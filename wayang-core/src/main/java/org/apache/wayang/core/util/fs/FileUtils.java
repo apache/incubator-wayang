@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.util.fs;
+package org.apache.wayang.core.util.fs;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.api.exception.WayangException;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.postgres.operators;
+package org.apache.wayang.postgres.operators;
 
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.basic.function.ProjectionDescriptor;
-import org.apache.incubator.wayang.basic.operators.FilterOperator;
-import org.apache.incubator.wayang.basic.operators.MapOperator;
-import org.apache.incubator.wayang.jdbc.operators.JdbcProjectionOperator;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.function.ProjectionDescriptor;
+import org.apache.wayang.basic.operators.FilterOperator;
+import org.apache.wayang.basic.operators.MapOperator;
+import org.apache.wayang.jdbc.operators.JdbcProjectionOperator;
 
 /**
  * PostgreSQL implementation of the {@link FilterOperator}.

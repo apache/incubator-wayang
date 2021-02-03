@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.plan.wayangplan.test;
+package org.apache.wayang.core.plan.wayangplan.test;
 
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.wayang.core.types.DataSetType;
 
 /**
  * Test operator that exposes map-like behavior. Does not provide a {@link CardinalityEstimator}.

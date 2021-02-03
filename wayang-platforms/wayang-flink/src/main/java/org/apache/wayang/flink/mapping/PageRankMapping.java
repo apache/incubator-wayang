@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.flink.mapping;
+package org.apache.wayang.flink.mapping;
 
-import org.apache.incubator.wayang.basic.operators.PageRankOperator;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.OperatorPattern;
-import org.apache.incubator.wayang.core.mapping.PlanTransformation;
-import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
-import org.apache.incubator.wayang.core.mapping.SubplanPattern;
-import org.apache.incubator.wayang.flink.operators.FlinkPageRankOperator;
-import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
+import org.apache.wayang.basic.operators.PageRankOperator;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.flink.operators.FlinkPageRankOperator;
+import org.apache.wayang.flink.platform.FlinkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

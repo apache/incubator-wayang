@@ -1,13 +1,13 @@
-# Wayang <img align="right" width="128px" src="https://wayang-ecosystem.github.io/img/logo.png" alt="Wayang logo">
+# Apache Wayang <img align="right" width="128px" src="https://wayang-ecosystem.github.io/img/logo.png" alt="Wayang logo">
 
 [![Build Status (Travis)](https://travis-ci.org/wayang-ecosystem/wayang.svg?branch=master)](https://travis-ci.org/wayang-ecosystem/wayang)
 [![Gitter chat](https://badges.gitter.im/wayang-ecosystem/Lobby.png)](https://gitter.im/wayang-ecosystem/Lobby)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.incubator.wayang/wayang/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.incubator.wayang/wayang)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.wayang/wayang/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.wayang/wayang)
 
-#### Turning the Zoo of Data Processing Systems into a Circus
+#### Turning a shadows into a show
 
 
-Wayang is an efficient and scalable data processing framework developed by the [data analytics](http://da.qcri.org) group at [Qatar Computing Research Institute](http://qcri.com/) in collaboration with the [information systems group](https://www.hpi.de/naumann) at the Hasso Plattner Institute. In contrast to classical data processing systems that provide one dedicated execution engine, Wayang rather is a *meta processing framework*: You can specify your data processing app via one of Wayang's API and then Wayang will pick an optimal configuration of classical processing frameworks, such as Java Streams or Apache Spark, to run your app on. Finally, Wayang will also perform the execution, thereby hiding the different specific platform APIs and coordinate inter-platform communication.
+Apache Wayang in contrast to classical data processing systems that provide one dedicated execution engine, Apache Wayang rather is a *meta processing framework*: You can specify your data processing app via one of Wayang's API and then Wayang will pick an optimal configuration of classical processing frameworks, such as Java Streams or Apache Spark, to run your app on. Finally, Wayang will also perform the execution, thereby hiding the different specific platform APIs and coordinate inter-platform communication.
 
 This approach aims at freeing data engineers and software developers from the burden of knowing the zoo of different data processing systems, their APIs, strengths and weakness; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when tying to a fix set of processing platforms. As of now, Wayang has built in support for the following processing platforms:
 - Java 8 Streams
@@ -19,13 +19,13 @@ This approach aims at freeing data engineers and software developers from the bu
 ## How to use Wayang
 
 **Requirements.**
-Wayang is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Wayang might have further requirements.
 
 **Get Wayang.**
 Wayang is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:
 ```xml
 <dependency> 
-  <groupId>org.apache.incubator.wayang</groupId>
+  <groupId>org.apache.wayang</groupId>
   <artifactId>wayang-***</artifactId>
   <version>0.3.0</version> 
 </dependency>
@@ -74,7 +74,7 @@ You can find the most relevant settings in the following:
   * `wayang.core.log.enabled (= true)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
   * `wayang.core.log.executions (= ~/.wayang/executions.json)` where to log execution times of operator groups
   * `wayang.core.log.cardinalities (= ~/.wayang/cardinalities.json)` where to log cardinality measurements
-  * `wayang.core.optimizer.instrumentation (= org.apache.incubator.wayang.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Wayang plans; other options are `org.apache.incubator.wayang.core.profiling.NoInstrumentationStrategy` and `org.apache.incubator.wayang.core.profiling.FullInstrumentationStrategy`
+  * `wayang.core.optimizer.instrumentation (= org.apache.wayang.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Wayang plans; other options are `org.apache.wayang.core.profiling.NoInstrumentationStrategy` and `org.apache.wayang.core.profiling.FullInstrumentationStrategy`
   * `wayang.core.optimizer.reoptimize (= false)`: whether to progressively optimize Wayang plans
   * `wayang.basic.tempdir (= file:///tmp)`: where to store temporary files, in particular for inter-platform communication
 * Java Streams
@@ -130,7 +130,7 @@ In particular, you can use
 While Wayang specifies templates for all execution operators, you will need to specify that your UDFs are modelled by some configuration-based cost function (see the k-means example below) and create the according initial specification and template yourself.
 Once, you gathered execution data, you can run
 ```shell
-java ... org.apache.incubator.wayang.profiler.ga.GeneticOptimizerApp [configuration URL [execution log]]
+java ... org.apache.wayang.profiler.ga.GeneticOptimizerApp [configuration URL [execution log]]
 ```
 This app will try to find appropriate values for the question marks (`?`) in the load profile estimator templates to fit the gathered execution data and ready-made configuration entries for the load profile estimators.
 You can then copy them into your configuration.
@@ -145,13 +145,13 @@ The "Hello World!" of data processing systems is the wordcount.
 
 #### Java API
 ```java
-import org.apache.incubator.wayang.api.JavaPlanBuilder;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.WayangContext;
-import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.apache.incubator.wayang.java.Java;
-import org.apache.incubator.wayang.spark.Spark;
+import org.apache.wayang.api.JavaPlanBuilder;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.spark.Spark;
 import java.util.Collection;
 import java.util.Arrays;
 
@@ -207,10 +207,10 @@ public class WordcountJava {
 #### Scala API
 
 ```scala
-import org.apache.incubator.wayang.api._
-import org.apache.incubator.wayang.core.api.{Configuration, WayangContext}
-import org.apache.incubator.wayang.java.Java
-import org.apache.incubator.wayang.spark.Spark
+import org.apache.wayang.api._
+import org.apache.wayang.core.api.{Configuration, WayangContext}
+import org.apache.wayang.java.Java
+import org.apache.wayang.spark.Spark
 
 object WordcountScala {
   def main(args: Array[String]) {
@@ -258,13 +258,13 @@ Wayang is also capable of iterative processing, which is, e.g., very important f
 #### Scala API
 
 ```scala
-import org.apache.incubator.wayang.api._
-import org.apache.incubator.wayang.core.api.{Configuration, WayangContext}
-import org.apache.incubator.wayang.core.function.FunctionDescriptor.ExtendedSerializableFunction
-import org.apache.incubator.wayang.core.function.ExecutionContext
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators
-import org.apache.incubator.wayang.java.Java
-import org.apache.incubator.wayang.spark.Spark
+import org.apache.wayang.api._
+import org.apache.wayang.core.api.{Configuration, WayangContext}
+import org.apache.wayang.core.function.FunctionDescriptor.ExtendedSerializableFunction
+import org.apache.wayang.core.function.ExecutionContext
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators
+import org.apache.wayang.java.Java
+import org.apache.wayang.spark.Spark
 
 import scala.util.Random
 import scala.collection.JavaConversions._
@@ -356,7 +356,7 @@ object kmeans {
 
 Unless explicitly stated otherwise all files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 Wayang Ecosystem
+Copyright 2020 Rheem Ecosystem
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

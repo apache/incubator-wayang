@@ -1,15 +1,15 @@
-package org.apache.incubator.wayang.core.optimizer.enumeration;
+package org.apache.wayang.core.optimizer.enumeration;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.incubator.wayang.core.plan.executionplan.test.TestChannel;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.test.MockFactory;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.plan.executionplan.test.TestChannel;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.test.MockFactory;
 
 import java.util.Collections;
 

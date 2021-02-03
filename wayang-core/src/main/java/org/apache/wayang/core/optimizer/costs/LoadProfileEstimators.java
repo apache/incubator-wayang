@@ -1,20 +1,20 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimator.SinglePointEstimationFunction;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.util.JuelUtils;
-import org.apache.incubator.wayang.core.util.mathex.Context;
-import org.apache.incubator.wayang.core.util.mathex.DefaultContext;
-import org.apache.incubator.wayang.core.util.mathex.Expression;
-import org.apache.incubator.wayang.core.util.mathex.ExpressionBuilder;
-import org.apache.incubator.wayang.core.util.mathex.exceptions.EvaluationException;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationUtils;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.costs.LoadEstimator.SinglePointEstimationFunction;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.util.JuelUtils;
+import org.apache.wayang.core.util.mathex.Context;
+import org.apache.wayang.core.util.mathex.DefaultContext;
+import org.apache.wayang.core.util.mathex.Expression;
+import org.apache.wayang.core.util.mathex.ExpressionBuilder;
+import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +84,7 @@ public class LoadProfileEstimators {
     /**
      * Creates a new instance from a specification {@link String}. Valid specifications are as follows:
      * <pre>
-     *     {"type":&lt;*juel*, org.apache.incubator.wayang.core.util.mathex.mathex&gt;,
+     *     {"type":&lt;*juel*, org.apache.wayang.core.util.mathex.mathex&gt;,
      *      "cpu":&lt;mathematical expression&gt;,
      *      "ram":&lt;mathematical expression&gt;,
      *      "disk":&lt;mathematical expression&gt;,

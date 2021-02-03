@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.core.mapping;
+package org.apache.wayang.core.mapping;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.OperatorBase;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
-import org.apache.incubator.wayang.core.plan.wayangplan.TopDownPlanVisitor;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.Slot;
+import org.apache.wayang.core.plan.wayangplan.TopDownPlanVisitor;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Collection;
 import java.util.LinkedList;

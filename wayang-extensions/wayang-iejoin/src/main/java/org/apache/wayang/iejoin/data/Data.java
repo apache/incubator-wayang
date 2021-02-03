@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.iejoin.data;
+package org.apache.wayang.iejoin.data;
 
 import java.io.Serializable;
 

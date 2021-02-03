@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.iejoin.operators.spark_helpers;
+package org.apache.wayang.iejoin.operators.spark_helpers;
 
 import org.apache.spark.api.java.function.Function2;
-import org.apache.incubator.wayang.core.util.Copyable;
-import org.apache.incubator.wayang.iejoin.data.Data;
+import org.apache.wayang.core.util.Copyable;
+import org.apache.wayang.iejoin.data.Data;
 import scala.Tuple2;
 
 import java.util.ArrayList;

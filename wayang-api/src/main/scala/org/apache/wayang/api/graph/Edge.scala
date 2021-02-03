@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.api.graph
+package org.apache.wayang.api.graph
 
 /**
   * Helper to handle [[Edge]]s.

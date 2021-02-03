@@ -1,17 +1,17 @@
-package org.apache.incubator.wayang.basic.channels;
+package org.apache.wayang.basic.channels;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.platform.AbstractChannelInstance;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.Executor;
-import org.apache.incubator.wayang.core.util.Actions;
-import org.apache.incubator.wayang.core.util.fs.FileSystem;
-import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.platform.AbstractChannelInstance;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.core.util.Actions;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.giraph.Algorithm;
+package org.apache.wayang.giraph.Algorithm;
 
 import com.google.common.collect.Lists;
 import org.apache.giraph.aggregators.DoubleMaxAggregator;

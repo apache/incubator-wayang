@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.core.mapping;
+package org.apache.wayang.core.mapping;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.OperatorBase;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.plan.wayangplan.TopDownPlanVisitor;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.plan.wayangplan.TopDownPlanVisitor;
 
 import java.util.Arrays;
 import java.util.HashSet;

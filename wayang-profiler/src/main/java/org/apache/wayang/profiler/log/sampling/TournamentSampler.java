@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.profiler.log.sampling;
+package org.apache.wayang.profiler.log.sampling;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.core.optimizer.cardinality;
+package org.apache.wayang.core.optimizer.cardinality;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.util.WayangArrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.sqlite3.platform;
+package org.apache.wayang.sqlite3.platform;
 
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 /**
  * {@link Platform} implementation for SQLite3.

@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.types;
+package org.apache.wayang.core.types;
 
-import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 import java.util.Objects;
 

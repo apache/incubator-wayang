@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityPusher;
-import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
-import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.apache.wayang.core.platform.Platform;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -353,7 +353,7 @@ public interface Operator {
 
     /**
      * Checks whether this instance is not connected to any other instance via its {@link Slot}s. This is a typical
-     * property of instances used for {@link org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion}s.
+     * property of instances used for {@link org.apache.wayang.core.optimizer.channels.ChannelConversion}s.
      *
      * @return whether this instance is unconnected
      */

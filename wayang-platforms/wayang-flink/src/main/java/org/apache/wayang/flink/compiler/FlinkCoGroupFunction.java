@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.flink.compiler;
+package org.apache.wayang.flink.compiler;
 
 import org.apache.flink.api.common.functions.CoGroupFunction;
 import org.apache.flink.util.Collector;
-import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.data.Tuple2;
 
 /**
  * Wrapper of {@Link CoGroupFunction} of Flink for use in Wayang

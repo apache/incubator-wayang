@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.core.optimizer.enumeration;
+package org.apache.wayang.core.optimizer.enumeration;
 
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.platform.Junction;
-import org.apache.incubator.wayang.core.util.OneTimeExecutable;
-import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.platform.Junction;
+import org.apache.wayang.core.util.OneTimeExecutable;
+import org.apache.wayang.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;

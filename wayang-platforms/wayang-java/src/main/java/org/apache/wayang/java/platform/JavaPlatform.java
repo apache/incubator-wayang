@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.java.platform;
+package org.apache.wayang.java.platform;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
-import org.apache.incubator.wayang.core.platform.Executor;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.util.ReflectionUtils;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.java.execution.JavaExecutor;
 
 /**
  * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.

@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.plan.executionplan;
+package org.apache.wayang.core.plan.executionplan;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
 
 import java.util.Collection;
 import java.util.HashSet;

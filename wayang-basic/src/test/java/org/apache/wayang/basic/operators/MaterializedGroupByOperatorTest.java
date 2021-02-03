@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.basic.operators;
+package org.apache.wayang.basic.operators;
 
 import org.junit.Test;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.types.DataUnitType;
 
 import java.util.stream.StreamSupport;
 

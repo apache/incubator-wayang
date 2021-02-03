@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.java.operators;
+package org.apache.wayang.java.operators;
 
-import org.apache.incubator.wayang.basic.operators.CollectionSource;
-import org.apache.incubator.wayang.basic.operators.TextFileSource;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.core.util.Tuple;
-import org.apache.incubator.wayang.java.channels.CollectionChannel;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.basic.operators.CollectionSource;
+import org.apache.wayang.basic.operators.TextFileSource;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.execution.JavaExecutor;
 
 import java.util.Collection;
 import java.util.Collections;

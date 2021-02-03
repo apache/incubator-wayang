@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.api.util
+package org.apache.wayang.api.util
 
-import org.apache.incubator.wayang.core.types.DataSetType
+import org.apache.wayang.core.types.DataSetType
 
 /**
-  * This class waits for a [[org.apache.incubator.wayang.core.types.DataSetType]] to be set and verifies that there are no
+  * This class waits for a [[org.apache.wayang.core.types.DataSetType]] to be set and verifies that there are no
   * two different sets.
   */
 class TypeTrap {

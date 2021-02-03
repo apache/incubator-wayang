@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.java.channels;
+package org.apache.wayang.java.channels;
 
-import org.apache.incubator.wayang.basic.channels.FileChannel;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.optimizer.channels.DefaultChannelConversion;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.java.operators.JavaCollectOperator;
-import org.apache.incubator.wayang.java.operators.JavaObjectFileSink;
-import org.apache.incubator.wayang.java.operators.JavaObjectFileSource;
-import org.apache.incubator.wayang.java.operators.JavaTsvFileSink;
-import org.apache.incubator.wayang.java.operators.JavaTsvFileSource;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.java.operators.JavaCollectOperator;
+import org.apache.wayang.java.operators.JavaObjectFileSink;
+import org.apache.wayang.java.operators.JavaObjectFileSource;
+import org.apache.wayang.java.operators.JavaTsvFileSink;
+import org.apache.wayang.java.operators.JavaTsvFileSource;
+import org.apache.wayang.java.platform.JavaPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;

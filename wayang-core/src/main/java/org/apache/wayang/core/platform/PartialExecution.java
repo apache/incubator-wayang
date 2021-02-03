@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
-import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.util.JsonSerializables;
-import org.apache.incubator.wayang.core.util.JsonSerializer;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.util.JsonSerializables;
+import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Collection;
 import java.util.LinkedList;

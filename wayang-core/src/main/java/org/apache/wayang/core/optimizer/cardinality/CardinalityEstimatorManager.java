@@ -1,17 +1,17 @@
-package org.apache.incubator.wayang.core.optimizer.cardinality;
+package org.apache.wayang.core.optimizer.cardinality;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
-import org.apache.incubator.wayang.core.optimizer.enumeration.LoopImplementation;
-import org.apache.incubator.wayang.core.optimizer.enumeration.PlanImplementation;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.ExecutionState;
-import org.apache.incubator.wayang.core.platform.Junction;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationUtils;
+import org.apache.wayang.core.optimizer.enumeration.LoopImplementation;
+import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.ExecutionState;
+import org.apache.wayang.core.platform.Junction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

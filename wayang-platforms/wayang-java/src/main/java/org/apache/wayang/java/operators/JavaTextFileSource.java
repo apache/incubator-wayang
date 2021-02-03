@@ -1,17 +1,17 @@
-package org.apache.incubator.wayang.java.operators;
+package org.apache.wayang.java.operators;
 
-import org.apache.incubator.wayang.basic.operators.TextFileSource;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.util.Tuple;
-import org.apache.incubator.wayang.core.util.fs.FileSystem;
-import org.apache.incubator.wayang.core.util.fs.FileSystems;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.basic.operators.TextFileSource;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
+import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.java.execution.JavaExecutor;
 
 import java.io.BufferedReader;
 import java.io.IOException;

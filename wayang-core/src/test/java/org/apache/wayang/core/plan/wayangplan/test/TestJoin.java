@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.core.plan.wayangplan.test;
+package org.apache.wayang.core.plan.wayangplan.test;
 
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.apache.incubator.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.TopDownPlanVisitor;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
+import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.TopDownPlanVisitor;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.types.DataUnitType;
 
 import java.util.Optional;
 

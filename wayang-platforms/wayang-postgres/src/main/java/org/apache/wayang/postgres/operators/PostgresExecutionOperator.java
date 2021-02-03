@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.postgres.operators;
+package org.apache.wayang.postgres.operators;
 
-import org.apache.incubator.wayang.jdbc.operators.JdbcExecutionOperator;
-import org.apache.incubator.wayang.postgres.platform.PostgresPlatform;
+import org.apache.wayang.jdbc.operators.JdbcExecutionOperator;
+import org.apache.wayang.postgres.platform.PostgresPlatform;
 
 public interface PostgresExecutionOperator extends JdbcExecutionOperator {
 

@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.basic.types;
+package org.apache.wayang.basic.types;
 
 
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.core.types.BasicDataUnitType;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.core.types.BasicDataUnitType;
 
 import java.util.Arrays;
 import java.util.Objects;

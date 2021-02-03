@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 
 import java.util.Arrays;
 

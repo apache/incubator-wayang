@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.basic.data;
+package org.apache.wayang.basic.data;
 
 import java.io.Serializable;
 import java.util.Objects;

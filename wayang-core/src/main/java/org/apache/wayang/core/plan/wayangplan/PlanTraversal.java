@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

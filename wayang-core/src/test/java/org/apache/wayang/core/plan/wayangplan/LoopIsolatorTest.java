@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestLoopHead;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestMapOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSource;
+import org.apache.wayang.core.plan.wayangplan.test.TestLoopHead;
+import org.apache.wayang.core.plan.wayangplan.test.TestMapOperator;
+import org.apache.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.wayang.core.plan.wayangplan.test.TestSource;
 
 import java.util.ArrayList;
 import java.util.List;

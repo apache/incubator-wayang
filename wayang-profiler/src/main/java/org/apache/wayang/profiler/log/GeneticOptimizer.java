@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.profiler.log;
+package org.apache.wayang.profiler.log;
 
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
-import org.apache.incubator.wayang.core.platform.AtomicExecution;
-import org.apache.incubator.wayang.core.platform.AtomicExecutionGroup;
-import org.apache.incubator.wayang.core.platform.PartialExecution;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.util.Bitmask;
-import org.apache.incubator.wayang.profiler.log.sampling.Sampler;
-import org.apache.incubator.wayang.profiler.log.sampling.TournamentSampler;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.platform.AtomicExecution;
+import org.apache.wayang.core.platform.AtomicExecutionGroup;
+import org.apache.wayang.core.platform.PartialExecution;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.Bitmask;
+import org.apache.wayang.profiler.log.sampling.Sampler;
+import org.apache.wayang.profiler.log.sampling.TournamentSampler;
 
 import java.util.ArrayList;
 import java.util.Collection;

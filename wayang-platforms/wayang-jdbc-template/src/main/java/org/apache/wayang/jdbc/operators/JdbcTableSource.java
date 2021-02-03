@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.jdbc.operators;
+package org.apache.wayang.jdbc.operators;
 
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
-import org.apache.incubator.wayang.basic.operators.TableSource;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.jdbc.compiler.FunctionCompiler;
+import org.apache.wayang.basic.operators.TableSource;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;

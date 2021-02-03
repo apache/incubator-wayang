@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.mapping;
+package org.apache.wayang.core.mapping;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.Operator;
 
 /**
  * An operator match correlates an {@link OperatorPattern} to an actually matched {@link Operator}.

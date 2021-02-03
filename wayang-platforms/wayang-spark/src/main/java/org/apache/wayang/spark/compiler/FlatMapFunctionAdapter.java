@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.spark.compiler;
+package org.apache.wayang.spark.compiler;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 

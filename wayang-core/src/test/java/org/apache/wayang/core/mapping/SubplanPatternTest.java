@@ -1,15 +1,15 @@
-package org.apache.incubator.wayang.core.mapping;
+package org.apache.wayang.core.mapping;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.plan.wayangplan.UnarySink;
-import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSource;
-import org.apache.incubator.wayang.core.test.TestDataUnit;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.plan.wayangplan.UnarySink;
+import org.apache.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.wayang.core.plan.wayangplan.test.TestSource;
+import org.apache.wayang.core.test.TestDataUnit;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.util.List;
 

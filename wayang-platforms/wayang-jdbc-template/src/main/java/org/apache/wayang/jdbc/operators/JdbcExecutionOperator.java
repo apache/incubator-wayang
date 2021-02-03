@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.jdbc.operators;
+package org.apache.wayang.jdbc.operators;
 
-import org.apache.incubator.wayang.basic.operators.TableSource;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.jdbc.compiler.FunctionCompiler;
-import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.wayang.basic.operators.TableSource;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.jdbc.compiler.FunctionCompiler;
+import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 import java.sql.Connection;
 import java.util.Collections;

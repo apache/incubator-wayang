@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.jdbc.execution;
+package org.apache.wayang.jdbc.execution;
 
-import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.api.exception.WayangException;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

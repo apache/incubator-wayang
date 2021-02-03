@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.tests.platform;
+package org.apache.wayang.tests.platform;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
-import org.apache.incubator.wayang.core.platform.Executor;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.plugin.Plugin;
 
 import java.util.Collection;
 import java.util.Collections;

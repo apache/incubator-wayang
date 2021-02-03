@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.function;
+package org.apache.wayang.core.function;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.platform.Platform;
 
 import java.util.Collection;
 

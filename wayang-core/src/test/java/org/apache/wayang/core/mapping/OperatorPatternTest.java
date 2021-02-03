@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.mapping;
+package org.apache.wayang.core.mapping;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.test.DummyExecutionOperator;
+import org.apache.wayang.core.test.DummyExecutionOperator;
 
 /**
  * Tests for {@link OperatorPattern}.

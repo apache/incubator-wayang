@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.java.mapping;
+package org.apache.wayang.java.mapping;
 
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.java.mapping.graph.PageRankMapping;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.java.mapping.graph.PageRankMapping;
 
 import java.util.Arrays;
 import java.util.Collection;

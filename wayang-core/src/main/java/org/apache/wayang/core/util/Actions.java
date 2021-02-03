@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.util;
+package org.apache.wayang.core.util;
 
 /**
  * Utilities to perform actions.

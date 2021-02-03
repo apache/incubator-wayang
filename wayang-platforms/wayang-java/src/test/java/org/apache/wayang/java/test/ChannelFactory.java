@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.java.test;
+package org.apache.wayang.java.test;
 
 import org.junit.Before;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.java.channels.CollectionChannel;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.java.execution.JavaExecutor;
 
 import java.util.Collection;
 import java.util.stream.Stream;

@@ -1,20 +1,20 @@
-package org.apache.incubator.wayang.iejoin.operators;
+package org.apache.wayang.iejoin.operators;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.junit.Before;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
-import org.apache.incubator.wayang.iejoin.test.ChannelFactory;
-import org.apache.incubator.wayang.java.channels.CollectionChannel;
-import org.apache.incubator.wayang.spark.channels.RddChannel;
-import org.apache.incubator.wayang.spark.execution.SparkExecutor;
-import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
-import org.apache.incubator.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.wayang.iejoin.test.ChannelFactory;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.spark.channels.RddChannel;
+import org.apache.wayang.spark.execution.SparkExecutor;
+import org.apache.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 

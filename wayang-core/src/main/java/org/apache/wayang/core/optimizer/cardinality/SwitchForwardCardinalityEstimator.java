@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.optimizer.cardinality;
+package org.apache.wayang.core.optimizer.cardinality;
 
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.slf4j.LoggerFactory;
 
 /**

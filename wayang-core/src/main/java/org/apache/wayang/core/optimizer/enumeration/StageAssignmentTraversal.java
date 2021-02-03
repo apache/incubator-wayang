@@ -1,21 +1,21 @@
-package org.apache.incubator.wayang.core.optimizer.enumeration;
+package org.apache.wayang.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStageLoop;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.incubator.wayang.core.plan.executionplan.PlatformExecution;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.util.Iterators;
-import org.apache.incubator.wayang.core.util.OneTimeExecutable;
-import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.wayang.core.plan.executionplan.ExecutionStageLoop;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.plan.executionplan.PlatformExecution;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.Iterators;
+import org.apache.wayang.core.util.OneTimeExecutable;
+import org.apache.wayang.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,7 +132,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     }
 
     /**
-     * Tells whether the given {@link Channel} lends itself to a {@link org.apache.incubator.wayang.core.platform.Breakpoint}. In
+     * Tells whether the given {@link Channel} lends itself to a {@link org.apache.wayang.core.platform.Breakpoint}. In
      * that case, we might want to split an {@link ExecutionStage} here.
      *
      * @see StageSplittingCriterion#shouldSplit(ExecutionTask, Channel, ExecutionTask)

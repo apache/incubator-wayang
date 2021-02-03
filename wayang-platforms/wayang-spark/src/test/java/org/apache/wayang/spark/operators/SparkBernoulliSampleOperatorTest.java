@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.spark.operators;
+package org.apache.wayang.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.apache.incubator.wayang.basic.operators.SampleOperator;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.wayang.basic.operators.SampleOperator;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.spark.channels.RddChannel;
 
 import java.util.Arrays;
 import java.util.List;

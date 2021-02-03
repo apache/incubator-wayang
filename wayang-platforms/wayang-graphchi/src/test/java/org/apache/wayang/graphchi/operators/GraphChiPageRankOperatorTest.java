@@ -1,20 +1,21 @@
-package org.apache.incubator.wayang.graphchi.operators;
+package org.apache.wayang.graphchi.operators;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.apache.incubator.wayang.basic.channels.FileChannel;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
-import org.apache.incubator.wayang.core.profiling.FullInstrumentationStrategy;
-import org.apache.incubator.wayang.graphchi.GraphChi;
-import org.apache.incubator.wayang.graphchi.execution.GraphChiExecutor;
-import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.wayang.core.profiling.FullInstrumentationStrategy;
+import org.apache.wayang.graphchi.GraphChi;
+import org.apache.wayang.graphchi.execution.GraphChiExecutor;
+import org.apache.wayang.graphchi.platform.GraphChiPlatform;
+import org.apache.wayang.graphchi.operators.GraphChiPageRankOperator;
+import org.apache.wayang.java.channels.StreamChannel;
 
 import java.io.IOException;
 

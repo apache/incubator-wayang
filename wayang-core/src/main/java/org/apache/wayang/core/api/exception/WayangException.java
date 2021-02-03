@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.api.exception;
+package org.apache.wayang.core.api.exception;
 
 /**
  * Exception that declares a problem of Wayang.

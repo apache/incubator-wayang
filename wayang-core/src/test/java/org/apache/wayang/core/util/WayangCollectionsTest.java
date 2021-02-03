@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.util;
+package org.apache.wayang.core.util;
 
 import org.junit.Assert;
 import org.junit.Test;

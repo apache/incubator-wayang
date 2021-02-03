@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.flink;
+package org.apache.wayang.flink;
 
 
-import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
-import org.apache.incubator.wayang.flink.plugin.FlinkBasicPlugin;
-import org.apache.incubator.wayang.flink.plugin.FlinkConversionPlugin;
-import org.apache.incubator.wayang.flink.plugin.FlinkGraphPlugin;
+import org.apache.wayang.flink.platform.FlinkPlatform;
+import org.apache.wayang.flink.plugin.FlinkBasicPlugin;
+import org.apache.wayang.flink.plugin.FlinkConversionPlugin;
+import org.apache.wayang.flink.plugin.FlinkGraphPlugin;
 
 /**
  * Register for relevant components of this module.

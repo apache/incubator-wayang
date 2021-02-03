@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.basic.data;
+package org.apache.wayang.basic.data;
 
-import org.apache.incubator.wayang.core.util.Copyable;
-import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.util.Copyable;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 import java.io.Serializable;
 import java.util.Arrays;

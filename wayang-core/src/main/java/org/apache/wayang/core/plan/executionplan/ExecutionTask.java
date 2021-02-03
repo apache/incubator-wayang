@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.core.plan.executionplan;
+package org.apache.wayang.core.plan.executionplan;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.Platform;
 
 /**
  * Serves as an adapter to include {@link ExecutionOperator}s, which are usually parts of {@link WayangPlan}s, in

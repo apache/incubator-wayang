@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.spark.compiler;
+package org.apache.wayang.spark.compiler;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.incubator.wayang.core.util.Iterators;
+import org.apache.wayang.core.util.Iterators;
 
 import java.util.ArrayList;
 import java.util.Iterator;

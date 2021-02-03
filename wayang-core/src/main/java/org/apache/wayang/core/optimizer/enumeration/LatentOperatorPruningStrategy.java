@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.core.optimizer.enumeration;
+package org.apache.wayang.core.optimizer.enumeration;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.Slot;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

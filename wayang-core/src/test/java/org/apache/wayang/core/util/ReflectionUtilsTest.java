@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.util;
+package org.apache.wayang.core.util;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,13 +28,13 @@ public class ReflectionUtilsTest {
 
     @Test
     public void testEvaluateWithStaticVariable() {
-        final Object val = ReflectionUtils.evaluate("org.apache.incubator.wayang.core.util.ReflectionUtilsTest.TEST_INT");
+        final Object val = ReflectionUtils.evaluate("org.apache.wayang.core.util.ReflectionUtilsTest.TEST_INT");
         Assert.assertEquals(42, val);
     }
 
     @Test
     public void testEvaluateWithStaticMethod() {
-        final Object val = ReflectionUtils.evaluate("org.apache.incubator.wayang.core.util.ReflectionUtilsTest.testInt()");
+        final Object val = ReflectionUtils.evaluate("org.apache.wayang.core.util.ReflectionUtilsTest.testInt()");
         Assert.assertEquals(23, val);
     }
 

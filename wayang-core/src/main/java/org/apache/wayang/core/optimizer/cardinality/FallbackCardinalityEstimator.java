@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.optimizer.cardinality;
+package org.apache.wayang.core.optimizer.cardinality;
 
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationContext;
 
 /**
  * Assumes with a confidence of 50% that the output cardinality will be somewhere between 1 and the product of

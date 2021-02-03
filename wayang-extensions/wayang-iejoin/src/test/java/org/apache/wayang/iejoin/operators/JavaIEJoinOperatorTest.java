@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.iejoin.operators;
+package org.apache.wayang.iejoin.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.core.types.DataUnitType;
-import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.types.DataUnitType;
+import org.apache.wayang.java.channels.JavaChannelInstance;
 
 import java.util.Arrays;
 import java.util.List;

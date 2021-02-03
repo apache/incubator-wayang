@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.test;
+package org.apache.wayang.core.test;
 
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.util.JsonSerializable;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.util.JsonSerializable;
 
 /**
  * Dummy {@link ExecutionOperator} for test purposes.

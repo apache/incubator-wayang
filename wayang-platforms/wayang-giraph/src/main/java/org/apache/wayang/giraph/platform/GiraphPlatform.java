@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.giraph.platform;
+package org.apache.wayang.giraph.platform;
 
 import org.apache.giraph.conf.GiraphConfiguration;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
-import org.apache.incubator.wayang.core.platform.Executor;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.util.ReflectionUtils;
-import org.apache.incubator.wayang.giraph.execution.GiraphExecutor;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.giraph.execution.GiraphExecutor;
 
 /**
  * Giraph {@link Platform} for Wayang.

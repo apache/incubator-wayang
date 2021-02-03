@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.postgres.channels;
+package org.apache.wayang.postgres.channels;
 
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.optimizer.channels.DefaultChannelConversion;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
-import org.apache.incubator.wayang.jdbc.operators.SqlToStreamOperator;
-import org.apache.incubator.wayang.postgres.platform.PostgresPlatform;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.jdbc.operators.SqlToStreamOperator;
+import org.apache.wayang.postgres.platform.PostgresPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

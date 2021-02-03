@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.sqlite3.operators;
+package org.apache.wayang.sqlite3.operators;
 
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.basic.function.ProjectionDescriptor;
-import org.apache.incubator.wayang.basic.operators.MapOperator;
-import org.apache.incubator.wayang.jdbc.operators.JdbcProjectionOperator;
-import org.apache.incubator.wayang.sqlite3.platform.Sqlite3Platform;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.function.ProjectionDescriptor;
+import org.apache.wayang.basic.operators.MapOperator;
+import org.apache.wayang.jdbc.operators.JdbcProjectionOperator;
+import org.apache.wayang.sqlite3.platform.Sqlite3Platform;
 
 /**
  * Implementation of the {@link JdbcProjectionOperator} for the {@link Sqlite3Platform}.

@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.types;
+package org.apache.wayang.core.types;
 
 import java.util.Objects;
 

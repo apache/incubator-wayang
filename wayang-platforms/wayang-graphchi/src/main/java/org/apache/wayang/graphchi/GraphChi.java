@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.graphchi;
+package org.apache.wayang.graphchi;
 
-import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
-import org.apache.incubator.wayang.graphchi.plugin.GraphChiPlugin;
+import org.apache.wayang.graphchi.platform.GraphChiPlatform;
+import org.apache.wayang.graphchi.plugin.GraphChiPlugin;
 
 /**
  * Register for relevant components of this module.

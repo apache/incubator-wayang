@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang
+package org.apache.wayang
 
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
 
-import org.apache.incubator.wayang.basic.data.{Record, Tuple2 => WayangTuple2}
-import org.apache.incubator.wayang.core.api.WayangContext
-import org.apache.incubator.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
-import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval
-import org.apache.incubator.wayang.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
-import org.apache.incubator.wayang.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator, LoadProfileEstimator, NestableLoadProfileEstimator}
-import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator
-import org.apache.incubator.wayang.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
+import org.apache.wayang.basic.data.{Record, Tuple2 => WayangTuple2}
+import org.apache.wayang.core.api.WayangContext
+import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
+import org.apache.wayang.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
+import org.apache.wayang.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator, LoadProfileEstimator, NestableLoadProfileEstimator}
+import org.apache.wayang.core.plan.wayangplan.ElementaryOperator
+import org.apache.wayang.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
 
 import scala.collection.JavaConversions
 import scala.language.implicitConversions

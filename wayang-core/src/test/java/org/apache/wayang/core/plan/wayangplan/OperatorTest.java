@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.util.ReflectionUtils;
-import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.util.WayangCollections;
 
 import java.util.Collection;
 

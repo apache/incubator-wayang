@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.profiler.util;
+package org.apache.wayang.profiler.util;
 
 import org.rrd4j.ConsolFun;
 import org.rrd4j.core.FetchData;

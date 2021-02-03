@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.java.execution;
+package org.apache.wayang.java.execution;
 
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.function.ExecutionContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.java.channels.CollectionChannel;
-import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.function.ExecutionContext;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.operators.JavaExecutionOperator;
+import org.apache.wayang.java.platform.JavaPlatform;
 
 import java.util.Collection;
 

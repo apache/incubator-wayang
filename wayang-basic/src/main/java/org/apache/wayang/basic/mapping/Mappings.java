@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.basic.mapping;
+package org.apache.wayang.basic.mapping;
 
-import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.Mapping;
 
 import java.util.Arrays;
 import java.util.Collection;

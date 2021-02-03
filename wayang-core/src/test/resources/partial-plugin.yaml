@@ -1,7 +1,7 @@
 platforms:
   include:
-  - org.apache.incubator.wayang.core.test.DummyPlatform.getInstance()
+  - org.apache.wayang.core.test.DummyPlatform.getInstance()
 
 mappings:
   exclude:
-  - new org.apache.incubator.wayang.core.mapping.test.TestSinkMapping()
+  - new org.apache.wayang.core.mapping.test.TestSinkMapping()

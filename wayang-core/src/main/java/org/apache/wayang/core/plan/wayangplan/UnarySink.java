@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.types.DataSetType;
 
 /**
  * Abstract base-class for sinks with a single input.

@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.util.WayangCollections;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;

@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.core.profiling;
+package org.apache.wayang.core.profiling;
 
 import de.hpi.isg.profiledb.ProfileDB;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.OperatorBase;
-import org.apache.incubator.wayang.core.plan.wayangplan.PlanMetrics;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.wayang.core.plan.wayangplan.PlanMetrics;
 
 /**
  * Utilities to work with {@link de.hpi.isg.profiledb.ProfileDB}s.

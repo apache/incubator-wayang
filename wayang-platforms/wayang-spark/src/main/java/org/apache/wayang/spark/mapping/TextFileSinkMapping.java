@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.spark.mapping;
+package org.apache.wayang.spark.mapping;
 
-import org.apache.incubator.wayang.basic.operators.CollectionSource;
-import org.apache.incubator.wayang.basic.operators.TextFileSink;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.OperatorPattern;
-import org.apache.incubator.wayang.core.mapping.PlanTransformation;
-import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
-import org.apache.incubator.wayang.core.mapping.SubplanPattern;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.spark.operators.SparkCollectionSource;
-import org.apache.incubator.wayang.spark.operators.SparkTextFileSink;
-import org.apache.incubator.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.basic.operators.CollectionSource;
+import org.apache.wayang.basic.operators.TextFileSink;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.spark.operators.SparkCollectionSource;
+import org.apache.wayang.spark.operators.SparkTextFileSink;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

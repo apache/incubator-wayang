@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.jdbc.compiler;
+package org.apache.wayang.jdbc.compiler;
 
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.PredicateDescriptor;
 
 /**
  * Compiles {@link FunctionDescriptor}s to SQL clauses.

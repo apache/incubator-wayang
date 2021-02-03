@@ -1,20 +1,20 @@
-package org.apache.incubator.wayang.java.execution;
+package org.apache.wayang.java.execution;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.api.WayangContext;
-import org.apache.incubator.wayang.core.function.ExecutionContext;
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.core.util.WayangArrays;
-import org.apache.incubator.wayang.core.util.WayangCollections;
-import org.apache.incubator.wayang.java.Java;
-import org.apache.incubator.wayang.java.operators.JavaCollectionSource;
-import org.apache.incubator.wayang.java.operators.JavaDoWhileOperator;
-import org.apache.incubator.wayang.java.operators.JavaLocalCallbackSink;
-import org.apache.incubator.wayang.java.operators.JavaMapOperator;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.function.ExecutionContext;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.WayangArrays;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.java.operators.JavaCollectionSource;
+import org.apache.wayang.java.operators.JavaDoWhileOperator;
+import org.apache.wayang.java.operators.JavaLocalCallbackSink;
+import org.apache.wayang.java.operators.JavaMapOperator;
 
 import java.util.Collection;
 import java.util.Collections;

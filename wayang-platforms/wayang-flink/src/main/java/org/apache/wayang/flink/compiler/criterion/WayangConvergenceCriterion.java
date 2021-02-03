@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.flink.compiler.criterion;
+package org.apache.wayang.flink.compiler.criterion;
 
 
 import org.apache.flink.api.common.aggregators.ConvergenceCriterion;
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.FunctionDescriptor;
 
 import java.io.Serializable;
 import java.util.Collection;

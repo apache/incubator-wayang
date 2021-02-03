@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.postgres.mapping;
+package org.apache.wayang.postgres.mapping;
 
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.basic.function.ProjectionDescriptor;
-import org.apache.incubator.wayang.basic.operators.MapOperator;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.OperatorPattern;
-import org.apache.incubator.wayang.core.mapping.PlanTransformation;
-import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
-import org.apache.incubator.wayang.core.mapping.SubplanPattern;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.postgres.operators.PostgresProjectionOperator;
-import org.apache.incubator.wayang.postgres.platform.PostgresPlatform;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.function.ProjectionDescriptor;
+import org.apache.wayang.basic.operators.MapOperator;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.postgres.operators.PostgresProjectionOperator;
+import org.apache.wayang.postgres.platform.PostgresPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.graphchi.mappings;
+package org.apache.wayang.graphchi.mappings;
 
-import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.Mapping;
 
 import java.util.Collection;
 import java.util.Collections;

@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.util.JsonSerializable;
-import org.apache.incubator.wayang.core.util.JsonSerializables;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.util.JsonSerializable;
+import org.apache.wayang.core.util.JsonSerializables;
 
 import java.util.Collection;
 import java.util.LinkedList;

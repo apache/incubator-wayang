@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.sqlite3;
+package org.apache.wayang.sqlite3;
 
-import org.apache.incubator.wayang.sqlite3.platform.Sqlite3Platform;
-import org.apache.incubator.wayang.sqlite3.plugin.Sqlite3ConversionPlugin;
-import org.apache.incubator.wayang.sqlite3.plugin.Sqlite3Plugin;
+import org.apache.wayang.sqlite3.platform.Sqlite3Platform;
+import org.apache.wayang.sqlite3.plugin.Sqlite3ConversionPlugin;
+import org.apache.wayang.sqlite3.plugin.Sqlite3Plugin;
 
 /**
  * Register for relevant components of this module.

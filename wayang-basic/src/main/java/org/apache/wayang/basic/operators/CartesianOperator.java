@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.basic.operators;
+package org.apache.wayang.basic.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.apache.incubator.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Optional;
 

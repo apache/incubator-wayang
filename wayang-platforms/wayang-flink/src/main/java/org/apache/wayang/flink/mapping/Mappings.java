@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.flink.mapping;
+package org.apache.wayang.flink.mapping;
 
-import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.Mapping;
 
 import java.util.Arrays;
 import java.util.Collection;

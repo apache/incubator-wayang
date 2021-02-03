@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
 /**
  * Operator free of ambiguities.

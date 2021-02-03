@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.util.mathex.model;
+package org.apache.wayang.core.util.mathex.model;
 
-import org.apache.incubator.wayang.core.util.mathex.Context;
-import org.apache.incubator.wayang.core.util.mathex.Expression;
+import org.apache.wayang.core.util.mathex.Context;
+import org.apache.wayang.core.util.mathex.Expression;
 
 /**
  * A constant {@link Expression}.

@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.profiler.log;
+package org.apache.wayang.profiler.log;
 
 import java.util.Random;
 

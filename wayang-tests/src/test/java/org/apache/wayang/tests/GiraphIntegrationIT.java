@@ -1,15 +1,15 @@
-package org.apache.incubator.wayang.tests;
+package org.apache.wayang.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.core.api.WayangContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.giraph.Giraph;
-import org.apache.incubator.wayang.graphchi.GraphChi;
-import org.apache.incubator.wayang.java.Java;
-import org.apache.incubator.wayang.spark.Spark;
-import org.apache.incubator.wayang.tests.WayangPlans;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.giraph.Giraph;
+import org.apache.wayang.graphchi.GraphChi;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.spark.Spark;
+import org.apache.wayang.tests.WayangPlans;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,19 +1,19 @@
-package org.apache.incubator.wayang.graphchi.execution;
+package org.apache.wayang.graphchi.execution;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.ExecutionState;
-import org.apache.incubator.wayang.core.platform.Executor;
-import org.apache.incubator.wayang.core.platform.ExecutorTemplate;
-import org.apache.incubator.wayang.core.platform.PartialExecution;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.util.Tuple;
-import org.apache.incubator.wayang.graphchi.operators.GraphChiExecutionOperator;
-import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.ExecutionState;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.core.platform.ExecutorTemplate;
+import org.apache.wayang.core.platform.PartialExecution;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.graphchi.operators.GraphChiExecutionOperator;
+import org.apache.wayang.graphchi.platform.GraphChiPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;

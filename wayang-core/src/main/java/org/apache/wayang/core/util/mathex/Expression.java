@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.util.mathex;
+package org.apache.wayang.core.util.mathex;
 
 
-import org.apache.incubator.wayang.core.util.mathex.exceptions.EvaluationException;
-import org.apache.incubator.wayang.core.util.mathex.model.Constant;
+import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
+import org.apache.wayang.core.util.mathex.model.Constant;
 
 /**
  * A mathematical expression that can be evaluated.

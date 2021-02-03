@@ -1,19 +1,19 @@
-package org.apache.incubator.wayang.core.util.mathex;
+package org.apache.wayang.core.util.mathex;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-import org.apache.incubator.wayang.core.mathex.MathExBaseVisitor;
-import org.apache.incubator.wayang.core.mathex.MathExLexer;
-import org.apache.incubator.wayang.core.mathex.MathExParser;
-import org.apache.incubator.wayang.core.util.mathex.exceptions.ParseException;
-import org.apache.incubator.wayang.core.util.mathex.model.BinaryOperation;
-import org.apache.incubator.wayang.core.util.mathex.model.Constant;
-import org.apache.incubator.wayang.core.util.mathex.model.NamedFunction;
-import org.apache.incubator.wayang.core.util.mathex.model.UnaryOperation;
-import org.apache.incubator.wayang.core.util.mathex.model.Variable;
+import org.apache.wayang.core.mathex.MathExBaseVisitor;
+import org.apache.wayang.core.mathex.MathExLexer;
+import org.apache.wayang.core.mathex.MathExParser;
+import org.apache.wayang.core.util.mathex.exceptions.ParseException;
+import org.apache.wayang.core.util.mathex.model.BinaryOperation;
+import org.apache.wayang.core.util.mathex.model.Constant;
+import org.apache.wayang.core.util.mathex.model.NamedFunction;
+import org.apache.wayang.core.util.mathex.model.UnaryOperation;
+import org.apache.wayang.core.util.mathex.model.Variable;
 
 import java.util.List;
 import java.util.stream.Collectors;

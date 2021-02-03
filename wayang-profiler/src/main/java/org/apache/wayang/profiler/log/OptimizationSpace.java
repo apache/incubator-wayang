@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.profiler.log;
+package org.apache.wayang.profiler.log;
 
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 
 import java.util.ArrayList;
 import java.util.HashMap;

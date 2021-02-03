@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.spark;
+package org.apache.wayang.spark;
 
-import org.apache.incubator.wayang.spark.platform.SparkPlatform;
-import org.apache.incubator.wayang.spark.plugin.SparkBasicPlugin;
-import org.apache.incubator.wayang.spark.plugin.SparkConversionPlugin;
-import org.apache.incubator.wayang.spark.plugin.SparkGraphPlugin;
+import org.apache.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.spark.plugin.SparkBasicPlugin;
+import org.apache.wayang.spark.plugin.SparkConversionPlugin;
+import org.apache.wayang.spark.plugin.SparkGraphPlugin;
 
 /**
  * Register for relevant components of this module.

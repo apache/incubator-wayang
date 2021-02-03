@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.core.plan.wayangplan.traversal;
+package org.apache.wayang.core.plan.wayangplan.traversal;
 
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

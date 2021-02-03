@@ -1,15 +1,15 @@
-package org.apache.incubator.wayang.iejoin.mapping.java;
+package org.apache.wayang.iejoin.mapping.java;
 
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.OperatorPattern;
-import org.apache.incubator.wayang.core.mapping.PlanTransformation;
-import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
-import org.apache.incubator.wayang.core.mapping.SubplanPattern;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.iejoin.operators.IEJoinMasterOperator;
-import org.apache.incubator.wayang.iejoin.operators.IESelfJoinOperator;
-import org.apache.incubator.wayang.iejoin.operators.JavaIESelfJoinOperator;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.iejoin.operators.IEJoinMasterOperator;
+import org.apache.wayang.iejoin.operators.IESelfJoinOperator;
+import org.apache.wayang.iejoin.operators.JavaIESelfJoinOperator;
+import org.apache.wayang.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.java.operators;
+package org.apache.wayang.java.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.junit.Test;
-import org.apache.incubator.wayang.basic.channels.FileChannel;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.io.IOException;
 import java.nio.file.Files;

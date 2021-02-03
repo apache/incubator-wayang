@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.api
+package org.apache.wayang.api
 
 import java.io.File
 import java.net.URI
@@ -7,16 +7,16 @@ import java.sql.{Connection, Statement}
 import java.util.function.Consumer
 
 import org.junit.{Assert, Test}
-import org.apache.incubator.wayang.basic.WayangBasics
-import org.apache.incubator.wayang.core.api.{Configuration, WayangContext}
-import org.apache.incubator.wayang.core.function.FunctionDescriptor.ExtendedSerializablePredicate
-import org.apache.incubator.wayang.core.function.{ExecutionContext, TransformationDescriptor}
-import org.apache.incubator.wayang.core.util.fs.LocalFileSystem
-import org.apache.incubator.wayang.java.Java
-import org.apache.incubator.wayang.java.operators.JavaMapOperator
-import org.apache.incubator.wayang.spark.Spark
-import org.apache.incubator.wayang.sqlite3.Sqlite3
-import org.apache.incubator.wayang.sqlite3.operators.Sqlite3TableSource
+import org.apache.wayang.basic.WayangBasics
+import org.apache.wayang.core.api.{Configuration, WayangContext}
+import org.apache.wayang.core.function.FunctionDescriptor.ExtendedSerializablePredicate
+import org.apache.wayang.core.function.{ExecutionContext, TransformationDescriptor}
+import org.apache.wayang.core.util.fs.LocalFileSystem
+import org.apache.wayang.java.Java
+import org.apache.wayang.java.operators.JavaMapOperator
+import org.apache.wayang.spark.Spark
+import org.apache.wayang.sqlite3.Sqlite3
+import org.apache.wayang.sqlite3.operators.Sqlite3TableSource
 
 /**
   * Tests the Wayang API.
@@ -399,7 +399,7 @@ class ApiTest {
       .withPlugin(Java.graphPlugin)
       .withPlugin(WayangBasics.graphPlugin)
       .withPlugin(Java.basicPlugin)
-    import org.apache.incubator.wayang.api.graph._
+    import org.apache.wayang.api.graph._
 
     val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => Edge(t._1, t._2))
 

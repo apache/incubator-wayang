@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.util.JsonSerializables;
-import org.apache.incubator.wayang.core.util.JsonSerializer;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.util.JsonSerializables;
+import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Collection;
 import java.util.List;

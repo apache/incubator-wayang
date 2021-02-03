@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.giraph.channels;
+package org.apache.wayang.giraph.channels;
 
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
 import java.util.Collection;
 import java.util.Collections;
 

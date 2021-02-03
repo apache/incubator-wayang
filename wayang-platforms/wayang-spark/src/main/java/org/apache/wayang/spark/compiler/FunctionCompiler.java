@@ -1,20 +1,20 @@
-package org.apache.incubator.wayang.spark.compiler;
+package org.apache.wayang.spark.compiler;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
-import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
-import org.apache.incubator.wayang.core.function.ReduceDescriptor;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.spark.execution.SparkExecutionContext;
-import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.wayang.core.function.FlatMapDescriptor;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.function.ReduceDescriptor;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.spark.execution.SparkExecutionContext;
+import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
 import java.util.Iterator;
 import java.util.function.BinaryOperator;

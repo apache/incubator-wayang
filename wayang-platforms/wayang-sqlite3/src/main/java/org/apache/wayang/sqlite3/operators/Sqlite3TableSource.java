@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.sqlite3.operators;
+package org.apache.wayang.sqlite3.operators;
 
-import org.apache.incubator.wayang.basic.operators.TableSource;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.jdbc.operators.JdbcTableSource;
-import org.apache.incubator.wayang.sqlite3.platform.Sqlite3Platform;
+import org.apache.wayang.basic.operators.TableSource;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.jdbc.operators.JdbcTableSource;
+import org.apache.wayang.sqlite3.platform.Sqlite3Platform;
 
 import java.util.List;
 

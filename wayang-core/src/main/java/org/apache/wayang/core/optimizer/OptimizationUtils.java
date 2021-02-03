@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.core.optimizer;
+package org.apache.wayang.core.optimizer;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
-import org.apache.incubator.wayang.core.plan.wayangplan.SlotMapping;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.plan.wayangplan.Slot;
+import org.apache.wayang.core.plan.wayangplan.SlotMapping;
 
 import java.util.Collection;
 import java.util.Collections;

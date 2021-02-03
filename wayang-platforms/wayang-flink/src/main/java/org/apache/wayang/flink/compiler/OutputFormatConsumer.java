@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.flink.compiler;
+package org.apache.wayang.flink.compiler;
 
 import org.apache.flink.api.common.io.OutputFormat;
 import org.apache.flink.configuration.Configuration;
-import org.apache.incubator.wayang.core.function.ConsumerDescriptor;
+import org.apache.wayang.core.function.ConsumerDescriptor;
 
 import java.io.IOException;
 import java.io.Serializable;

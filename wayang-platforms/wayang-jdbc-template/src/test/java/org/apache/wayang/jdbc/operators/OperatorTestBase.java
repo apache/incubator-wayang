@@ -1,18 +1,18 @@
-package org.apache.incubator.wayang.jdbc.operators;
+package org.apache.wayang.jdbc.operators;
 
 import org.junit.BeforeClass;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
-import org.apache.incubator.wayang.core.profiling.FullInstrumentationStrategy;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
-import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.wayang.core.profiling.FullInstrumentationStrategy;
+import org.apache.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.java.operators.JavaExecutionOperator;
+import org.apache.wayang.java.platform.JavaPlatform;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

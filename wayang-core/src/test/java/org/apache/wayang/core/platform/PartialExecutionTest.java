@@ -1,20 +1,20 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.configuration.KeyValueProvider;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.test.DummyExecutionOperator;
-import org.apache.incubator.wayang.core.test.DummyPlatform;
-import org.apache.incubator.wayang.core.test.SerializableDummyExecutionOperator;
-import org.apache.incubator.wayang.core.util.JsonSerializables;
-import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.configuration.KeyValueProvider;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.test.DummyExecutionOperator;
+import org.apache.wayang.core.test.DummyPlatform;
+import org.apache.wayang.core.test.SerializableDummyExecutionOperator;
+import org.apache.wayang.core.util.JsonSerializables;
+import org.apache.wayang.core.util.WayangCollections;
 
 import java.util.Arrays;
 

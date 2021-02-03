@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.spark.execution;
+package org.apache.wayang.spark.execution;
 
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.function.ExecutionContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.spark.channels.BroadcastChannel;
-import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
-import org.apache.incubator.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.function.ExecutionContext;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.spark.channels.BroadcastChannel;
+import org.apache.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.io.Serializable;
 import java.util.Collection;

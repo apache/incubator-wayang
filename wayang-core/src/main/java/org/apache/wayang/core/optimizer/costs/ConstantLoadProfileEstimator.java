@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
 import java.util.Collection;
 import java.util.LinkedList;

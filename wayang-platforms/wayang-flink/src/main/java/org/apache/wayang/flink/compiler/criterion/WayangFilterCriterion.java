@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.flink.compiler.criterion;
+package org.apache.wayang.flink.compiler.criterion;
 
 import org.apache.flink.api.common.functions.AbstractRichFunction;
 import org.apache.flink.api.common.functions.FilterFunction;

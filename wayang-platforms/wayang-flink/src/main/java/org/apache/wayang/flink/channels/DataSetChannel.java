@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.flink.channels;
+package org.apache.wayang.flink.channels;
 
 import org.apache.flink.api.java.DataSet;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.platform.AbstractChannelInstance;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.Executor;
-import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.platform.AbstractChannelInstance;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.flink.execution.FlinkExecutor;
 
 import java.util.OptionalLong;
 

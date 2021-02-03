@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.optimizer;
+package org.apache.wayang.core.optimizer;
 
 import java.util.Objects;
 

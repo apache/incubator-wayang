@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.optimizer.enumeration;
+package org.apache.wayang.core.optimizer.enumeration;
 
-import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Configuration;
 
 /**
  * A strategy to prune {@link PlanImplementation}s from a {@link PlanEnumeration}.

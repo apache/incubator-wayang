@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.spark.channels;
+package org.apache.wayang.spark.channels;
 
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.platform.AbstractChannelInstance;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.Executor;
-import org.apache.incubator.wayang.spark.execution.SparkExecutor;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.platform.AbstractChannelInstance;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.spark.execution.SparkExecutor;
 
 /**
  * {@link Channel} that represents a broadcasted value.

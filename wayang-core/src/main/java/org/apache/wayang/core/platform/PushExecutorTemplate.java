@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
-import org.apache.incubator.wayang.core.util.OneTimeExecutable;
-import org.apache.incubator.wayang.core.util.WayangCollections;
-import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.wayang.core.util.OneTimeExecutable;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.util.Tuple;
 
 import java.util.ArrayList;
 import java.util.Collection;

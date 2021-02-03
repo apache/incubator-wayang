@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.iejoin.operators.spark_helpers;
+package org.apache.wayang.iejoin.operators.spark_helpers;
 
 
-import org.apache.incubator.wayang.iejoin.data.Data;
+import org.apache.wayang.iejoin.data.Data;
 
 import java.io.Serializable;
 import java.util.Comparator;

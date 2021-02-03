@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.core.optimizer.cardinality;
+package org.apache.wayang.core.optimizer.cardinality;
 
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.optimizer.ProbabilisticIntervalEstimate;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.util.Formats;
-import org.apache.incubator.wayang.core.util.JsonSerializable;
+import org.apache.wayang.core.optimizer.ProbabilisticIntervalEstimate;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.util.Formats;
+import org.apache.wayang.core.util.JsonSerializable;
 
 /**
  * An estimate of cardinality within a {@link WayangPlan} expressed as a {@link ProbabilisticIntervalEstimate}.

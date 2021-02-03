@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.api
+package org.apache.wayang.api
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
-import org.apache.incubator.wayang.api
-import org.apache.incubator.wayang.basic.data.Record
-import org.apache.incubator.wayang.basic.operators.{CollectionSource, TableSource, TextFileSource}
-import org.apache.incubator.wayang.core.api.WayangContext
-import org.apache.incubator.wayang.core.plan.wayangplan._
-import org.apache.incubator.wayang.core.util.ReflectionUtils
+import org.apache.wayang.api
+import org.apache.wayang.basic.data.Record
+import org.apache.wayang.basic.operators.{CollectionSource, TableSource, TextFileSource}
+import org.apache.wayang.core.api.WayangContext
+import org.apache.wayang.core.plan.wayangplan._
+import org.apache.wayang.core.util.ReflectionUtils
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -77,7 +77,7 @@ class PlanBuilder(wayangContext: WayangContext, private var jobName: String = nu
 
 
   /**
-    * Build the [[org.apache.incubator.wayang.core.api.Job]] and execute it.
+    * Build the [[org.apache.wayang.core.api.Job]] and execute it.
     */
   def buildAndExecute(): Unit = {
     val plan: WayangPlan = new WayangPlan(this.sinks.toArray: _*)

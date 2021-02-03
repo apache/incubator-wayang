@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.flink.compiler;
+package org.apache.wayang.flink.compiler;
 
 import org.apache.flink.api.common.functions.CoGroupFunction;
 import org.apache.flink.api.common.functions.FilterFunction;
@@ -14,14 +14,14 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.io.TextOutputFormat;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
-import org.apache.incubator.wayang.core.function.ConsumerDescriptor;
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
-import org.apache.incubator.wayang.core.function.ReduceDescriptor;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.flink.compiler.criterion.WayangConvergenceCriterion;
-import org.apache.incubator.wayang.flink.execution.FlinkExecutionContext;
+import org.apache.wayang.core.function.ConsumerDescriptor;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.function.ReduceDescriptor;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.flink.compiler.criterion.WayangConvergenceCriterion;
+import org.apache.wayang.flink.execution.FlinkExecutionContext;
 
 import java.util.Collection;
 import java.util.function.BiFunction;

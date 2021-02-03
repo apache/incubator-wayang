@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.profiling;
+package org.apache.wayang.core.profiling;
 
 import de.hpi.isg.profiledb.store.model.Measurement;
 import de.hpi.isg.profiledb.store.model.Type;

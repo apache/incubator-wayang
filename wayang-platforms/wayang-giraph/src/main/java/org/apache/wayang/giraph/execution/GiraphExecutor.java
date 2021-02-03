@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.giraph.execution;
+package org.apache.wayang.giraph.execution;
 
 import org.apache.giraph.conf.GiraphConfiguration;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.incubator.wayang.core.platform.*;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.util.Tuple;
-import org.apache.incubator.wayang.giraph.operators.GiraphExecutionOperator;
-import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.platform.*;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.giraph.operators.GiraphExecutionOperator;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
 
 import java.util.*;
 

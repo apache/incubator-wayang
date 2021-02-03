@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.iejoin.operators;
+package org.apache.wayang.iejoin.operators;
 
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.basic.data.Tuple5;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.data.Tuple5;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
+import org.apache.wayang.core.types.DataSetType;
 
 /**
  * This operator applies inequality join on elements of input datasets.

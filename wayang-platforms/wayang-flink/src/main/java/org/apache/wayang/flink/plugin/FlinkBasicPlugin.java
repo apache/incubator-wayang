@@ -1,15 +1,15 @@
-package org.apache.incubator.wayang.flink.plugin;
+package org.apache.wayang.flink.plugin;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.plugin.Plugin;
-import org.apache.incubator.wayang.flink.channels.ChannelConversions;
-import org.apache.incubator.wayang.flink.mapping.Mappings;
-import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.flink.channels.ChannelConversions;
+import org.apache.wayang.flink.mapping.Mappings;
+import org.apache.wayang.flink.platform.FlinkPlatform;
+import org.apache.wayang.java.platform.JavaPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;

@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.mapping;
+package org.apache.wayang.core.mapping;
 
 import java.util.Collection;
 

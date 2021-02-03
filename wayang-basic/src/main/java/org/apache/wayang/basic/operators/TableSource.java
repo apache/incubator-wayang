@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.basic.operators;
+package org.apache.wayang.basic.operators;
 
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.basic.types.RecordType;
-import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.types.RecordType;
+import org.apache.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.wayang.core.types.DataSetType;
 
 /**
  * {@link UnarySource} that provides the tuples from a database table.

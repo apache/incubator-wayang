@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.basic;
+package org.apache.wayang.basic;
 
-import org.apache.incubator.wayang.basic.plugin.WayangBasic;
-import org.apache.incubator.wayang.basic.plugin.WayangBasicGraph;
+import org.apache.wayang.basic.plugin.WayangBasic;
+import org.apache.wayang.basic.plugin.WayangBasicGraph;
 
 /**
  * Register for plugins in the module.

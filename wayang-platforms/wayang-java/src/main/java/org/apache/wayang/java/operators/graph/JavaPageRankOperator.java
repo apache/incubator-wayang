@@ -1,22 +1,22 @@
-package org.apache.incubator.wayang.java.operators.graph;
+package org.apache.wayang.java.operators.graph;
 
 import gnu.trove.iterator.TLongFloatIterator;
 import gnu.trove.map.TLongFloatMap;
 import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
 import gnu.trove.map.hash.TLongIntHashMap;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.basic.operators.PageRankOperator;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.util.Tuple;
-import org.apache.incubator.wayang.java.channels.CollectionChannel;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
-import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.operators.PageRankOperator;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
 import java.util.Collections;

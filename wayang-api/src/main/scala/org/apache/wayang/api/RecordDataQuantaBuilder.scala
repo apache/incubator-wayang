@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.api
+package org.apache.wayang.api
 
-import org.apache.incubator.wayang.api.util.DataQuantaBuilderDecorator
-import org.apache.incubator.wayang.basic.data.Record
-import org.apache.incubator.wayang.basic.function.ProjectionDescriptor
-import org.apache.incubator.wayang.basic.operators.MapOperator
-import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimator
+import org.apache.wayang.api.util.DataQuantaBuilderDecorator
+import org.apache.wayang.basic.data.Record
+import org.apache.wayang.basic.function.ProjectionDescriptor
+import org.apache.wayang.basic.operators.MapOperator
+import org.apache.wayang.core.optimizer.costs.LoadEstimator
 
 
 /**
@@ -34,11 +34,11 @@ class RecordDataQuantaBuilderDecorator[This <: RecordDataQuantaBuilder[This]]
   extends DataQuantaBuilderDecorator[This, Record](baseBuilder) with RecordDataQuantaBuilder[This]
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.MapOperator]]s with
-  * [[org.apache.incubator.wayang.basic.function.ProjectionDescriptor]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.wayang.basic.operators.MapOperator]]s with
+  * [[org.apache.wayang.basic.function.ProjectionDescriptor]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param fieldNames      field names for the [[org.apache.incubator.wayang.basic.function.ProjectionDescriptor]]
+  * @param fieldNames      field names for the [[org.apache.wayang.basic.function.ProjectionDescriptor]]
   */
 class ProjectRecordsDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Record], fieldNames: Array[String])
                                      (implicit javaPlanBuilder: JavaPlanBuilder)

@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityPusher;
-import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
 
 import java.util.Collection;
 

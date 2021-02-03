@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.flink.compiler;
+package org.apache.wayang.flink.compiler;
 
 import org.apache.flink.api.common.io.BlockInfo;
 import org.apache.flink.api.common.io.CleanupWhenUnsuccessful;
@@ -14,7 +14,7 @@ import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

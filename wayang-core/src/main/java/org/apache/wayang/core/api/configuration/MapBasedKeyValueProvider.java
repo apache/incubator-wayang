@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.api.configuration;
+package org.apache.wayang.core.api.configuration;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,17 +1,17 @@
-package org.apache.incubator.wayang.java.operators;
+package org.apache.wayang.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.util.fs.LocalFileSystem;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.util.fs.LocalFileSystem;
+import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.java.platform.JavaPlatform;
 
 import java.io.File;
 import java.io.IOException;

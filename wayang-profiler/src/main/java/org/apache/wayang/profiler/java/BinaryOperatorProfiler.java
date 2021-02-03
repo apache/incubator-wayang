@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.profiler.java;
+package org.apache.wayang.profiler.java;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
-import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.apache.wayang.java.operators.JavaExecutionOperator;
 
 import java.util.ArrayList;
 import java.util.Collection;

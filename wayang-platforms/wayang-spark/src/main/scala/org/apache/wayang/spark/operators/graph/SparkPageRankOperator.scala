@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.spark.operators.graph
+package org.apache.wayang.spark.operators.graph
 
 import java.lang.{Long => JavaLong}
 import java.util
@@ -6,15 +6,15 @@ import java.util.Collections
 
 import org.apache.spark.graphx.Graph
 import org.apache.spark.graphx.lib.PageRank
-import org.apache.incubator.wayang.basic.data.{Tuple2 => T2}
-import org.apache.incubator.wayang.basic.operators.PageRankOperator
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators
-import org.apache.incubator.wayang.core.optimizer.{OptimizationContext, ProbabilisticDoubleInterval}
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode
-import org.apache.incubator.wayang.core.platform.{ChannelDescriptor, ChannelInstance}
-import org.apache.incubator.wayang.spark.channels.RddChannel
-import org.apache.incubator.wayang.spark.execution.SparkExecutor
-import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator
+import org.apache.wayang.basic.data.{Tuple2 => T2}
+import org.apache.wayang.basic.operators.PageRankOperator
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators
+import org.apache.wayang.core.optimizer.{OptimizationContext, ProbabilisticDoubleInterval}
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode
+import org.apache.wayang.core.platform.{ChannelDescriptor, ChannelInstance}
+import org.apache.wayang.spark.channels.RddChannel
+import org.apache.wayang.spark.execution.SparkExecutor
+import org.apache.wayang.spark.operators.SparkExecutionOperator
 
 /**
   * GraphX-based implementation of the [[PageRankOperator]].

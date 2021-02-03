@@ -1,25 +1,25 @@
-package org.apache.incubator.wayang.core.optimizer.cardinality;
+package org.apache.wayang.core.optimizer.cardinality;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.api.configuration.FunctionalKeyValueProvider;
-import org.apache.incubator.wayang.core.api.configuration.KeyValueProvider;
-import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopIsolator;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestFilterOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestJoin;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestLoopHead;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSource;
-import org.apache.incubator.wayang.core.test.MockFactory;
-import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.api.configuration.FunctionalKeyValueProvider;
+import org.apache.wayang.core.api.configuration.KeyValueProvider;
+import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.LoopIsolator;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.test.TestFilterOperator;
+import org.apache.wayang.core.plan.wayangplan.test.TestJoin;
+import org.apache.wayang.core.plan.wayangplan.test.TestLoopHead;
+import org.apache.wayang.core.plan.wayangplan.test.TestSource;
+import org.apache.wayang.core.test.MockFactory;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * Test suite for {@link LoopSubplanCardinalityPusher}.

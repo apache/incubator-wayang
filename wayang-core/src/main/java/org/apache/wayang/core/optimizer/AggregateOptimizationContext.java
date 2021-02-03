@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.optimizer;
+package org.apache.wayang.core.optimizer;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.Operator;
 
 import java.util.Collections;
 import java.util.HashMap;

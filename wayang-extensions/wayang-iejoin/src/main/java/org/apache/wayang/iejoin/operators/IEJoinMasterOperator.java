@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.iejoin.operators;
+package org.apache.wayang.iejoin.operators;
 
-import org.apache.incubator.wayang.basic.data.Tuple5;
+import org.apache.wayang.basic.data.Tuple5;
 
 /**
  * This operator decides the correct sorting orders for IEJoin

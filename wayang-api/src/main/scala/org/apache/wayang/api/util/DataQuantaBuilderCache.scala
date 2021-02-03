@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.api.util
+package org.apache.wayang.api.util
 
-import org.apache.incubator.wayang.api.DataQuanta
+import org.apache.wayang.api.DataQuanta
 
 /**
-  * Caches products of [[org.apache.incubator.wayang.api.DataQuantaBuilder]]s that need to be executed at once, e.g., because they
-  * belong to different [[org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot]]s of the same custom [[org.apache.incubator.wayang.core.plan.wayangplan.Operator]].
+  * Caches products of [[org.apache.wayang.api.DataQuantaBuilder]]s that need to be executed at once, e.g., because they
+  * belong to different [[org.apache.wayang.core.plan.wayangplan.OutputSlot]]s of the same custom [[org.apache.wayang.core.plan.wayangplan.Operator]].
   */
 class DataQuantaBuilderCache {
 

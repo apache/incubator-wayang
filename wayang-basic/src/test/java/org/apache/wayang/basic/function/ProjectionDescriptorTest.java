@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.basic.function;
+package org.apache.wayang.basic.function;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.basic.types.RecordType;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.types.RecordType;
 
 import java.util.function.Function;
 

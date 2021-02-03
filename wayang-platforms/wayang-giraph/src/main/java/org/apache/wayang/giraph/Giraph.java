@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.giraph;
+package org.apache.wayang.giraph;
 
-import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
-import org.apache.incubator.wayang.giraph.plugin.GiraphPlugin;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
+import org.apache.wayang.giraph.plugin.GiraphPlugin;
 
 /**
  * Register for relevant components of this module.

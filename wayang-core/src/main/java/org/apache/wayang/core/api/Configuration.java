@@ -1,45 +1,45 @@
-package org.apache.incubator.wayang.core.api;
+package org.apache.wayang.core.api;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.incubator.wayang.core.api.configuration.CollectionProvider;
-import org.apache.incubator.wayang.core.api.configuration.ConstantValueProvider;
-import org.apache.incubator.wayang.core.api.configuration.ExplicitCollectionProvider;
-import org.apache.incubator.wayang.core.api.configuration.FunctionalCollectionProvider;
-import org.apache.incubator.wayang.core.api.configuration.FunctionalKeyValueProvider;
-import org.apache.incubator.wayang.core.api.configuration.FunctionalValueProvider;
-import org.apache.incubator.wayang.core.api.configuration.KeyValueProvider;
-import org.apache.incubator.wayang.core.api.configuration.MapBasedKeyValueProvider;
-import org.apache.incubator.wayang.core.api.configuration.ValueProvider;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.core.optimizer.cardinality.FallbackCardinalityEstimator;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.optimizer.costs.IntervalLoadEstimator;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
-import org.apache.incubator.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
-import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.plugin.Plugin;
-import org.apache.incubator.wayang.core.profiling.InstrumentationStrategy;
-import org.apache.incubator.wayang.core.profiling.OutboundInstrumentationStrategy;
-import org.apache.incubator.wayang.core.util.Actions;
-import org.apache.incubator.wayang.core.util.ReflectionUtils;
-import org.apache.incubator.wayang.core.util.fs.FileSystem;
-import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.wayang.core.api.configuration.CollectionProvider;
+import org.apache.wayang.core.api.configuration.ConstantValueProvider;
+import org.apache.wayang.core.api.configuration.ExplicitCollectionProvider;
+import org.apache.wayang.core.api.configuration.FunctionalCollectionProvider;
+import org.apache.wayang.core.api.configuration.FunctionalKeyValueProvider;
+import org.apache.wayang.core.api.configuration.FunctionalValueProvider;
+import org.apache.wayang.core.api.configuration.KeyValueProvider;
+import org.apache.wayang.core.api.configuration.MapBasedKeyValueProvider;
+import org.apache.wayang.core.api.configuration.ValueProvider;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.function.FlatMapDescriptor;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.core.optimizer.cardinality.FallbackCardinalityEstimator;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.optimizer.costs.IntervalLoadEstimator;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
+import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.core.profiling.InstrumentationStrategy;
+import org.apache.wayang.core.profiling.OutboundInstrumentationStrategy;
+import org.apache.wayang.core.util.Actions;
+import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +59,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.function.ToDoubleFunction;
 
-import static org.apache.incubator.wayang.core.util.ReflectionUtils.instantiateDefault;
+import static org.apache.wayang.core.util.ReflectionUtils.instantiateDefault;
 
 /**
  * Describes both the configuration of a {@link WayangContext} and {@link Job}s.
@@ -82,7 +82,7 @@ public class Configuration {
         Actions.doSafe(() -> bootstrapPlugins(defaultConfiguration));
     }
 
-    private static final String BASIC_PLUGIN = "org.apache.incubator.wayang.basic.WayangBasics.defaultPlugin()";
+    private static final String BASIC_PLUGIN = "org.apache.wayang.basic.WayangBasics.defaultPlugin()";
 
     private String name = "(no name)";
 

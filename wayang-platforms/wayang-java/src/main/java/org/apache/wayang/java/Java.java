@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.java;
+package org.apache.wayang.java;
 
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
-import org.apache.incubator.wayang.java.plugin.JavaBasicPlugin;
-import org.apache.incubator.wayang.java.plugin.JavaChannelConversionPlugin;
-import org.apache.incubator.wayang.java.plugin.JavaGraphPlugin;
+import org.apache.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.java.plugin.JavaBasicPlugin;
+import org.apache.wayang.java.plugin.JavaChannelConversionPlugin;
+import org.apache.wayang.java.plugin.JavaGraphPlugin;
 
 /**
  * Register for relevant components of this module.

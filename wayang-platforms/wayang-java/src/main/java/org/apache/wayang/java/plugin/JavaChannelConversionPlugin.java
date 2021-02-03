@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.java.plugin;
+package org.apache.wayang.java.plugin;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.plugin.Plugin;
-import org.apache.incubator.wayang.java.channels.ChannelConversions;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.java.channels.ChannelConversions;
+import org.apache.wayang.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.spark.compiler;
+package org.apache.wayang.spark.compiler;
 
 import org.apache.spark.api.java.function.Function;
-import org.apache.incubator.wayang.core.function.ExecutionContext;
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
-import org.apache.incubator.wayang.spark.execution.SparkExecutionContext;
+import org.apache.wayang.core.function.ExecutionContext;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.spark.execution.SparkExecutionContext;
 
 /**
- * Implements a {@link Function} that calls {@link org.apache.incubator.wayang.core.function.ExtendedFunction#open(ExecutionContext)}
+ * Implements a {@link Function} that calls {@link org.apache.wayang.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function#call(Object)}.
  */
 public class ExtendedPredicateAdapater<Type> implements Function<Type, Boolean> {

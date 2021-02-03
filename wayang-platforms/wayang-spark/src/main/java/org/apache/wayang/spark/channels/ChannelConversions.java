@@ -1,20 +1,20 @@
-package org.apache.incubator.wayang.spark.channels;
+package org.apache.wayang.spark.channels;
 
-import org.apache.incubator.wayang.basic.channels.FileChannel;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.optimizer.channels.DefaultChannelConversion;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.java.channels.CollectionChannel;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
-import org.apache.incubator.wayang.spark.operators.SparkBroadcastOperator;
-import org.apache.incubator.wayang.spark.operators.SparkCacheOperator;
-import org.apache.incubator.wayang.spark.operators.SparkCollectOperator;
-import org.apache.incubator.wayang.spark.operators.SparkCollectionSource;
-import org.apache.incubator.wayang.spark.operators.SparkObjectFileSink;
-import org.apache.incubator.wayang.spark.operators.SparkObjectFileSource;
-import org.apache.incubator.wayang.spark.operators.SparkTsvFileSink;
-import org.apache.incubator.wayang.spark.operators.SparkTsvFileSource;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.spark.operators.SparkBroadcastOperator;
+import org.apache.wayang.spark.operators.SparkCacheOperator;
+import org.apache.wayang.spark.operators.SparkCollectOperator;
+import org.apache.wayang.spark.operators.SparkCollectionSource;
+import org.apache.wayang.spark.operators.SparkObjectFileSink;
+import org.apache.wayang.spark.operators.SparkObjectFileSource;
+import org.apache.wayang.spark.operators.SparkTsvFileSink;
+import org.apache.wayang.spark.operators.SparkTsvFileSource;
 
 import java.util.Arrays;
 import java.util.Collection;

@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.profiler.log;
+package org.apache.wayang.profiler.log;
 
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.costs.EstimationContext;
 
 import java.util.Collection;
 

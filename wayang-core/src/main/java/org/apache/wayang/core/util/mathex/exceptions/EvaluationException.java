@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.util.mathex.exceptions;
+package org.apache.wayang.core.util.mathex.exceptions;
 
 
-import org.apache.incubator.wayang.core.util.mathex.Context;
-import org.apache.incubator.wayang.core.util.mathex.Expression;
+import org.apache.wayang.core.util.mathex.Context;
+import org.apache.wayang.core.util.mathex.Expression;
 
 /**
  * This exception signals a failed {@link Expression} evaluation.

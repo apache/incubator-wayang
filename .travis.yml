@@ -14,15 +14,15 @@ notification:
 install: true
 before_script:
   - mkdir -p travis/tmp
-  - echo "rheem.basic.tempdir = file://$(pwd)/travis/tmp" >> travis/rheem.properties
-  - echo "spark.driver.host = localhost" >> travis/rheem.properties
-  - echo "spark.master = local[1]" >> travis/rheem.properties
-  - echo "rheem.giraph.job.tracker = localhost:50300" >> travis/rheem.properties
-  - echo "rheem.giraph.maxWorkers = 1" >> travis/rheem.properties
-  - echo "rheem.giraph.minWorkers = 1" >> travis/rheem.properties
-  - echo "rheem.mapreduce.job.counters.limit = 200" >> travis/rheem.properties
-  - cat travis/rheem.properties
-  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Drheem.configuration=file://$(pwd)/travis/rheem.properties")
+  - echo "wayang.basic.tempdir = file://$(pwd)/travis/tmp" >> travis/wayang.properties
+  - echo "spark.driver.host = localhost" >> travis/wayang.properties
+  - echo "spark.master = local[1]" >> travis/wayang.properties
+  - echo "wayang.giraph.job.tracker = localhost:50300" >> travis/wayang.properties
+  - echo "wayang.giraph.maxWorkers = 1" >> travis/wayang.properties
+  - echo "wayang.giraph.minWorkers = 1" >> travis/wayang.properties
+  - echo "wayang.mapreduce.job.counters.limit = 200" >> travis/wayang.properties
+  - cat travis/wayang.properties
+  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties")
 script:
   - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}"
 

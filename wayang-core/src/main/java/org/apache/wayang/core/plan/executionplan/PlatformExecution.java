@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.plan.executionplan;
+package org.apache.wayang.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.wayang.core.platform.Platform;
 
 import java.util.Collection;
 import java.util.LinkedList;

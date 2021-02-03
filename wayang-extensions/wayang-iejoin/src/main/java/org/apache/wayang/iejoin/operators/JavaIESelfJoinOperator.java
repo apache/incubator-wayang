@@ -1,22 +1,22 @@
-package org.apache.incubator.wayang.iejoin.operators;
+package org.apache.wayang.iejoin.operators;
 
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.core.util.Tuple;
-import org.apache.incubator.wayang.iejoin.data.Data;
-import org.apache.incubator.wayang.iejoin.operators.java_helpers.BitSetJoin;
-import org.apache.incubator.wayang.iejoin.operators.java_helpers.DataComparator;
-import org.apache.incubator.wayang.iejoin.operators.java_helpers.extractData;
-import org.apache.incubator.wayang.java.channels.CollectionChannel;
-import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
-import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.iejoin.data.Data;
+import org.apache.wayang.iejoin.operators.java_helpers.BitSetJoin;
+import org.apache.wayang.iejoin.operators.java_helpers.DataComparator;
+import org.apache.wayang.iejoin.operators.java_helpers.extractData;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.java.operators.JavaExecutionOperator;
 import scala.Tuple2;
 
 import java.util.ArrayList;
@@ -85,12 +85,12 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
         ArrayList<Tuple2<Input, Input>> result = new BitSetJoin<Type0, Type1, Input>(list1ASC, list2ASC,
                 list1ASCSec, list2ASCSec, equalReverse, true, cond0).call(list0, list0);
 
-        ArrayList<org.apache.incubator.wayang.basic.data.Tuple2<Input, Input>> result2 = new ArrayList<>();
+        ArrayList<org.apache.wayang.basic.data.Tuple2<Input, Input>> result2 = new ArrayList<>();
         for (Tuple2<Input, Input> t : result) {
-            result2.add(new org.apache.incubator.wayang.basic.data.Tuple2<Input, Input>(t._1(), t._2()));
+            result2.add(new org.apache.wayang.basic.data.Tuple2<Input, Input>(t._1(), t._2()));
         }
 
-        outputChannel.<org.apache.incubator.wayang.basic.data.Tuple2<Input, Input>>accept(result2.stream());
+        outputChannel.<org.apache.wayang.basic.data.Tuple2<Input, Input>>accept(result2.stream());
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

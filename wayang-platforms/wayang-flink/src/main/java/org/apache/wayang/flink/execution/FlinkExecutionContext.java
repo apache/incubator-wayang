@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.flink.execution;
+package org.apache.wayang.flink.execution;
 
 import org.apache.flink.api.common.functions.RichFunction;
-import org.apache.incubator.wayang.core.function.ExecutionContext;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.flink.operators.FlinkExecutionOperator;
-import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
+import org.apache.wayang.core.function.ExecutionContext;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.flink.operators.FlinkExecutionOperator;
+import org.apache.wayang.flink.platform.FlinkPlatform;
 
 import java.io.Serializable;
 import java.util.Collection;

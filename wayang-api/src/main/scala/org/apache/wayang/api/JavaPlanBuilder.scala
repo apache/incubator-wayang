@@ -1,15 +1,15 @@
-package org.apache.incubator.wayang.api
+package org.apache.wayang.api
 
 import java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
-import org.apache.incubator.wayang.api.util.DataQuantaBuilderCache
-import org.apache.incubator.wayang.basic.data.Record
-import org.apache.incubator.wayang.basic.operators.{TableSource, TextFileSource}
-import org.apache.incubator.wayang.core.api.WayangContext
-import org.apache.incubator.wayang.core.plan.wayangplan._
-import org.apache.incubator.wayang.core.types.DataSetType
+import org.apache.wayang.api.util.DataQuantaBuilderCache
+import org.apache.wayang.basic.data.Record
+import org.apache.wayang.basic.operators.{TableSource, TextFileSource}
+import org.apache.wayang.core.api.WayangContext
+import org.apache.wayang.core.plan.wayangplan._
+import org.apache.wayang.core.types.DataSetType
 
 import scala.reflect.ClassTag
 
@@ -26,7 +26,7 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
   protected[api] val planBuilder = new PlanBuilder(wayangCtx, jobName = jobName)
 
   /**
-    * Feed a [[JavaCollection]] into a [[org.apache.incubator.wayang.basic.operators.CollectionSource]].
+    * Feed a [[JavaCollection]] into a [[org.apache.wayang.basic.operators.CollectionSource]].
     *
     * @param collection the [[JavaCollection]]
     * @return a [[DataQuantaBuilder]] to further develop and configure the just started [[WayangPlan]]

@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.optimizer;
+package org.apache.wayang.core.optimizer;
 
-import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.wayang.core.util.Formats;
 
 import java.util.Comparator;
 import java.util.Objects;

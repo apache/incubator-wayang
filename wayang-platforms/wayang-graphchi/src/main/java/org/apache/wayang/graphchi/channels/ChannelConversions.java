@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.graphchi.channels;
+package org.apache.wayang.graphchi.channels;
 
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.graphchi.platform.GraphChiPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

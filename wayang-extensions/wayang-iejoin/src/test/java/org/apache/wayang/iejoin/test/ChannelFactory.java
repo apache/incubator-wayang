@@ -1,15 +1,15 @@
-package org.apache.incubator.wayang.iejoin.test;
+package org.apache.wayang.iejoin.test;
 
 import org.junit.Before;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.util.WayangCollections;
-import org.apache.incubator.wayang.java.channels.CollectionChannel;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
-import org.apache.incubator.wayang.java.execution.JavaExecutor;
-import org.apache.incubator.wayang.spark.channels.RddChannel;
-import org.apache.incubator.wayang.spark.execution.SparkExecutor;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.spark.channels.RddChannel;
+import org.apache.wayang.spark.execution.SparkExecutor;
 
 import java.util.Collection;
 import java.util.stream.Stream;

@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.iejoin.operators.spark_helpers;
+package org.apache.wayang.iejoin.operators.spark_helpers;
 
 import org.apache.spark.api.java.function.PairFlatMapFunction;
-import org.apache.incubator.wayang.iejoin.data.Data;
-import org.apache.incubator.wayang.iejoin.operators.IEJoinMasterOperator;
+import org.apache.wayang.iejoin.data.Data;
+import org.apache.wayang.iejoin.operators.IEJoinMasterOperator;
 import scala.Tuple2;
 
 import java.util.ArrayList;

@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.java.compiler;
+package org.apache.wayang.java.compiler;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
-import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
-import org.apache.incubator.wayang.core.function.ReduceDescriptor;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.function.FlatMapDescriptor;
+import org.apache.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.function.ReduceDescriptor;
+import org.apache.wayang.core.function.TransformationDescriptor;
 
 import java.util.function.BinaryOperator;
 import java.util.function.Function;

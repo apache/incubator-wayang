@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.lineage.ChannelLineageNode;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.lineage.ChannelLineageNode;
 import org.slf4j.LoggerFactory;
 
 import java.util.OptionalLong;

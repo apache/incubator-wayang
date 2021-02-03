@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.iejoin.mapping;
+package org.apache.wayang.iejoin.mapping;
 
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.iejoin.mapping.spark.IEJoinMapping;
-import org.apache.incubator.wayang.iejoin.mapping.spark.IESelfJoinMapping;
-import org.apache.incubator.wayang.iejoin.operators.IEJoinOperator;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
-import org.apache.incubator.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.iejoin.mapping.spark.IEJoinMapping;
+import org.apache.wayang.iejoin.mapping.spark.IESelfJoinMapping;
+import org.apache.wayang.iejoin.operators.IEJoinOperator;
+import org.apache.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,7 +19,7 @@ public class Mappings {
      * {@link Mapping}s towards the {@link JavaPlatform}.
      */
     public static Collection<Mapping> javaMappings = Arrays.asList(
-            new org.apache.incubator.wayang.iejoin.mapping.java.IEJoinMapping(), new org.apache.incubator.wayang.iejoin.mapping.java.IESelfJoinMapping()
+            new org.apache.wayang.iejoin.mapping.java.IEJoinMapping(), new org.apache.wayang.iejoin.mapping.java.IESelfJoinMapping()
     );
 
     /**

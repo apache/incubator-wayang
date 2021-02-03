@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.core.util.fs;
+package org.apache.wayang.core.util.fs;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FsUrlStreamHandlerFactory;
 import org.apache.hadoop.fs.Path;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

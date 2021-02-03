@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.profiling;
+package org.apache.wayang.core.profiling;
 
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
-import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 
 /**
  * Determines, which {@link Channel}s in an {@link ExecutionPlan} should be instrumented.

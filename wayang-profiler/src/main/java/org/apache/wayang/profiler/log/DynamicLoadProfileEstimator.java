@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.profiler.log;
+package org.apache.wayang.profiler.log;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfile;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.wayang.core.optimizer.costs.LoadProfile;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 
 import java.util.ArrayList;
 import java.util.Collection;

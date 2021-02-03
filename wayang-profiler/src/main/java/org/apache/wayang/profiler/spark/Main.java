@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.profiler.spark;
+package org.apache.wayang.profiler.spark;
 
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.util.WayangArrays;
-import org.apache.incubator.wayang.core.util.WayangCollections;
-import org.apache.incubator.wayang.profiler.data.DataGenerators;
-import org.apache.incubator.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.util.WayangArrays;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.profiler.data.DataGenerators;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +102,7 @@ public class Main {
 //            case "word-count-split": {
 //                final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2, 10, new Random(42));
 //                results = profile(
-//                        org.apache.incubator.wayang.profiler.java.OperatorProfilers.createJavaFlatMapProfiler(
+//                        org.apache.wayang.profiler.java.OperatorProfilers.createJavaFlatMapProfiler(
 //                                () -> String.format("%s %s %s %s %s %s %s %s %s",
 //                                        randomStringSupplier.get(), randomStringSupplier.get(),
 //                                        randomStringSupplier.get(), randomStringSupplier.get(),
@@ -119,7 +119,7 @@ public class Main {
 //            case "word-count-canonicalize": {
 //                final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2, 10, new Random(42));
 //                results = profile(
-//                        org.apache.incubator.wayang.profiler.java.OperatorProfilers.createJavaMapProfiler(
+//                        org.apache.wayang.profiler.java.OperatorProfilers.createJavaMapProfiler(
 //                                randomStringSupplier,
 //                                word -> new Tuple2<>(word.toLowerCase(), 1),
 //                                String.class,
@@ -132,7 +132,7 @@ public class Main {
 //            case "word-count-count": {
 //                final Supplier<String> stringSupplier = DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 2, 10);
 //                results = profile(
-//                        org.apache.incubator.wayang.profiler.java.OperatorProfilers.createJavaReduceByProfiler(
+//                        org.apache.wayang.profiler.java.OperatorProfilers.createJavaReduceByProfiler(
 //                                () -> new Tuple2<>(stringSupplier.get(), 1),
 //                                pair -> pair.field0,
 //                                (p1, p2) -> {

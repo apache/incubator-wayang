@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.postgres.operators;
+package org.apache.wayang.postgres.operators;
 
-import org.apache.incubator.wayang.basic.operators.TableSource;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.jdbc.operators.JdbcTableSource;
+import org.apache.wayang.basic.operators.TableSource;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.jdbc.operators.JdbcTableSource;
 
 import java.util.List;
 

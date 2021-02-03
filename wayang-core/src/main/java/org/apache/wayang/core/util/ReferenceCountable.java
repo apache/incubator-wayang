@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.util;
+package org.apache.wayang.core.util;
 
 /**
  * This interface provides a reference-counting scheme, e.g., to manage allocated external resources. The initial

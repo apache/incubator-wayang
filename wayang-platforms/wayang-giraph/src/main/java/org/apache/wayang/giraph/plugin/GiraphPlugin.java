@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.giraph.plugin;
+package org.apache.wayang.giraph.plugin;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.plugin.Plugin;
-import org.apache.incubator.wayang.core.util.fs.LocalFileSystem;
-import org.apache.incubator.wayang.giraph.channels.ChannelConversions;
-import org.apache.incubator.wayang.giraph.mappings.Mappings;
-import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.core.util.fs.LocalFileSystem;
+import org.apache.wayang.giraph.channels.ChannelConversions;
+import org.apache.wayang.giraph.mappings.Mappings;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
 
 import java.io.File;
 import java.util.Collection;

@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
-import org.apache.incubator.wayang.core.optimizer.ProbabilisticIntervalEstimate;
-import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.wayang.core.optimizer.ProbabilisticIntervalEstimate;
+import org.apache.wayang.core.util.Formats;
 
 /**
  * An estimate of time (in <b>milliseconds</b>) expressed as a {@link ProbabilisticIntervalEstimate}.

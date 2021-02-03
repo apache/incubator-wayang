@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 
 import java.util.Arrays;
 import java.util.function.ToDoubleBiFunction;

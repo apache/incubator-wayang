@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.giraph.Algorithm;
+package org.apache.wayang.giraph.Algorithm;
 
-import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.api.exception.WayangException;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
 /**
  * {@link ExecutionResource} that itself contains {@link ExecutionResource}s.

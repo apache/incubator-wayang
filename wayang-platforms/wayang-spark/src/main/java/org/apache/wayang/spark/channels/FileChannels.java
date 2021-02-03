@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.spark.channels;
+package org.apache.wayang.spark.channels;
 
-import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.channels.FileChannel;
 
 /**
  * Utilities for {@link FileChannel}s.

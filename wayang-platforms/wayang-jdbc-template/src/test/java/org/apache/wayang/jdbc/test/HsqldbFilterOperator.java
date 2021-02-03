@@ -1,8 +1,8 @@
-package org.apache.incubator.wayang.jdbc.test;
+package org.apache.wayang.jdbc.test;
 
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.jdbc.operators.JdbcFilterOperator;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.jdbc.operators.JdbcFilterOperator;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.types;
+package org.apache.wayang.core.types;
 
 /**
  * The type of data types designate the kind of data that are being passed between operators.

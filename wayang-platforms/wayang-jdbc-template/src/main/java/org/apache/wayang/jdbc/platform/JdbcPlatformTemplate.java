@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.jdbc.platform;
+package org.apache.wayang.jdbc.platform;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.Executor;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.util.ReflectionUtils;
-import org.apache.incubator.wayang.jdbc.channels.SqlQueryChannel;
-import org.apache.incubator.wayang.jdbc.execution.DatabaseDescriptor;
-import org.apache.incubator.wayang.jdbc.execution.JdbcExecutor;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.jdbc.channels.SqlQueryChannel;
+import org.apache.wayang.jdbc.execution.DatabaseDescriptor;
+import org.apache.wayang.jdbc.execution.JdbcExecutor;
 
 import java.sql.Connection;
 

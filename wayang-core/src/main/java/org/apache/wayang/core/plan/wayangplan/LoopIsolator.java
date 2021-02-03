@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.util.OneTimeExecutable;
+import org.apache.wayang.core.util.OneTimeExecutable;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;

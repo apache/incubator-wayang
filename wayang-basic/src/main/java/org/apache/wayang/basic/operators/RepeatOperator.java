@@ -1,15 +1,15 @@
-package org.apache.incubator.wayang.basic.operators;
+package org.apache.wayang.basic.operators;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
-import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.OperatorBase;
-import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
+import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Arrays;
 import java.util.Collection;

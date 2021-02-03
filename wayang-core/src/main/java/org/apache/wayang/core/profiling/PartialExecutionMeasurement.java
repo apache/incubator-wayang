@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.core.profiling;
+package org.apache.wayang.core.profiling;
 
 import de.hpi.isg.profiledb.store.model.Measurement;
 import de.hpi.isg.profiledb.store.model.Type;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
-import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.wayang.core.platform.PartialExecution;
 
 /**
  * This {@link Measurement} adapts a {@link PartialExecutionMeasurement}.

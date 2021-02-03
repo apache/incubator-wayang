@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.core.mapping.test;
+package org.apache.wayang.core.mapping.test;
 
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.OperatorPattern;
-import org.apache.incubator.wayang.core.mapping.PlanTransformation;
-import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
-import org.apache.incubator.wayang.core.mapping.SubplanPattern;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink;
-import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink2;
-import org.apache.incubator.wayang.core.test.DummyPlatform;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.wayang.core.plan.wayangplan.test.TestSink2;
+import org.apache.wayang.core.test.DummyPlatform;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Collection;
 import java.util.Collections;

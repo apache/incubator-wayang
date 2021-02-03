@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.flink.execution;
+package org.apache.wayang.flink.execution;
 
 import org.apache.flink.api.common.ExecutionMode;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
-import org.apache.incubator.wayang.core.platform.ExecutionResourceTemplate;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.wayang.core.platform.ExecutionResourceTemplate;
 
 /**
  * Wraps and manages a Flink {@link ExecutionEnvironment} to avoid steady re-creation.

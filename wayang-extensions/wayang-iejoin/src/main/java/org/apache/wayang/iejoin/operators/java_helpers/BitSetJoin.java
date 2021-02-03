@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.iejoin.operators.java_helpers;
+package org.apache.wayang.iejoin.operators.java_helpers;
 
-import org.apache.incubator.wayang.iejoin.data.Data;
-import org.apache.incubator.wayang.iejoin.operators.IEJoinMasterOperator;
+import org.apache.wayang.iejoin.data.Data;
+import org.apache.wayang.iejoin.operators.IEJoinMasterOperator;
 import scala.Tuple2;
 
 import java.util.ArrayList;

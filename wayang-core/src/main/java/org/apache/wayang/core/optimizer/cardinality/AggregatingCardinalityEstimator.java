@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.optimizer.cardinality;
+package org.apache.wayang.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationContext;
 
 import java.util.ArrayList;
 import java.util.List;

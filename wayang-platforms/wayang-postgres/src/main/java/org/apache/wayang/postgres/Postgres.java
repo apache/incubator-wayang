@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.postgres;
+package org.apache.wayang.postgres;
 
 
-import org.apache.incubator.wayang.postgres.platform.PostgresPlatform;
-import org.apache.incubator.wayang.postgres.plugin.PostgresConversionsPlugin;
-import org.apache.incubator.wayang.postgres.plugin.PostgresPlugin;
+import org.apache.wayang.postgres.platform.PostgresPlatform;
+import org.apache.wayang.postgres.plugin.PostgresConversionsPlugin;
+import org.apache.wayang.postgres.plugin.PostgresPlugin;
 
 /**
  * Register for relevant components of this module.

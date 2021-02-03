@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.sqlite3.plugin;
+package org.apache.wayang.sqlite3.plugin;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.plugin.Plugin;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
-import org.apache.incubator.wayang.sqlite3.channels.ChannelConversions;
-import org.apache.incubator.wayang.sqlite3.platform.Sqlite3Platform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.sqlite3.channels.ChannelConversions;
+import org.apache.wayang.sqlite3.platform.Sqlite3Platform;
 
 import java.util.Arrays;
 import java.util.Collection;

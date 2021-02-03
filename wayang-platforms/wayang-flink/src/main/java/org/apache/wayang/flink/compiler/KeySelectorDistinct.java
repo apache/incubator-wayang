@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.flink.compiler;
+package org.apache.wayang.flink.compiler;
 
 import org.apache.flink.api.java.functions.KeySelector;
 

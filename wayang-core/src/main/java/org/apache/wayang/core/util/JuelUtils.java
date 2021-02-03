@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.core.util;
+package org.apache.wayang.core.util;
 
 import de.odysseus.el.ExpressionFactoryImpl;
 import de.odysseus.el.TreeValueExpression;
 import de.odysseus.el.util.SimpleContext;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.el.ValueExpression;

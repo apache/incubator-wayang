@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
-import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 
 /**
  * This (linear) converter turns {@link TimeEstimate}s into cost estimates.

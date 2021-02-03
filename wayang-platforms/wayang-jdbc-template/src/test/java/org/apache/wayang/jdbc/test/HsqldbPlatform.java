@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.jdbc.test;
+package org.apache.wayang.jdbc.test;
 
-import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 /**
  * {@link JdbcPlatformTemplate} implementation based on HSQLDB for test purposes.

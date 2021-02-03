@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.platform.lineage;
+package org.apache.wayang.core.platform.lineage;
 
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;

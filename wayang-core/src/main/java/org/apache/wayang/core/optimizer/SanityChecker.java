@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.core.optimizer;
+package org.apache.wayang.core.optimizer;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
-import org.apache.incubator.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
-import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.plan.wayangplan.Subplan;
+import org.apache.wayang.core.util.WayangCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

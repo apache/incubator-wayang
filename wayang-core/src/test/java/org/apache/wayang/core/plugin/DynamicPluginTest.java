@@ -1,17 +1,17 @@
-package org.apache.incubator.wayang.core.plugin;
+package org.apache.wayang.core.plugin;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.test.TestSinkMapping;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.optimizer.channels.DefaultChannelConversion;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.test.DummyPlatform;
-import org.apache.incubator.wayang.core.util.ReflectionUtils;
-import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.test.TestSinkMapping;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.test.DummyPlatform;
+import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.util.WayangCollections;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -55,9 +55,9 @@ public class DynamicPluginTest {
 
         Configuration configuration = new Configuration();
         plugin.setProperties(configuration);
-        Assert.assertEquals(51.3d, configuration.getDoubleProperty("org.apache.incubator.wayang.test.float"), 0.000001);
-        Assert.assertEquals("abcdef", configuration.getStringProperty("org.apache.incubator.wayang.test.string"));
-        Assert.assertEquals(1234567890123456789L, configuration.getLongProperty("org.apache.incubator.wayang.test.long"));
+        Assert.assertEquals(51.3d, configuration.getDoubleProperty("org.apache.wayang.test.float"), 0.000001);
+        Assert.assertEquals("abcdef", configuration.getStringProperty("org.apache.wayang.test.string"));
+        Assert.assertEquals(1234567890123456789L, configuration.getLongProperty("org.apache.wayang.test.long"));
     }
 
     @Test

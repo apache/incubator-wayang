@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.profiler.log;
+package org.apache.wayang.profiler.log;
 
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimate;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimator;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfile;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.wayang.core.optimizer.costs.LoadEstimate;
+import org.apache.wayang.core.optimizer.costs.LoadEstimator;
+import org.apache.wayang.core.optimizer.costs.LoadProfile;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -609,7 +609,7 @@ public class DynamicLoadProfileEstimators {
     /**
      * Creates a new instance from a template {@link String}. Valid specifications are as follows:
      * <pre>
-     *     {"type":&lt;*org.apache.incubator.wayang.core.util.mathex.mathex*&gt;,
+     *     {"type":&lt;*org.apache.wayang.core.util.mathex.mathex*&gt;,
      *      "cpu":&lt;mathematical expression&gt;,
      *      "ram":&lt;mathematical expression&gt;,
      *      "disk":&lt;mathematical expression&gt;,

@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.test;
+package org.apache.wayang.core.test;
 
 /**
  * Another data unit type for test purposes.

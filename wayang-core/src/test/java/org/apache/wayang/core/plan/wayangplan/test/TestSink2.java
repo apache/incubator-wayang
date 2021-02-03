@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.plan.wayangplan.test;
+package org.apache.wayang.core.plan.wayangplan.test;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.UnarySink;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.plan.wayangplan.UnarySink;
+import org.apache.wayang.core.types.DataSetType;
 
 /**
  * Another dummy sink for testing purposes.

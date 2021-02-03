@@ -1,13 +1,13 @@
-package org.apache.incubator.wayang.graphchi.mappings;
+package org.apache.wayang.graphchi.mappings;
 
-import org.apache.incubator.wayang.basic.operators.PageRankOperator;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.OperatorPattern;
-import org.apache.incubator.wayang.core.mapping.PlanTransformation;
-import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
-import org.apache.incubator.wayang.core.mapping.SubplanPattern;
-import org.apache.incubator.wayang.graphchi.operators.GraphChiPageRankOperator;
-import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
+import org.apache.wayang.basic.operators.PageRankOperator;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.graphchi.operators.GraphChiPageRankOperator;
+import org.apache.wayang.graphchi.platform.GraphChiPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

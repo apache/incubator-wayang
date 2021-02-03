@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.java.operators;
+package org.apache.wayang.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.java.channels.JavaChannelInstance;
 
 import java.util.Arrays;
 import java.util.List;

@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.function;
+package org.apache.wayang.core.function;
 
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.Operator;
 
 /**
  * Used to enrich regular functions with additional life-cycle methods of {@link Operator}s.

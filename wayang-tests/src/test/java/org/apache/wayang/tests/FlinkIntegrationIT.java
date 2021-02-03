@@ -1,17 +1,17 @@
-package org.apache.incubator.wayang.tests;
+package org.apache.wayang.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.api.WayangContext;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.incubator.wayang.core.plugin.Plugin;
-import org.apache.incubator.wayang.core.util.WayangCollections;
-import org.apache.incubator.wayang.flink.Flink;
-import org.apache.incubator.wayang.java.Java;
-import org.apache.incubator.wayang.tests.platform.MyMadeUpPlatform;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.flink.Flink;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.tests.platform.MyMadeUpPlatform;
 
 import java.io.File;
 import java.io.IOException;

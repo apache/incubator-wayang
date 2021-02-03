@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.tests;
+package org.apache.wayang.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.api.JavaPlanBuilder;
-import org.apache.incubator.wayang.api.LoadCollectionDataQuantaBuilder;
-import org.apache.incubator.wayang.api.MapDataQuantaBuilder;
-import org.apache.incubator.wayang.core.api.WayangContext;
-import org.apache.incubator.wayang.core.util.WayangArrays;
-import org.apache.incubator.wayang.java.Java;
-import org.apache.incubator.wayang.spark.Spark;
+import org.apache.wayang.api.JavaPlanBuilder;
+import org.apache.wayang.api.LoadCollectionDataQuantaBuilder;
+import org.apache.wayang.api.MapDataQuantaBuilder;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.util.WayangArrays;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.spark.Spark;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import java.util.Arrays;
 public class RegressionIT {
 
     /**
-     * This plan revealed an issue with the {@link org.apache.incubator.wayang.core.optimizer.channels.ChannelConversionGraph.ShortestTreeSearcher}.
+     * This plan revealed an issue with the {@link org.apache.wayang.core.optimizer.channels.ChannelConversionGraph.ShortestTreeSearcher}.
      */
     @Test
     public void testCollectionToRddAndBroadcast() {

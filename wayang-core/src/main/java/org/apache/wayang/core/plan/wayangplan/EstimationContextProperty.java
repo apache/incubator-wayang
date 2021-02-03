@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.plan.wayangplan;
+package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.wayang.core.optimizer.costs.EstimationContext;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

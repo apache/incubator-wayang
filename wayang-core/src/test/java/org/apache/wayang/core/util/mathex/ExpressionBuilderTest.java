@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.core.util.mathex;
+package org.apache.wayang.core.util.mathex;
 
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.util.mathex.exceptions.ParseException;
+import org.apache.wayang.core.util.mathex.exceptions.ParseException;
 
 import java.util.Arrays;
 import java.util.Collection;

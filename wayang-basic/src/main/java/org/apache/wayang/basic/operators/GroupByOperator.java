@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.basic.operators;
+package org.apache.wayang.basic.operators;
 
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.function.TransformationDescriptor;
-import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.wayang.core.types.DataSetType;
 
 /**
  * This is the auxiliary GroupBy operator, i.e., it behaves differently depending on its context. If it is followed

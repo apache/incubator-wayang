@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.core.util.fs;
+package org.apache.wayang.core.util.fs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

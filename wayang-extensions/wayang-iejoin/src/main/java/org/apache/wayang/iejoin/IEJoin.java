@@ -1,17 +1,17 @@
-package org.apache.incubator.wayang.iejoin;
+package org.apache.wayang.iejoin;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.plugin.Plugin;
-import org.apache.incubator.wayang.iejoin.mapping.Mappings;
-import org.apache.incubator.wayang.iejoin.operators.IEJoinOperator;
-import org.apache.incubator.wayang.iejoin.operators.IESelfJoinOperator;
-import org.apache.incubator.wayang.java.Java;
-import org.apache.incubator.wayang.java.platform.JavaPlatform;
-import org.apache.incubator.wayang.spark.Spark;
-import org.apache.incubator.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.iejoin.mapping.Mappings;
+import org.apache.wayang.iejoin.operators.IEJoinOperator;
+import org.apache.wayang.iejoin.operators.IESelfJoinOperator;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.spark.Spark;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.util.ArrayList;
 import java.util.Arrays;

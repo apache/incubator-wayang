@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.api
+package org.apache.wayang.api
 
-import org.apache.incubator.wayang.basic.data.{Tuple2 => T2}
+import org.apache.wayang.basic.data.{Tuple2 => T2}
 
 /**
   * Provides implicits for Wayang's graph API.

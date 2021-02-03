@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.profiler.spark;
+package org.apache.wayang.profiler.spark;
 
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.profiler.util.ProfilingUtils;
-import org.apache.incubator.wayang.spark.channels.RddChannel;
-import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.profiler.util.ProfilingUtils;
+import org.apache.wayang.spark.channels.RddChannel;
+import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
 import java.util.function.Supplier;
 

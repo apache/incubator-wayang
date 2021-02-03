@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.util;
+package org.apache.wayang.core.util;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
-import org.apache.incubator.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
+import org.apache.wayang.core.plan.executionplan.Channel;
 
 import java.util.Collection;
 

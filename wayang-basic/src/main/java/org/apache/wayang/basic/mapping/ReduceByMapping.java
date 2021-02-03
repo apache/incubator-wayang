@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.basic.mapping;
+package org.apache.wayang.basic.mapping;
 
-import org.apache.incubator.wayang.basic.operators.GroupByOperator;
-import org.apache.incubator.wayang.basic.operators.ReduceByOperator;
-import org.apache.incubator.wayang.basic.operators.ReduceOperator;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.OperatorPattern;
-import org.apache.incubator.wayang.core.mapping.PlanTransformation;
-import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
-import org.apache.incubator.wayang.core.mapping.SubplanMatch;
-import org.apache.incubator.wayang.core.mapping.SubplanPattern;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.basic.operators.GroupByOperator;
+import org.apache.wayang.basic.operators.ReduceByOperator;
+import org.apache.wayang.basic.operators.ReduceOperator;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanMatch;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Collection;
 import java.util.Collections;

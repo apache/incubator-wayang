@@ -1,14 +1,14 @@
-package org.apache.incubator.wayang.basic.operators;
+package org.apache.wayang.basic.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.function.FunctionDescriptor;
-import org.apache.incubator.wayang.core.function.ReduceDescriptor;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
-import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
-import org.apache.incubator.wayang.core.types.BasicDataUnitType;
-import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.ReduceDescriptor;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
+import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.wayang.core.types.BasicDataUnitType;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Optional;
 

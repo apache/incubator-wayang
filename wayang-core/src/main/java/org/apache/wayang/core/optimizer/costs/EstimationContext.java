@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.core.optimizer.costs;
+package org.apache.wayang.core.optimizer.costs;
 
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.util.JsonSerializables;
-import org.apache.incubator.wayang.core.util.JsonSerializer;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.util.JsonSerializables;
+import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Arrays;
 import java.util.Collection;

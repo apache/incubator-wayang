@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.util.mathex;
+package org.apache.wayang.core.util.mathex;
 
-import org.apache.incubator.wayang.core.util.mathex.exceptions.EvaluationException;
+import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
 
 import java.util.function.ToDoubleFunction;
 

@@ -1,12 +1,12 @@
-package org.apache.incubator.wayang.jdbc.operators;
+package org.apache.wayang.jdbc.operators;
 
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.basic.operators.FilterOperator;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.function.PredicateDescriptor;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
-import org.apache.incubator.wayang.jdbc.compiler.FunctionCompiler;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.operators.FilterOperator;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 
 import java.sql.Connection;
 import java.util.Optional;

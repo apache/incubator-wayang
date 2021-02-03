@@ -1,17 +1,17 @@
-package org.apache.incubator.wayang.jdbc.operators;
+package org.apache.wayang.jdbc.operators;
 
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.incubator.wayang.jdbc.test.HsqldbPlatform;
-import org.apache.incubator.wayang.jdbc.test.HsqldbTableSource;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.jdbc.test.HsqldbPlatform;
+import org.apache.wayang.jdbc.test.HsqldbTableSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;

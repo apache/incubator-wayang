@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.api.graph
+package org.apache.wayang.api.graph
 
-import org.apache.incubator.wayang.api._
-import org.apache.incubator.wayang.basic.data.Record
-import org.apache.incubator.wayang.basic.operators.{MapOperator, PageRankOperator}
-import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval
+import org.apache.wayang.api._
+import org.apache.wayang.basic.data.Record
+import org.apache.wayang.basic.operators.{MapOperator, PageRankOperator}
+import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 
 /**
   * This class enhances the functionality of [[DataQuanta]] with [[Record]]s.

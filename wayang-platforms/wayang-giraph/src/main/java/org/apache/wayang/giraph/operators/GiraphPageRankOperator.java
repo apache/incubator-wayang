@@ -1,27 +1,27 @@
-package org.apache.incubator.wayang.giraph.operators;
+package org.apache.wayang.giraph.operators;
 
 import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.giraph.job.GiraphJob;
-import org.apache.incubator.wayang.basic.channels.FileChannel;
-import org.apache.incubator.wayang.basic.data.Tuple2;
-import org.apache.incubator.wayang.basic.operators.PageRankOperator;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.Platform;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.util.Tuple;
-import org.apache.incubator.wayang.core.util.fs.FileSystem;
-import org.apache.incubator.wayang.core.util.fs.FileSystems;
-import org.apache.incubator.wayang.giraph.Algorithm.PageRankAlgorithm;
-import org.apache.incubator.wayang.giraph.Algorithm.PageRankParameters;
-import org.apache.incubator.wayang.giraph.execution.GiraphExecutor;
-import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.operators.PageRankOperator;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
+import org.apache.wayang.giraph.Algorithm.PageRankAlgorithm;
+import org.apache.wayang.giraph.Algorithm.PageRankParameters;
+import org.apache.wayang.giraph.execution.GiraphExecutor;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
+import org.apache.wayang.java.channels.StreamChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,7 +175,7 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
 
 
     private Stream<Tuple2<Long, Float>> createStream(String path) {
-        return org.apache.incubator.wayang.core.util.fs.FileUtils.streamLines(path).map(line -> {
+        return org.apache.wayang.core.util.fs.FileUtils.streamLines(path).map(line -> {
             String[] part = line.split("\t");
             return new Tuple2<>(Long.parseLong(part[0]), Float.parseFloat(part[1]));
         });

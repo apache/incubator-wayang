@@ -1,9 +1,9 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.executionplan.Channel;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.lineage.ChannelLineageNode;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.lineage.ChannelLineageNode;
 
 import java.util.OptionalLong;
 
@@ -40,7 +40,7 @@ public interface ChannelInstance extends ExecutionResource {
 
     /**
      * Provides a {@link ChannelLineageNode} that keeps around (at least) all non-executed predecessor
-     * {@link ChannelInstance}s and {@link org.apache.incubator.wayang.core.optimizer.OptimizationContext.OperatorContext}s.
+     * {@link ChannelInstance}s and {@link org.apache.wayang.core.optimizer.OptimizationContext.OperatorContext}s.
      *
      * @return the {@link ChannelLineageNode}
      */

@@ -1,20 +1,20 @@
-package org.apache.incubator.wayang.giraph.operators;
+package org.apache.wayang.giraph.operators;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.apache.incubator.wayang.basic.channels.FileChannel;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.api.Job;
-import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
-import org.apache.incubator.wayang.core.profiling.FullInstrumentationStrategy;
-import org.apache.incubator.wayang.giraph.Giraph;
-import org.apache.incubator.wayang.giraph.execution.GiraphExecutor;
-import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
-import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.wayang.core.profiling.FullInstrumentationStrategy;
+import org.apache.wayang.giraph.Giraph;
+import org.apache.wayang.giraph.execution.GiraphExecutor;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
+import org.apache.wayang.java.channels.StreamChannel;
 
 import java.io.IOException;
 

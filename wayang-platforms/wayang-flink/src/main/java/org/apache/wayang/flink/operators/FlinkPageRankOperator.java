@@ -1,4 +1,4 @@
-package org.apache.incubator.wayang.flink.operators;
+package org.apache.wayang.flink.operators;
 
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -8,15 +8,15 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.util.Collector;
-import org.apache.incubator.wayang.basic.operators.PageRankOperator;
-import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
-import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
-import org.apache.incubator.wayang.core.platform.ChannelInstance;
-import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.incubator.wayang.core.util.Tuple;
-import org.apache.incubator.wayang.flink.channels.DataSetChannel;
-import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
+import org.apache.wayang.basic.operators.PageRankOperator;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.flink.channels.DataSetChannel;
+import org.apache.wayang.flink.execution.FlinkExecutor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,14 +55,14 @@ public class FlinkPageRankOperator extends PageRankOperator implements FlinkExec
         final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
 
-        MapFunction<org.apache.incubator.wayang.basic.data.Tuple2<Long, Long>, Tuple2<Long,Long>> mapFunction = new MapFunction<org.apache.incubator.wayang.basic.data.Tuple2<Long, Long>, Tuple2<Long, Long>>() {
+        MapFunction<org.apache.wayang.basic.data.Tuple2<Long, Long>, Tuple2<Long,Long>> mapFunction = new MapFunction<org.apache.wayang.basic.data.Tuple2<Long, Long>, Tuple2<Long, Long>>() {
             @Override
-            public Tuple2<Long, Long> map(org.apache.incubator.wayang.basic.data.Tuple2<Long, Long> longLongTuple2) throws Exception {
+            public Tuple2<Long, Long> map(org.apache.wayang.basic.data.Tuple2<Long, Long> longLongTuple2) throws Exception {
                 return new Tuple2<>(longLongTuple2.field0, longLongTuple2.field1);
             }
         };
 
-        final DataSet<org.apache.incubator.wayang.basic.data.Tuple2<Long, Long>> dataSetInput = input.provideDataSet();
+        final DataSet<org.apache.wayang.basic.data.Tuple2<Long, Long>> dataSetInput = input.provideDataSet();
 
         final DataSet<Tuple2<Long, Long>> dataSetInputReal = dataSetInput.map(mapFunction);
 
@@ -114,11 +114,11 @@ public class FlinkPageRankOperator extends PageRankOperator implements FlinkExec
                         .filter(new EpsilonFilter()));
 
 
-        final DataSet<org.apache.incubator.wayang.basic.data.Tuple2<Long, Float>> dataSetOutput = finalPageRanks.map(
-                new MapFunction<Tuple2<Long, Double>, org.apache.incubator.wayang.basic.data.Tuple2<Long, Float>>() {
+        final DataSet<org.apache.wayang.basic.data.Tuple2<Long, Float>> dataSetOutput = finalPageRanks.map(
+                new MapFunction<Tuple2<Long, Double>, org.apache.wayang.basic.data.Tuple2<Long, Float>>() {
                     @Override
-                    public org.apache.incubator.wayang.basic.data.Tuple2<Long, Float> map(Tuple2<Long, Double> longDoubleTuple2) throws Exception {
-                        return new org.apache.incubator.wayang.basic.data.Tuple2<Long, Float>(longDoubleTuple2.f0, longDoubleTuple2.f1.floatValue());
+                    public org.apache.wayang.basic.data.Tuple2<Long, Float> map(Tuple2<Long, Double> longDoubleTuple2) throws Exception {
+                        return new org.apache.wayang.basic.data.Tuple2<Long, Float>(longDoubleTuple2.f0, longDoubleTuple2.f1.floatValue());
                     }
                 }
         );

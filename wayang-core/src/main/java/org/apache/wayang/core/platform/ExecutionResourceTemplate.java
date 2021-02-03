@@ -1,7 +1,7 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
-import org.apache.incubator.wayang.core.api.exception.WayangException;
-import org.apache.incubator.wayang.core.util.AbstractReferenceCountable;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.util.AbstractReferenceCountable;
 
 /**
  * Implements various functionalities of an {@link ExecutionResource}.

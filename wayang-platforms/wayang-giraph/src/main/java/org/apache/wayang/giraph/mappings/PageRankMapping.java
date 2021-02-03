@@ -1,11 +1,11 @@
-package org.apache.incubator.wayang.giraph.mappings;
+package org.apache.wayang.giraph.mappings;
 
-import org.apache.incubator.wayang.basic.operators.PageRankOperator;
-import org.apache.incubator.wayang.core.mapping.*;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
-import org.apache.incubator.wayang.giraph.operators.GiraphPageRankOperator;
-import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
+import org.apache.wayang.basic.operators.PageRankOperator;
+import org.apache.wayang.core.mapping.*;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.Subplan;
+import org.apache.wayang.giraph.operators.GiraphPageRankOperator;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

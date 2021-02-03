@@ -1,18 +1,18 @@
-package org.apache.incubator.wayang.iejoin.mapping.spark;
+package org.apache.wayang.iejoin.mapping.spark;
 
-import org.apache.incubator.wayang.basic.data.Record;
-import org.apache.incubator.wayang.core.mapping.Mapping;
-import org.apache.incubator.wayang.core.mapping.OperatorPattern;
-import org.apache.incubator.wayang.core.mapping.PlanTransformation;
-import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
-import org.apache.incubator.wayang.core.mapping.SubplanMatch;
-import org.apache.incubator.wayang.core.mapping.SubplanPattern;
-import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
-import org.apache.incubator.wayang.core.types.DataSetType;
-import org.apache.incubator.wayang.iejoin.operators.IEJoinMasterOperator;
-import org.apache.incubator.wayang.iejoin.operators.IESelfJoinOperator;
-import org.apache.incubator.wayang.iejoin.operators.SparkIESelfJoinOperator;
-import org.apache.incubator.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanMatch;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.iejoin.operators.IEJoinMasterOperator;
+import org.apache.wayang.iejoin.operators.IESelfJoinOperator;
+import org.apache.wayang.iejoin.operators.SparkIESelfJoinOperator;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

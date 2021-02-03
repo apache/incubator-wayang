@@ -1,10 +1,10 @@
-package org.apache.incubator.wayang.api
+package org.apache.wayang.api
 
-import org.apache.incubator.wayang.basic.data.Record
-import org.apache.incubator.wayang.basic.function.ProjectionDescriptor
-import org.apache.incubator.wayang.basic.operators.MapOperator
-import org.apache.incubator.wayang.basic.types.RecordType
-import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimator
+import org.apache.wayang.basic.data.Record
+import org.apache.wayang.basic.function.ProjectionDescriptor
+import org.apache.wayang.basic.operators.MapOperator
+import org.apache.wayang.basic.types.RecordType
+import org.apache.wayang.core.optimizer.costs.LoadEstimator
 
 /**
   * This class enhances the functionality of [[DataQuanta]] with [[Record]]s.

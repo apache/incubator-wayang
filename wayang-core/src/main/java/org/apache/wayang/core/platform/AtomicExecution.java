@@ -1,16 +1,16 @@
-package org.apache.incubator.wayang.core.platform;
+package org.apache.wayang.core.platform;
 
 import org.apache.commons.lang3.SerializationException;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.apache.incubator.wayang.core.api.Configuration;
-import org.apache.incubator.wayang.core.optimizer.costs.ConstantLoadProfileEstimator;
-import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfile;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
-import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
-import org.apache.incubator.wayang.core.util.JsonSerializables;
-import org.apache.incubator.wayang.core.util.JsonSerializer;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.costs.ConstantLoadProfileEstimator;
+import org.apache.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.wayang.core.optimizer.costs.LoadProfile;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.wayang.core.util.JsonSerializables;
+import org.apache.wayang.core.util.JsonSerializer;
 
 /**
  * An atomic execution describes the smallest work unit considered by Wayang's cost model.
@@ -42,7 +42,7 @@ public class AtomicExecution {
     }
 
     /**
-     * This {@link JsonSerializer} stores the given instances via their {@link org.apache.incubator.wayang.core.api.Configuration}
+     * This {@link JsonSerializer} stores the given instances via their {@link org.apache.wayang.core.api.Configuration}
      * key, if any, or else by the {@link LoadProfile} that they estimate.
      */
     public static class KeyOrLoadSerializer implements JsonSerializer<AtomicExecution> {

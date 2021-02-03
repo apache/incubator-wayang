@@ -1,6 +1,6 @@
-package org.apache.incubator.wayang.core.api.configuration;
+package org.apache.wayang.core.api.configuration;
 
-import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Configuration;
 
 import java.util.Collection;
 import java.util.HashSet;
