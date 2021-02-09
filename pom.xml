@@ -13,20 +13,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <encoding>UTF-8</encoding>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.11.8</scala.version>
-        <scala.compat.version>2.11</scala.compat.version>
-        <spark.version>2.4.0</spark.version>
-        <!-- This Hadoop version is enforced by Spark in the version that is deployed in the Maven repository via code signing. -->
-        <hadoop.version>2.6.0</hadoop.version>
-        <graphchi.version>0.2.2</graphchi.version>
-        <antlr.version>4.5.3</antlr.version>
-        <external.platforms.scope>provided</external.platforms.scope>
-    </properties>
+    <parent>
+        <groupId>org.apache</groupId>
+        <artifactId>apache</artifactId>
+        <version>23</version>
+    </parent>
 
     <groupId>org.apache.wayang</groupId>
     <artifactId>wayang</artifactId>
@@ -47,49 +38,48 @@
         </license>
     </licenses>
 
-    <developers>
-        <developer>
-            <name>Bertty Contreras-Rojas</name>
-            <email>bertty@scalytics.io</email>
-            <organization>Scalytics, Inc</organization>
-            <organizationUrl>https://www.scalytics.io</organizationUrl>
-        </developer>
-        <developer>
-            <name>Rodrigo Pardo-Meza</name>
-            <email>rodrigo@scalytics.io</email>
-            <organization>Scalytics, Inc</organization>
-            <organizationUrl>https://www.scalytics.io</organizationUrl>
-        </developer>
-        <developer>
-            <name>Sebastian Kruse</name>
-            <email>sebastian.kruse@hpi.de</email>
-            <organization>Hasso-Plattner-Institut</organization>
-            <organizationUrl>http://hpi.de/naumann/home.html</organizationUrl>
-        </developer>
-        <developer>
-            <name>Yasser Idris</name>
-            <email>yidris@hbku.edu.qa</email>
-            <organization>Qatar Computing Research Institute</organization>
-            <organizationUrl>http://qcri.com/</organizationUrl>
-        </developer>
-    </developers>
-
     <scm>
-        <connection>scm:git:git://github.com/wayang-ecosystem/wayang</connection>
-        <developerConnection>scm:git:https://github.com/wayang-ecosystem/wayang</developerConnection>
-        <url>https://github.com/wayang-ecosystem/wayang</url>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</developerConnection>
+        <url>https://github.com/apache/incubator-wayang</url>
     </scm>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
+    <issueManagement>
+        <system>Jira</system>
+        <url>https://issues.apache.org/jira/browse/WAYANG</url>
+    </issueManagement>
+
+    <mailingLists>
+        <mailingList>
+            <name>Apache Wayang Developer List</name>
+            <subscribe>mailto:dev-subscribe@wayang.apache.org</subscribe>
+            <unsubscribe>mailto:dev-unsubscribe@wayang.apache.org</unsubscribe>
+            <post>mailto:dev@wayang.apache.org</post>
+            <archive>http://mail-archives.apache.org/mod_mbox/wayang-dev/</archive>
+        </mailingList>
+        <mailingList>
+            <name>Apache Wayang Commits List</name>
+            <subscribe>mailto:commits-subscribe@wayang.apache.org</subscribe>
+            <unsubscribe>mailto:commits-unsubscribe@wayang.apache.org</unsubscribe>
+            <post>mailto:commits@wayang.apache.org</post>
+            <archive>http://mail-archives.apache.org/mod_mbox/wayang-commits/</archive>
+        </mailingList>
+    </mailingLists>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <scala.version>2.11.8</scala.version>
+        <scala.compat.version>2.11</scala.compat.version>
+        <spark.version>2.4.0</spark.version>
+        <!-- This Hadoop version is enforced by Spark in the version that is deployed in the Maven repository via code signing. -->
+        <hadoop.version>2.6.0</hadoop.version>
+        <graphchi.version>0.2.2</graphchi.version>
+        <antlr.version>4.5.3</antlr.version>
+        <external.platforms.scope>provided</external.platforms.scope>
+    </properties>
 
     <profiles>
         <profile>
@@ -145,6 +135,71 @@
     </profiles>
 
     <build>
+        <plugins>
+            <!-- Fail the build if files don't have a valid header -->
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>license-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Right now this would fail the build as not all files have Apache headers -->
+                    <!-- TODO: Enable asap -->
+                    <skip>true</skip>
+                    <useMavenDefaultExcludes>true</useMavenDefaultExcludes>
+                    <excludes>
+                        <!-- Git related files -->
+                        <exclude>**/.git/**</exclude>
+                        <exclude>**/.gitignore</exclude>
+
+                        <!-- Maven related files -->
+                        <exclude>**/target/**</exclude>
+                        <exclude>target/**</exclude>
+
+                        <!-- Eclipse related files -->
+                        <exclude>**/.project</exclude>
+                        <exclude>**/.settings/**</exclude>
+                        <exclude>**/.classpath</exclude>
+                        <exclude>**/.factorypath</exclude>
+
+                        <!-- IntelliJ related files -->
+                        <exclude>**/.idea/**</exclude>
+                        <exclude>**/*.iml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <!-- Generate the legally required text files in the jars -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-remote-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>process-resource-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                        <configuration>
+                            <resourceBundles>
+                                <!-- Will generate META-INF/{DEPENDENCIES,LICENSE,NOTICE} -->
+                                <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
+                                <!-- Will generate META-INF/DISCLAIMER  -->
+                                <resourceBundle>org.apache.apache.resources:apache-incubator-disclaimer-resource-bundle:1.1</resourceBundle>
+                            </resourceBundles>
+                            <!-- Content in this directory will be appended to generated resources -->
+                            <appendedResourcesDirectory>${basedir}/src/remote-resources</appendedResourcesDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -252,6 +307,7 @@
                     </executions>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.8</version>
                 </plugin>
@@ -623,4 +679,33 @@
         <module>wayang-profiler</module>
         <module>wayang-extensions</module>
     </modules>
+
+    <!-- Make Snapshots of Apache projects available -->
+    <repositories>
+        <repository>
+            <id>apache-snapshots</id>
+            <url>https://repository.apache.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <!-- Make Snapshots of Apache plugins available -->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>apache-snapshots</id>
+            <url>https://repository.apache.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
 </project>
