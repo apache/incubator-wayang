@@ -19,6 +19,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>wayang-core</artifactId>
+
+    <name>Wayang Core</name>
     <description>
         This Wayang module contains all the base code that is used by all other modules.
     </description>

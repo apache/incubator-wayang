@@ -19,6 +19,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>wayang-basic</artifactId>
+
+    <name>Wayang Basic</name>
     <description>
         This modules represents the base Wayang package with the default operators and functions.
     </description>

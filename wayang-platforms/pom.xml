@@ -20,6 +20,12 @@
 
     <artifactId>wayang-platforms</artifactId>
     <packaging>pom</packaging>
+
+    <name>Wayang Platform</name>
+    <description>
+        This module aggregates platforms implemented on Wayang.
+    </description>
+
     <modules>
         <module>wayang-java</module>
         <module>wayang-spark</module>
