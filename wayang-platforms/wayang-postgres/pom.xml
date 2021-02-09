@@ -14,26 +14,40 @@
     <parent>
         <artifactId>wayang-platforms</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.6.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.apache.wayang</groupId>
     <artifactId>wayang-postgres</artifactId>
+    <packaging>jar</packaging>
+
+
+    <name>Wayang Platform Postgres</name>
+    <description>
+        Wayang implementation of the operators to be working with the platform "Postgres"
+    </description>
+
+    <properties>
+        <java-module-name>org.apache.wayang.platform.postgres</java-module-name>
+        <postgres.version>9.4.1208</postgres.version>
+    </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>${postgres.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-basic</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-jdbc-template</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

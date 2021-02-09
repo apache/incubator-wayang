@@ -14,11 +14,33 @@
     <parent>
         <artifactId>wayang</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.6.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.apache.wayang</groupId>
     <artifactId>wayang-profiler_2.11</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Wayang Profiler</name>
+    <description>Wayang Profiler allow to know the weight of each operator</description>
+
+    <properties>
+        <java-module-name>org.apache.wayang.profiler</java-module-name>
+        <spark.version>2.4.0</spark.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.wayang</groupId>
+                <artifactId>wayang-commons</artifactId>
+                <version>0.6.0-SNAPSHOT</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -28,38 +50,38 @@
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
-            <artifactId>wayang-spark_2.11</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <artifactId>wayang-spark_${scala.mayor.version}</artifactId>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-java</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
-            <artifactId>wayang-graphchi_2.11</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <artifactId>wayang-graphchi_${scala.mayor.version}</artifactId>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-postgres</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-sqlite3</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.compat.version}</artifactId>
+            <artifactId>spark-core_${scala.mayor.version}</artifactId>
+            <version>${spark.version}</version>
         </dependency>
         <dependency>
             <groupId>de.hpi.isg</groupId>
             <artifactId>profiledb-instrumentation</artifactId>
         </dependency>
     </dependencies>
-
 
 </project>
