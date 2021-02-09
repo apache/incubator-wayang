@@ -19,7 +19,6 @@
         <version>23</version>
     </parent>
 
-
     <groupId>org.apache.wayang</groupId>
     <artifactId>wayang</artifactId>
     <version>0.6.0-SNAPSHOT</version>
@@ -57,10 +56,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git://git.apache.org/incubator-wayang.git</connection>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</developerConnection>
-        <url>https://gitbox.apache.org/repos/asf?s=incubator-wayang</url>
-        <tag>HEAD</tag>
+        <url>https://github.com/apache/incubator-wayang</url>
     </scm>
 
     <issueManagement>
@@ -70,54 +68,20 @@
 
     <mailingLists>
         <mailingList>
-            <name>Developer List</name>
-            <subscribe>dev-subscribe@wayang.apache.org</subscribe>
-            <unsubscribe>dev-unsubscribe@wayang.apache.org</unsubscribe>
-            <post>dev@wayang.apache.org</post>
-            <archive>https://lists.apache.org/list.html?dev@wayang.apache.org</archive>
-            <otherArchives>
-                <otherArchive>http://mail-archives.apache.org/mod_mbox/wayang-dev/</otherArchive>
-            </otherArchives>
+            <name>Apache Wayang Developer List</name>
+            <subscribe>mailto:dev-subscribe@wayang.apache.org</subscribe>
+            <unsubscribe>mailto:dev-unsubscribe@wayang.apache.org</unsubscribe>
+            <post>mailto:dev@wayang.apache.org</post>
+            <archive>http://mail-archives.apache.org/mod_mbox/wayang-dev/</archive>
         </mailingList>
         <mailingList>
-            <name>Commits List</name>
-            <subscribe>commits-subscribe@wayang.apache.org</subscribe>
-            <unsubscribe>commits-unsubscribe@wayang.apache.org</unsubscribe>
-            <archive>https://lists.apache.org/list.html?commits@wayang.apache.org</archive>
-            <otherArchives>
-                <otherArchive>http://mail-archives.apache.org/mod_mbox/wayang-commits/</otherArchive>
-            </otherArchives>
+            <name>Apache Wayang Commits List</name>
+            <subscribe>mailto:commits-subscribe@wayang.apache.org</subscribe>
+            <unsubscribe>mailto:commits-unsubscribe@wayang.apache.org</unsubscribe>
+            <post>mailto:commits@wayang.apache.org</post>
+            <archive>http://mail-archives.apache.org/mod_mbox/wayang-commits/</archive>
         </mailingList>
     </mailingLists>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>apache.snapshots</id>
-            <url>https://repository.apache.org/snapshots/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
-
-    <distributionManagement>
-        <repository>
-            <id>apache.staging.https</id>
-            <name>Apache Release Distribution Repository</name>
-            <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
-        </repository>
-        <snapshotRepository>
-            <id>apache.snapshots.https</id>
-            <name>Apache Development Snapshot Repository</name>
-            <url>https://repository.apache.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>apache.snapshots.https</id>
-            <name>Apache Development Snapshot Repository</name>
-            <url>https://repository.apache.org/content/repositories/snapshots</url>
-        </repository>
-    </repositories>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -151,7 +115,133 @@
         <scala.mayor.version>2.11</scala.mayor.version>
     </properties>
 
+    <!-- Make Snapshots of Apache projects available -->
+    <repositories>
+        <repository>
+            <id>apache-snapshots</id>
+            <url>https://repository.apache.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <!-- Make Snapshots of Apache plugins available -->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>apache-snapshots</id>
+            <url>https://repository.apache.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+
+
     <profiles>
+        <profile>
+            <!-- Include the external platforms in the build. -->
+            <id>standalone</id>
+            <properties>
+                <external.platforms.scope>compile</external.platforms.scope>
+            </properties>
+        </profile>
+
+        <profile>
+            <!-- Profile to be activated when building the docs artifacts.  -->
+            <id>distro</id>
+            <properties>
+                <shared.resources>${project.build.directory}/shared-resources</shared.resources>
+                <maven.main.skip>false</maven.main.skip>
+                <maven.test.skip>false</maven.test.skip>
+                <maven.install.skip>false</maven.install.skip>
+                <maven.deploy.skip>false</maven.deploy.skip>
+                <skipTests>false</skipTests>
+            </properties>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.wayang</groupId>
+                    <artifactId>wayang-distro_${scala.mayor.version}</artifactId>
+                    <version>0.6.0-SNAPSHOT</version>
+                    <type>zip</type>
+                    <optional>true</optional>
+                </dependency>
+            </dependencies>
+
+            <build>
+                <plugins>
+                    <!-- Configures JavaDoc generation. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>aggregate-javadoc</id>
+                                <goals>
+                                    <goal>aggregate-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.jfrog.buildinfo</groupId>
+                        <artifactId>artifactory-maven-plugin</artifactId>
+                    </plugin>
+
+                </plugins>
+
+            </build>
+        </profile>
+
+        <profile>
+            <!-- Perform steps to deploy Wayang. -->
+            <id>deployment</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <!-- Perform steps to deploy Wayang. -->
+            <id>deployment-dryrun</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+
         <profile>
 
             <!-- Profile to be run on the CI server, JARs JavaDocs -->
@@ -295,54 +385,7 @@
             </build>
         </profile>
 
-        <profile>
-            <!-- Profile to be activated when building the docs artifacts.  -->
-            <id>distribute</id>
-            <properties>
-                <shared.resources>${project.build.directory}/shared-resources</shared.resources>
-                <maven.main.skip>true</maven.main.skip>
-                <maven.test.skip>true</maven.test.skip>
-                <maven.install.skip>true</maven.install.skip>
-                <maven.deploy.skip>true</maven.deploy.skip>
-                <skipTests>true</skipTests>
-            </properties>
 
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.wayang</groupId>
-                    <artifactId>wayang-distro_${scala.mayor.version}</artifactId>
-                    <version>0.6.0-SNAPSHOT</version>
-                    <type>zip</type>
-                    <optional>true</optional>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <plugins>
-                    <!-- Configures JavaDoc generation. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>aggregate-javadoc</id>
-                                <goals>
-                                    <goal>aggregate-no-fork</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.jfrog.buildinfo</groupId>
-                        <artifactId>artifactory-maven-plugin</artifactId>
-                    </plugin>
-
-                </plugins>
-
-            </build>
-        </profile>
 
         <profile>
             <id>scala</id>
@@ -496,14 +539,6 @@
         </profile>
 
         <profile>
-            <!-- Include the external platforms in the build. -->
-            <id>standalone</id>
-            <properties>
-                <external.platforms.scope>compile</external.platforms.scope>
-            </properties>
-        </profile>
-
-        <profile>
             <id>add-dependencies</id>
             <build>
                 <pluginManagement>
@@ -631,6 +666,17 @@
         <pluginManagement>
 
             <plugins>
+                <plugin>
+                    <groupId>org.openclover</groupId>
+                    <artifactId>clover-maven-plugin</artifactId>
+                    <version>4.2.1</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.6</version>
+                </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -638,11 +684,7 @@
                     <version>3.0.0</version>
                 </plugin>
 
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.3.0</version>
-                </plugin>
+
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -687,7 +729,19 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>3.0.0-M5</version>
+                    <version>2.19.1</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <trimStackTrace>false</trimStackTrace>
+                        <enableAssertions>true</enableAssertions>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -699,13 +753,32 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>2.10.4</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <additionalparam>-Xdoclint:none</additionalparam>
+                    </configuration>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.0.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>
@@ -728,18 +801,94 @@
                     <artifactId>artifactory-maven-plugin</artifactId>
                     <version>2.7.0</version>
                 </plugin>
-
                 <plugin>
-                    <groupId>org.openclover</groupId>
-                    <artifactId>clover-maven-plugin</artifactId>
-                    <version>4.2.1</version>
-                </plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.6</version>
+                    <configuration>
 
+                    </configuration>
+                </plugin>
             </plugins>
 
         </pluginManagement>
 
         <plugins>
+            <!-- Fail the build if files don't have a valid header -->
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>license-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Right now this would fail the build as not all files have Apache headers -->
+                    <!-- TODO: Enable asap -->
+                    <useMavenDefaultExcludes>true</useMavenDefaultExcludes>
+                    <!--
+                       Make rat output the files with missing licensed directly into the
+                       build output (This way we don't have to look into the rat.txt to find
+                       out which ones)
+                   -->
+                    <consoleOutput>true</consoleOutput>
+                    <excludes>
+                        <!-- Git related files -->
+                        <exclude>**/.git/**</exclude>
+                        <exclude>**/.gitignore</exclude>
+
+                        <!-- Maven related files -->
+                        <exclude>**/target/**</exclude>
+                        <exclude>target/**</exclude>
+
+                        <!-- Eclipse related files -->
+                        <exclude>**/.project</exclude>
+                        <exclude>**/.settings/**</exclude>
+                        <exclude>**/.classpath</exclude>
+                        <exclude>**/.factorypath</exclude>
+
+                        <!-- IntelliJ related files -->
+                        <exclude>**/.idea/**</exclude>
+                        <exclude>**/*.iml</exclude>
+
+                        <exclude>**/*.yaml</exclude>
+
+                        <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
+                        <exclude>src/test/resources/ulysses.txt</exclude>
+                        <exclude>src/test/resources/test.edgelist</exclude>
+                        <exclude>src/test/resources/*.txt</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <!-- Generate the legally required text files in the jars -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-remote-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>process-resource-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                        <configuration>
+                            <resourceBundles>
+                                <!-- Will generate META-INF/{DEPENDENCIES,LICENSE,NOTICE} -->
+                                <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
+                                <!-- Will generate META-INF/DISCLAIMER  -->
+                                <resourceBundle>org.apache:apache-incubator-disclaimer-resource-bundle:1.1</resourceBundle>
+                            </resourceBundles>
+                            <!-- Content in this directory will be appended to generated resources -->
+                            <appendedResourcesDirectory>${basedir}/src/remote-resources</appendedResourcesDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

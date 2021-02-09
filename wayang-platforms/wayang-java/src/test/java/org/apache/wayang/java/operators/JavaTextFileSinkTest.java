@@ -18,7 +18,9 @@
 
 package org.apache.wayang.java.operators;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -37,8 +39,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,6 +54,24 @@ import static org.mockito.Mockito.when;
  * Test suite for {@link JavaTextFileSink}.
  */
 public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
+
+    private Locale defaultLocale;
+
+    /**
+     * In locales, where the decimal separator is not "." this rest would fail.
+     * Therefore we ensure it's run in a pre-defined locale and we make sure it's
+     * reset after the test.
+     */
+    @Before
+    public void setupTest() {
+        defaultLocale = Locale.getDefault();
+        Locale.setDefault(Locale.US);
+    }
+
+    @After
+    public void teardownTest() {
+        Locale.setDefault(defaultLocale);
+    }
 
     @Test
     public void testWritingLocalFile() throws IOException, URISyntaxException {
