@@ -23,9 +23,6 @@
 
     <properties>
         <java-module-name>org.apache.wayang.extensions.iejoin</java-module-name>
-        <wayang.core.version>0.6.0-SNAPSHOT</wayang.core.version>
-        <wayang.java.version>0.6.0-SNAPSHOT</wayang.java.version>
-        <wayang.spark.version>0.6.0-SNAPSHOT</wayang.spark.version>
         <spark.version>2.4.0</spark.version>
     </properties>
 
@@ -33,22 +30,22 @@
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-core</artifactId>
-            <version>${wayang.core.version}</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-basic</artifactId>
-            <version>${wayang.core.version}</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-java</artifactId>
-            <version>${wayang.java.version}</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-spark_${scala.mayor.version}</artifactId>
-            <version>${wayang.spark.version}</version>
+            <version>0.6.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
