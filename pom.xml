@@ -1024,6 +1024,5 @@
         <module>wayang-api</module>
         <module>wayang-profiler</module>
         <module>wayang-extensions</module>
-        <module>wayang-api</module>
     </modules>
 </project>
