@@ -152,8 +152,13 @@
                 <configuration>
                     <!-- Right now this would fail the build as not all files have Apache headers -->
                     <!-- TODO: Enable asap -->
-                    <skip>true</skip>
                     <useMavenDefaultExcludes>true</useMavenDefaultExcludes>
+                    <!--
+                       Make rat output the files with missing licensed directly into the
+                       build output (This way we don't have to look into the rat.txt to find
+                       out which ones)
+                   -->
+                    <consoleOutput>true</consoleOutput>
                     <excludes>
                         <!-- Git related files -->
                         <exclude>**/.git/**</exclude>
@@ -172,6 +177,13 @@
                         <!-- IntelliJ related files -->
                         <exclude>**/.idea/**</exclude>
                         <exclude>**/*.iml</exclude>
+
+                        <exclude>**/*.yaml</exclude>
+
+                        <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
+                        <exclude>src/test/resources/ulysses.txt</exclude>
+                        <exclude>src/test/resources/test.edgelist</exclude>
+                        <exclude>src/test/resources/*.txt</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -191,7 +203,7 @@
                                 <!-- Will generate META-INF/{DEPENDENCIES,LICENSE,NOTICE} -->
                                 <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
                                 <!-- Will generate META-INF/DISCLAIMER  -->
-                                <resourceBundle>org.apache.apache.resources:apache-incubator-disclaimer-resource-bundle:1.1</resourceBundle>
+                                <resourceBundle>org.apache:apache-incubator-disclaimer-resource-bundle:1.1</resourceBundle>
                             </resourceBundles>
                             <!-- Content in this directory will be appended to generated resources -->
                             <appendedResourcesDirectory>${basedir}/src/remote-resources</appendedResourcesDirectory>
