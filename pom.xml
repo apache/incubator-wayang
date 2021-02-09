@@ -177,6 +177,13 @@
                         <!-- IntelliJ related files -->
                         <exclude>**/.idea/**</exclude>
                         <exclude>**/*.iml</exclude>
+
+                        <exclude>**/*.yaml</exclude>
+
+                        <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
+                        <exclude>src/test/resources/ulysses.txt</exclude>
+                        <exclude>src/test/resources/test.edgelist</exclude>
+                        <exclude>src/test/resources/*.txt</exclude>
                     </excludes>
                 </configuration>
             </plugin>
