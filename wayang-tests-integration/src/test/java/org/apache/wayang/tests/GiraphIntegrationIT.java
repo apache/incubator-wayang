@@ -40,7 +40,8 @@ import java.util.stream.Collectors;
  */
 public class GiraphIntegrationIT {
 
-    @Test
+    //@Test
+    //TODO validate if this test is helpfull
     public void testPageRankWithJava() {
         List<Tuple2<Character, Float>> pageRanks = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlans.pageRankWithDictionaryCompression(pageRanks);

@@ -14,33 +14,51 @@
     <parent>
         <artifactId>wayang-platforms</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.6.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.apache.wayang</groupId>
     <artifactId>wayang-sqlite3</artifactId>
+    <packaging>jar</packaging>
+
+
+    <name>Wayang Platform SQLite3</name>
+    <description>
+        Wayang implementation of the operators to be working with the platform "SQLite3"
+    </description>
+
+    <properties>
+        <java-module-name>org.apache.wayang.platform.sqlite3</java-module-name>
+        <wayang.core.version>0.6.0-SNAPSHOT</wayang.core.version>
+        <wayang.jdbc.template.version>0.6.0-SNAPSHOT</wayang.jdbc.template.version>
+        <sqlite.version>3.8.11.2</sqlite.version>
+    </properties>
+
 
     <dependencies>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-core</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${wayang.core.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-basic</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${wayang.core.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-jdbc-template</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${wayang.jdbc.template.version}</version>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
+            <version>${sqlite.version}</version>
         </dependency>
     </dependencies>
+
 
 
 </project>
