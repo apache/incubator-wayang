@@ -36,7 +36,25 @@
 
     <properties>
         <java-module-name>org.apache.wayang.api</java-module-name>
+        <graphchi.version>0.2.2</graphchi.version>
+        <spark.version>2.4.0</spark.version>
+        <flink.version>1.7.1</flink.version>
+        <scala.mayor.version>2.11</scala.mayor.version>
+        <giraph.version>1.2.0-hadoop2</giraph.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.wayang</groupId>
+                <artifactId>wayang-commons</artifactId>
+                <version>0.6.0-SNAPSHOT</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
 
     <dependencies>
         <dependency>
@@ -44,5 +62,18 @@
             <artifactId>wayang-core</artifactId>
             <version>0.6.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.wayang</groupId>
+            <artifactId>wayang-java</artifactId>
+            <version>0.6.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
 </project>
