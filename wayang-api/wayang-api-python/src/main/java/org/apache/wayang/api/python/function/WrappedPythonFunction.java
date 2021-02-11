@@ -31,9 +31,12 @@ public class WrappedPythonFunction<Input, Output>  implements FunctionDescriptor
 
     @Override
     public Iterable<Output> apply(Iterable<Input> input) {
-        PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(myUDF, input);
+
+        return (Iterable<Output>) input;
+
+        /*PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(myUDF, input);
         Iterable<Output> output = manager.execute();
-        return output;
+        return output;*/
     }
 
 }

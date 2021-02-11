@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License. See accompanying LICENSE file.
--->
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -330,6 +337,7 @@
 
             - Prevents thrid-party snapshot dependencies in projects
         -->
+        <!-- TODO: This is actually automatically done by the maven-release-plugin:prepare goal Therefore if could be removed -->
         <profile>
             <id>pre-release</id>
             <build>
@@ -360,6 +368,7 @@
             </build>
         </profile>
 
+        <!-- TODO: At Apache we have a SonarCloud system setup to do this and it's configured by Jenkins. So this profile could be removed. -->
         <profile>
             <!-- Profile for SonarCube -->
             <id>sonarcube</id>
@@ -389,15 +398,11 @@
 
         <profile>
             <id>scala</id>
-            <dependencyManagement>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.scala-lang</groupId>
-                        <artifactId>scala-library</artifactId>
-                        <version>${scala.version}</version>
-                    </dependency>
-                </dependencies>
-            </dependencyManagement>
+            <activation>
+                <file>
+                    <exists>src/main/scala</exists>
+                </file>
+            </activation>
             <build>
                 <pluginManagement>
                     <plugins>
@@ -415,7 +420,7 @@
                                     <configuration>
                                         <scalaVersion>${scala.version}</scalaVersion>
                                         <sourceDir>${project.build.sourceDirectory}/../scala</sourceDir>
-                                        <testSourceDir> ${project.build.testSourceDirectory}/../scala</testSourceDir>
+                                        <testSourceDir>${project.build.testSourceDirectory}/../scala</testSourceDir>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -425,12 +430,15 @@
                                         <goal>add-source</goal>
                                     </goals>
                                 </execution>
-                                <execution>
+                                <!-- Getting strange CNFE errors:
+                                 java.lang.NoClassDefFoundError: javax/tools/ToolProvider
+                                 -->
+                                <!--execution>
                                     <id>generate-scaladoc</id>
                                     <goals>
                                         <goal>doc-jar</goal>
                                     </goals>
-                                </execution>
+                                </execution-->
                             </executions>
                         </plugin>
                         <plugin>
@@ -493,8 +501,13 @@
 
         <profile>
             <id>antlr</id>
+            <activation>
+                <file>
+                    <exists>src/main/antlr4</exists>
+                </file>
+            </activation>
             <properties>
-                <antlr.version>4.5.3</antlr.version>
+                <antlr.version>4.9.1</antlr.version>
             </properties>
             <build>
                 <pluginManagement>
@@ -503,8 +516,7 @@
                         <plugin>
                             <groupId>org.antlr</groupId>
                             <artifactId>antlr4-maven-plugin</artifactId>
-                            <version>4.5.3</version>
-                            <!--                            <version>${antlr.version}</version>-->
+                            <version>${antlr.version}</version>
                             <executions>
                                 <execution>
                                     <id>run-antlr</id>
@@ -568,6 +580,79 @@
             </build>
         </profile>
 
+        <!-- Allows skipping of the pre-flight-check as needed when deploying on jenkins -->
+        <profile>
+            <id>skip-prerequisite-check</id>
+            <activation>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Make some additional properties available to simplify keeping some content up to date -->
+                    <plugin>
+                        <groupId>org.codehaus.gmaven</groupId>
+                        <artifactId>groovy-maven-plugin</artifactId>
+                        <version>2.1.1</version>
+                        <executions>
+                            <!-- Do some pre-build checks and report any findings to the user -->
+                            <execution>
+                                <id>prerequisite-check</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <inherited>false</inherited>
+                                <configuration>
+                                    <source>
+                                        print "\nSkipping prerequisite-check\n\n"
+                                    </source>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Profile for linux (Self-Enabling) -->
+        <profile>
+            <id>os-unix</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <os.suffix>linux</os.suffix>
+                <os.classifier>linux-x86_64</os.classifier>
+            </properties>
+        </profile>
+        <!-- Profile for mac (Self-Enabling) -->
+        <profile>
+            <id>os-mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties>
+                <os.suffix>mac</os.suffix>
+                <os.classifier>mac-x86_64</os.classifier>
+            </properties>
+        </profile>
+        <!-- profile for windows (Self-Enabling) -->
+        <profile>
+            <id>os-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <os.suffix>win</os.suffix>
+                <os.classifier>windows-x86_64</os.classifier>
+            </properties>
+        </profile>
+
     </profiles>
 
     <dependencyManagement>
@@ -585,6 +670,11 @@
                 <version>${junit5.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>${scala.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -814,6 +904,33 @@
         </pluginManagement>
 
         <plugins>
+            <!-- Make some additional properties available to simplify keeping some content up to date -->
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>groovy-maven-plugin</artifactId>
+                <executions>
+                    <!-- Do some pre-build checks and report any findings to the user -->
+                    <execution>
+                        <id>prerequisite-check</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <source>${project.basedir}/src/main/script/prerequisiteCheck.groovy</source>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>joda-time</groupId>
+                        <artifactId>joda-time</artifactId>
+                        <version>2.10.8</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
             <!-- Fail the build if files don't have a valid header -->
             <plugin>
                 <groupId>org.apache.rat</groupId>
@@ -949,7 +1066,7 @@
                         <manifestEntries>
                             <Implementation-Title>${project.name}</Implementation-Title>
                             <Implementation-Version>${project.version}</Implementation-Version>
-                            <Automatic-Module-Name>${java-module-name}</Automatic-Module-Name>
+                            <!--Automatic-Module-Name>${java-module-name}</Automatic-Module-Name-->
                         </manifestEntries>
                     </archive>
                 </configuration>
