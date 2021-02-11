@@ -158,10 +158,15 @@
                 <external.platforms.scope>compile</external.platforms.scope>
             </properties>
         </profile>
-
+        <profile>
+            <id>distro</id>
+            <modules>
+                <module>wayang-distro</module>
+            </modules>
+        </profile>
         <profile>
             <!-- Profile to be activated when building the docs artifacts.  -->
-            <id>distro</id>
+            <id>build-docs</id>
             <properties>
                 <shared.resources>${project.build.directory}/shared-resources</shared.resources>
                 <maven.main.skip>false</maven.main.skip>
@@ -1118,7 +1123,6 @@
 
     <modules>
         <module>wayang-commons</module>
-        <module>wayang-distro</module>
         <module>wayang-platforms</module>
         <module>wayang-tests-integration</module>
         <module>wayang-api</module>
