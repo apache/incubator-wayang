@@ -36,6 +36,8 @@ import java.util.stream.Stream;
  */
 public class JavaObjectFileSinkTest extends JavaExecutionOperatorTestBase {
 
+    // If this test fails, make sure you have Hadoop installed and it's HADOOP_HOME is set.
+    // Also, if on Windows: Make sure you installed the winutils binaries (https://github.com/cdarlint/winutils)
     @Test
     public void testWritingDoesNotFail() throws IOException {
         // Prepare the sink.
