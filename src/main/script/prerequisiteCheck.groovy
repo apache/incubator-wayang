@@ -193,7 +193,10 @@ if (os == "windows") {
 checkJavaVersion("1.8", "1.8")
 
 // Check if hadoop is available
-checkHadoop(os)
+// It seems that this is only required on Windows systems.
+if (os == "windows") {
+    checkHadoop(os)
+}
 
 if (!allConditionsMet) {
     throw new RuntimeException("Not all conditions met, see log for details.")
