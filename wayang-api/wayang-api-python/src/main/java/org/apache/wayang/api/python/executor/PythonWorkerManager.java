@@ -34,6 +34,8 @@ public class PythonWorkerManager<Input, Output> {
     }
 
     public Iterable<Output> execute(){
+        PythonProcessCaller worker = new PythonProcessCaller();
+
         return null;
     }
 }
