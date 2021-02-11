@@ -81,6 +81,7 @@ public class PythonProcessCaller {
 
     public void close(){
         try {
+            this.process.destroy();
             this.socket.close();
             this.serverSocket.close();
             System.out.println("Everything closed");

@@ -19,6 +19,7 @@
 package org.apache.wayang.api.python.executor;
 
 import org.apache.wayang.api.python.function.PythonUdf;
+import org.apache.wayang.core.api.exception.WayangException;
 
 public class PythonWorkerManager<Input, Output> {
 
@@ -37,13 +38,19 @@ public class PythonWorkerManager<Input, Output> {
         PythonProcessCaller worker = new PythonProcessCaller();
 
         if(worker.isReady()){
-            System.out.println("ready on port: " + worker.getSocket().getLocalPort());
-            worker.close();
+
+            ProcessFeeder feed = new ProcessFeeder(worker.getSocket(), this.udf, this.inputIterator);
+
+            //TODO should this retrieve something?
+            feed.send();
+
             return (Iterable<Output>) inputIterator;
         } else{
-            System.out.println("Socket not ready");
+
+            int port = worker.getSocket().getLocalPort();
+            worker.close();
+            throw new WayangException("Not possible to work with the Socket provided on port: " + port);
         }
 
-        return null;
     }
 }
