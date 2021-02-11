@@ -39,8 +39,8 @@ import org.apache.wayang.core.util.OneTimeExecutable;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,7 +77,7 @@ public class ChannelConversionGraph {
      */
     private final TreeSelectionStrategy treeSelectionStrategy;
 
-    private static final Logger logger = LoggerFactory.getLogger(ChannelConversionGraph.class);
+    private static final Logger logger = LogManager.getLogger(ChannelConversionGraph.class);
 
     /**
      * Creates a new instance.

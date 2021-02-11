@@ -20,8 +20,8 @@ package org.apache.wayang.core.util;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.function.Consumer;
@@ -49,7 +49,7 @@ public class ConsumerIteratorAdapterTest {
         );
         producerThread.start();
 
-        Logger logger = LoggerFactory.getLogger(this.getClass());
+        Logger logger = LogManager.getLogger(this.getClass());
         for (int i = 0; i < maxI; i++) {
             Assert.assertTrue(iterator.hasNext());
             Assert.assertEquals(i, iterator.next().intValue());

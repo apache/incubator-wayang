@@ -20,8 +20,8 @@ package org.apache.wayang.core.util;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.api.exception.WayangException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;;
 
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -52,7 +52,7 @@ import java.util.stream.Stream;
  */
 public class ReflectionUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(ReflectionUtils.class);
+    private static final Logger logger = LogManager.getLogger(ReflectionUtils.class);
 
     private static final Pattern defaultConstructorPattern = Pattern.compile(
             "new ([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*)\\(\\)"

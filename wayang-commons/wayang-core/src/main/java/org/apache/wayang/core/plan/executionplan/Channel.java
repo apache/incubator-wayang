@@ -31,8 +31,8 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.types.DataSetType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,7 +51,7 @@ import java.util.stream.Stream;
  */
 public abstract class Channel {
 
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * Was used to set up this instance.
@@ -232,7 +232,7 @@ public abstract class Channel {
     public void markForInstrumentation() {
         this.withSiblings(false).forEach(channel -> {
             channel.isMarkedForInstrumentation = true;
-            LoggerFactory.getLogger(this.getClass()).debug("Marked {} for instrumentation.", channel);
+            LogManager.getLogger(this.getClass()).debug("Marked {} for instrumentation.", channel);
         });
     }
 

@@ -18,15 +18,14 @@
 
 package org.apache.wayang.core.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 /**
  * Implements a template for {@link ReferenceCountable} objects.
  */
 public abstract class AbstractReferenceCountable implements ReferenceCountable {
 
-    private static final Logger logger = LoggerFactory.getLogger(ReferenceCountable.class);
+    private static final Logger logger = LogManager.getLogger(ReferenceCountable.class);
 
     /**
      * Maintains the number of references on this object.

@@ -24,8 +24,8 @@ import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Slot;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  */
 public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStrategy {
 
-    private static final Logger logger = LoggerFactory.getLogger(LatentOperatorPruningStrategy.class);
+    private static final Logger logger = LogManager.getLogger(LatentOperatorPruningStrategy.class);
 
     @Override
     public void configure(Configuration configuration) {
@@ -88,11 +88,11 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
         final boolean isPickP1 = t1 <= t2;
         if (logger.isDebugEnabled()) {
             if (isPickP1) {
-                LoggerFactory.getLogger(LatentOperatorPruningStrategy.class).debug(
+                LogManager.getLogger(LatentOperatorPruningStrategy.class).debug(
                         "{} < {}: Choosing {} over {}.", p1.getTimeEstimate(), p2.getTimeEstimate(), p1.getOperators(), p2.getOperators()
                 );
             } else {
-                LoggerFactory.getLogger(LatentOperatorPruningStrategy.class).debug(
+                LogManager.getLogger(LatentOperatorPruningStrategy.class).debug(
                         "{} < {}: Choosing {} over {}.", p2.getTimeEstimate(), p1.getTimeEstimate(), p2.getOperators(), p1.getOperators()
                 );
             }

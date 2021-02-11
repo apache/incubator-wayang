@@ -27,8 +27,8 @@ import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.Slot;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * {@link Breakpoint} implementation that is based on the {@link CardinalityEstimate}s of {@link Channel}s.
@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CardinalityBreakpoint implements Breakpoint {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     private final double spreadSmoothing;
 

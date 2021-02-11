@@ -58,8 +58,8 @@ import org.apache.wayang.core.util.Actions;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +84,7 @@ import static org.apache.wayang.core.util.ReflectionUtils.instantiateDefault;
  */
 public class Configuration {
 
-    private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
+    private static final Logger logger = LogManager.getLogger(Configuration.class);
 
     private static final String DEFAULT_CONFIGURATION_FILE = "wayang-core-defaults.properties";
 

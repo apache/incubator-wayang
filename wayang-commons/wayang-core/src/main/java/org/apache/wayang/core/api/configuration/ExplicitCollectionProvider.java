@@ -19,8 +19,8 @@
 package org.apache.wayang.core.api.configuration;
 
 import org.apache.wayang.core.api.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public class ExplicitCollectionProvider<Value> extends CollectionProvider<Value> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExplicitCollectionProvider.class);
+    private static final Logger logger = LogManager.getLogger(ExplicitCollectionProvider.class);
 
     private Set<Value> whitelist = new LinkedHashSet<>();
 

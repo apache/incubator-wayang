@@ -23,8 +23,8 @@ import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.costs.TimeEstimate;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.util.WayangArrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -35,7 +35,7 @@ import java.util.Objects;
  */
 public abstract class CardinalityPusher {
 
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LogManager.getLogger(this.getClass());
 
     protected final int[] relevantInputIndices;
 

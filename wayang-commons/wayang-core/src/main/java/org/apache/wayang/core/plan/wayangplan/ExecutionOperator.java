@@ -33,7 +33,7 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.platform.lineage.LazyExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -200,7 +200,7 @@ public interface ExecutionOperator extends ElementaryOperator {
         final List<ChannelDescriptor> supportedOutputChannels = this.getSupportedOutputChannels(index);
         assert !supportedOutputChannels.isEmpty() : String.format("No supported output channels for %s.", this);
         if (supportedOutputChannels.size() > 1) {
-            LoggerFactory.getLogger(this.getClass()).warn("Treat {} as the only supported channel for {}.",
+            LogManager.getLogger(this.getClass()).warn("Treat {} as the only supported channel for {}.",
                     supportedOutputChannels.get(0), this.getOutput(index)
             );
         }

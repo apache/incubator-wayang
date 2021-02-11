@@ -23,8 +23,8 @@ import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.mapping.PlanTransformation;
 import org.apache.wayang.core.optimizer.SanityChecker;
 import org.apache.wayang.core.util.WayangCollections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,7 +37,7 @@ import java.util.Set;
  */
 public class WayangPlan {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     private final Collection<Operator> sinks = new LinkedList<>();
 

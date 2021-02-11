@@ -33,8 +33,8 @@ import org.apache.wayang.core.util.mathex.DefaultContext;
 import org.apache.wayang.core.util.mathex.Expression;
 import org.apache.wayang.core.util.mathex.ExpressionBuilder;
 import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,7 +58,7 @@ public class LoadProfileEstimators {
      */
     public static final Context baseContext;
 
-    private static final Logger logger = LoggerFactory.getLogger(LoadProfileEstimators.class);
+    private static final Logger logger = LogManager.getLogger(LoadProfileEstimators.class);
 
     static {
         DefaultContext ctx = new DefaultContext(Context.baseContext);

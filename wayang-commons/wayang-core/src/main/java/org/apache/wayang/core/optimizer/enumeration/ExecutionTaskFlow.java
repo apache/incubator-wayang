@@ -25,8 +25,8 @@ import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.executionplan.PlatformExecution;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.traversal.AbstractTopologicalTraversal;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -77,7 +77,7 @@ public class ExecutionTaskFlow {
     }
 
     public boolean isComplete() {
-        final Logger logger = LoggerFactory.getLogger(this.getClass());
+        final Logger logger = LogManager.getLogger(this.getClass());
         final Set<ExecutionTask> allTasks = this.collectAllTasks();
         if (allTasks.isEmpty()) {
             logger.warn("Instance has not tasks.");

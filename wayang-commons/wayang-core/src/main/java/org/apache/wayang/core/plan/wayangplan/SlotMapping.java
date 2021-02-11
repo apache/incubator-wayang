@@ -19,8 +19,8 @@
 package org.apache.wayang.core.plan.wayangplan;
 
 import org.apache.wayang.core.util.WayangCollections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 public class SlotMapping {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     private final Map<Slot, Slot> upstreamMapping = new HashMap<>();
 
