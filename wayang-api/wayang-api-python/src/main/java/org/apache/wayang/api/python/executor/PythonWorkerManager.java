@@ -36,6 +36,14 @@ public class PythonWorkerManager<Input, Output> {
     public Iterable<Output> execute(){
         PythonProcessCaller worker = new PythonProcessCaller();
 
+        if(worker.isReady()){
+            System.out.println("ready on port: " + worker.getSocket().getLocalPort());
+            worker.close();
+            return (Iterable<Output>) inputIterator;
+        } else{
+            System.out.println("Socket not ready");
+        }
+
         return null;
     }
 }

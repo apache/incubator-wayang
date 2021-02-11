@@ -23,14 +23,14 @@ public class PythonProcessCaller {
     public PythonProcessCaller(){
 
         //TODO create documentation to how to the configuration in the code
-        this.configuration = new Configuration("wayang-api-python-defaults.properties");
+        this.configuration = new Configuration("file:///Users/rodrigopardomeza/wayang/incubator-wayang/wayang-api/wayang-api-python/src/main/resources/wayang-api-python-defaults.properties");
         this.ready = false;
         byte[] addr = new byte[4];
         addr[0] = 127; addr[1] = 0; addr[2] = 0; addr[3] = 1;
 
         try {
             /*TODO should NOT be assigned an specific port, set port as 0 (zero)*/
-            this.serverSocket = new ServerSocket(80, 1, InetAddress.getByAddress(addr));
+            this.serverSocket = new ServerSocket(0, 1, InetAddress.getByAddress(addr));
             ProcessBuilder pb = new ProcessBuilder(
                     Arrays.asList(
                             "python3",
@@ -83,6 +83,7 @@ public class PythonProcessCaller {
         try {
             this.socket.close();
             this.serverSocket.close();
+            System.out.println("Everything closed");
         } catch (IOException e) {
             e.printStackTrace();
         }
