@@ -27,7 +27,7 @@ import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * Utilities to fake Wayang internals etc..
@@ -71,7 +71,7 @@ public class ProfilingUtils {
             System.out.printf("Sleeping for %s.\n", Formats.formatDuration(millis));
             Thread.sleep(millis);
         } catch (InterruptedException e) {
-            LoggerFactory.getLogger(ProfilingUtils.class).error("Sleep interrupted.", e);
+            LogManager.getLogger(ProfilingUtils.class).error("Sleep interrupted.", e);
         }
     }
 }

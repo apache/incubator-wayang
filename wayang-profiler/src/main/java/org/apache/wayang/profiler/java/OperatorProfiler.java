@@ -30,8 +30,8 @@ import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.profiler.util.ProfilingUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -45,7 +45,7 @@ import java.util.function.Supplier;
  */
 public abstract class OperatorProfiler {
 
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LogManager.getLogger(this.getClass());
 
     public int cpuMhz;
 

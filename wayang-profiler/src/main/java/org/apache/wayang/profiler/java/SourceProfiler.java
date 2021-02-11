@@ -21,7 +21,8 @@ package org.apache.wayang.profiler.java;
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.function.Supplier;
 
@@ -43,7 +44,7 @@ public abstract class SourceProfiler extends OperatorProfiler {
         try {
             this.setUpSourceData(inputCardinalities[0]);
         } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).error(
+            LogManager.getLogger(this.getClass()).error(
                     String.format("Failed to set up source data for input cardinality %d.", inputCardinalities[0]),
                     e
             );

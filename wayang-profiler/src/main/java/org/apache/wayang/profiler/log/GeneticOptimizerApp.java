@@ -38,8 +38,8 @@ import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.sqlite3.Sqlite3;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -64,7 +64,7 @@ import java.util.stream.Stream;
  */
 public class GeneticOptimizerApp {
 
-    private static final Logger logger = LoggerFactory.getLogger(GeneticOptimizerApp.class);
+    private static final Logger logger = LogManager.getLogger(GeneticOptimizerApp.class);
 
     /**
      * {@link Configuration} to be used.
