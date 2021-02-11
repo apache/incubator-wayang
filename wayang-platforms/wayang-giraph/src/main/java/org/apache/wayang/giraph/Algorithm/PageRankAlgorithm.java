@@ -38,7 +38,8 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,7 +56,7 @@ public class PageRankAlgorithm extends BasicComputation<LongWritable, DoubleWrit
      * Logger
      */
     private static final Logger LOG =
-            Logger.getLogger(PageRankAlgorithm.class);
+            LogManager.getLogger(PageRankAlgorithm.class);
     /**
      * Sum aggregator name
      */
@@ -195,7 +196,7 @@ public class PageRankAlgorithm extends BasicComputation<LongWritable, DoubleWrit
          * Class logger
          */
         private static final Logger LOG =
-                Logger.getLogger(PageRankVertexReader.class);
+                LogManager.getLogger(PageRankVertexReader.class);
 
         @Override
         public boolean nextVertex() {
