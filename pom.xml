@@ -975,6 +975,7 @@
 
                         <exclude>**/*.yaml</exclude>
 
+                        <exclude>**/0-to-10000.sequence_file</exclude>
                         <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
                         <exclude>src/test/resources/ulysses.txt</exclude>
                         <exclude>src/test/resources/test.edgelist</exclude>
