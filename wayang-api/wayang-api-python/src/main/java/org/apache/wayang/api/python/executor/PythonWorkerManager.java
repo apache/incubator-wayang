@@ -39,7 +39,7 @@ public class PythonWorkerManager<Input, Output> {
 
         if(worker.isReady()){
 
-            ProcessFeeder feed = new ProcessFeeder(worker.getSocket(), this.udf, this.inputIterator);
+            ProcessFeeder<Input, Output> feed = new ProcessFeeder<>(worker.getSocket(), this.udf, this.inputIterator);
 
             //TODO should this retrieve something?
             feed.send();

@@ -19,6 +19,7 @@ public class ProcessFeeder<Input, Output> {
 
     //TODO add to a config file
     int END_OF_DATA_SECTION = -1;
+    int NULL = -5;
 
     public ProcessFeeder(
             Socket socket,
@@ -36,7 +37,10 @@ public class ProcessFeeder<Input, Output> {
     public void send(){
 
         try{
-            BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), 8192);
+            //TODO use config buffer size
+            int BUFFER_SIZE = 8192;
+
+            BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), BUFFER_SIZE);
             DataOutputStream dataOut = new DataOutputStream(stream);
 
             this.writeIteratorToStream(input.iterator(), dataOut);
@@ -48,27 +52,60 @@ public class ProcessFeeder<Input, Output> {
         }
     }
 
-    public void writeIteratorToStream(Iterator iter, DataOutputStream dataOut){
+    public void writeIteratorToStream(Iterator<Input> iter, DataOutputStream dataOut){
 
-        for (Iterator it = iter; it.hasNext(); ) {
-            Object elem = it.next();
+        for (Iterator<Input> it = iter; it.hasNext(); ) {
+            Input elem = it.next();
             write(elem, dataOut);
         }
     }
 
-    /*TODO Missing cases PortableDataStream, and NULL */
-    public static void write(Object obj, DataOutputStream dataOut){
+    /*TODO Missing case PortableDataStream */
+    public void write(Object obj, DataOutputStream dataOut){
         try {
 
+            if(obj == null)
+                dataOut.writeInt(this.NULL);
+
             /**
-             * Byte cases
+             * Byte Array cases
              */
+            else if (obj instanceof Byte[] || obj instanceof byte[])
+                writeBytes(obj, dataOut);
+
+            /**
+             * String case
+             * */
+            else if (obj instanceof String)
+                writeUTF((String) obj, dataOut);
+
+            /**
+             * Key, Value case
+             * */
+            else if (obj instanceof Map.Entry)
+                writeKeyValue((Map.Entry) obj, dataOut);
+
+            else{
+                throw new WayangException("Unexpected element type " + obj.getClass());
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeBytes(Object obj, DataOutputStream dataOut){
+
+        try{
+
             if (obj instanceof Byte[]) {
 
                 int length = ((Byte[]) obj).length;
 
                 byte[] bytes = new byte[length];
                 int j=0;
+
                 // Unboxing Byte values. (Byte[] to byte[])
                 for(Byte b: ((Byte[]) obj))
                     bytes[j++] = b.byteValue();
@@ -81,40 +118,28 @@ public class ProcessFeeder<Input, Output> {
                 dataOut.writeInt(((byte[]) obj).length);
                 dataOut.write(((byte[]) obj));
             }
-
-            /**
-             * String case
-             * */
-            else if (obj instanceof String) {
-
-                writeUTF((String) obj, dataOut);
-            }
-
-            /**
-             * Key, Value Case case
-             * */
-            else if (obj instanceof Map.Entry) {
-
-                write(((Map.Entry) obj).getKey() , dataOut);
-                write(((Map.Entry) obj).getValue(), dataOut);
-            } else{
-                throw new WayangException("Unexpected element type " + obj.getClass());
-            }
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void writeUTF(String str, DataOutputStream dataOut){
+    public void writeUTF(String str, DataOutputStream dataOut){
+
         byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
 
         try {
+
             dataOut.writeInt(bytes.length);
             dataOut.write(bytes);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    public void writeKeyValue(Map.Entry obj, DataOutputStream dataOut){
+
+        write(obj.getKey(), dataOut);
+        write(obj.getValue(), dataOut);
+    }
+
 }
