@@ -2,6 +2,54 @@ import os
 import socket
 import struct
 
+
+class SpecialLengths(object):
+    END_OF_DATA_SECTION = -1
+    PYTHON_EXCEPTION_THROWN = -2
+    TIMING_DATA = -3
+    END_OF_STREAM = -4
+    NULL = -5
+    START_ARROW_STREAM = -6
+
+
+class UTF8Deserializer:
+
+    """
+    Deserializes streams written by String.getBytes.
+    """
+    def __init__(self, use_unicode=True):
+        self.use_unicode = use_unicode
+
+    def loads(self, stream):
+        length = read_int(stream)
+        if length == SpecialLengths.END_OF_DATA_SECTION:
+            raise EOFError
+        elif length == SpecialLengths.NULL:
+            return None
+        s = stream.read(length)
+        return s.decode("utf-8") if self.use_unicode else s
+
+    def load_stream(self, stream):
+        try:
+            while True:
+                yield self.loads(stream)
+        except struct.error:
+            return
+        except EOFError:
+            return
+
+    def __repr__(self):
+        return "UTF8Deserializer(%s)" % self.use_unicode
+
+
+def process(infile, outfile):
+
+    #TODO First we must receive the command + UDF
+
+    #TODO Here we are temporarily assuming that the user is exclusively sending UTF8. User has several types
+    iterator = UTF8Deserializer().load_stream(infile)
+
+
 def local_connect(port):
     sock = None
     errors = []
@@ -30,3 +78,5 @@ if __name__ == '__main__':
     print("hello")
     java_port = int(os.environ["PYTHON_WORKER_FACTORY_PORT"])
     sock_file, sock = local_connect(java_port)
+    process(sock_file, sock_file)
+    sock_file.flush()
