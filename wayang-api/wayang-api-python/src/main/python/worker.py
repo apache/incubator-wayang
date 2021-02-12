@@ -12,6 +12,14 @@ class SpecialLengths(object):
     START_ARROW_STREAM = -6
 
 
+def read_int(stream):
+    length = stream.read(4)
+    if not length:
+        raise EOFError
+    res = struct.unpack("!i", length)[0]
+    return res
+
+
 class UTF8Deserializer:
 
     """
@@ -45,9 +53,19 @@ class UTF8Deserializer:
 def process(infile, outfile):
 
     #TODO First we must receive the command + UDF
+    udf = lambda elem: elem.lower()
+    def func(it):
+        return sorted(it, key=udf)
 
     #TODO Here we are temporarily assuming that the user is exclusively sending UTF8. User has several types
     iterator = UTF8Deserializer().load_stream(infile)
+    #out_iter = sorted(iterator, key=lambda elem: elem.lower())
+    out_iter = func(iterator)
+    for x in out_iter:
+        print("Python: " + x)
+    print("Ending Program")
+    exit()
+    #dump_stream(iterator=out_iter, stream=outfile)
 
 
 def local_connect(port):
