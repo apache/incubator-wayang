@@ -21,10 +21,10 @@ def read_int(stream):
 
 
 class UTF8Deserializer:
-
     """
     Deserializes streams written by String.getBytes.
     """
+
     def __init__(self, use_unicode=True):
         self.use_unicode = use_unicode
 
@@ -50,22 +50,38 @@ class UTF8Deserializer:
         return "UTF8Deserializer(%s)" % self.use_unicode
 
 
-def process(infile, outfile):
+def write_int(p, outfile):
+    outfile.write(struct.pack("!i", p))
 
-    #TODO First we must receive the command + UDF
+
+def write_with_length(obj, stream):
+    serialized = obj.encode('utf-8')
+    if serialized is None:
+        raise ValueError("serialized value should not be None")
+    if len(serialized) > (1 << 31):
+        raise ValueError("can not serialize object larger than 2G")
+    write_int(len(serialized), stream)
+    stream.write(serialized)
+
+
+def dump_stream(iterator, stream):
+    for obj in iterator:
+        write_with_length(obj, stream)
+    write_int(SpecialLengths.END_OF_DATA_SECTION, stream)
+
+
+def process(infile, outfile):
+    # TODO First we must receive the command + UDF
     udf = lambda elem: elem.lower()
+
     def func(it):
         return sorted(it, key=udf)
 
-    #TODO Here we are temporarily assuming that the user is exclusively sending UTF8. User has several types
+    # TODO Here we are temporarily assuming that the user is exclusively sending UTF8. User has several types
     iterator = UTF8Deserializer().load_stream(infile)
-    #out_iter = sorted(iterator, key=lambda elem: elem.lower())
+    # out_iter = sorted(iterator, key=lambda elem: elem.lower())
     out_iter = func(iterator)
-    for x in out_iter:
-        print("Python: " + x)
-    print("Ending Program")
-    exit()
-    #dump_stream(iterator=out_iter, stream=outfile)
+    dump_stream(iterator=out_iter, stream=outfile)
 
 
 def local_connect(port):
@@ -77,12 +93,12 @@ def local_connect(port):
         af, socktype, proto, _, sa = res
         try:
             sock = socket.socket(af, socktype, proto)
-            #sock.settimeout(int(os.environ.get("SPARK_AUTH_SOCKET_TIMEOUT", 15)))
+            # sock.settimeout(int(os.environ.get("SPARK_AUTH_SOCKET_TIMEOUT", 15)))
             sock.settimeout(30)
             sock.connect(sa)
-            #sockfile = sock.makefile("rwb", int(os.environ.get("SPARK_BUFFER_SIZE", 65536)))
+            # sockfile = sock.makefile("rwb", int(os.environ.get("SPARK_BUFFER_SIZE", 65536)))
             sockfile = sock.makefile("rwb", 65536)
-            #_do_server_auth(sockfile, auth_secret)
+            # _do_server_auth(sockfile, auth_secret)
             return (sockfile, sock)
         except socket.error as e:
             emsg = str(e)
@@ -93,8 +109,8 @@ def local_connect(port):
 
 
 if __name__ == '__main__':
-    print("hello")
     java_port = int(os.environ["PYTHON_WORKER_FACTORY_PORT"])
     sock_file, sock = local_connect(java_port)
     process(sock_file, sock_file)
     sock_file.flush()
+    exit()

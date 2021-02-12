@@ -36,8 +36,6 @@ public class SortPython {
         WayangContext rheemContext = new WayangContext().with(Java.basicPlugin());
         TextFileSource textFileSource = new TextFileSource(FILE_SOME_LINES_TXT.toString());
 
-        System.out.println("Trying!!$");
-
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator
                 = new FlatMapOperator<>(

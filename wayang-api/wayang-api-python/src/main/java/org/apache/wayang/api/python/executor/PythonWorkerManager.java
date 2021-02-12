@@ -40,11 +40,9 @@ public class PythonWorkerManager<Input, Output> {
         if(worker.isReady()){
 
             ProcessFeeder<Input, Output> feed = new ProcessFeeder<>(worker.getSocket(), this.udf, this.inputIterator);
-
-            //TODO should this retrieve something?
             feed.send();
-
-            return (Iterable<Output>) inputIterator;
+            ProcessReceiver<Output> r = new ProcessReceiver<>(worker.getSocket());
+            return r.getIterable();
         } else{
 
             int port = worker.getSocket().getLocalPort();
