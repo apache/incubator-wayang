@@ -16,7 +16,8 @@
 #
 
 language: java
-
+jdk:
+  - openjdk8
 notification:
   email:
     on_success: never
@@ -41,5 +42,6 @@ before_script:
   - cat travis/wayang.properties
   - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties")
 script:
+  - jdk_switcher use openjdk8
   - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}"
 
