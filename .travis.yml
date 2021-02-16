@@ -44,4 +44,5 @@ before_script:
 script:
   - jdk_switcher use openjdk8
   - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}"
+  - cat /home/travis/build/apache/incubator-wayang/target/rat.txt
 
