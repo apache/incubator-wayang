@@ -60,6 +60,7 @@ before_script:
   - echo "wayang.giraph.minWorkers = 1" >> travis/wayang.properties
   - echo "wayang.mapreduce.job.counters.limit = 200" >> travis/wayang.properties
   - cat travis/wayang.properties
+  - rm -rf /home/travis/build/apache/incubator-wayang/target/rat.txt
   - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=error" "-Dlog4j.rootLogger=ERROR")
 script:
   - jdk_switcher use openjdk8
