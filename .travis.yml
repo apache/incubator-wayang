@@ -63,6 +63,6 @@ before_script:
   - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=error" "-Dlog4j.rootLogger=ERROR")
 script:
   - jdk_switcher use openjdk8
-  - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}"
+  - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}" &> result
   - cat /home/travis/build/apache/incubator-wayang/target/rat.txt
-
+  - tail -n 2000 result
