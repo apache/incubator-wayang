@@ -963,7 +963,7 @@
 
                         <exclude>**/*.yaml</exclude>
 
-                        <exclude>result</exclude>
+                        <exclude>**/*.log</exclude>
                         <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
                         <exclude>src/test/resources/ulysses.txt</exclude>
                         <exclude>src/test/resources/test.edgelist</exclude>
