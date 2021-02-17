@@ -18,8 +18,8 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  */
 public class PlanTraversal {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlanTraversal.class);
+    private static final Logger logger = LogManager.getLogger(PlanTraversal.class);
 
     public Set<Operator> visitedRelevantOperators = new HashSet<>(), visitedIrrelevantOperators = new HashSet<>();
 

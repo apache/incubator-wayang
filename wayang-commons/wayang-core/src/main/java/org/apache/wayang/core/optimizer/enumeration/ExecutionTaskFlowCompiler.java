@@ -33,7 +33,7 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.traversal.AbstractTopologicalTraversal;
 import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.platform.Platform;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -419,7 +419,7 @@ public class ExecutionTaskFlowCompiler
             final OutputSlot<?> output = this.operator.getOutput(outputIndex);
             // TODO: Make generic: There might be multiple OutputSlots for final loop outputs (one for each iteration).
             final Junction junction = this.getJunction(output);
-            LoggerFactory.getLogger(this.getClass()).debug("Connecting {} -> {}.", output, junction);
+            LogManager.getLogger(this.getClass()).debug("Connecting {} -> {}.", output, junction);
             assert junction != null : String.format("No junction found for %s.", output);
             this.executionTask.setOutputChannel(outputIndex, junction.getSourceChannel());
 

@@ -20,7 +20,7 @@ package org.apache.wayang.core.plan.wayangplan;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.util.OneTimeExecutable;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -128,7 +128,7 @@ public class LoopIsolator extends OneTimeExecutable {
         for (OutputSlot<?> outputSlot : loopHead.getLoopBodyOutputs()) {
             final List<? extends InputSlot<?>> occupiedSlots = outputSlot.getOccupiedSlots();
             if (occupiedSlots.isEmpty()) {
-                LoggerFactory.getLogger(LoopIsolator.class).warn("{} is not feeding any input slot.", outputSlot);
+                LogManager.getLogger(LoopIsolator.class).warn("{} is not feeding any input slot.", outputSlot);
             }
         }
         for (OutputSlot<?> outputSlot : loopHead.getFinalLoopOutputs()) {

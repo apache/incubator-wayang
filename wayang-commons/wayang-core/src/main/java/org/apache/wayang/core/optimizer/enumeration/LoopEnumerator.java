@@ -26,7 +26,7 @@ import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.util.OneTimeExecutable;
 import org.apache.wayang.core.util.Tuple;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -145,7 +145,7 @@ public class LoopEnumerator extends OneTimeExecutable {
         for (OutputSlot<?> execOutput : execOutputs) {
             final Junction existingJunction = loopImpl.getJunction(execOutput);
             if (existingJunction != null) {
-                LoggerFactory.getLogger(this.getClass()).debug(
+                LogManager.getLogger(this.getClass()).debug(
                         "Need to override existing {} for {} while closing loop.",
                         existingJunction, execOutput
                 );

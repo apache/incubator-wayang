@@ -33,8 +33,8 @@ import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.profiling.InstrumentationStrategy;
 import org.apache.wayang.core.util.AbstractReferenceCountable;
 import org.apache.wayang.core.util.Formats;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,7 +52,7 @@ import java.util.function.Supplier;
  */
 public class CrossPlatformExecutor implements ExecutionState {
 
-    public final Logger logger = LoggerFactory.getLogger(this.getClass());
+    public final Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * The {@link Job} that is being executed by this instance.

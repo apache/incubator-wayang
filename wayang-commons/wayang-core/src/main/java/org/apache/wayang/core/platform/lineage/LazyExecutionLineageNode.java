@@ -20,7 +20,7 @@ package org.apache.wayang.core.platform.lineage;
 
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.util.Tuple;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -95,7 +95,7 @@ public abstract class LazyExecutionLineageNode {
      * Mark that this instance should not be traversed any more.
      */
     protected void markAsExecuted() {
-        LoggerFactory.getLogger(this.getClass()).debug("Marking {} as executed.", this);
+        LogManager.getLogger(this.getClass()).debug("Marking {} as executed.", this);
         this.isExecuted = true;
 
         // Free pinned down ChannelInstances.

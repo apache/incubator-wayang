@@ -20,7 +20,7 @@ package org.apache.wayang.core.optimizer.cardinality;
 
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * Forwards the {@link CardinalityEstimate} of any given {@link InputSlot} that is not {@code null}. Asserts that
@@ -42,7 +42,7 @@ public class SwitchForwardCardinalityEstimator implements CardinalityEstimator {
             final CardinalityEstimate inputEstimate = inputEstimates[switchInputIndex];
             if (inputEstimate != null) {
                 if (forwardEstimate != null) {
-                    LoggerFactory.getLogger(this.getClass()).error("Conflicting estimates {} and {}.", forwardEstimate, inputEstimate);
+                    LogManager.getLogger(this.getClass()).error("Conflicting estimates {} and {}.", forwardEstimate, inputEstimate);
                 }
                 if (forwardEstimate == null || forwardEstimate.getCorrectnessProbability() > inputEstimate.getCorrectnessProbability()) {
                     forwardEstimate = inputEstimate;

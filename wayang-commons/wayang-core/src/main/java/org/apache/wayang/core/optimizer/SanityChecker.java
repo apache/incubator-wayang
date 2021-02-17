@@ -24,8 +24,8 @@ import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.Subplan;
 import org.apache.wayang.core.util.WayangCollections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,7 +42,7 @@ public class SanityChecker {
     /**
      * Logger.
      */
-    private final Logger logger = LoggerFactory.getLogger(SanityChecker.class);
+    private final Logger logger = LogManager.getLogger(SanityChecker.class);
 
     /**
      * Is subject to the sanity checks.

@@ -27,8 +27,8 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.core.profiling.CardinalityRepository;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This is the entry point for users to work with Wayang.
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public class WayangContext {
 
     @SuppressWarnings("unused")
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * Stores input/output cardinalities to provide better {@link CardinalityEstimator}s over time.

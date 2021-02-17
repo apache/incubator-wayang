@@ -16,7 +16,8 @@
 #
 
 language: java
-
+jdk:
+  - openjdk8
 notification:
   email:
     on_success: never
@@ -27,10 +28,30 @@ notification:
     on_success: never
     on_failure: never
     on_start: false
+#cache:
+#  directories:
+#    - .autoconf
+#    - $HOME/.m2
 
 install: true
 before_script:
   - mkdir -p travis/tmp
+  - echo "#" >> travis/wayang.properties
+  - echo "# Licensed to the Apache Software Foundation (ASF) under one or more" >> travis/wayang.properties
+  - echo "# contributor license agreements.  See the NOTICE file distributed with" >> travis/wayang.properties
+  - echo "# this work for additional information regarding copyright ownership." >> travis/wayang.properties
+  - echo "# The ASF licenses this file to You under the Apache License, Version 2.0" >> travis/wayang.properties
+  - echo "# (the "License"); you may not use this file except in compliance with" >> travis/wayang.properties
+  - echo "# the License.  You may obtain a copy of the License at" >> travis/wayang.properties
+  - echo "#" >> travis/wayang.properties
+  - echo "# http://www.apache.org/licenses/LICENSE-2.0" >> travis/wayang.properties
+  - echo "#" >> travis/wayang.properties
+  - echo "# Unless required by applicable law or agreed to in writing, software" >> travis/wayang.properties
+  - echo "# distributed under the License is distributed on an "AS IS" BASIS," >> travis/wayang.properties
+  - echo "# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied." >> travis/wayang.properties
+  - echo "# See the License for the specific language governing permissions and" >> travis/wayang.properties
+  - echo "# limitations under the License." >> travis/wayang.properties
+  - echo "#" >> travis/wayang.properties
   - echo "wayang.basic.tempdir = file://$(pwd)/travis/tmp" >> travis/wayang.properties
   - echo "spark.driver.host = localhost" >> travis/wayang.properties
   - echo "spark.master = local[1]" >> travis/wayang.properties
@@ -39,7 +60,12 @@ before_script:
   - echo "wayang.giraph.minWorkers = 1" >> travis/wayang.properties
   - echo "wayang.mapreduce.job.counters.limit = 200" >> travis/wayang.properties
   - cat travis/wayang.properties
-  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties")
+  - rm -rf /home/travis/build/apache/incubator-wayang/target/rat.txt
+  - rm -rf result.log
+  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=error" "-Dlog4j.rootLogger=ERROR")
 script:
-  - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}"
-
+  #- jdk_switcher use openjdk8
+  - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}" &> result.log
+  - cat /home/travis/build/apache/incubator-wayang/target/rat.txt
+  - tail -n 2000 result.log
+  - tail -n 2000 result.log

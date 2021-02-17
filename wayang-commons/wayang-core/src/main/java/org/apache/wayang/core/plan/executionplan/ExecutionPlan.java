@@ -21,8 +21,8 @@ package org.apache.wayang.core.plan.executionplan;
 import org.apache.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
 import org.apache.wayang.core.optimizer.enumeration.StageAssignmentTraversal;
 import org.apache.wayang.core.util.Counter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +41,7 @@ import java.util.stream.Stream;
  */
 public class ExecutionPlan {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * All {@link ExecutionStage}s without predecessors that need be executed at first.

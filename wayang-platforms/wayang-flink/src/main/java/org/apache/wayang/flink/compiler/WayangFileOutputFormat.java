@@ -33,8 +33,8 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.wayang.core.api.exception.WayangException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -79,7 +79,7 @@ public class WayangFileOutputFormat<IT> extends FileOutputFormat<IT> implements 
     /**
      * The LOG for logging messages in this class.
      */
-    private static final Logger LOG = LoggerFactory.getLogger(FileOutputFormat.class);
+    private static final Logger LOG = LogManager.getLogger(FileOutputFormat.class);
 
     /**
      * The key under which the name of the target path is stored in the configuration.

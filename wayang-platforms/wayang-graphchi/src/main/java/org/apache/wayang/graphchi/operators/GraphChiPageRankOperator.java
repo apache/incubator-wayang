@@ -44,8 +44,8 @@ import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.core.util.fs.LocalFileSystem;
 import org.apache.wayang.graphchi.platform.GraphChiPlatform;
 import org.apache.wayang.java.channels.StreamChannel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +67,7 @@ import java.util.stream.StreamSupport;
  */
 public class GraphChiPageRankOperator extends PageRankOperator implements GraphChiExecutionOperator {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     public GraphChiPageRankOperator(Integer numIterations) {
         super(numIterations);
