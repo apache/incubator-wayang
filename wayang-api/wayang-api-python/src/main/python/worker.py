@@ -71,7 +71,7 @@ def dump_stream(iterator, stream):
 
 
 def process(infile, outfile):
-    # TODO First we must receive the command + UDF
+    # TODO First we must receive the operator + UDF
     udf = lambda elem: elem.lower()
 
     def func(it):

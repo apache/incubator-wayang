@@ -77,11 +77,9 @@ class Operator:
         self.udf = cloudpickle.dumps(self.udf)
 
     def getIterator(self):
-        print("Recursion " + str(self.getID()) + " " + self.operator_type)
         if self.is_source():
-            print("iter")
             return self.iterator
-        print("vuelta")
+        # TODO this should iterate through previous REDESIGN
         return self.udf(self.previous[0].getIterator())
 
     def set_successor(self, suc):
