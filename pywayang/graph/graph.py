@@ -42,9 +42,9 @@ class Graph:
         for key in self.graph:
             print("Node: ", self.graph[key].operator_type, " - ", key)
             for key2 in self.graph[key].predecessors:
-                print("Papi: ", self.graph[key2].operator_type, " - ", self.graph[key].predecessors[key2], " - ", key2)
+                print("Parent: ", self.graph[key2].operator_type, " - ", self.graph[key].predecessors[key2], " - ", key2)
             for key2 in self.graph[key].successors:
-                print("Hijo: ", self.graph[key2].operator_type, " - ", self.graph[key].successors[key2], " - ", key2)
+                print("Child: ", self.graph[key2].operator_type, " - ", self.graph[key].successors[key2], " - ", key2)
 
     def get_node(self, id):
         # print("looking for id: ", id)
