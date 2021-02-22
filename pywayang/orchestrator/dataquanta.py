@@ -74,7 +74,11 @@ class DataQuanta:
         return DataQuanta(
             Operator(
                 operator_type="sink",
-                udf=func,
+
+                udf=path,
+                # To execute directly uncomment
+                #udf=func,
+
                 previous=self.operator,
                 wrapper="URL,end"
             ),

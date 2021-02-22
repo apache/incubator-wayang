@@ -1,0 +1,51 @@
+syntax="proto2";
+
+message Source{
+  optional int64 id = 1;
+  optional string type = 2;
+  optional string path = 3;
+}
+
+message Sink{
+  optional int64 id = 1;
+  optional string type = 2;
+  optional string path = 3;
+}
+
+message Operator{
+  optional int64 id = 1;
+  optional string type = 2;
+  optional bytes operator = 3;
+  optional bytes udf = 4;
+}
+
+message Plan{
+
+  enum Types{
+    string = 0;
+    integer = 1;
+  }
+
+  optional Source source = 1;
+  optional Sink sink = 2;
+  optional Types input = 3;
+  optional Types output = 4;
+  //repeated Operator operators = 5;
+}
+
+message Context{
+
+  enum Platform{
+    java = 0;
+    spark = 1;
+  }
+
+  repeated Platform platforms = 1;
+}
+
+message PyWayangPlan{
+
+  optional Plan plan = 1;
+  optional Context context = 2;
+
+}
