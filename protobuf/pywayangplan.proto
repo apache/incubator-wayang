@@ -43,7 +43,7 @@ message Context{
   repeated Platform platforms = 1;
 }
 
-message PyWayangPlan{
+message WayangPlan{
 
   optional Plan plan = 1;
   optional Context context = 2;

@@ -1,5 +1,6 @@
 from orchestrator.plan import Descriptor
 from orchestrator.dataquanta import DataQuantaBuilder
+from protobuf.planwriter import MessageWriter
 
 
 # Returns the Sink Executable Dataquanta of a DEMO plan
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     descriptor = Descriptor()
 
     plan = plan_basic(descriptor)
-    plan.execute()
+    # plan.execute()
 
     print("sources: ")
     for i in descriptor.get_sources():
@@ -39,3 +40,5 @@ if __name__ == '__main__':
     print("sinks: ")
     for i in descriptor.get_sinks():
         print(i.getID(), i.operator_type)
+
+    MessageWriter(source=descriptor.get_sources()[0], sink=descriptor.get_sinks()[0], operators=None)
