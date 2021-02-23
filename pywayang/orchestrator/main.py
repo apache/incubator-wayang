@@ -41,4 +41,6 @@ if __name__ == '__main__':
     for i in descriptor.get_sinks():
         print(i.getID(), i.operator_type)
 
+    print("source", descriptor.get_sources()[0].udf)
+    print("sink", descriptor.get_sinks()[0].udf)
     MessageWriter(source=descriptor.get_sources()[0], sink=descriptor.get_sinks()[0], operators=None)
