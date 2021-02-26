@@ -1,6 +1,8 @@
 import os
 import socket
 import struct
+import binascii
+import pickle
 
 
 class SpecialLengths(object):
@@ -71,11 +73,16 @@ def dump_stream(iterator, stream):
 
 
 def process(infile, outfile):
+    udf64 = os.environ["UDF"]
+    serialized_udf = binascii.a2b_base64(udf64)
+    func = pickle.loads(serialized_udf)
+    # func([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+
     # TODO First we must receive the operator + UDF
-    udf = lambda elem: elem.lower()
+    """udf = lambda elem: elem.lower()
 
     def func(it):
-        return sorted(it, key=udf)
+        return sorted(it, key=udf)"""
 
     # TODO Here we are temporarily assuming that the user is exclusively sending UTF8. User has several types
     iterator = UTF8Deserializer().load_stream(infile)
