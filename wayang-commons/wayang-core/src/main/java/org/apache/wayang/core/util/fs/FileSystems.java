@@ -20,8 +20,8 @@ package org.apache.wayang.core.util.fs;
 
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.util.LruCache;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 public class FileSystems {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystems.class);
+    private static final Logger LOGGER = LogManager.getLogger(FileSystems.class);
 
     /**
      * We need file sizes several times during the optimization process, so we cache them.
@@ -100,7 +100,7 @@ public class FileSystems {
         final Optional<FileSystem> fsOptional = getFileSystem(ostensibleInputFile);
 
         if (!fsOptional.isPresent()) {
-            LoggerFactory.getLogger(FileSystems.class).warn("Could not inspect input file {}.", ostensibleInputFile);
+            LogManager.getLogger(FileSystems.class).warn("Could not inspect input file {}.", ostensibleInputFile);
             return Collections.singleton(ostensibleInputFile);
         }
 

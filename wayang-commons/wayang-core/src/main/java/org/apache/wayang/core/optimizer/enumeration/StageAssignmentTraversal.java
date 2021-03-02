@@ -34,8 +34,8 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.util.Iterators;
 import org.apache.wayang.core.util.OneTimeExecutable;
 import org.apache.wayang.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
  */
 public class StageAssignmentTraversal extends OneTimeExecutable {
 
-    private static final Logger logger = LoggerFactory.getLogger(StageAssignmentTraversal.class);
+    private static final Logger logger = LogManager.getLogger(StageAssignmentTraversal.class);
 
     /**
      * Should be turned into a {@link ExecutionPlan}.

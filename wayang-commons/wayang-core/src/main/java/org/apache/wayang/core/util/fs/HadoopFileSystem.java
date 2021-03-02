@@ -23,8 +23,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FsUrlStreamHandlerFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.wayang.core.api.exception.WayangException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  */
 public class HadoopFileSystem implements FileSystem {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * Tells whether the necessary setup for this {@link FileSystem} has been performed.
@@ -56,11 +56,11 @@ public class HadoopFileSystem implements FileSystem {
         if (this.isInitialized) return;
 
         // Add handler for HDFS URL for java.net.URL
-        LoggerFactory.getLogger(HadoopFileSystem.class).info("Adding handler for HDFS URLs.");
+        LogManager.getLogger(HadoopFileSystem.class).info("Adding handler for HDFS URLs.");
         try {
             URL.setURLStreamHandlerFactory(new FsUrlStreamHandlerFactory());
         } catch (Throwable t) {
-            LoggerFactory.getLogger(HadoopFileSystem.class).error(
+            LogManager.getLogger(HadoopFileSystem.class).error(
                     "Could not set URL stream handler factory.", t
             );
         } finally {

@@ -34,8 +34,8 @@ import org.apache.wayang.spark.compiler.FunctionCompiler;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 import org.rrd4j.ConsolFun;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ import java.util.function.Supplier;
  */
 public abstract class SparkOperatorProfiler {
 
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LogManager.getLogger(this.getClass());
 
     protected Supplier<SparkExecutionOperator> operatorGenerator;
 

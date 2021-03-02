@@ -30,8 +30,8 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.ExecutionState;
 import org.apache.wayang.core.platform.Junction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;;
 
 import java.util.Collections;
 import java.util.Map;
@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class CardinalityEstimatorManager {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * The {@link WayangPlan} whose cardinalities are being managed.

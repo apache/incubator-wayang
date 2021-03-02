@@ -40,8 +40,8 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.util.Canonicalizer;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +64,7 @@ import java.util.stream.Stream;
  */
 public class PlanImplementation {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlanImplementation.class);
+    private static final Logger logger = LogManager.getLogger(PlanImplementation.class);
 
     /**
      * {@link ExecutionOperator}s contained in this instance.

@@ -18,7 +18,7 @@
 
 package org.apache.wayang.core.util;
 
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * This interface represents any piece of code that takes no input and produces no output but may fail.
@@ -40,7 +40,7 @@ public interface Action {
         try {
             this.execute();
         } catch (Throwable t) {
-            LoggerFactory.getLogger(Action.class).error("Execution failed.", t);
+            LogManager.getLogger(Action.class).error("Execution failed.", t);
         }
     }
 }

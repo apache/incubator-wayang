@@ -110,10 +110,8 @@
         <jodatime.version>2.10.6</jodatime.version>
         <jsonpath.version>2.4.0</jsonpath.version>
         <junit5.version>5.6.1</junit5.version>
-        <logback.version>1.2.3</logback.version>
         <mockito.version>3.5.10</mockito.version>
         <mockk.version>1.10.0</mockk.version>
-        <slf4j.version>1.7.26</slf4j.version>
         <external.platforms.scope>provided</external.platforms.scope>
         <hadoop.version>2.7.7</hadoop.version>
         <!-- To be overridden by individual modules -->
@@ -160,10 +158,15 @@
                 <external.platforms.scope>compile</external.platforms.scope>
             </properties>
         </profile>
-
+        <profile>
+            <id>distro</id>
+            <modules>
+                <module>wayang-distro</module>
+            </modules>
+        </profile>
         <profile>
             <!-- Profile to be activated when building the docs artifacts.  -->
-            <id>distro</id>
+            <id>build-docs</id>
             <properties>
                 <shared.resources>${project.build.directory}/shared-resources</shared.resources>
                 <maven.main.skip>false</maven.main.skip>
@@ -176,7 +179,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.wayang</groupId>
-                    <artifactId>wayang-distro_${scala.mayor.version}</artifactId>
+                    <artifactId>wayang-resources</artifactId>
                     <version>0.6.0-SNAPSHOT</version>
                     <type>zip</type>
                     <optional>true</optional>
@@ -671,6 +674,14 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Logging -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-bom</artifactId>
+                <version>2.14.0</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
             <dependency>
                 <groupId>org.scala-lang</groupId>
                 <artifactId>scala-library</artifactId>
@@ -712,29 +723,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-
-        <!-- Logging -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -975,6 +963,8 @@
 
                         <exclude>**/*.yaml</exclude>
 
+                        <exclude>**/*.log</exclude>
+                        <exclude>**/0-to-10000.sequence_file</exclude>
                         <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
                         <exclude>src/test/resources/ulysses.txt</exclude>
                         <exclude>src/test/resources/test.edgelist</exclude>
@@ -1135,11 +1125,11 @@
 
     <modules>
         <module>wayang-commons</module>
-        <module>wayang-distro</module>
         <module>wayang-platforms</module>
         <module>wayang-tests-integration</module>
         <module>wayang-api</module>
         <module>wayang-profiler</module>
         <module>wayang-extensions</module>
+        <module>wayang-resources</module>
     </modules>
 </project>

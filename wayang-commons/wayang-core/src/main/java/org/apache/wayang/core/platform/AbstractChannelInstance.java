@@ -22,7 +22,7 @@ import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.lineage.ChannelLineageNode;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.OptionalLong;
 
@@ -68,7 +68,7 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
     public void setMeasuredCardinality(long cardinality) {
         this.measuredCardinality.ifPresent(oldCardinality -> {
             if (oldCardinality != cardinality) {
-                LoggerFactory.getLogger(this.getClass()).warn(
+                LogManager.getLogger(this.getClass()).warn(
                         "Replacing existing measured cardinality of {} with {} (was {}).",
                         this.getChannel(),
                         cardinality,

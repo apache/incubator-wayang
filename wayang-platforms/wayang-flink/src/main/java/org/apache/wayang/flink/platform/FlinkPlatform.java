@@ -32,8 +32,8 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.flink.execution.FlinkContextReference;
 import org.apache.wayang.flink.execution.FlinkExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class FlinkPlatform extends Platform {
      */
     private FlinkContextReference flinkContextReference = null;
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     public static FlinkPlatform getInstance() {
         if (instance == null) {

@@ -38,7 +38,7 @@ import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -216,7 +216,7 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
                 try {
                     this.resultSet.close();
                 } catch (Throwable t) {
-                    LoggerFactory.getLogger(this.getClass()).error("Could not close result set.", t);
+                    LogManager.getLogger(this.getClass()).error("Could not close result set.", t);
                 } finally {
                     this.resultSet = null;
                 }

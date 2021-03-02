@@ -67,8 +67,8 @@ import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.core.util.OneTimeExecutable;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangCollections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -87,7 +87,7 @@ import java.util.stream.Collectors;
  */
 public class Job extends OneTimeExecutable {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * Guardian to avoid re-execution.

@@ -137,7 +137,7 @@ You can then copy them into your configuration.
 
 ## Examples
 
-For some executable examples, have a look at [this repository](https://www.github.com/sekruse/wayang-examples).
+For some executable examples, have a look at [this repository](https://github.com/sekruse/rheem-examples).
 
 ### WordCount
 
@@ -354,9 +354,9 @@ object kmeans {
 
 ## License
 
-Unless explicitly stated otherwise all files in this repository are licensed under the Apache Software License 2.0
+All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 Rheem Ecosystem
+Copyright 2020 Apache (incubating) Wayang Team
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

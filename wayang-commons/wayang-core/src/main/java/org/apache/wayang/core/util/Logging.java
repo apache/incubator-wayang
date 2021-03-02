@@ -18,8 +18,8 @@
 
 package org.apache.wayang.core.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Provide logging via {@link org.slf4j.Logger}.
@@ -32,7 +32,7 @@ public interface Logging {
      * @return the {@link Logger}
      */
     default Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
+        return LogManager.getLogger(this.getClass());
     }
 
 }

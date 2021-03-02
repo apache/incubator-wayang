@@ -19,8 +19,8 @@
 package org.apache.wayang.core.util.fs;
 
 import org.apache.wayang.core.api.exception.WayangException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  */
 public class LocalFileSystem implements FileSystem {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalFileSystem.class);
+    private static final Logger logger = LogManager.getLogger(LocalFileSystem.class);
 
     /**
      * Retrieves a directory that can be used for temporary files.

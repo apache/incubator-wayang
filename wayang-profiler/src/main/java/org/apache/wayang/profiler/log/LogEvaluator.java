@@ -28,8 +28,8 @@ import org.apache.wayang.core.profiling.ExecutionLog;
 import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -46,7 +46,7 @@ import java.util.stream.Stream;
  */
 public class LogEvaluator {
 
-    private static final Logger logger = LoggerFactory.getLogger(LogEvaluator.class);
+    private static final Logger logger = LogManager.getLogger(LogEvaluator.class);
 
     private final Configuration configuration;
 

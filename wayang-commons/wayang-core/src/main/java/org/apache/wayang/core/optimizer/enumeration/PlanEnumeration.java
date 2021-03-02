@@ -34,8 +34,8 @@ import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.util.MultiMap;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
  */
 public class PlanEnumeration {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlanEnumeration.class);
+    private static final Logger logger = LogManager.getLogger(PlanEnumeration.class);
 
     /**
      * The {@link OperatorAlternative}s for that an {@link OperatorAlternative.Alternative} has been picked.
