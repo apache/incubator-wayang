@@ -1,5 +1,6 @@
 package org.apache.wayang.api.python.executor;
 
+import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function.PythonUdf;
 import org.apache.wayang.core.api.exception.WayangException;
 
@@ -15,6 +16,7 @@ public class ProcessFeeder<Input, Output> {
 
     private Socket socket;
     private PythonUdf<Input, Output> udf;
+    private ByteString serializedUDF;
     private Iterable<Input> input;
 
     //TODO add to a config file
@@ -24,12 +26,14 @@ public class ProcessFeeder<Input, Output> {
     public ProcessFeeder(
             Socket socket,
             PythonUdf<Input, Output> udf,
+            ByteString serializedUDF,
             Iterable<Input> input){
 
         if(input == null) throw new WayangException("Nothing to process with Python API");
 
         this.socket = socket;
         this.udf = udf;
+        this.serializedUDF = serializedUDF;
         this.input = input;
 
     }
@@ -43,6 +47,7 @@ public class ProcessFeeder<Input, Output> {
             BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), BUFFER_SIZE);
             DataOutputStream dataOut = new DataOutputStream(stream);
 
+            writeUDF(serializedUDF, dataOut);
             this.writeIteratorToStream(input.iterator(), dataOut);
             dataOut.writeInt(END_OF_DATA_SECTION);
             dataOut.flush();
@@ -50,6 +55,14 @@ public class ProcessFeeder<Input, Output> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void writeUDF(ByteString serializedUDF, DataOutputStream dataOut){
+
+        //write(serializedUDF.toByteArray(), dataOut);
+        writeBytes(serializedUDF.toByteArray(), dataOut);
+        System.out.println("UDF written");
+
     }
 
     public void writeIteratorToStream(Iterator<Input> iter, DataOutputStream dataOut){
@@ -70,9 +83,10 @@ public class ProcessFeeder<Input, Output> {
             /**
              * Byte Array cases
              */
-            else if (obj instanceof Byte[] || obj instanceof byte[])
+            else if (obj instanceof Byte[] || obj instanceof byte[]) {
+                System.out.println("Writing Bytes");
                 writeBytes(obj, dataOut);
-
+            }
             /**
              * String case
              * */

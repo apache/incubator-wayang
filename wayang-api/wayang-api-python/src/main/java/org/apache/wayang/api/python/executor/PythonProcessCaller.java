@@ -1,5 +1,6 @@
 package org.apache.wayang.api.python.executor;
 
+import com.google.protobuf.ByteString;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 
@@ -7,7 +8,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 
 public class PythonProcessCaller {
@@ -20,7 +24,7 @@ public class PythonProcessCaller {
     //TODO How to get the config
     private Configuration configuration;
 
-    public PythonProcessCaller(){
+    public PythonProcessCaller(ByteString serializedUDF){
 
         //TODO create documentation to how to the configuration in the code
         this.configuration = new Configuration("file:///Users/rodrigopardomeza/wayang/incubator-wayang/wayang-api/wayang-api-python/src/main/resources/wayang-api-python-defaults.properties");
@@ -39,6 +43,10 @@ public class PythonProcessCaller {
             );
             Map<String, String> workerEnv = pb.environment();
             workerEnv.put("PYTHON_WORKER_FACTORY_PORT", String.valueOf(this.serverSocket.getLocalPort()));
+
+            // TODO See what is happening with ENV Python version
+            workerEnv.put("PYTHONPATH", "/Users/rodrigopardomeza/wayang/incubator-wayang/pywayang/:/Users/rodrigopardomeza/opt/anaconda3/");
+
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             pb.redirectError(ProcessBuilder.Redirect.INHERIT);
             this.process = pb.start();
