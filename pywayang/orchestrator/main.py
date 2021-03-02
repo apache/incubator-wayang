@@ -6,10 +6,20 @@ from protobuf.planwriter import MessageWriter
 # Returns the Sink Executable Dataquanta of a DEMO plan
 def plan_sort(descriptor):
     plan = DataQuantaBuilder(descriptor)
+    sink_dataquanta = \
+        plan.source("../test/words.txt") \
+            .sort(lambda elem: elem.lower()) \
+            .sink("../test/output.txt", end="")
+    return sink_dataquanta
+
+
+# Returns the Sink Executable Dataquanta of a DEMO plan
+def plan_filter(descriptor):
+    plan = DataQuantaBuilder(descriptor)
 
     sink_dataquanta = \
-        plan.source("../test/lines.txt") \
-            .sort(lambda elem: elem.lower()) \
+        plan.source("../test/numbers.txt") \
+            .filter(lambda elem: int(elem) % 2 != 0) \
             .sink("../test/output.txt", end="")
 
     return sink_dataquanta
@@ -27,11 +37,13 @@ def plan_basic(descriptor):
 
 
 if __name__ == '__main__':
-    # Plan will contain general info about the Rheem Plan created here
+
+    # Plan will contain general info about the Wayang Plan created here
     descriptor = Descriptor()
 
-    plan = plan_basic(descriptor)
-    # plan.execute()
+    plan_dataquanta_sink = plan_filter(descriptor)
+    #plan_dataquanta_sink.execute()
+    # plan_dataquanta_sink.console()
 
     print("sources: ")
     for i in descriptor.get_sources():
@@ -43,4 +55,5 @@ if __name__ == '__main__':
 
     print("source", descriptor.get_sources()[0].udf)
     print("sink", descriptor.get_sinks()[0].udf)
-    MessageWriter(source=descriptor.get_sources()[0], sink=descriptor.get_sinks()[0], operators=None)
+    # MessageWriter(source=descriptor.get_sources()[0], sink=descriptor.get_sinks()[0], operators=None)
+    MessageWriter(descriptor=descriptor)

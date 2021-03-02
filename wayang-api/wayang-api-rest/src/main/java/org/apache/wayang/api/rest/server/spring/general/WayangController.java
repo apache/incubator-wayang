@@ -1,9 +1,12 @@
 package org.apache.wayang.api.rest.server.spring.general;
 
+import org.apache.wayang.api.python.function.WrappedPythonFunction;
+import org.apache.wayang.basic.operators.MapPartitionsOperator;
 import org.apache.wayang.basic.operators.TextFileSink;
 import org.apache.wayang.basic.operators.TextFileSource;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.function.MapPartitionsDescriptor;
 import org.apache.wayang.core.types.DataSetType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,7 +35,8 @@ public class WayangController {
 
         try {
 
-            FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/message");
+            //FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/message");
+            FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/filter_message");
             Pywayangplan.WayangPlan plan = Pywayangplan.WayangPlan.parseFrom(inputStream);
 
             WayangContext wc = buildContext(plan);
@@ -109,7 +113,22 @@ public class WayangController {
                     t
             );
 
-            textFileSource.connectTo(0, textFileSink, 0);
+            /** There is only one operator*/
+            Pywayangplan.Operator op = plan.getPlan().getOperators(0);
+            MapPartitionsOperator<String, String> filter =
+                    new MapPartitionsOperator<>(
+                            new MapPartitionsDescriptor<String, String>(
+                                    new WrappedPythonFunction<String, String>(
+                                            l -> l,
+                                            op.getUdf()
+                                    ),
+                                    String.class,
+                                    String.class
+                            )
+                    );
+
+            textFileSource.connectTo(0, filter, 0);
+            filter.connectTo(0, textFileSink, 0);
             return new WayangPlan(textFileSink);
 
         } catch (MalformedURLException e) {
