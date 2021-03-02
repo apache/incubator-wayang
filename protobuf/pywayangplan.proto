@@ -15,7 +15,6 @@ message Sink{
 message Operator{
   optional int64 id = 1;
   optional string type = 2;
-  optional bytes operator = 3;
   optional bytes udf = 4;
 }
 
@@ -30,7 +29,7 @@ message Plan{
   optional Sink sink = 2;
   optional Types input = 3;
   optional Types output = 4;
-  //repeated Operator operators = 5;
+  repeated Operator operators = 5;
 }
 
 message Context{
