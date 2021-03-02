@@ -52,6 +52,7 @@ public class PythonWorkerManager<Input, Output> {
             feed.send();
             ProcessReceiver<Output> r = new ProcessReceiver<>(worker.getSocket());
             return r.getIterable();
+
         } else{
 
             int port = worker.getSocket().getLocalPort();
