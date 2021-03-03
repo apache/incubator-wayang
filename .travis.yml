@@ -35,6 +35,7 @@ notification:
 
 install: true
 before_script:
+  - sudo apt-get install -y protobuf-compiler
   - mkdir -p travis/tmp
   - echo "#" >> travis/wayang.properties
   - echo "# Licensed to the Apache Software Foundation (ASF) under one or more" >> travis/wayang.properties
