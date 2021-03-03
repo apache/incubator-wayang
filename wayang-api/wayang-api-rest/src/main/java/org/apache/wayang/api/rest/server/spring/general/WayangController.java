@@ -22,6 +22,7 @@ import org.apache.wayang.api.python.function.WrappedPythonFunction;
 import org.apache.wayang.basic.operators.MapPartitionsOperator;
 import org.apache.wayang.basic.operators.TextFileSink;
 import org.apache.wayang.basic.operators.TextFileSource;
+import org.apache.wayang.commons.serializable.OperatorProto;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.MapPartitionsDescriptor;
@@ -37,12 +38,12 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.stream.Stream;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
-import shapeless.TypeClass;
+
+import org.apache.wayang.commons.serializable.WayangPlanProto;
+
 
 @RestController
 public class WayangController {
@@ -55,7 +56,7 @@ public class WayangController {
 
             //FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/message");
             FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/filter_message");
-            Pywayangplan.WayangPlan plan = Pywayangplan.WayangPlan.parseFrom(inputStream);
+            WayangPlanProto plan = WayangPlanProto.parseFrom(inputStream);
 
             WayangContext wc = buildContext(plan);
             WayangPlan wp = buildPlan(plan);
@@ -81,7 +82,7 @@ public class WayangController {
 
     }
 
-    private WayangContext buildContext(Pywayangplan.WayangPlan plan) {
+    private WayangContext buildContext(WayangPlanProto plan) {
         WayangContext ctx = new WayangContext();
             /*for(Pywayangplan.Context.Platform platform : plan.getContext().getPlatformsList()){
                 if (platform.getNumber() == 0)
@@ -100,7 +101,7 @@ public class WayangController {
         return ctx;
     }
 
-    private WayangPlan buildPlan(Pywayangplan.WayangPlan plan) {
+    private WayangPlan buildPlan(WayangPlanProto plan) {
 
         try {
 
@@ -132,7 +133,7 @@ public class WayangController {
             );
 
             /** There is only one operator*/
-            Pywayangplan.Operator op = plan.getPlan().getOperators(0);
+            OperatorProto op = plan.getPlan().getOperators(0);
             MapPartitionsOperator<String, String> filter =
                     new MapPartitionsOperator<>(
                             new MapPartitionsDescriptor<String, String>(
