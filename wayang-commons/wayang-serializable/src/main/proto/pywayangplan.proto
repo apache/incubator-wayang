@@ -20,8 +20,8 @@ syntax="proto2";
 
 option java_multiple_files = true;
 option java_package = "org.apache.wayang.commons.serializable";
-option objc_class_prefix = "Proto";
-option java_outer_classname = "Proto";
+//option objc_class_prefix = "Proto";
+//option java_outer_classname = "Proto";
 
 message SourceProto{
   optional int64 id = 1;
