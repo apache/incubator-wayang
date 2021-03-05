@@ -21,7 +21,7 @@ package org.apache.wayang.core.plan.wayangplan;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.util.WayangCollections;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -175,7 +175,7 @@ public interface OperatorContainer {
 
         if (innerOutput != null) {
             if (compositeOperator.isLoopSubplan()) {
-                LoggerFactory.getLogger(this.getClass()).warn(
+                LogManager.getLogger(this.getClass()).warn(
                         "Will not propagate cardinality of {} back to {}.",
                         compositeOperator.getOutput(outputIndex),
                         innerOutput

@@ -31,7 +31,7 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -71,7 +71,7 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
         input.provideRdd()
                 .coalesce(1) // TODO: Remove. This only hotfixes the issue that JavaObjectFileSource reads only a single file.
                 .saveAsObjectFile(targetPath);
-        LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", targetPath);
+        LogManager.getLogger(this.getClass()).info("Writing dataset to {}.", targetPath);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

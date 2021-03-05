@@ -27,8 +27,8 @@ import org.apache.wayang.core.optimizer.costs.LoadEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfile;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -38,7 +38,7 @@ import java.util.Collections;
  */
 public class DynamicLoadProfileEstimators {
 
-    private static final Logger logger = LoggerFactory.getLogger(DynamicLoadProfileEstimators.class);
+    private static final Logger logger = LogManager.getLogger(DynamicLoadProfileEstimators.class);
 
 
     /**

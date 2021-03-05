@@ -40,7 +40,7 @@ import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -104,7 +104,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
             });
             ((JavaChannelInstance) inputs[0]).provideStream().forEach(streamChunker::push);
             streamChunker.fire();
-            LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", path);
+            LogManager.getLogger(this.getClass()).info("Writing dataset to {}.", path);
         } catch (IOException | UncheckedIOException e) {
             throw new WayangException("Could not write stream to sequence file.", e);
         }

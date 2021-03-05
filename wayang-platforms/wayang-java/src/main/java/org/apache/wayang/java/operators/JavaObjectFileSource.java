@@ -40,7 +40,7 @@ import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -203,7 +203,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
                 try {
                     this.sequenceFileReader.close();
                 } catch (Throwable t) {
-                    LoggerFactory.getLogger(this.getClass()).error("Closing failed.", t);
+                    LogManager.getLogger(this.getClass()).error("Closing failed.", t);
                 }
                 this.sequenceFileReader = null;
             }

@@ -27,8 +27,8 @@ import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.util.WayangCollections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -40,7 +40,7 @@ import java.util.List;
 public class Junction {
 
     @SuppressWarnings("unused")
-    private static final Logger logger = LoggerFactory.getLogger(Junction.class);
+    private static final Logger logger = LogManager.getLogger(Junction.class);
 
     private final OutputSlot<?> sourceOutput;
 

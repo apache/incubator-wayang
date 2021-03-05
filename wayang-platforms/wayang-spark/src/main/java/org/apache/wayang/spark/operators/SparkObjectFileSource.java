@@ -33,8 +33,8 @@ import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -47,7 +47,7 @@ import java.util.List;
  */
 public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExecutionOperator {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     private final String sourcePath;
 

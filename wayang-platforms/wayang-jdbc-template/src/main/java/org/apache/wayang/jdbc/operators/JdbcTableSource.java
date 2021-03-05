@@ -24,7 +24,7 @@ import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -90,7 +90,7 @@ public abstract class JdbcTableSource extends TableSource implements JdbcExecuti
                     return new CardinalityEstimate(cardinality, cardinality, 1d);
 
                 } catch (Exception e) {
-                    LoggerFactory.getLogger(this.getClass()).error(
+                    LogManager.getLogger(this.getClass()).error(
                             "Could not estimate cardinality for {}.", JdbcTableSource.this, e
                     );
 

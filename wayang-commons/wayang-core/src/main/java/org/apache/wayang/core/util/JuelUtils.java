@@ -23,7 +23,7 @@ import de.odysseus.el.TreeValueExpression;
 import de.odysseus.el.util.SimpleContext;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationUtils;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 import javax.el.ValueExpression;
 import java.util.HashMap;
@@ -90,9 +90,9 @@ public class JuelUtils {
                 final Argument argument = this.arguments.get(key);
                 if (argument == null) {
                     if (isExpectTooManyArguments) {
-                        LoggerFactory.getLogger(this.getClass()).debug("Unknown field \"{}\" (available: {}).", key, this.arguments.keySet());
+                        LogManager.getLogger(this.getClass()).debug("Unknown field \"{}\" (available: {}).", key, this.arguments.keySet());
                     } else {
-                        LoggerFactory.getLogger(this.getClass()).warn("Unknown field \"{}\" (available: {}).", key, this.arguments.keySet());
+                        LogManager.getLogger(this.getClass()).warn("Unknown field \"{}\" (available: {}).", key, this.arguments.keySet());
                     }
                 } else {
                     argument.expression.setValue(this.context, value);
