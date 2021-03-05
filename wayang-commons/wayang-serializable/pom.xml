@@ -60,7 +60,8 @@
                 <version>0.5.1</version>
                 <configuration>
                     <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}</protocArtifact>
-                    <protocExecutable>/usr/local/bin/protoc</protocExecutable>
+                    <protocExecutable>/usr/bin/protoc</protocExecutable>
+                    <!--<protocExecutable>/usr/local/bin/protoc</protocExecutable>-->
                 </configuration>
                 <executions>
                     <execution>
