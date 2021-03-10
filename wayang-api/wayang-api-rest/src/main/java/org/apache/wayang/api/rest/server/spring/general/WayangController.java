@@ -26,6 +26,7 @@ import org.apache.wayang.commons.serializable.OperatorProto;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.wayang.core.plan.wayangplan.OperatorBase;
 import org.apache.wayang.core.types.DataSetType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +39,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
+
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
@@ -132,7 +135,8 @@ public class WayangController {
                     t
             );
 
-            /** There is only one operator*/
+            connectOperators(textFileSource, textFileSink, plan.getPlan().getOperatorsList());
+            /** There is only one operator
             OperatorProto op = plan.getPlan().getOperators(0);
             MapPartitionsOperator<String, String> filter =
                     new MapPartitionsOperator<>(
@@ -147,7 +151,7 @@ public class WayangController {
                     );
 
             textFileSource.connectTo(0, filter, 0);
-            filter.connectTo(0, textFileSink, 0);
+            filter.connectTo(0, textFileSink, 0);*/
             return new WayangPlan(textFileSink);
 
         } catch (MalformedURLException e) {
@@ -155,5 +159,47 @@ public class WayangController {
         }
 
         throw new WayangException("Unable to create Plan");
+    }
+
+    private void connectOperators(
+            TextFileSource textFileSource,
+            TextFileSink textFileSink,
+            List<OperatorProto> operatorsList) {
+
+        MapPartitionsOperator<String, String> current = null;
+        OperatorBase previous = null;
+
+        if(operatorsList.size() < 1){
+            textFileSource.connectTo(0, textFileSink, 0);
+            return;
+        }
+
+        /* TODO operatorList should be a list of pipelines*/
+        /* This just describe the operation in one pipeline*/
+        for(OperatorProto op : operatorsList){
+
+            if(current == null)
+                previous = textFileSource;
+            else
+                previous = current;
+
+            current =
+                    new MapPartitionsOperator<>(
+                            new MapPartitionsDescriptor<String, String>(
+                                    new WrappedPythonFunction<String, String>(
+                                            l -> l,
+                                            op.getUdf()
+                                    ),
+                                    String.class,
+                                    String.class
+                            )
+                    );
+
+            previous.connectTo(0, current, 0);
+        }
+
+        current.connectTo(0, textFileSink, 0);
+
+        return;
     }
 }

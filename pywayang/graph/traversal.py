@@ -36,7 +36,7 @@ class Traversal:
             return
 
         for operator in iter(origin):
-            print("operator: ", operator.id)
+            print("operator origin: ", operator.id)
             node = graph.get_node(operator.id)
             self.app.visit_node(
                 node=node,

@@ -16,6 +16,10 @@
 #
 
 from orchestrator.operator import Operator
+from graph.graph import Graph
+from graph.traversal import Traversal
+import itertools
+import collections
 
 
 class DataQuantaBuilder:
@@ -33,7 +37,7 @@ class DataQuantaBuilder:
                 operator_type="source",
                 udf=source,
                 iterator=iter(source_ori),
-                wrapper="URL"
+                previous=[]
             ),
             descriptor=self.descriptor
         )
@@ -57,8 +61,7 @@ class DataQuanta:
             Operator(
                 operator_type="filter",
                 udf=func,
-                previous=self.operator,
-                wrapper="predicate"
+                previous=[self.operator]
             ),
             descriptor=self.descriptor
         )
@@ -71,8 +74,7 @@ class DataQuanta:
             Operator(
                 operator_type="map",
                 udf=func,
-                previous=self.operator,
-                wrapper="transform"
+                previous=[self.operator]
             ),
             descriptor=self.descriptor
         )
@@ -91,12 +93,11 @@ class DataQuanta:
             Operator(
                 operator_type="sink",
 
-                udf=path,
+                # udf=path,
                 # To execute directly uncomment
-                # udf=func,
+                udf=func,
 
-                previous=self.operator,
-                wrapper="URL,end"
+                previous=[self.operator]
             ),
             descriptor=self.descriptor
         )
@@ -110,8 +111,21 @@ class DataQuanta:
             Operator(
                 operator_type="sort",
                 udf=func,
-                previous=self.operator,
-                wrapper="wrapped_python"
+                previous=[self.operator]
+            ),
+            descriptor=self.descriptor
+        )
+
+    def union(self, other):
+
+        def func(iterator):
+            return itertools.chain(iterator, other.operator.getIterator())
+
+        return DataQuanta(
+            Operator(
+                operator_type="union",
+                udf=func,
+                previous=[self.operator, other.operator]
             ),
             descriptor=self.descriptor
         )
@@ -130,7 +144,83 @@ class DataQuanta:
     def execute(self):
         # print(self.operator.previous[0].operator_type)
         if self.operator.is_sink():
+            print(self.operator.operator_type)
+            print(self.operator.udf)
+            print(len(self.operator.previous))
             self.operator.udf(self.operator.previous[0].getIterator())
         else:
             print("Plan must call execute from SINK type of operator")
             raise RuntimeError
+
+    def unify_pipelines(self):
+
+        sinks = self.descriptor.get_sinks()
+        if len(sinks) == 0:
+            return
+
+        graph = Graph()
+        graph.populate(self.descriptor.get_sinks())
+
+        graph.print_adjlist()
+
+        print("END PRINTING!")
+
+        def define_pipelines(node1, current_pipeline, collection):
+            def store_unique(pipe_to_insert):
+                for pipe in collection:
+                    if equivalent_lists(pipe, pipe_to_insert):
+                        return
+                collection.append(pipe_to_insert)
+
+            def equivalent_lists(l1, l2):
+                if collections.Counter(l1) == collections.Counter(l2):
+                    return True
+                else:
+                    return False
+
+            if not current_pipeline:
+                current_pipeline = [node1]
+
+            elif node1.operator.is_boundary():
+                store_unique(current_pipeline.copy())
+                current_pipeline.clear()
+                current_pipeline.append(node1)
+
+            else:
+                current_pipeline.append(node1)
+
+            if node1.operator.sink:
+                store_unique(current_pipeline.copy())
+                current_pipeline.clear()
+
+            return current_pipeline
+
+        # Works over the graph
+        trans = Traversal(
+            graph=graph,
+            origin=self.descriptor.get_sources(),
+            # udf=lambda x, y, z: d(x, y, z)
+            # UDF always will receive:
+            # x: a Node object,
+            # y: an object representing the result of the last iteration,
+            # z: a collection to store final results inside your UDF
+            udf=lambda x, y, z: define_pipelines(x, y, z)
+        )
+
+        collected_stages = trans.get_collected_data()
+
+        # Setting dependencies
+
+        a = 0
+        # Stage is composed of Nodes
+        for stage in collected_stages:
+            a += 1
+            print("///")
+            print("stage", a)
+
+            for node in stage:
+
+                print(node.operator_type, node.id)
+                print(node.predecessors)
+
+                print(node.successors)

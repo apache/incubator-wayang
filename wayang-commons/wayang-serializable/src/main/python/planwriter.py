@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+# TODO when replaced by the original file, set this from generated file
 import protobuf.pywayangplan_pb2 as pwb
 import os
 import pickle
@@ -22,7 +23,7 @@ import struct
 import base64
 
 
-class OldMessageWriter:
+class MessageWriter:
 
     def __init__(self, descriptor):
 
@@ -66,70 +67,6 @@ class OldMessageWriter:
             func = pickle.loads(mid.udf)
             for i in func([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]):
                 print(i)"""
-
-        finalpath = "/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/filter_message"
-        planconf = pwb.WayangPlan()
-        try:
-            f = open(finalpath, "rb")
-            planconf.ParseFromString(f.read())
-            f.close()
-        except IOError:
-            print(finalpath + ": Could not open file.  Creating a new one.")
-
-        so = pwb.Source()
-        so.id = source.id
-        so.type = source.operator_type
-        so.path = os.path.abspath(source.udf)
-
-        operators = []
-        for mid in middle_operators:
-            op = pwb.Operator()
-            op.id = mid.id
-            op.type = mid.operator_type
-            op.udf = mid.udf
-            operators.append(op)
-
-        si = pwb.Sink()
-        si.id = sink.id
-        si.type = sink.operator_type
-        si.path = os.path.abspath(sink.udf)
-
-        plan = pwb.Plan()
-        plan.source.CopyFrom(so)
-        plan.sink.CopyFrom(si)
-        plan.operators.extend(operators)
-        plan.input = pwb.Plan.string
-        plan.output = pwb.Plan.string
-
-        ctx = pwb.Context()
-        ctx.platforms.extend([pwb.Context.Platform.java])
-
-        planconf.plan.CopyFrom(plan)
-        planconf.context.CopyFrom(ctx)
-
-        f = open(finalpath, "wb")
-        f.write(planconf.SerializeToString())
-        f.close()
-        pass
-
-
-class MessageWriter:
-
-    def __init__(self, descriptor):
-
-        sink = descriptor.get_sinks()[0]
-        source = descriptor.get_sources()[0]
-
-        op = source
-        visited = []
-        middle_operators = []
-        while op.sink is not True and len(op.successor) > 0:
-            pre = op.successor[0]
-            if pre not in visited and pre.sink is not True:
-
-                pre.serialize_udf()
-                middle_operators.append(pre)
-            op = pre
 
         finalpath = "/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/filter_message"
         planconf = pwb.WayangPlan()
