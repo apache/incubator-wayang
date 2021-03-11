@@ -118,6 +118,8 @@
         <java-module-name>org.apache.wayang.default</java-module-name>
         <scala.version>2.11.12</scala.version>
         <scala.mayor.version>2.11</scala.mayor.version>
+        <code.coverage.project.folder>${basedir}/</code.coverage.project.folder>
+        <code.coverage.overall.data.folder>${basedir}/target/aggregate.exec</code.coverage.overall.data.folder>
     </properties>
 
     <!-- Make Snapshots of Apache projects available -->
@@ -370,33 +372,6 @@
                 </plugins>
             </build>
         </profile>
-
-        <!-- TODO: At Apache we have a SonarCloud system setup to do this and it's configured by Jenkins. So this profile could be removed. -->
-        <profile>
-            <!-- Profile for SonarCube -->
-            <id>sonarcube</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>${jacoco.version}</version>
-                        <configuration>
-                            <destFile>${jacoco.destfile}</destFile>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>jacoco-initialize</id>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
 
 
         <profile>
@@ -1115,6 +1090,60 @@
                                     <version>1.8</version>
                                 </requireJavaVersion>
                             </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.3</version>
+                <executions>
+                    <execution>
+                        <id>coverage-initialize</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>coverage-report</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+<!--                    TODO addd the check to the minimum coverage -->
+<!--                    &lt;!&ndash; Threshold &ndash;&gt;-->
+<!--                    <execution>-->
+<!--                        <id>coverage-check</id>-->
+<!--                        <goals>-->
+<!--                            <goal>check</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+                    <execution>
+                        <id>report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>merge-results</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${code.coverage.project.folder}</directory>
+                                    <includes>
+                                        <include>**/target/jacoco.exec</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
+                            <destFile>${code.coverage.overall.data.folder}/aggregate.exec</destFile>
                         </configuration>
                     </execution>
                 </executions>

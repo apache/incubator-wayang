@@ -35,3 +35,12 @@ The modules are:
 - wayang-spark_#Scala_Version#
 - wayang-profiler_#Scala_Version#
 - wayang-tests-integration_#Scala_Version# 
+
+
+# Executing Coverage 
+
+```shell
+mvn clean verify jacoco:report
+```
+
+the final report is placed on `./target/aggregate.exec/aggregate.exec`
