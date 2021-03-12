@@ -857,7 +857,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.6</version>
+                    <version>3.7</version>
                     <configuration>
 
                     </configuration>
@@ -940,6 +940,9 @@
 
                         <exclude>**/*.log</exclude>
                         <exclude>**/0-to-10000.sequence_file</exclude>
+
+                        <exclude>**/*.svg</exclude>
+                        <exclude>**/Gemfile.lock</exclude>
                         <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
                         <exclude>src/test/resources/ulysses.txt</exclude>
                         <exclude>src/test/resources/test.edgelist</exclude>
@@ -1160,5 +1163,6 @@
         <module>wayang-profiler</module>
         <module>wayang-extensions</module>
         <module>wayang-resources</module>
+        <module>wayang-docs</module>
     </modules>
 </project>

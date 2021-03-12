@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>wayang</artifactId>
+        <groupId>org.apache.wayang</groupId>
+        <version>0.6.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>wayang-docs</artifactId>
+    <description>Generation of the documentation with jekyll</description>
+
+    <properties>
+        <github.global.server>github</github.global.server>
+        <github.site.userName>berttty</github.site.userName>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>de.saumya.mojo</groupId>
+                <artifactId>gem-maven-plugin</artifactId>
+                <version>1.1.8</version>
+                <executions>
+                    <execution>
+                        <id>bundle-install</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <file>${user.home}/.gem/bin/bundle</file>
+                            <execArgs>install --gemfile=src/main/resources/Gemfile</execArgs>
+                        </configuration>
+                        <phase>compile</phase>
+                    </execution>
+                    <execution>
+                        <id>generate-documentation</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <file>${user.home}/.gem/bin/jekyll</file>
+                            <execArgs>build --trace --source ${project.basedir}/src/main/resources --destination ${project.build.outputDirectory}/../site/website</execArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- run me with: mvn gem:exec@jekyll-serve -->
+                        <id>jekyll-serve</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <file>${user.home}/.gem/bin/jekyll</file>
+                            <execArgs>serve --trace --source ${project.basedir}/src/main/resources --destination ${project.build.outputDirectory}</execArgs>
+                        </configuration>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <gemHome>${user.home}/.gem/</gemHome>
+                    <gemPath>${user.home}/.gem/</gemPath>
+                    <supportNative>true</supportNative>
+                    <jrubyVersion>9.2.5.0</jrubyVersion>
+                    <addProjectClasspath>true</addProjectClasspath>
+                    <jrubyVerbose>false</jrubyVerbose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>site-maven-plugin</artifactId>
+                <version>0.12</version>
+                <configuration>
+                    <noJekyll>true</noJekyll>
+                    <repositoryOwner>apache</repositoryOwner>
+                    <repositoryName>incubator-wayang-website</repositoryName>
+                    <branch>refs/heads/asf-docs</branch>
+                    <message>Creating site for ${project.version}</message>
+                    <outputDirectory>${project.build.outputDirectory}/../site/website</outputDirectory>
+                    <includes>
+                        <include>**/*</include>
+                        <include>**/.asf.yaml</include>
+                    </includes>
+                    <merge>true</merge>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <phase>site</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <scm>
+        <url>https://github.com/apache/incubator-wayang-website</url>
+        <connection>scm:git:git://github.com/apache/incubator-wayang.git</connection>
+        <developerConnection>scm:git:git@github.com:apache/incubator-wayang.git</developerConnection>
+    </scm>
+
+
+    <repositories>
+        <repository>
+            <id>rubygems-proxy</id>
+            <name>Rubygems Proxy</name>
+            <url>http://rubygems-proxy.torquebox.org/releases</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>jekyll</artifactId>
+                <version>3.1.2</version>
+                <type>gem</type>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>liquid</artifactId>
+                <type>gem</type>
+                <version>4.0</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>kramdown</artifactId>
+                <type>gem</type>
+                <version>1.10.0</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>mercenary</artifactId>
+                <type>gem</type>
+                <version>0.3.5</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>safe_yaml</artifactId>
+                <type>gem</type>
+                <version>1.0.4</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>colorator</artifactId>
+                <type>gem</type>
+                <version>0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>rouge</artifactId>
+                <type>gem</type>
+                <version>1.10.1</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>jekyll-sass-converter</artifactId>
+                <type>gem</type>
+                <version>1.4.0</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>sass</artifactId>
+                <type>gem</type>
+                <version>3.4.22</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>jekyll-watch</artifactId>
+                <type>gem</type>
+                <version>1.3.1</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>listen</artifactId>
+                <type>gem</type>
+                <version>3.0.6</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>rb-fsevent</artifactId>
+                <type>gem</type>
+                <version>0.9.7</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>rb-inotify</artifactId>
+                <type>gem</type>
+                <version>0.9.7</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>ffi</artifactId>
+                <type>gem</type>
+                <version>1.9.10</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>celluloid-essentials</artifactId>
+                <version>0.20.5</version>
+                <type>gem</type>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>celluloid-supervision</artifactId>
+                <type>gem</type>
+                <version>0.20.5</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>yajl-ruby</artifactId>
+                <type>gem</type>
+                <version>1.2.1</version>
+            </dependency>
+            <dependency>
+                <groupId>rubygems</groupId>
+                <artifactId>bundler</artifactId>
+                <type>gem</type>
+                <version>1.11.2</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
