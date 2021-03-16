@@ -18,6 +18,7 @@
 from orchestrator.operator import Operator
 from graph.graph import Graph
 from graph.traversal import Traversal
+from protobuf.planwriter import MessageWriter
 import itertools
 import collections
 
@@ -37,7 +38,8 @@ class DataQuantaBuilder:
                 operator_type="source",
                 udf=source,
                 iterator=iter(source_ori),
-                previous=[]
+                previous=[],
+                python_exec=False
             ),
             descriptor=self.descriptor
         )
@@ -61,7 +63,8 @@ class DataQuanta:
             Operator(
                 operator_type="filter",
                 udf=func,
-                previous=[self.operator]
+                previous=[self.operator],
+                python_exec=True
             ),
             descriptor=self.descriptor
         )
@@ -74,7 +77,8 @@ class DataQuanta:
             Operator(
                 operator_type="map",
                 udf=func,
-                previous=[self.operator]
+                previous=[self.operator],
+                python_exec=True
             ),
             descriptor=self.descriptor
         )
@@ -93,11 +97,12 @@ class DataQuanta:
             Operator(
                 operator_type="sink",
 
-                # udf=path,
+                udf=path,
                 # To execute directly uncomment
-                udf=func,
+                # udf=func,
 
-                previous=[self.operator]
+                previous=[self.operator],
+                python_exec=False
             ),
             descriptor=self.descriptor
         )
@@ -111,7 +116,8 @@ class DataQuanta:
             Operator(
                 operator_type="sort",
                 udf=func,
-                previous=[self.operator]
+                previous=[self.operator],
+                python_exec=True
             ),
             descriptor=self.descriptor
         )
@@ -125,7 +131,8 @@ class DataQuanta:
             Operator(
                 operator_type="union",
                 udf=func,
-                previous=[self.operator, other.operator]
+                previous=[self.operator, other.operator],
+                python_exec=False
             ),
             descriptor=self.descriptor
         )
@@ -211,16 +218,22 @@ class DataQuanta:
 
         # Setting dependencies
 
+        writer = MessageWriter()
         a = 0
         # Stage is composed of Nodes
         for stage in collected_stages:
             a += 1
             print("///")
             print("stage", a)
-
-            for node in stage:
-
+            writer.process_pipeline(stage)
+            """for node in stage:
+                if node.python_exec:
+                    
                 print(node.operator_type, node.id)
                 print(node.predecessors)
 
-                print(node.successors)
+                print(node.successors)"""
+
+        print(">>>>>>>>>")
+        print(writer.operator_references)
+        print(writer.boundaries)
