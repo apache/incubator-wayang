@@ -27,13 +27,14 @@ pickle_protocol = pickle.HIGHEST_PROTOCOL
 class Operator:
 
     def __init__(
-            self, operator_type=None, udf=None, previous=None, iterator=None):
+            self, operator_type=None, udf=None, previous=None,
+            iterator=None, python_exec=False):
 
-        if previous:
+        """if previous:
             for p in previous:
                 print("|", p.operator_type, " - ", p.id)
         else:
-            print("Not have")
+            print("Not have")"""
 
         # Operator ID
         self.id = id(self)
@@ -80,7 +81,10 @@ class Operator:
                     prev.set_successor(self)
                     self.set_predecessor(prev)
 
-        print(str(self.getID()) + " " + self.operator_type, ", is boundary: ", self.is_boundary(), ", is source: ",
+        self.python_exec = python_exec
+
+        print("Operator:", str(self.getID()) + ", type:" + self.operator_type, ", PythonExecutable: ", self.python_exec,
+              ", is boundary: ", self.is_boundary(), ", is source: ",
               self.source, ", is sink: ", self.sink)
 
     def getID(self):
