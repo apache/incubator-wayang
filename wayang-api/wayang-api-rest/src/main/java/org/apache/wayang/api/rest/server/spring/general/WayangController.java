@@ -22,12 +22,13 @@ import org.apache.wayang.api.python.function.WrappedPythonFunction;
 import org.apache.wayang.basic.operators.MapPartitionsOperator;
 import org.apache.wayang.basic.operators.TextFileSink;
 import org.apache.wayang.basic.operators.TextFileSource;
+import org.apache.wayang.basic.operators.UnionAllOperator;
 import org.apache.wayang.commons.serializable.OperatorProto;
+import org.apache.wayang.commons.serializable.PlanProto;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.MapPartitionsDescriptor;
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
-import org.apache.wayang.core.types.DataSetType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,7 +40,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
@@ -58,7 +60,7 @@ public class WayangController {
         try {
 
             //FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/message");
-            FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/filter_message");
+            FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/pipelined_message");
             WayangPlanProto plan = WayangPlanProto.parseFrom(inputStream);
 
             WayangContext wc = buildContext(plan);
@@ -76,24 +78,9 @@ public class WayangController {
         return "Not working";
     }
 
-    public static URI createUri(String resourcePath) {
-        try {
-            return Thread.currentThread().getClass().getResource(resourcePath).toURI();
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Illegal URI.", e);
-        }
+    private WayangContext buildContext(WayangPlanProto plan){
 
-    }
-
-    private WayangContext buildContext(WayangPlanProto plan) {
         WayangContext ctx = new WayangContext();
-            /*for(Pywayangplan.Context.Platform platform : plan.getContext().getPlatformsList()){
-                if (platform.getNumber() == 0)
-                    ctx.with(Java.basicPlugin());
-                else if(platform.getNumber() == 1)
-                    ctx.with(Spark.basicPlugin());
-            }*/
-
         plan.getContext().getPlatformsList().forEach(platform -> {
             if (platform.getNumber() == 0)
                 ctx.with(Java.basicPlugin());
@@ -104,64 +91,154 @@ public class WayangController {
         return ctx;
     }
 
-    private WayangPlan buildPlan(WayangPlanProto plan) {
+    private WayangPlan buildPlan(WayangPlanProto plan){
 
-        try {
+        System.out.println(plan);
 
-            String sourcepath = plan.getPlan().getSource().getPath();
-            URL url = new File(sourcepath).toURI().toURL();
-            System.out.println("sourceurl");
-            System.out.println(url.toString());
-            TextFileSource textFileSource = new TextFileSource(url.toString());
+        PlanProto planProto = plan.getPlan();
+        LinkedList<OperatorProto> protoList = new LinkedList<>();
+        planProto.getSourcesList().forEach(protoList::addLast);
 
-            DataSetType d = null;
-            Class t = null;
-            switch (plan.getPlan().getOutput().getNumber()){
-                case 0:
-                    d = DataSetType.createDefault(String.class);
-                    t = String.class;
-                    break;
-                case 1:
-                    d = DataSetType.createDefault(Integer.class);
-                    t = Integer.class;
-                    break;
+        Map<String, OperatorBase> operators = new HashMap<>();
+        List<OperatorBase> sinks = new ArrayList<>();
+        while(! protoList.isEmpty()) {
+
+            OperatorProto proto = protoList.pollFirst();
+
+            /* Checking if protoOperator can be connected to the current WayangPlan*/
+            boolean processIt;
+            if(proto.getType().equals("source")) processIt = true;
+
+            else {
+                /* Checking if ALL predecessors were already processed */
+                processIt = true;
+                for(String predecessor : proto.getPredecessorsList()){
+                    if (!operators.containsKey(predecessor)) {
+                        processIt = false;
+                        break;
+                    }
+                }
             }
-            String sinkpath = plan.getPlan().getSink().getPath();
-            URL sink_url = new File(sinkpath).toURI().toURL();
-            System.out.println("sink");
-            System.out.println(sink_url.toString());
-            TextFileSink textFileSink = new TextFileSink(
-                    sink_url.toString(),
-                    t
-            );
 
-            connectOperators(textFileSource, textFileSink, plan.getPlan().getOperatorsList());
-            /** There is only one operator
-            OperatorProto op = plan.getPlan().getOperators(0);
-            MapPartitionsOperator<String, String> filter =
-                    new MapPartitionsOperator<>(
-                            new MapPartitionsDescriptor<String, String>(
-                                    new WrappedPythonFunction<String, String>(
-                                            l -> l,
-                                            op.getUdf()
-                                    ),
-                                    String.class,
-                                    String.class
-                            )
-                    );
+            /* Operators should not be processed twice*/
+            if(operators.containsKey(proto.getId())) processIt = false;
 
-            textFileSource.connectTo(0, filter, 0);
-            filter.connectTo(0, textFileSink, 0);*/
-            return new WayangPlan(textFileSink);
+            if(processIt) {
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+                /* Create and store Wayang operator */
+                OperatorBase operator = createOperatorByType(proto);
+                operators.put(proto.getId(), operator);
+
+                /*TODO Connect with predecessors requires more details in connection slot*/
+                int order = 0;
+                for (String pre_id : proto.getPredecessorsList()) {
+
+                    OperatorBase predecessor = operators.get(pre_id);
+                    /* Only works without replicate topology */
+                    predecessor.connectTo(0, operator, order);
+                    order++;
+
+                    if(proto.getType().equals("sink")){
+                        sinks.add(operator);
+                        //if(!sinks.contains(operator)) {
+                        //    sinks.add(operator);
+                        //}
+                    }
+                }
+
+                /*List of OperatorProto successors
+                 * They will be added to the protoList
+                 * nevertheless they must be processed only if the parents are in operators list */
+                List<OperatorProto> listSuccessors = planProto.getOperatorsList()
+                        .stream()
+                        .filter(t -> proto.getSuccessorsList().contains(t.getId()))
+                        .collect(Collectors.toList());
+                for (OperatorProto successor : listSuccessors){
+                    if(!protoList.contains(successor)){
+                        protoList.addLast(successor);
+                    }
+                }
+
+                List<OperatorProto> sinkSuccessors = planProto.getSinksList()
+                        .stream()
+                        .filter(t -> proto.getSuccessorsList().contains(t.getId()))
+                        .collect(Collectors.toList());
+                for (OperatorProto successor : sinkSuccessors){
+                    if(!protoList.contains(successor)){
+                        protoList.addLast(successor);
+                    }
+                }
+
+            } else {
+
+                /* In case we cannot process it yet, It must be added again at the end*/
+                protoList.addLast(proto);
+            }
         }
 
-        throw new WayangException("Unable to create Plan");
+        WayangPlan wayangPlan = new WayangPlan(sinks.get(0));
+        return wayangPlan;
     }
 
-    private void connectOperators(
+    public OperatorBase createOperatorByType(OperatorProto operator){
+
+        System.out.println("Typo: " + operator.getType());
+        switch(operator.getType()){
+            case "source":
+                try {
+                    String source_path = operator.getPath();
+                    URL url = new File(source_path).toURI().toURL();
+                    return new TextFileSource(url.toString());
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "sink":
+                try {
+                    String sink_path = operator.getPath();
+                    URL url = new File(sink_path).toURI().toURL();
+                    return new TextFileSink<String>(
+                            url.toString(),
+                            String.class
+                    );
+
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "map_partition":
+                return new MapPartitionsOperator<>(
+                    new MapPartitionsDescriptor<String, String>(
+                        new WrappedPythonFunction<String, String>(
+                            l -> l,
+                            operator.getUdf()
+                        ),
+                        String.class,
+                        String.class
+                    )
+                );
+
+            case "union":
+                System.out.println("procesando union");
+                return new UnionAllOperator<String>(
+                        String.class
+                );
+
+        }
+
+        throw new WayangException("Operator Type not supported");
+    }
+
+    public static URI createUri(String resourcePath) {
+        try {
+            return Thread.currentThread().getClass().getResource(resourcePath).toURI();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Illegal URI.", e);
+        }
+
+    }
+
+    private TextFileSink connectOperators(
             TextFileSource textFileSource,
             TextFileSink textFileSink,
             List<OperatorProto> operatorsList) {
@@ -171,7 +248,7 @@ public class WayangController {
 
         if(operatorsList.size() < 1){
             textFileSource.connectTo(0, textFileSink, 0);
-            return;
+            return textFileSink;
         }
 
         /* TODO operatorList should be a list of pipelines*/
@@ -200,6 +277,6 @@ public class WayangController {
 
         current.connectTo(0, textFileSink, 0);
 
-        return;
+        return textFileSink;
     }
 }
