@@ -40,6 +40,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,9 +59,7 @@ public class WayangController {
         System.out.println("detected!");
 
         try {
-
-            //FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/message");
-            FileInputStream inputStream = new FileInputStream("/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/pipelined_message");
+            FileInputStream inputStream = new FileInputStream(Paths.get(".").toRealPath() + "/protobuf/wayang_message");
             WayangPlanProto plan = WayangPlanProto.parseFrom(inputStream);
 
             WayangContext wc = buildContext(plan);
@@ -219,7 +218,6 @@ public class WayangController {
                 );
 
             case "union":
-                System.out.println("procesando union");
                 return new UnionAllOperator<String>(
                         String.class
                 );
@@ -238,45 +236,4 @@ public class WayangController {
 
     }
 
-    private TextFileSink connectOperators(
-            TextFileSource textFileSource,
-            TextFileSink textFileSink,
-            List<OperatorProto> operatorsList) {
-
-        MapPartitionsOperator<String, String> current = null;
-        OperatorBase previous = null;
-
-        if(operatorsList.size() < 1){
-            textFileSource.connectTo(0, textFileSink, 0);
-            return textFileSink;
-        }
-
-        /* TODO operatorList should be a list of pipelines*/
-        /* This just describe the operation in one pipeline*/
-        for(OperatorProto op : operatorsList){
-
-            if(current == null)
-                previous = textFileSource;
-            else
-                previous = current;
-
-            current =
-                    new MapPartitionsOperator<>(
-                            new MapPartitionsDescriptor<String, String>(
-                                    new WrappedPythonFunction<String, String>(
-                                            l -> l,
-                                            op.getUdf()
-                                    ),
-                                    String.class,
-                                    String.class
-                            )
-                    );
-
-            previous.connectTo(0, current, 0);
-        }
-
-        current.connectTo(0, textFileSink, 0);
-
-        return textFileSink;
-    }
 }
