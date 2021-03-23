@@ -80,10 +80,10 @@ class Operator:
 
         self.python_exec = python_exec
 
-        logging.info("Operator:", str(self.getID()) + ", type:" + self.operator_type, ", PythonExecutable: ",
-                     self.python_exec,
-                     ", is boundary: ", self.is_boundary(), ", is source: ",
-                     self.source, ", is sink: ", self.sink)
+        logging.info("Operator:" + str(self.getID()) + ", type:" + self.operator_type + ", PythonExecutable: " +
+                     str(self.python_exec) +
+                     ", is boundary: " + str(self.is_boundary()) + ", is source: " +
+                     str(self.source) + ", is sink: " + str(self.sink))
 
     def getID(self):
         return self.id

@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import logging
 
 
 class Descriptor:
@@ -22,6 +23,7 @@ class Descriptor:
         self.sinks = []
         self.sources = []
         self.boundary_operators = None
+        logging.basicConfig(filename='../config/execution.log', level=logging.DEBUG)
 
     def get_boundary_operators(self):
         return self.boundary_operators

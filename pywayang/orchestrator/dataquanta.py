@@ -235,7 +235,7 @@ class DataQuanta:
         for stage in collected_stages:
             a += 1
             logging.info("///")
-            logging.info("stage", a)
+            logging.info("stage" + str(a))
             writer.process_pipeline(stage)
 
         writer.set_dependencies()

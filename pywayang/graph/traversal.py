@@ -38,7 +38,7 @@ class Traversal:
             return
 
         for operator in iter(origin):
-            logging.debug("operator origin: ", operator.id)
+            logging.debug("operator origin: " + str(operator.id))
             node = graph.get_node(operator.id)
             self.app.visit_node(
                 node=node,

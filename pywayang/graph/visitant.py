@@ -35,16 +35,16 @@ class Visitant(Visitor):
     # UDF can store results in ApplyFunction.collection whenever its requires.
     # last_iter has the generated current value obtained in the previous iteration
     def visit_node(self, node, udf, orientation, last_iter):
-        logging.debug("Applying UDf", orientation)
+        logging.debug("Applying UDf" + str(orientation))
         current_value = udf(node, last_iter, self.collection)
-        logging.debug("orientation result ", getattr(node, orientation))
+        logging.debug("orientation result " + str(getattr(node, orientation)))
         next_iter = getattr(node, orientation)
         if len(next_iter) > 0:
             for next_iter_id in next_iter:
                 if next_iter_id:
-                    logging.debug("next_id: ", next_iter_id)
+                    logging.debug("next_id: " + str(next_iter_id))
                     next_iter_node = self.graph.get_node(next_iter_id)
-                    logging.debug("next_iter_node: ", next_iter_node.operator_type, next_iter_node.id)
+                    logging.debug("next_iter_node: " + next_iter_node.operator_type + " " + str(next_iter_node.id))
                     next_iter_node.accept(visitor=self, udf=udf, orientation=orientation, last_iter=current_value)
         pass
 

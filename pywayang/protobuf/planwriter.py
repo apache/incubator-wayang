@@ -69,7 +69,7 @@ class MessageWriter:
         nested_predecessors = None
         nested_successors = None
         for node in reversed(stage):
-            logging.debug(node.operator_type, "executable:", node.python_exec, "id:", node.id)
+            logging.debug(node.operator_type + " executable: " + str(node.python_exec) + " id: " + str(node.id))
 
             if not node.python_exec:
                 if nested_udf is not None:
