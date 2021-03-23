@@ -95,17 +95,50 @@ def plan_junction(descriptor):
     return sink_dataquanta
 
 
+def plan_java_junction(descriptor):
+
+    plan = DataQuantaBuilder(descriptor)
+
+    dq_source_a = plan.source("../test/lines.txt")
+    dq_source_b = plan.source("../test/morelines.txt")
+    sink_dataquanta = dq_source_a.union(dq_source_b) \
+        .filter(lambda elem: str(elem).startswith("I")) \
+        .sort(lambda elem: elem.lower()) \
+        .sink("../test/output.txt", end="")
+
+    return sink_dataquanta
+
+def plan_full_java(descriptor):
+
+    plan = DataQuantaBuilder(descriptor)
+
+    dq_source_a = plan.source("../test/lines.txt")
+    dq_source_b = plan.source("../test/morelines.txt")
+    sink_dataquanta = dq_source_a.union(dq_source_b) \
+        .sink("../test/output.txt", end="")
+
+    return sink_dataquanta
+
+
 if __name__ == '__main__':
 
     # Plan will contain general info about the Wayang Plan created here
     descriptor = Descriptor()
 
-    plan_dataquanta_sink = plan_junction(descriptor)
-    plan_dataquanta_sink.execute()
-
-    print(descriptor.get_sources())
+    plan_dataquanta_sink = plan_java_junction(descriptor)
+    # plan_dataquanta_sink.execute()
 
     plan_dataquanta_sink.unify_pipelines()
+
+
+    """def f1(iterator):
+        return sorted(iterator, key=lambda elem: elem.lower())
+
+    def f2(iterator):
+        return filter(lambda elem: str(elem).startswith("f"), iterator)
+
+    t = f2(f1)"""
+
 
     # plan_dataquanta_sink.execute()
     # plan_dataquanta_sink.console()
