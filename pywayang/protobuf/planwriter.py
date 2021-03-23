@@ -36,8 +36,8 @@ class MessageWriter:
         source.type = operator_type
         source.path = os.path.abspath(path)
         source.udf = chr(0).encode('utf-8')
-        #source.predecessors = predecessors
-        #source.successors = successors
+        # source.predecessors = predecessors
+        # source.successors = successors
         self.sources.append(source)
         return source
 
@@ -47,8 +47,8 @@ class MessageWriter:
         sink.type = operator_type
         sink.path = os.path.abspath(path)
         sink.udf = chr(0).encode('utf-8')
-        #sink.predecessors = predecessors
-        #sink.successors = successors
+        # sink.predecessors = predecessors
+        # sink.successors = successors
         self.sinks.append(sink)
         return sink
 
@@ -58,8 +58,8 @@ class MessageWriter:
         op.type = operator_type
         op.udf = cloudpickle.dumps(udf)
         op.path = str(path)
-        #op.predecessors = predecessors
-        #op.successors = successors
+        # op.predecessors = predecessors
+        # op.successors = successors
         self.operators.append(op)
         return op
 
@@ -72,8 +72,8 @@ class MessageWriter:
         nested_predecessors = None
         nested_successors = None
         for node in reversed(stage):
-            print("########")
-            print(node.operator_type, "executable:", node.python_exec, "id:", node.id)
+            # print("########")
+            # print(node.operator_type, "executable:", node.python_exec, "id:", node.id)
 
             if not node.python_exec:
                 if nested_udf is not None:
@@ -86,11 +86,11 @@ class MessageWriter:
 
                     ids = nested_id.split(",")
                     for id in ids:
-                        self.operator_references[id] = op
+                        self.operator_references[str(id)] = op
 
-                    self.boundaries[nested_id] = {}
-                    self.boundaries[nested_id]["end"] = nested_successors
-                    self.boundaries[nested_id]["start"] = nested_predecessors
+                    self.boundaries[str(nested_id)] = {}
+                    self.boundaries[str(nested_id)]["end"] = nested_successors
+                    self.boundaries[str(nested_id)]["start"] = nested_predecessors
 
                     nested_udf = None
                     nested_id = ""
@@ -101,27 +101,27 @@ class MessageWriter:
                     op = self.add_source(
                         node.id, node.operator_type, node.operator.udf,
                         node.predecessors, node.operator.successor)
-                    self.operator_references[node.id] = op
-                    self.boundaries[node.id] = {}
-                    self.boundaries[node.id]["end"] = node.successors
+                    self.operator_references[str(node.id)] = op
+                    self.boundaries[str(node.id)] = {}
+                    self.boundaries[str(node.id)]["end"] = node.successors.keys()
 
                 elif node.operator.sink:
                     op = self.add_sink(
                         node.id, node.operator_type, node.operator.udf,
                         node.predecessors, node.operator.successor)
-                    self.operator_references[node.id] = op
-                    self.boundaries[node.id] = {}
-                    self.boundaries[node.id]["start"] = node.predecessors
+                    self.operator_references[str(node.id)] = op
+                    self.boundaries[str(node.id)] = {}
+                    self.boundaries[str(node.id)]["start"] = node.predecessors.keys()
 
                 # Regular operator to be processed in Java
                 else:
                     op = self.add_operator(
                         node.id, node.operator_type, node.operator.udf, None,
                         node.predecessors, node.operator.successor)
-                    self.operator_references[node.id] = op
-                    self.boundaries[node.id] = {}
-                    self.boundaries[node.id]["start"] = node.predecessors
-                    self.boundaries[node.id]["end"] = node.successors
+                    self.operator_references[str(node.id)] = op
+                    self.boundaries[str(node.id)] = {}
+                    self.boundaries[str(node.id)]["start"] = node.predecessors.keys()
+                    self.boundaries[str(node.id)]["end"] = node.successors.keys()
 
             else:
 
@@ -129,14 +129,14 @@ class MessageWriter:
                     nested_udf = node.operator.udf
                     nested_id = node.id
                     # It is the last operator to execute in the map partition
-                    nested_successors = node.successors
+                    nested_successors = node.successors.keys()
 
                 else:
                     nested_udf = self.concatenate(nested_udf, node.operator.udf)
                     nested_id = str(node.id) + "," + str(nested_id)
 
                 # Every iteration assign the first known predecessors
-                nested_predecessors = node.predecessors
+                nested_predecessors = node.predecessors.keys()
 
         # Just in case in the future some pipelines start with Python operators
         if nested_udf is not None:
@@ -153,14 +153,15 @@ class MessageWriter:
             self.boundaries[nested_id]["start"] = nested_predecessors
 
     def __init__(self):
-        print("lala")
+        pass
 
     def concatenate(self, function_a, function_b):
         def executable(iterable):
             return function_a(function_b(iterable))
+
         return executable
 
-    def old(self, descriptor):
+    """def old(self, descriptor):
 
         sink = descriptor.get_sinks()[0]
         source = descriptor.get_sources()[0]
@@ -218,7 +219,78 @@ class MessageWriter:
         f = open(finalpath, "wb")
         f.write(planconf.SerializeToString())
         f.close()
-        pass
+        pass"""
 
-    def pipeline_singleton(self):
-        print("lala")
+    def set_dependencies(self):
+        print("Assigning dependencies")
+
+        for source in self.sources:
+            """print("sources")
+            print("id", source.id)
+            print(type(source.id))
+            print("refs", self.operator_references[source.id])
+            print(self.boundaries[source.id])"""
+
+            if 'end' in self.boundaries[source.id]:
+                op_successors = []
+                for op_id in self.boundaries[source.id]['end']:
+                    op_successors.append(str(self.operator_references[str(op_id)].id))
+                source.successors.extend(op_successors)
+
+        for sink in self.sinks:
+            if 'start' in self.boundaries[sink.id]:
+                op_predecessors = []
+                for op_id in self.boundaries[sink.id]['start']:
+                    op_predecessors.append(str(self.operator_references[str(op_id)].id))
+                sink.predecessors.extend(op_predecessors)
+
+        for op in self.operators:
+            if 'start' in self.boundaries[op.id]:
+                op_predecessors = []
+                for op_id in self.boundaries[op.id]['start']:
+                    op_predecessors.append(str(self.operator_references[str(op_id)].id))
+                op.predecessors.extend(op_predecessors)
+
+            if 'end' in self.boundaries[op.id]:
+                op_successors = []
+                for op_id in self.boundaries[op.id]['end']:
+                    op_successors.append(str(self.operator_references[str(op_id)].id))
+                op.successors.extend(op_successors)
+
+        """for ref in self.operator_references.keys():
+            print("key", ref)
+            print("type", type(ref))
+            print(self.operator_references[ref])
+            print("CHANGE!!!!")
+            print(self.operators)"""
+
+    def write_message(self):
+
+        # TODO From config file
+        finalpath = "/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/pipelined_message"
+        plan_configuration = pwb.WayangPlanProto()
+
+        try:
+            f = open(finalpath, "rb")
+            plan_configuration.ParseFromString(f.read())
+            f.close()
+        except IOError:
+            print(finalpath + ": Could not open file.  Creating a new one.")
+
+        plan = pwb.PlanProto()
+        plan.sources.extend(self.sources)
+        plan.operators.extend(self.operators)
+        plan.sinks.extend(self.sinks)
+        plan.input = pwb.PlanProto.string
+        plan.output = pwb.PlanProto.string
+
+        ctx = pwb.ContextProto()
+        ctx.platforms.extend([pwb.ContextProto.PlatformProto.java])
+
+        plan_configuration.plan.CopyFrom(plan)
+        plan_configuration.context.CopyFrom(ctx)
+
+        f = open(finalpath, "wb")
+        f.write(plan_configuration.SerializeToString())
+        f.close()
+        pass

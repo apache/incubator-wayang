@@ -30,6 +30,7 @@ class Node(Element):
         self.id = id
         self.predecessors = {}
         self.successors = {}
+        self.python_exec = operator.python_exec
 
         # Temporal
         self.operator = operator

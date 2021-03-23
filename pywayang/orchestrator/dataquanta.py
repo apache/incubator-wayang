@@ -168,9 +168,8 @@ class DataQuanta:
         graph = Graph()
         graph.populate(self.descriptor.get_sinks())
 
-        graph.print_adjlist()
-
-        print("END PRINTING!")
+        # graph.print_adjlist()
+        # print("END PRINTING!")
 
         def define_pipelines(node1, current_pipeline, collection):
             def store_unique(pipe_to_insert):
@@ -226,14 +225,7 @@ class DataQuanta:
             print("///")
             print("stage", a)
             writer.process_pipeline(stage)
-            """for node in stage:
-                if node.python_exec:
-                    
-                print(node.operator_type, node.id)
-                print(node.predecessors)
 
-                print(node.successors)"""
+        writer.set_dependencies()
 
-        print(">>>>>>>>>")
-        print(writer.operator_references)
-        print(writer.boundaries)
+        writer.write_message()
