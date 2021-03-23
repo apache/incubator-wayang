@@ -17,12 +17,12 @@
 
 import protobuf.pywayangplan_pb2 as pwb
 import os
-import pickle
 import cloudpickle
-import struct
-import base64
+import logging
+import pathlib
 
 
+# Writes Wayang Plan from several stages
 class MessageWriter:
     sources = []
     operators = []
@@ -30,41 +30,38 @@ class MessageWriter:
     operator_references = {}
     boundaries = {}
 
-    def add_source(self, operator_id, operator_type, path, predecessors, successors):
+    # Creates and appends Source type of operator
+    def add_source(self, operator_id, operator_type, path):
         source = pwb.OperatorProto()
         source.id = str(operator_id)
         source.type = operator_type
         source.path = os.path.abspath(path)
         source.udf = chr(0).encode('utf-8')
-        # source.predecessors = predecessors
-        # source.successors = successors
         self.sources.append(source)
         return source
 
-    def add_sink(self, operator_id, operator_type, path, predecessors, successors):
+    # Creates and appends Sink type of operator
+    def add_sink(self, operator_id, operator_type, path):
         sink = pwb.OperatorProto()
         sink.id = str(operator_id)
         sink.type = operator_type
         sink.path = os.path.abspath(path)
         sink.udf = chr(0).encode('utf-8')
-        # sink.predecessors = predecessors
-        # sink.successors = successors
         self.sinks.append(sink)
         return sink
 
-    def add_operator(self, operator_id, operator_type, udf, path, predecessors, successors):
+    # Creates and appends an operator
+    def add_operator(self, operator_id, operator_type, udf):
         op = pwb.OperatorProto()
         op.id = str(operator_id)
         op.type = operator_type
         op.udf = cloudpickle.dumps(udf)
-        op.path = str(path)
-        # op.predecessors = predecessors
-        # op.successors = successors
+        op.path = str(None)
         self.operators.append(op)
         return op
 
-    # TODO define how dependency will be described
-    # should be list of ids
+    # Receive a chain of operators, separate them in Wayang Operators
+    # Compacts several Python executable operators in one Map Partition Wayang Operator
     def process_pipeline(self, stage):
 
         nested_udf = None
@@ -72,17 +69,14 @@ class MessageWriter:
         nested_predecessors = None
         nested_successors = None
         for node in reversed(stage):
-            # print("########")
-            # print(node.operator_type, "executable:", node.python_exec, "id:", node.id)
+            logging.debug(node.operator_type, "executable:", node.python_exec, "id:", node.id)
 
             if not node.python_exec:
                 if nested_udf is not None:
 
                     # Predecessors depends on last operator
                     # Successors depends on first operator
-                    op = self.add_operator(
-                        nested_id, "map_partition", nested_udf, None,
-                        None, None)
+                    op = self.add_operator(nested_id, "map_partition", nested_udf)
 
                     ids = nested_id.split(",")
                     for id in ids:
@@ -98,26 +92,20 @@ class MessageWriter:
                     nested_successors = None
 
                 if node.operator.source:
-                    op = self.add_source(
-                        node.id, node.operator_type, node.operator.udf,
-                        node.predecessors, node.operator.successor)
+                    op = self.add_source(node.id, node.operator_type, node.operator.udf)
                     self.operator_references[str(node.id)] = op
                     self.boundaries[str(node.id)] = {}
                     self.boundaries[str(node.id)]["end"] = node.successors.keys()
 
                 elif node.operator.sink:
-                    op = self.add_sink(
-                        node.id, node.operator_type, node.operator.udf,
-                        node.predecessors, node.operator.successor)
+                    op = self.add_sink(node.id, node.operator_type, node.operator.udf)
                     self.operator_references[str(node.id)] = op
                     self.boundaries[str(node.id)] = {}
                     self.boundaries[str(node.id)]["start"] = node.predecessors.keys()
 
                 # Regular operator to be processed in Java
                 else:
-                    op = self.add_operator(
-                        node.id, node.operator_type, node.operator.udf, None,
-                        node.predecessors, node.operator.successor)
+                    op = self.add_operator(node.id, node.operator_type, node.operator.udf)
                     self.operator_references[str(node.id)] = op
                     self.boundaries[str(node.id)] = {}
                     self.boundaries[str(node.id)]["start"] = node.predecessors.keys()
@@ -140,9 +128,7 @@ class MessageWriter:
 
         # Just in case in the future some pipelines start with Python operators
         if nested_udf is not None:
-            self.add_operator(
-                nested_id, "map_partition", nested_udf, None,
-                None, None)
+            self.add_operator(nested_id, "map_partition", nested_udf)
 
             ids = nested_id.split(",")
             for id in ids:
@@ -155,81 +141,18 @@ class MessageWriter:
     def __init__(self):
         pass
 
-    def concatenate(self, function_a, function_b):
+    # Takes 2 Functions and compact them in only one function
+    @staticmethod
+    def concatenate(function_a, function_b):
         def executable(iterable):
             return function_a(function_b(iterable))
 
         return executable
 
-    """def old(self, descriptor):
-
-        sink = descriptor.get_sinks()[0]
-        source = descriptor.get_sources()[0]
-
-        op = source
-        visited = []
-        middle_operators = []
-        while op.sink is not True and len(op.successor) > 0:
-            pre = op.successor[0]
-            if pre not in visited and pre.sink is not True:
-                pre.serialize_udf()
-                middle_operators.append(pre)
-            op = pre
-
-        finalpath = "/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/filter_message"
-        planconf = pwb.WayangPlan()
-        try:
-            f = open(finalpath, "rb")
-            planconf.ParseFromString(f.read())
-            f.close()
-        except IOError:
-            print(finalpath + ": Could not open file.  Creating a new one.")
-
-        so = pwb.Source()
-        so.id = source.id
-        so.type = source.operator_type
-        so.path = os.path.abspath(source.udf)
-
-        operators = []
-        for mid in middle_operators:
-            op = pwb.Operator()
-            op.id = mid.id
-            op.type = mid.operator_type
-            op.udf = mid.udf
-            operators.append(op)
-
-        si = pwb.Sink()
-        si.id = sink.id
-        si.type = sink.operator_type
-        si.path = os.path.abspath(sink.udf)
-
-        plan = pwb.Plan()
-        plan.source.CopyFrom(so)
-        plan.sink.CopyFrom(si)
-        plan.operators.extend(operators)
-        plan.input = pwb.Plan.string
-        plan.output = pwb.Plan.string
-
-        ctx = pwb.Context()
-        ctx.platforms.extend([pwb.Context.Platform.java])
-
-        planconf.plan.CopyFrom(plan)
-        planconf.context.CopyFrom(ctx)
-
-        f = open(finalpath, "wb")
-        f.write(planconf.SerializeToString())
-        f.close()
-        pass"""
-
+    # Set dependencies over final Wayang Operators
     def set_dependencies(self):
-        print("Assigning dependencies")
 
         for source in self.sources:
-            """print("sources")
-            print("id", source.id)
-            print(type(source.id))
-            print("refs", self.operator_references[source.id])
-            print(self.boundaries[source.id])"""
 
             if 'end' in self.boundaries[source.id]:
                 op_successors = []
@@ -257,17 +180,10 @@ class MessageWriter:
                     op_successors.append(str(self.operator_references[str(op_id)].id))
                 op.successors.extend(op_successors)
 
-        """for ref in self.operator_references.keys():
-            print("key", ref)
-            print("type", type(ref))
-            print(self.operator_references[ref])
-            print("CHANGE!!!!")
-            print(self.operators)"""
-
+    # Writes the message to a local directory
     def write_message(self):
 
-        # TODO From config file
-        finalpath = "/Users/rodrigopardomeza/wayang/incubator-wayang/protobuf/pipelined_message"
+        finalpath = "../../protobuf/wayang_message"
         plan_configuration = pwb.WayangPlanProto()
 
         try:
@@ -275,7 +191,7 @@ class MessageWriter:
             plan_configuration.ParseFromString(f.read())
             f.close()
         except IOError:
-            print(finalpath + ": Could not open file.  Creating a new one.")
+            logging.warn("File " + finalpath + " did not exist. System generated a new file")
 
         plan = pwb.PlanProto()
         plan.sources.extend(self.sources)
