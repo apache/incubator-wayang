@@ -20,21 +20,18 @@ import cloudpickle
 from config.config_reader import get_source_types
 from config.config_reader import get_sink_types
 from config.config_reader import get_boundary_types
+import logging
 
 pickle_protocol = pickle.HIGHEST_PROTOCOL
 
 
+# Describes an Operation over an intermediate result
+# Each operation could be processed by Python or Java platforms
 class Operator:
 
     def __init__(
             self, operator_type=None, udf=None, previous=None,
             iterator=None, python_exec=False):
-
-        """if previous:
-            for p in previous:
-                print("|", p.operator_type, " - ", p.id)
-        else:
-            print("Not have")"""
 
         # Operator ID
         self.id = id(self)
@@ -83,9 +80,10 @@ class Operator:
 
         self.python_exec = python_exec
 
-        print("Operator:", str(self.getID()) + ", type:" + self.operator_type, ", PythonExecutable: ", self.python_exec,
-              ", is boundary: ", self.is_boundary(), ", is source: ",
-              self.source, ", is sink: ", self.sink)
+        logging.info("Operator:", str(self.getID()) + ", type:" + self.operator_type, ", PythonExecutable: ",
+                     self.python_exec,
+                     ", is boundary: ", self.is_boundary(), ", is source: ",
+                     self.source, ", is sink: ", self.sink)
 
     def getID(self):
         return self.id

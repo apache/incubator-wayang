@@ -17,7 +17,6 @@
 
 from orchestrator.plan import Descriptor
 from orchestrator.dataquanta import DataQuantaBuilder
-from protobuf.planwriter import MessageWriter
 
 
 # Returns the Sink Executable Dataquanta of a DEMO plan
@@ -108,6 +107,7 @@ def plan_java_junction(descriptor):
 
     return sink_dataquanta
 
+
 def plan_full_java(descriptor):
 
     plan = DataQuantaBuilder(descriptor)
@@ -127,43 +127,6 @@ if __name__ == '__main__':
 
     plan_dataquanta_sink = plan_java_junction(descriptor)
     # plan_dataquanta_sink.execute()
-
-    plan_dataquanta_sink.unify_pipelines()
-
-
-    """def f1(iterator):
-        return sorted(iterator, key=lambda elem: elem.lower())
-
-    def f2(iterator):
-        return filter(lambda elem: str(elem).startswith("f"), iterator)
-
-    t = f2(f1)"""
-
-
-    # plan_dataquanta_sink.execute()
     # plan_dataquanta_sink.console()
 
-    """print("sources: ")
-    for i in descriptor.get_sources():
-        print(i.getID(), i.operator_type)
-
-    print("sinks: ")
-    for i in descriptor.get_sinks():
-        print(i.getID(), i.operator_type)
-
-    print("source", descriptor.get_sources()[0].udf)
-    print("sink", descriptor.get_sinks()[0].udf)"""
-
-    #filter(lambda elem: str(elem).startswith("f"), iter(open("../test/words.txt", "r")))
-    #lambda elem: elem.lower()
-    #sorted(filter(lambda elem: str(elem).startswith("f"), iter(open("../test/words.txt", "r"))), key=lambda elem: str(elem).startswith("f"))
-
-    #it = sorted(iter(open("../test/words.txt", "r")), key=lambda elem: elem.lower())
-    #it2 = filter(lambda elem: str(elem).startswith("f"), it)
-
-    #for i in it2:
-    #    print(i)
-
-
-    # Creates the message
-    # MessageWriter(descriptor=descriptor)
+    plan_dataquanta_sink.to_wayang_plan()

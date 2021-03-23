@@ -21,8 +21,10 @@ from graph.traversal import Traversal
 from protobuf.planwriter import MessageWriter
 import itertools
 import collections
+import logging
 
 
+# Wraps a Source operation to create an iterable
 class DataQuantaBuilder:
     def __init__(self, descriptor):
         self.descriptor = descriptor
@@ -45,6 +47,7 @@ class DataQuantaBuilder:
         )
 
 
+# Wraps an operation over an iterable
 class DataQuanta:
     def __init__(self, operator=None, descriptor=None):
         self.operator = operator
@@ -122,6 +125,8 @@ class DataQuanta:
             descriptor=self.descriptor
         )
 
+    # This function allow the union to be performed by Python
+    # Nevertheless, current configuration runs it over Java
     def union(self, other):
 
         def func(iterator):
@@ -148,18 +153,23 @@ class DataQuanta:
 
         self.__run(consume)
 
+    # Only for debugging purposes!
+    # To execute the plan directly in the program driver
     def execute(self):
-        # print(self.operator.previous[0].operator_type)
+        logging.warn("DEBUG Execution")
+        logging.info("Reminder to swap SINK UDF value from path to func")
+        logging.debug(self.operator.previous[0].operator_type)
         if self.operator.is_sink():
-            print(self.operator.operator_type)
-            print(self.operator.udf)
-            print(len(self.operator.previous))
+            logging.debug(self.operator.operator_type)
+            logging.debug(self.operator.udf)
+            logging.debug(len(self.operator.previous))
             self.operator.udf(self.operator.previous[0].getIterator())
         else:
-            print("Plan must call execute from SINK type of operator")
+            logging.error("Plan must call execute from SINK type of operator")
             raise RuntimeError
 
-    def unify_pipelines(self):
+    # Converts Python Functional Plan to valid Wayang Plan
+    def to_wayang_plan(self):
 
         sinks = self.descriptor.get_sinks()
         if len(sinks) == 0:
@@ -168,9 +178,11 @@ class DataQuanta:
         graph = Graph()
         graph.populate(self.descriptor.get_sinks())
 
+        # Uncomment to check the Graph built
         # graph.print_adjlist()
-        # print("END PRINTING!")
 
+        # Function to be consumed by Traverse
+        # Separates Python Plan into a List of Pipelines
         def define_pipelines(node1, current_pipeline, collection):
             def store_unique(pipe_to_insert):
                 for pipe in collection:
@@ -213,17 +225,17 @@ class DataQuanta:
             udf=lambda x, y, z: define_pipelines(x, y, z)
         )
 
+        # Gets the results of the traverse process
         collected_stages = trans.get_collected_data()
 
-        # Setting dependencies
-
+        # Passing the Stages to a Wayang message writer
         writer = MessageWriter()
         a = 0
-        # Stage is composed of Nodes
+        # Stage is composed of class Node objects
         for stage in collected_stages:
             a += 1
-            print("///")
-            print("stage", a)
+            logging.info("///")
+            logging.info("stage", a)
             writer.process_pipeline(stage)
 
         writer.set_dependencies()
