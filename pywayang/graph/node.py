@@ -24,6 +24,7 @@ class Element(metaclass=abc.ABCMeta):
         pass
 
 
+# Describes an Operator in the Graph
 class Node(Element):
     def __init__(self, operator_type, id, operator):
         self.operator_type = operator_type
@@ -41,5 +42,7 @@ class Node(Element):
     def add_successor(self, id_child, e):
         self.successors[id_child] = e
 
+    # Nodes are visited by objects of class Visitant.
+    # Visitants are being used to execute a UDF through the Graph
     def accept(self, visitor, udf, orientation, last_iter):
         visitor.visit_node(self, udf, orientation, last_iter)
