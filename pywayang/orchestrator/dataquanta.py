@@ -16,8 +16,15 @@
 #
 
 from orchestrator.operator import Operator
+from graph.graph import Graph
+from graph.traversal import Traversal
+from protobuf.planwriter import MessageWriter
+import itertools
+import collections
+import logging
 
 
+# Wraps a Source operation to create an iterable
 class DataQuantaBuilder:
     def __init__(self, descriptor):
         self.descriptor = descriptor
@@ -33,12 +40,14 @@ class DataQuantaBuilder:
                 operator_type="source",
                 udf=source,
                 iterator=iter(source_ori),
-                wrapper="URL"
+                previous=[],
+                python_exec=False
             ),
             descriptor=self.descriptor
         )
 
 
+# Wraps an operation over an iterable
 class DataQuanta:
     def __init__(self, operator=None, descriptor=None):
         self.operator = operator
@@ -57,8 +66,8 @@ class DataQuanta:
             Operator(
                 operator_type="filter",
                 udf=func,
-                previous=self.operator,
-                wrapper="predicate"
+                previous=[self.operator],
+                python_exec=True
             ),
             descriptor=self.descriptor
         )
@@ -71,8 +80,8 @@ class DataQuanta:
             Operator(
                 operator_type="map",
                 udf=func,
-                previous=self.operator,
-                wrapper="transform"
+                previous=[self.operator],
+                python_exec=True
             ),
             descriptor=self.descriptor
         )
@@ -95,8 +104,8 @@ class DataQuanta:
                 # To execute directly uncomment
                 # udf=func,
 
-                previous=self.operator,
-                wrapper="URL,end"
+                previous=[self.operator],
+                python_exec=False
             ),
             descriptor=self.descriptor
         )
@@ -110,8 +119,25 @@ class DataQuanta:
             Operator(
                 operator_type="sort",
                 udf=func,
-                previous=self.operator,
-                wrapper="wrapped_python"
+                previous=[self.operator],
+                python_exec=True
+            ),
+            descriptor=self.descriptor
+        )
+
+    # This function allow the union to be performed by Python
+    # Nevertheless, current configuration runs it over Java
+    def union(self, other):
+
+        def func(iterator):
+            return itertools.chain(iterator, other.operator.getIterator())
+
+        return DataQuanta(
+            Operator(
+                operator_type="union",
+                udf=func,
+                previous=[self.operator, other.operator],
+                python_exec=False
             ),
             descriptor=self.descriptor
         )
@@ -127,10 +153,91 @@ class DataQuanta:
 
         self.__run(consume)
 
+    # Only for debugging purposes!
+    # To execute the plan directly in the program driver
     def execute(self):
-        # print(self.operator.previous[0].operator_type)
+        logging.warn("DEBUG Execution")
+        logging.info("Reminder to swap SINK UDF value from path to func")
+        logging.debug(self.operator.previous[0].operator_type)
         if self.operator.is_sink():
+            logging.debug(self.operator.operator_type)
+            logging.debug(self.operator.udf)
+            logging.debug(len(self.operator.previous))
             self.operator.udf(self.operator.previous[0].getIterator())
         else:
-            print("Plan must call execute from SINK type of operator")
+            logging.error("Plan must call execute from SINK type of operator")
             raise RuntimeError
+
+    # Converts Python Functional Plan to valid Wayang Plan
+    def to_wayang_plan(self):
+
+        sinks = self.descriptor.get_sinks()
+        if len(sinks) == 0:
+            return
+
+        graph = Graph()
+        graph.populate(self.descriptor.get_sinks())
+
+        # Uncomment to check the Graph built
+        # graph.print_adjlist()
+
+        # Function to be consumed by Traverse
+        # Separates Python Plan into a List of Pipelines
+        def define_pipelines(node1, current_pipeline, collection):
+            def store_unique(pipe_to_insert):
+                for pipe in collection:
+                    if equivalent_lists(pipe, pipe_to_insert):
+                        return
+                collection.append(pipe_to_insert)
+
+            def equivalent_lists(l1, l2):
+                if collections.Counter(l1) == collections.Counter(l2):
+                    return True
+                else:
+                    return False
+
+            if not current_pipeline:
+                current_pipeline = [node1]
+
+            elif node1.operator.is_boundary():
+                store_unique(current_pipeline.copy())
+                current_pipeline.clear()
+                current_pipeline.append(node1)
+
+            else:
+                current_pipeline.append(node1)
+
+            if node1.operator.sink:
+                store_unique(current_pipeline.copy())
+                current_pipeline.clear()
+
+            return current_pipeline
+
+        # Works over the graph
+        trans = Traversal(
+            graph=graph,
+            origin=self.descriptor.get_sources(),
+            # udf=lambda x, y, z: d(x, y, z)
+            # UDF always will receive:
+            # x: a Node object,
+            # y: an object representing the result of the last iteration,
+            # z: a collection to store final results inside your UDF
+            udf=lambda x, y, z: define_pipelines(x, y, z)
+        )
+
+        # Gets the results of the traverse process
+        collected_stages = trans.get_collected_data()
+
+        # Passing the Stages to a Wayang message writer
+        writer = MessageWriter()
+        a = 0
+        # Stage is composed of class Node objects
+        for stage in collected_stages:
+            a += 1
+            logging.info("///")
+            logging.info("stage" + str(a))
+            writer.process_pipeline(stage)
+
+        writer.set_dependencies()
+
+        writer.write_message()

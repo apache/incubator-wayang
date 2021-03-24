@@ -16,8 +16,10 @@
 #
 
 from graph.visitant import Visitant
+import logging
 
 
+# Defines how a UDF will be applied over the Graph
 class Traversal:
 
     def __init__(self, graph, origin, udf):
@@ -32,11 +34,11 @@ class Traversal:
         elif origin[0].sink:
             self.orientation = "predecessors"
         else:
-            print("BAD DEFINED ORIGIN")
+            logging.error("Origin point to traverse the plan wrongly defined")
             return
 
         for operator in iter(origin):
-            print("operator: ", operator.id)
+            logging.debug("operator origin: " + str(operator.id))
             node = graph.get_node(operator.id)
             self.app.visit_node(
                 node=node,

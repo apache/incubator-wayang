@@ -20,25 +20,17 @@ syntax="proto2";
 
 option java_multiple_files = true;
 option java_package = "org.apache.wayang.commons.serializable";
-//option objc_class_prefix = "Proto";
-//option java_outer_classname = "Proto";
 
-message SourceProto{
-  optional int64 id = 1;
-  optional string type = 2;
-  optional string path = 3;
-}
-
-message SinkProto{
-  optional int64 id = 1;
-  optional string type = 2;
-  optional string path = 3;
-}
-
+/*Java Operator or concatenated Python Pipeline*/
 message OperatorProto{
-  optional int64 id = 1;
+  optional string id = 1;
   optional string type = 2;
-  optional bytes udf = 4;
+  optional bytes udf = 3;
+  optional string path = 4;
+  // repeated OperatorProto predecessors = 5;
+  repeated string predecessors = 5;
+  // repeated OperatorProto successors = 6;
+  repeated string successors = 6;
 }
 
 message PlanProto{
@@ -48,11 +40,12 @@ message PlanProto{
     integer = 1;
   }
 
-  optional SourceProto source = 1;
-  optional SinkProto sink = 2;
-  optional TypesProto input = 3;
-  optional TypesProto output = 4;
-  repeated OperatorProto operators = 5;
+  repeated OperatorProto sources = 1;
+  repeated OperatorProto operators = 2;
+  repeated OperatorProto sinks = 3;
+  optional TypesProto input = 4;
+  optional TypesProto output = 5;
+
 }
 
 message ContextProto{

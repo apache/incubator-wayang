@@ -16,18 +16,22 @@
 #
 
 from graph.node import Node
+import logging
 
 
+# Adjacency Matrix used to analise the plan
 class Graph:
     def __init__(self):
         self.graph = {}
         self.nodes_no = 0
         self.nodes = []
 
-    def create(self, sinks):
+    # Fills the Graph
+    def populate(self, sinks):
         for sink in iter(sinks):
             self.process_operator(sink)
 
+    # Add current operator and set dependencies
     def process_operator(self, operator):
         self.add_node(operator.operator_type, operator.id, operator)
 
@@ -57,12 +61,11 @@ class Graph:
     def print_adjlist(self):
 
         for key in self.graph:
-            print("Node: ", self.graph[key].operator_type, " - ", key)
+            logging.debug("Node: ", self.graph[key].operator_type, " - ", key)
             for key2 in self.graph[key].predecessors:
-                print("Parent: ", self.graph[key2].operator_type, " - ", self.graph[key].predecessors[key2], " - ", key2)
+                logging.debug("- Parent: ", self.graph[key2].operator_type, " - ", self.graph[key].predecessors[key2], " - ", key2)
             for key2 in self.graph[key].successors:
-                print("Child: ", self.graph[key2].operator_type, " - ", self.graph[key].successors[key2], " - ", key2)
+                logging.debug("- Child: ", self.graph[key2].operator_type, " - ", self.graph[key].successors[key2], " - ", key2)
 
     def get_node(self, id):
-        # print("looking for id: ", id)
         return self.graph[id]

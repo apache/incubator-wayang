@@ -20,28 +20,30 @@ import cloudpickle
 from config.config_reader import get_source_types
 from config.config_reader import get_sink_types
 from config.config_reader import get_boundary_types
+import logging
 
 pickle_protocol = pickle.HIGHEST_PROTOCOL
 
+
+# Describes an Operation over an intermediate result
+# Each operation could be processed by Python or Java platforms
 class Operator:
 
     def __init__(
-            self, operator_type=None, udf=None, previous=None, iterator=None, wrapper=None):
-
-        if previous:
-            print("|", previous.operator_type)
-        else:
-            print("Not have")
+            self, operator_type=None, udf=None, previous=None,
+            iterator=None, python_exec=False):
 
         # Operator ID
         self.id = id(self)
 
         # Operator Type
         self.operator_type = operator_type
+
+        # Set Boundaries
         if self.operator_type in get_boundary_types():
-            self.is_boundary = True
+            self.boundary = True
         else:
-            self.is_boundary = False
+            self.boundary = False
 
         # UDF Function
         self.udf = udf
@@ -63,12 +65,8 @@ class Operator:
         else:
             self.sink = False
 
-        # Kind of function descriptor that processes this UDF
-        self.wrapper = wrapper
-
         # TODO Why managing previous and predecessors per separate?
-        self.previous = []
-        self.previous.append(previous)
+        self.previous = previous
 
         self.successor = []
         self.predecessor = []
@@ -80,8 +78,12 @@ class Operator:
                     prev.set_successor(self)
                     self.set_predecessor(prev)
 
-        print(str(self.getID()) + " " + self.operator_type, ", is boundary: ", self.is_boundary, ", is source: ",
-              self.source, ", is sink: ", self.sink, " wrapper: ", self.wrapper)
+        self.python_exec = python_exec
+
+        logging.info("Operator:" + str(self.getID()) + ", type:" + self.operator_type + ", PythonExecutable: " +
+                     str(self.python_exec) +
+                     ", is boundary: " + str(self.is_boundary()) + ", is source: " +
+                     str(self.source) + ", is sink: " + str(self.sink))
 
     def getID(self):
         return self.id
@@ -91,6 +93,9 @@ class Operator:
 
     def is_sink(self):
         return self.sink
+
+    def is_boundary(self):
+        return self.boundary
 
     def serialize_udf(self):
         self.udf = cloudpickle.dumps(self.udf)
