@@ -17,10 +17,10 @@ license: |
 layout: default
 title: "Code Changes"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/documentation_changes/
+    title: Documentation Changes
 next:
-    url: /
-    title: next
+    url: /how_contribute/code_changes/choosing_what_contribute/
+    title: Choosing What to Contribute
 ---
 Code Changes

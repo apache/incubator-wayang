@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Code Style Guide"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/review_process/
+    title: The Review Process
 next:
-    url: /
-    title: next
+    url: /how_contribute/reviewing_changes/
+    title: Reviewing Changes
 menus:
     preparing_code_changes:
         weight: 5

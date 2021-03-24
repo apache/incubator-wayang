@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Bugs Report"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/
+    title: How to Contribute
 next:
-    url: /
-    title: next
+    url: /how_contribute/jira_issue_maintenance/
+    title: Jira Issue Maintenance
 menus:
     contribute:
         weight: 1

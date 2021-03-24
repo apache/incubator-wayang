@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Closing Your Pull Request and Github Issues"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/pull_request/
+    title: Pull Request
 next:
-    url: /
-    title: next
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/review_process/
+    title: The Review Process
 menus:
     preparing_code_changes:
         weight: 3

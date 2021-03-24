@@ -17,11 +17,8 @@ license: |
 layout: default
 title: "Slack Channels"
 previous:
-    url: /
-    title: previous
-next:
-    url: /
-    title: next
+    url: /how_contribute/helping_users/
+    title: Helping Other Users
 menus:
     contribute:
         weight: 10

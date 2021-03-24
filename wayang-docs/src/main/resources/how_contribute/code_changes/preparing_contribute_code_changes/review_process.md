@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "The Review Process"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/closing_pull_request/
+    title: Closing Your Pull Request and Github Issues
 next:
-    url: /
-    title: next
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/code_style_guide/
+    title: Code Style Guide
 menus:
     preparing_code_changes:
         weight: 4

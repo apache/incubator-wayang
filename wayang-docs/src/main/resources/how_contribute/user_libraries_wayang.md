@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "User Libraries to Wayang"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/testing_releases/
+    title: Testing Releases
 next:
-    url: /
-    title: next
+    url: /how_contribute/helping_users/
+    title: Helping Other Users
 menus:
     contribute:
         weight: 8

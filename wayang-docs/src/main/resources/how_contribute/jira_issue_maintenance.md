@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Jira Issue Maintenance"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/bugs_report/
+    title: Bugs Report
 next:
-    url: /
-    title: next
+    url: /how_contribute/documentation_changes/
+    title: Documentation Changes
 menus:
     contribute:
         weight: 2

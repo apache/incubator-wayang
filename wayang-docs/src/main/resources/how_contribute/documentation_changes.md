@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Documentation Changes"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/jira_issue_maintenance/
+    title: Jira Issue Maintenance
 next:
-    url: /
-    title: next
+    url: /how_contribute/code_changes/
+    title: Code Changes
 menus: contribute
 menus:
     contribute:

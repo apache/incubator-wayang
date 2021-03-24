@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Code Review Criteria"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/code_changes/choosing_what_contribute/
+    title: Choosing What to Contribute
 next:
-    url: /
-    title: next
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/
+    title: Preparing to Contribute Code Changes
 menus:
     code_changes:
         weight: 2

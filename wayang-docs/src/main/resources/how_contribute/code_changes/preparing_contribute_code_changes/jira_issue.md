@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Jira issues"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/
+    title: Preparing to Contribute Code Changes
 next:
-    url: /
-    title: next
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/pull_request/
+    title: Pull Request
 menus:
     preparing_code_changes:
         weight: 1

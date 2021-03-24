@@ -16,12 +16,9 @@ license: |
     limitations under the License.
 layout: default
 title: "How to Contribute"
-previous:
-    url: /
-    title: previous
 next:
-    url: /
-    title: next
+    url: /how_contribute/bugs_report/
+    title: Bugs Report
 ---
 
 How to Contribute

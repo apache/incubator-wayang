@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Reviewing Changes"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/code_style_guide/
+    title: Code Style Guide
 next:
-    url: /
-    title: next
+    url: /how_contribute/testing_releases/
+    title: Testing Releases
 menus:
     contribute:
         weight: 6

@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Pull Request"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/jira_issue/
+    title: Jira issues
 next:
-    url: /
-    title: next
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/closing_pull_request/
+    title: Closing Your Pull Request and Github Issues
 menus:
     preparing_code_changes:
         weight: 2

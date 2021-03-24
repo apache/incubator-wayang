@@ -17,10 +17,10 @@ license: |
 layout: default
 title: "Preparing to Contribute Code Changes"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/code_changes/code_review_criteria/
+    title: Code Review Criteria
 next:
-    url: /
-    title: next
+    url: /how_contribute/code_changes/preparing_contribute_code_changes/jira_issue/
+    title: Jira issues
 ---
 Preparing to Contribute Code Changes

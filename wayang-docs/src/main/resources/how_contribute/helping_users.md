@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Helping Other Users"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/user_libraries_wayang/
+    title: User Libraries to Wayang
 next:
-    url: /
-    title: next
+    url: /how_contribute/slack_channels/
+    title: Slack Channels
 menus:
     contribute:
         weight: 9

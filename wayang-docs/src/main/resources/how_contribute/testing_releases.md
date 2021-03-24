@@ -17,11 +17,11 @@ license: |
 layout: default
 title: "Testing Releases"
 previous:
-    url: /
-    title: previous
+    url: /how_contribute/reviewing_changes/
+    title: Reviewing Changes
 next:
-    url: /
-    title: next
+    url: /how_contribute/user_libraries_wayang/
+    title: User Libraries to Wayang
 menus:
     contribute:
         weight: 7
