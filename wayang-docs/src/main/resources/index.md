@@ -15,10 +15,20 @@ license: |
     See the License for the specific language governing permissions and
     limitations under the License.
 layout: default
-title: "Home"
+title: "Read Me"
+menus: header
+previous: 
+    url: /
+    title: previous
+next: 
+    url: /
+    title: next
+menus:
+    header:
+        weight: 0
 ---
 
-# Apache Wayang <img align="right" width="170px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
+# Apache Wayang <img align="right" style="margin-top: -0.5em;" width="170px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
 
 [![Build Status (Travis)](https://travis-ci.org/wayang-ecosystem/wayang.svg?branch=master)](https://travis-ci.org/wayang-ecosystem/wayang)
 [![Gitter chat](https://badges.gitter.im/wayang-ecosystem/Lobby.png)](https://gitter.im/wayang-ecosystem/Lobby)
