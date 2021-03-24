@@ -122,3 +122,13 @@ h1 {
     background-color: transparent;
     vertical-align: middle !important;
 }
+
+.sub-menu:before {
+    content:'';
+    position: relative;
+    top: 0.25em;
+    left: -0.5em;
+    border-top: solid 0.5em #a00e5a;
+    border-left: solid 0.5em transparent;
+    border-right: solid 0.5em transparent;
+}
