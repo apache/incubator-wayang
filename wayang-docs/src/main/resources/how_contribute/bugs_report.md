@@ -27,4 +27,24 @@ menus:
         weight: 1
 ---
 
-Bugs Report
+# Bug Reports
+
+## How to make a good Bug Report?
+
+Ideally, bug reports are accompanied by a proposed code change to fix the bug. This isn’t always possible, as those who **discover a bug may not have the experience to fix it, however, it needs to be reported**  by creating a [Jira Issues](https://issues.apache.org/jira/projects/WAYANG/issues).
+
+Before to contiues reading take a look on how to [Create Issues](https://support.atlassian.com/jira-software-cloud/docs/create-an-issue-and-a-sub-task/)
+
+Have in mind that a bug reports are only useful when they include enough information to understand, isolate and ideally reproduce the bug. Simply encountering an error does not mean a bug should be reported; as below, search in [Jira Issues](https://issues.apache.org/jira/projects/WAYANG/issues). Unreproducible bugs, or simple error reports, may be closed if is not possible to collect enough information.
+
+It’s very helpful if the bug report has a description about how the bug was found it, the version of Wayang where occurs and the platform that was be setted at that moment, so that reviewers can easily understand the bug. It also helps committers to narrow down the problem to the root cause, because **it can be bug of the underline platform,** but is important figure out.
+
+**Performance regression** is also one kind of bug. The pull request to fix a performance regression must provide a benchmark to prove the problem is indeed fixed.
+
+Note that, **data correctness/data loss bugs are very serious**. Make sure of labeling the bug as `correctness` or `data-loss`, when you create the [Jira Issue](https://issues.apache.org/jira/projects/WAYANG/issues). If the bug report doesn’t get enough attention, please send an email to `dev@wayang.apache.org`, to draw more attentions.
+
+It is possible to propose new features as well. These are generally not helpful unless accompanied by detail, such as a design document and/or code change. Large new contributions should consider to be part of `wayang-core` but first needs to be discussed on the [Slack Channel](https://the-asf.slack.com/archives/C01H1CPE8KU). Feature requests may be rejected, or closed after a long period of inactivity.
+
+### Label meaning
+
+TODO: add the label meaning
