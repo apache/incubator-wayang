@@ -78,7 +78,7 @@ class MessageWriter:
                     # Successors depends on first operator
                     op = self.add_operator(nested_id, "map_partition", nested_udf)
 
-                    ids = nested_id.split(",")
+                    ids = str(nested_id).split(",")
                     for id in ids:
                         self.operator_references[str(id)] = op
 
