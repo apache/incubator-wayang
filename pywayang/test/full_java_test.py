@@ -7,8 +7,9 @@ class MyTestCase(unittest.TestCase):
 
     def test_most_basic(self):
         descriptor = Descriptor()
-        plan = DataQuantaBuilder(descriptor)
+        descriptor.add_plugin(Descriptor.Plugin.java)
 
+        plan = DataQuantaBuilder(descriptor)
         sink_dataquanta = \
             plan.source("../test/lines.txt") \
                 .sink("../test/output.txt", end="")
@@ -18,8 +19,9 @@ class MyTestCase(unittest.TestCase):
 
     def test_single_juncture(self):
         descriptor = Descriptor()
-        plan = DataQuantaBuilder(descriptor)
+        descriptor.add_plugin(Descriptor.Plugin.java)
 
+        plan = DataQuantaBuilder(descriptor)
         dq_source_a = plan.source("../test/lines.txt")
         dq_source_b = plan.source("../test/morelines.txt")
         sink_dataquanta = dq_source_a.union(dq_source_b) \
@@ -30,6 +32,8 @@ class MyTestCase(unittest.TestCase):
 
     def test_multiple_juncture(self):
         descriptor = Descriptor()
+        descriptor.add_plugin(Descriptor.Plugin.java)
+
         plan = DataQuantaBuilder(descriptor)
         dq_source_a = plan.source("../test/lines.txt")
         dq_source_b = plan.source("../test/morelines.txt") \
