@@ -124,6 +124,8 @@ if __name__ == '__main__':
 
     # Plan will contain general info about the Wayang Plan created here
     descriptor = Descriptor()
+    descriptor.add_plugin(Descriptor.Plugin.spark)
+    descriptor.add_plugin(Descriptor.Plugin.java)
 
     plan_dataquanta_sink = plan_java_junction(descriptor)
     # plan_dataquanta_sink.execute()

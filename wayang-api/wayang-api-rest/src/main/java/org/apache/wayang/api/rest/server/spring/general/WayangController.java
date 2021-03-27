@@ -86,6 +86,7 @@ public class WayangController {
             else if (platform.getNumber() == 1)
                 ctx.with(Spark.basicPlugin());
         });
+        //ctx.with(Spark.basicPlugin());
 
         return ctx;
     }

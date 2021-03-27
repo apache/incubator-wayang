@@ -181,7 +181,7 @@ class MessageWriter:
                 op.successors.extend(op_successors)
 
     # Writes the message to a local directory
-    def write_message(self):
+    def write_message(self, descriptor):
 
         finalpath = "../../protobuf/wayang_message"
         plan_configuration = pwb.WayangPlanProto()
@@ -201,7 +201,12 @@ class MessageWriter:
         plan.output = pwb.PlanProto.string
 
         ctx = pwb.ContextProto()
-        ctx.platforms.extend([pwb.ContextProto.PlatformProto.java])
+        # ctx.platforms.extend([pwb.ContextProto.PlatformProto.java])
+        for plug in descriptor.plugins:
+            print("plug")
+            print(plug.value)
+            ctx.platforms.append(plug.value)
+        # ctx.platforms.extend(descriptor.get_plugins())
 
         plan_configuration.plan.CopyFrom(plan)
         plan_configuration.context.CopyFrom(ctx)

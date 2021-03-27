@@ -240,4 +240,4 @@ class DataQuanta:
 
         writer.set_dependencies()
 
-        writer.write_message()
+        writer.write_message(self.descriptor)
