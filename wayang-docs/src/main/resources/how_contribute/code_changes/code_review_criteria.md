@@ -26,4 +26,29 @@ menus:
     code_changes:
         weight: 2
 ---
-Code Review Criteria
+# Code Review Criteria
+
+Before considering how to contribute code, it’s useful to understand how code is reviewed, and why changes may be rejected. See the [detailed guide for code reviewers](https://google.github.io/eng-practices/review/) from Google’s Engineering Practices documentation. Simply put, changes that have many or large positives, and few negative effects or risks, are much more likely to be merged, and merged quickly. Risky and less valuable changes are very unlikely to be merged, and may be rejected outright rather than receive iterations of review.
+
+**Positives**
+
+* Fixes the root cause of a bug in existing functionality
+* Adds functionality or fixes a problem needed by a large number of users
+* Simple, targeted
+* Maintains or improves consistency across Python, Java, Scala
+* Easily tested; has tests
+* Reduces complexity and lines of code
+* Change has already been discussed and is known to committers
+* Contribute in the test coverage of the code
+
+**Negatives, Risks**
+
+* Band-aids a symptom of a bug only
+* Introduces complex new functionality, especially an API that needs to be supported
+* Adds complexity that only helps a niche use case, may be can generate a library then be part of the core.
+* Changes a public API or semantics \(rarely allowed\)
+* Adds large dependencies
+* Changes versions of existing dependencies, if is not mandatory or for security reasons.
+* Adds a large amount of code
+* Makes lots of modifications in one “big bang” change, but can be considere in a new version.
+

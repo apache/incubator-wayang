@@ -27,4 +27,7 @@ menus:
         weight: 7
 ---
 
-Testing Releases
+# Testing Releases
+
+Wayang’s release process is community-oriented, and members of the community can vote on new releases on the [email list@dev](mailto:dev@wayang.apache.org). Wayang users are invited to subscribe to the email list \#Dev to receive announcements, and test their workloads on newer release and provide feedback on any performance or correctness issues found in the newer release.
+

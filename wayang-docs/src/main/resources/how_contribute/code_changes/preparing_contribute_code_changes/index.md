@@ -23,4 +23,23 @@ next:
     url: /how_contribute/code_changes/preparing_contribute_code_changes/jira_issue/
     title: Jira issues
 ---
-Preparing to Contribute Code Changes
+# Preparing to Contribute Code Changes
+
+Please review the preceding section before proposing a code change. This section documents how to do so.
+
+<div class="alert alert-success" role="alert">
+<h2> Important </h2>
+<hr>
+<strong>When you contribute code, you affirm that the contribution is your original work and that you license the work to the project under the project’s open source license. Whether or not you state this explicitly, by submitting any copyrighted material via pull request, email, or other means you agree to license the material under the project’s open source license and warrant that you have the legal authority to do so.</strong>
+</div>
+
+### Cloning the Rheem Source Code
+
+If you are interested in working with the newest under-development code or contributing to Wayang development, you can check out the master branch from Git:
+
+```text
+# Master development branch
+git clone https://github.com/apache/incubator-wayang
+```
+
+Once you’ve downloaded Wayang, you can find instructions for [installing]({% link how_install/index.md %}) and [building]({% link how_build/index.md %}) it on the [Wayang documentation](https://wayang.apache.org/docs/latest/).
