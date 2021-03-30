@@ -240,4 +240,8 @@ class DataQuanta:
 
         writer.set_dependencies()
 
-        writer.write_message(self.descriptor)
+        # Uses a file to provide the plan
+        #writer.write_message(self.descriptor)
+
+        # Send the plan to Wayang REST api directly
+        writer.send_message(self.descriptor)

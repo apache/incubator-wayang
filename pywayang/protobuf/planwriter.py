@@ -20,6 +20,8 @@ import os
 import cloudpickle
 import logging
 import pathlib
+import requests
+import base64
 
 
 # Writes Wayang Plan from several stages
@@ -203,8 +205,6 @@ class MessageWriter:
         ctx = pwb.ContextProto()
         # ctx.platforms.extend([pwb.ContextProto.PlatformProto.java])
         for plug in descriptor.plugins:
-            print("plug")
-            print(plug.value)
             ctx.platforms.append(plug.value)
         # ctx.platforms.extend(descriptor.get_plugins())
 
@@ -214,4 +214,40 @@ class MessageWriter:
         f = open(finalpath, "wb")
         f.write(plan_configuration.SerializeToString())
         f.close()
+        pass
+
+    # Send message as bytes to the Wayang Rest API
+    def send_message(self, descriptor):
+
+        plan_configuration = pwb.WayangPlanProto()
+
+        plan = pwb.PlanProto()
+        plan.sources.extend(self.sources)
+        plan.operators.extend(self.operators)
+        plan.sinks.extend(self.sinks)
+        plan.input = pwb.PlanProto.string
+        plan.output = pwb.PlanProto.string
+
+        ctx = pwb.ContextProto()
+        # ctx.platforms.extend([pwb.ContextProto.PlatformProto.java])
+        for plug in descriptor.plugins:
+            ctx.platforms.append(plug.value)
+        # ctx.platforms.extend(descriptor.get_plugins())
+
+        plan_configuration.plan.CopyFrom(plan)
+        plan_configuration.context.CopyFrom(ctx)
+
+        msg_bytes = plan_configuration.SerializeToString()
+        msg_64 = base64.b64encode(msg_bytes)
+
+        logging.debug(msg_bytes)
+        # response = requests.get("http://localhost:8080/plan/create/fromfile")
+        data = {
+            'message': msg_64
+        }
+        response = requests.post("http://localhost:8080/plan/create", data)
+        logging.debug(response)
+        # f = open(finalpath, "wb")
+        # f.write(plan_configuration.SerializeToString())
+        # f.close()
         pass
