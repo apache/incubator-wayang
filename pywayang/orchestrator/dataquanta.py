@@ -22,6 +22,9 @@ from protobuf.planwriter import MessageWriter
 import itertools
 import collections
 import logging
+from functools import reduce
+import operator
+import xrange
 
 
 # Wraps a Source operation to create an iterable
@@ -72,6 +75,47 @@ class DataQuanta:
             descriptor=self.descriptor
         )
 
+    def flatmap(self, udf):
+
+        def func(iterator):
+            return itertools.chain.from_iterable(map(udf, iterator))
+
+        def func_wthout_lib(iterator):
+            mapped = map(udf, iterator)
+            flattened = flatten_single_dim(mapped)
+            yield from flattened
+
+        def flatten_single_dim(mapped):
+            for item in mapped:
+                for subitem in item:
+                    yield subitem
+
+        return DataQuanta(
+            Operator(
+                operator_type="flatmap",
+                udf=func,
+                previous=[self.operator],
+                python_exec=True
+            ),
+            descriptor=self.descriptor
+        )
+
+    def group_by(self, udf):
+        def func(iterator):
+            # TODO key should be given by "udf"
+            return itertools.groupby(iterator, key=operator.itemgetter(0))
+            #return itertools.groupby(sorted(iterator), key=itertools.itemgetter(0))
+
+        return DataQuanta(
+            Operator(
+                operator_type="group_by",
+                udf=func,
+                previous=[self.operator],
+                python_exec=True
+            ),
+            descriptor=self.descriptor
+        )
+
     def map(self, udf):
         def func(iterator):
             return map(udf, iterator)
@@ -79,6 +123,42 @@ class DataQuanta:
         return DataQuanta(
             Operator(
                 operator_type="map",
+                udf=func,
+                previous=[self.operator],
+                python_exec=True
+            ),
+            descriptor=self.descriptor
+        )
+
+    # Key specifies pivot dimensions
+    # UDF specifies reducer function
+    def reduce_by_key(self, keys, udf):
+
+        op = Operator(
+            operator_type="reduce_by_key",
+            udf=udf,
+            previous=[self.operator],
+            python_exec=False
+        )
+
+        for i in xrange(1, len(keys)):
+            if keys[i] is int:
+                op.set_parameter("vector_position|"+str(i), keys[i])
+            else:
+                op.set_parameter("dimension_key|"+str(i), keys[i])
+
+        return DataQuanta(
+            op,
+            descriptor=self.descriptor
+        )
+
+    def reduce(self, udf):
+        def func(iterator):
+            return reduce(udf, iterator)
+
+        return DataQuanta(
+            Operator(
+                operator_type="reduce",
                 udf=func,
                 previous=[self.operator],
                 python_exec=True

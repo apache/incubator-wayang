@@ -31,7 +31,8 @@ class Operator:
 
     def __init__(
             self, operator_type=None, udf=None, previous=None,
-            iterator=None, python_exec=False):
+            iterator=None, python_exec=False
+    ):
 
         # Operator ID
         self.id = id(self)
@@ -71,6 +72,8 @@ class Operator:
         self.successor = []
         self.predecessor = []
 
+        self.parameters = {}
+
         # Set predecessors and successors from previous
         if self.previous:
             for prev in self.previous:
@@ -105,6 +108,9 @@ class Operator:
             return self.iterator
         # TODO this should iterate through previous REDESIGN
         return self.udf(self.previous[0].getIterator())
+
+    def set_parameter(self, key, value):
+        self.parameters[key] = value
 
     def set_successor(self, suc):
         if (not self.is_sink()) and self.successor.count(suc) == 0:

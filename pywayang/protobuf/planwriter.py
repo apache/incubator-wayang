@@ -39,6 +39,7 @@ class MessageWriter:
         source.type = operator_type
         source.path = os.path.abspath(path)
         source.udf = chr(0).encode('utf-8')
+        source.parameters = {}
         self.sources.append(source)
         return source
 
@@ -49,16 +50,30 @@ class MessageWriter:
         sink.type = operator_type
         sink.path = os.path.abspath(path)
         sink.udf = chr(0).encode('utf-8')
+        source.parameters = {}
         self.sinks.append(sink)
         return sink
 
-    # Creates and appends an operator
+    # Creates and appends a Python operator
+    # Python OP don't require parameters, UDF has the function ready to be executed directly
     def add_operator(self, operator_id, operator_type, udf):
         op = pwb.OperatorProto()
         op.id = str(operator_id)
         op.type = operator_type
         op.udf = cloudpickle.dumps(udf)
         op.path = str(None)
+        op.parameters = {}
+        self.operators.append(op)
+        return op
+
+    # Creates and appends a Java operator
+    def add_operator(self, operator_id, operator_type, udf, parameters):
+        op = pwb.OperatorProto()
+        op.id = str(operator_id)
+        op.type = operator_type
+        op.udf = cloudpickle.dumps(udf)
+        op.path = str(None)
+        op.parameters = parameters
         self.operators.append(op)
         return op
 
@@ -106,8 +121,9 @@ class MessageWriter:
                     self.boundaries[str(node.id)]["start"] = node.predecessors.keys()
 
                 # Regular operator to be processed in Java
+                # Notice that those could include more parameters for Java
                 else:
-                    op = self.add_operator(node.id, node.operator_type, node.operator.udf)
+                    op = self.add_operator(node.id, node.operator_type, node.operator.udf, node.operator.parameters)
                     self.operator_references[str(node.id)] = op
                     self.boundaries[str(node.id)] = {}
                     self.boundaries[str(node.id)]["start"] = node.predecessors.keys()
