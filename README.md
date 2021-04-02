@@ -1,4 +1,4 @@
-# Apache Wayang <img align="right" width="128px" src="https://wayang-ecosystem.github.io/img/logo.png" alt="Wayang logo">
+# Apache Wayang <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
 
 [![Build Status (Travis)](https://travis-ci.org/wayang-ecosystem/wayang.svg?branch=master)](https://travis-ci.org/wayang-ecosystem/wayang)
 [![Gitter chat](https://badges.gitter.im/wayang-ecosystem/Lobby.png)](https://gitter.im/wayang-ecosystem/Lobby)
