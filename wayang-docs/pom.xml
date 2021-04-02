@@ -32,7 +32,6 @@
 
     <properties>
         <github.global.server>github</github.global.server>
-        <github.site.userName>berttty</github.site.userName>
     </properties>
 
     <build>

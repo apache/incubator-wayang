@@ -39,3 +39,6 @@ compress_html:
   blanklines: false
   profile: true
   startings: [html, head, body]
+plugins:
+  - jekyll-menus
+exclude: ['README.md', 'Gemfile.lock', 'Gemfile']

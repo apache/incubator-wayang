@@ -1,0 +1,35 @@
+header:
+  - url: /how_contribute/
+    title: How To Contribute
+    identifier: contribute
+    weight: 1
+
+  - url: /how_build/
+    title: How To Build Wayang
+    identifier: build
+    weight: 2
+
+  - url: /how_install/
+    title: How To Install Wayang
+    identifier: install
+    weight: 3
+
+  - url: /how_run/
+    title: How To Run Wayang
+    identifier: run
+    weight: 4
+
+contribute:
+  - url: /how_contribute/code_changes/
+    title: Code Changes
+    identifier: code_changes
+    weight: 4
+
+
+code_changes:
+  - url: /how_contribute/code_changes/preparing_contribute_code_changes/
+    title: Preparing to Contribute Code Changes
+    identifier: preparing_code_changes
+    weight: 5
+
+
