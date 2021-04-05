@@ -17,6 +17,7 @@
 
 from orchestrator.plan import Descriptor
 from orchestrator.dataquanta import DataQuantaBuilder
+import datetime
 
 
 # Returns the Sink Executable Dataquanta of a DEMO plan
@@ -106,6 +107,30 @@ def plan_java_junction(descriptor):
         .sink("../test/output.txt", end="")
 
     return sink_dataquanta
+
+
+def plan_tpch_q1(descriptor):
+
+    # TODO create reduce by
+    plan = DataQuantaBuilder(descriptor)
+
+    def reducer(obj1, obj2):
+        return obj1[0], obj1[1], obj1[2] + obj2[2], obj1[3] + obj2[3], obj1[4] + obj2[4], obj1[5] + obj2[5], \
+               obj1[6] + obj2[6], obj1[7] + obj2[7], obj1[8] + obj2[8], obj1[9] + obj2[9]
+
+    sink = plan.source("../test/lineitem.txt") \
+        .map(lambda elem: elem.split("|")) \
+        .filter(lambda elem: datetime.datetime.strptime(elem[10], '%Y-%m-%d') <= datetime.datetime.strptime('1998-09-02', '%Y-%m-%d')) \
+        .map(lambda elem:
+             [elem[8], elem[9], elem[4], elem[5],
+              float(elem[5]) * (1 - float(elem[6])),
+              float(elem[5]) * (1 - float(elem[6])) * (1 + float(elem[7])),
+              elem[4], elem[5],
+              elem[6], 1]) \
+        .reduce_by_key([0, 1], reducer) \
+        .sink("../test/output.txt", end="")
+
+    return sink
 
 
 def plan_full_java(descriptor):
