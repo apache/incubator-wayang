@@ -1158,7 +1158,7 @@
         <module>wayang-tests-integration</module>
         <module>wayang-api</module>
         <module>wayang-profiler</module>
-        <module>wayang-extensions</module>
+        <module>wayang-plugins</module>
         <module>wayang-resources</module>
     </modules>
 </project>
