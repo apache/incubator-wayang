@@ -17,5 +17,99 @@
  */
 package org.apache.wayang.plugin.hackit.core.sniffer;
 
-public class HackitSniffer {
+import org.apache.wayang.plugin.hackit.core.sniffer.actor.Actor;
+import org.apache.wayang.plugin.hackit.core.sniffer.clone.Cloner;
+import org.apache.wayang.plugin.hackit.core.sniffer.inject.Injector;
+import org.apache.wayang.plugin.hackit.core.sniffer.shipper.Shipper;
+import org.apache.wayang.plugin.hackit.core.sniffer.shipper.sender.Sender;
+import org.apache.wayang.plugin.hackit.core.sniffer.shipper.receiver.Receiver;
+import org.apache.wayang.plugin.hackit.core.sniffer.sniff.Sniff;
+import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
+
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.function.Function;
+
+public class HackitSniffer<K, T, SentType, SenderObj extends Sender<SentType>, ReceiverObj extends Receiver<HackitTuple<K,T>> > implements Function<HackitTuple<K, T>, Iterator<HackitTuple<K, T>>>, Serializable {
+
+    private transient boolean not_first = false;
+    private Injector<HackitTuple<K, T>> hackItInjector;
+
+    private Actor<HackitTuple<K, T>> actorFunction;
+
+    private Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper;
+
+    private Sniff<HackitTuple<K, T>> hackItSniff;
+    private Cloner<HackitTuple<K, T>, SentType> hackItCloner;
+
+    public HackitSniffer(Injector<HackitTuple<K, T>> hackItInjector, Actor<HackitTuple<K, T>> actorFunction, Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper, Sniff<HackitTuple<K, T>> hackItSniff, Cloner<HackitTuple<K, T>, SentType> hackItCloner) {
+        this.hackItInjector = hackItInjector;
+        this.actorFunction = actorFunction;
+        this.shipper = shipper;
+        this.hackItSniff = hackItSniff;
+        this.hackItCloner = hackItCloner;
+        this.not_first = false;
+    }
+
+    public HackitSniffer() {
+        //TODO this over configuration file
+        this.not_first = false;
+    }
+
+    @Override
+    public Iterator<HackitTuple<K, T>> apply(HackitTuple<K, T> ktHackItTuple) {
+        if(!this.not_first){
+            this.shipper.subscribeAsProducer();
+            this.shipper.subscribeAsConsumer();
+            this.not_first = true;
+        }
+
+        if(this.hackItSniff.sniff(ktHackItTuple)){
+            if(this.actorFunction.is_sendout(ktHackItTuple)){
+                this.shipper.publish(
+                        this.hackItCloner.clone(ktHackItTuple)
+                );
+            }
+        }
+        Iterator<HackitTuple<K, T>> inyection = this.shipper.getNexts();
+
+        return this.hackItInjector.inject(ktHackItTuple, inyection);
+    }
+
+    public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItInjector(Injector<HackitTuple<K, T>> hackItInjector) {
+        this.hackItInjector = hackItInjector;
+        return this;
+    }
+
+    public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setActorFunction(Actor<HackitTuple<K, T>> actorFunction) {
+        this.actorFunction = actorFunction;
+        return this;
+    }
+
+    public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setShipper(Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper) {
+        this.shipper = shipper;
+        return this;
+    }
+
+    public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItSniff(Sniff<HackitTuple<K, T>> hackItSniff) {
+        this.hackItSniff = hackItSniff;
+        return this;
+    }
+
+    public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItCloner(Cloner<HackitTuple<K, T>, SentType> hackItCloner) {
+        this.hackItCloner = hackItCloner;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "HackItSniffer{" +
+                "\nfirst=" + not_first +
+                ",\n hackItInjector=" + hackItInjector +
+                ",\n actorFunction=" + actorFunction +
+                ",\n shipper=" + shipper +
+                ",\n hackItSniff=" + hackItSniff +
+                ",\n hackItCloner=" + hackItCloner +
+                "\n}";
+    }
 }
