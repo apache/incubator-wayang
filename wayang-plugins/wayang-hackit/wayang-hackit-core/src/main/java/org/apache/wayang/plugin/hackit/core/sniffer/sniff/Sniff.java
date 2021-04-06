@@ -19,7 +19,7 @@ package org.apache.wayang.plugin.hackit.core.sniffer.sniff;
 
 import java.io.Serializable;
 
-public interface Sniffer<I> extends Serializable {
+public interface Sniff<I> extends Serializable {
 
     public boolean sniff(I input);
 }
