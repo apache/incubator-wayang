@@ -38,6 +38,7 @@
     </description>
     <modules>
         <module>wayang-hackit-core</module>
+        <module>wayang-hackit-shipper</module>
     </modules>
 
     <properties>
