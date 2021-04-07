@@ -69,4 +69,7 @@ script:
   - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}" &> result.log
   - cat /home/travis/build/apache/incubator-wayang/target/rat.txt || echo "file doesn't exist"
   - tail -n 2000 result.log
-  -
+
+after_success:
+  # generate the documentation and create a update of the documentation if something change there
+  - if [ -z $(git diff HEAD --name-only | grep "wayang-docs") ] ; then mvn gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site:site -pl wayang-docs ; fi

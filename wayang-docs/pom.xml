@@ -60,7 +60,18 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <file>${user.home}/.gem/bin/jekyll</file>
-                            <execArgs>build --trace --source ${project.basedir}/src/main/resources --destination ${project.build.outputDirectory}/../site/website</execArgs>
+                            <execArgs>build --trace --source ${project.basedir}/src/main/resources --destination ${project.build.outputDirectory}/site/website/docs/${project.version}</execArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-documentation-as-latest</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <file>${user.home}/.gem/bin/jekyll</file>
+                            <execArgs>build --trace --source ${project.basedir}/src/main/resources --destination ${project.build.outputDirectory}/site/website/docs/latest</execArgs>
                         </configuration>
                     </execution>
                     <execution>
@@ -93,12 +104,11 @@
                     <noJekyll>true</noJekyll>
                     <repositoryOwner>apache</repositoryOwner>
                     <repositoryName>incubator-wayang-website</repositoryName>
-                    <branch>refs/heads/asf-docs</branch>
+                    <branch>refs/heads/asf-site</branch>
                     <message>Creating site for ${project.version}</message>
-                    <outputDirectory>${project.build.outputDirectory}/../site/website</outputDirectory>
+                    <outputDirectory>${project.build.outputDirectory}/site/website</outputDirectory>
                     <includes>
                         <include>**/*</include>
-                        <include>**/.asf.yaml</include>
                     </includes>
                     <merge>true</merge>
                 </configuration>
