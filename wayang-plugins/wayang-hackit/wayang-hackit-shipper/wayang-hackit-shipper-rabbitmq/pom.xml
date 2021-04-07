@@ -21,17 +21,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>wayang-hackit</artifactId>
+        <artifactId>wayang-hackit-shipper</artifactId>
         <groupId>org.apache.wayang</groupId>
         <version>0.6.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wayang-hackit-shipper</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>wayang-hackit-shipper-rabbitmq</module>
-    </modules>
+    <artifactId>wayang-hackit-shipper-rabbitmq</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
