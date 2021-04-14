@@ -33,7 +33,15 @@ notification:
 #    - .autoconf
 #    - $HOME/.m2
 
-install: true
+before_install:
+  - sudo apt-get update
+  - sudo apt-get -y install ruby-full build-essential zlib1g-dev
+  - echo 'export GEM_HOME="$HOME/gems"' >> ~/.bashrc
+  - echo 'export PATH="$HOME/gems/bin:$PATH"' >> ~/.bashrc
+  - source ~/.bashrc
+install:
+  - gem install jekyll bundler
+
 before_script:
   - mkdir -p travis/tmp
   - echo "#" >> travis/wayang.properties
@@ -63,7 +71,7 @@ before_script:
   - rm -rf /home/travis/build/apache/incubator-wayang/target/rat.txt || echo "file doesn't exist"
   - rm -rf result.log || echo "file doesn't exist"
   - export LOG_LEVEL=info
-  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=${LOG_LEVEL}" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=${LOG_LEVEL}" "-Dlog4j.rootLogger=${LOG_LEVEL}")
+  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=${LOG_LEVEL}" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=${LOG_LEVEL}" "-Dlog4j.rootLogger=${LOG_LEVEL} -DskipTests")
 #  - chmod +x ./docs/script/cibuild
 script:
   #- jdk_switcher use openjdk8
@@ -74,3 +82,7 @@ script:
 after_success:
   # generate the documentation and create a update of the documentation if something change there
   - if [ -z $(git diff HEAD --name-only | grep "wayang-docs") ] ; then mvn gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site:site -pl wayang-docs ; fi
+
+env:
+  global:
+    - NOKOGIRI_USE_SYSTEM_LIBRARIES=true # speeds up installation of html-proofer

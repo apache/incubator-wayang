@@ -47,10 +47,10 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <file>${user.home}/.gem/bin/bundle</file>
-                            <execArgs>install --gemfile=src/main/resources/Gemfile</execArgs>
+                            <file>${env.GEM_HOME}/bin/bundle</file>
+                            <execArgs>install --gemfile=${project.basedir}/src/main/resources/Gemfile</execArgs>
                         </configuration>
-                        <phase>compile</phase>
+                        <phase>generate-resources</phase>
                     </execution>
                     <execution>
                         <id>generate-documentation</id>
@@ -59,7 +59,7 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <file>${user.home}/.gem/bin/jekyll</file>
+                            <file>${env.GEM_HOME}/bin/jekyll</file>
                             <execArgs>build --trace --source ${project.basedir}/src/main/resources --destination ${project.build.outputDirectory}/site/website/docs/${project.version}</execArgs>
                         </configuration>
                     </execution>
@@ -70,7 +70,7 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <file>${user.home}/.gem/bin/jekyll</file>
+                            <file>${env.GEM_HOME}/bin/jekyll</file>
                             <execArgs>build --trace --source ${project.basedir}/src/main/resources --destination ${project.build.outputDirectory}/site/website/docs/latest</execArgs>
                         </configuration>
                     </execution>
@@ -81,15 +81,15 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <file>${user.home}/.gem/bin/jekyll</file>
+                            <file>${env.GEM_HOME}/bin/jekyll</file>
                             <execArgs>serve --trace --source ${project.basedir}/src/main/resources --destination ${project.build.outputDirectory}</execArgs>
                         </configuration>
                         <phase>none</phase>
                     </execution>
                 </executions>
                 <configuration>
-                    <gemHome>${user.home}/.gem/</gemHome>
-                    <gemPath>${user.home}/.gem/</gemPath>
+                    <gemHome>${env.GEM_HOME}/</gemHome>
+                    <gemPath>${env.GEM_HOME}/</gemPath>
                     <supportNative>true</supportNative>
                     <jrubyVersion>9.2.5.0</jrubyVersion>
                     <addProjectClasspath>true</addProjectClasspath>
