@@ -132,3 +132,7 @@ h1 {
     border-left: solid 0.5em transparent;
     border-right: solid 0.5em transparent;
 }
+
+div.sub-menu ul li:last-child {
+    border-bottom: solid 1px #a00e5a;
+}
