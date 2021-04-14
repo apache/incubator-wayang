@@ -15,7 +15,7 @@
 header:
   - url: /what_is_wayang/
     title: What is Wayang?
-    identifier: whay_wayang
+    identifier: what_wayang
     weight: 0
 
   - url: /getting_start/
@@ -23,28 +23,59 @@ header:
     identifier: getting_start
     weight: 1
 
+  - url: /using_wayang/
+    title: Using Wayang
+    identifier: using
+    weight: 2
 
   - url: /how_contribute/
     title: How To Contribute
     identifier: contribute
-    weight: 1
+    weight: 5
 
 
 getting_start:
-  - url: /how_build/
+  - url: /getting_start/how_build/
     title: How To Build Wayang
     identifier: build
-    weight: 2
+    weight: 0
 
-  - url: /how_install/
+  - url: /getting_start/how_install/
     title: How To Install Wayang
     identifier: install
-    weight: 3
+    weight: 1
 
-  - url: /how_run/
+  - url: /getting_start/how_run/
     title: How To Run Wayang
     identifier: run
-    weight: 4
+    weight: 2
+
+  - url: /getting_start/writting_plan_wayang/
+    title: Writting a Plan with Wayang
+    identifier: writting
+    weight: 3
+
+using:
+  - url: /using_wayang/api_java_scala/
+    title: API Java/Scala
+    identifier: api_java
+    weight: 0
+
+  - url: /using_wayang/api_python/
+    title: API Python
+    identifier: api_python
+    weight: 1
+
+  - url: /using_wayang/api_rest/
+    title: API REST
+    identifier: api_rest
+    weight: 2
+
+#  - url: /using_wayang/api_sql/
+#    title: API SQL
+#    identifier: api_sql
+#    weight: 3
+
 
 contribute:
   - url: /how_contribute/code_changes/
