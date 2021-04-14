@@ -16,17 +16,22 @@ header:
   - url: /what_is_wayang/
     title: What is Wayang?
     identifier: what_wayang
-    weight: 0
+    weight: 1
 
   - url: /getting_start/
     title: Getting Started with Wayang
     identifier: getting_start
-    weight: 1
+    weight: 2
 
   - url: /using_wayang/
     title: Using Wayang
     identifier: using
-    weight: 2
+    weight: 3
+
+  - url: /extending_wayang/
+    title: Extending Wayang
+    identifier: extending
+    weight: 4
 
   - url: /how_contribute/
     title: How To Contribute
@@ -76,6 +81,11 @@ using:
 #    identifier: api_sql
 #    weight: 3
 
+extending:
+  - url: /extending_wayang/adding_platform/
+    title: Adding Platform
+    identifier: platform
+    weight: 0
 
 contribute:
   - url: /how_contribute/code_changes/
