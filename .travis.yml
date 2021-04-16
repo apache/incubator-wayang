@@ -34,13 +34,14 @@ notification:
 #    - $HOME/.m2
 
 before_install:
-  - sudo apt-get update
-  - sudo apt-get -y install ruby-full build-essential zlib1g-dev
-  - echo 'export GEM_HOME="$HOME/gems"' >> ~/.bashrc
-  - echo 'export PATH="$HOME/gems/bin:$PATH"' >> ~/.bashrc
-  - source ~/.bashrc
+  - if [ -z $(git diff HEAD --name-only | grep "wayang-docs") ] ; then export GENERATE_DOCS="true" ; fi
+  - if [ "${GENERATE_DOS}" = "true"  ] ; then sudo apt-get update ; fi
+  - if [ "${GENERATE_DOS}" = "true"  ] ; then sudo apt-get -y install ruby-full build-essential zlib1g-dev ; fi
+  - if [ "${GENERATE_DOS}" = "true"  ] ; then echo 'export GEM_HOME="$HOME/gems"' >> ~/.bashrc ; fi
+  - if [ "${GENERATE_DOS}" = "true"  ] ; then echo 'export PATH="$HOME/gems/bin:$PATH"' >> ~/.bashrc ; fi
+  - if [ "${GENERATE_DOS}" = "true"  ] ; then source ~/.bashrc ; fi
 install:
-  - gem install jekyll bundler
+  - if [ "${GENERATE_DOS}" = "true"  ] ; then gem install jekyll bundler ; fi
 
 before_script:
   - mkdir -p travis/tmp
@@ -70,8 +71,9 @@ before_script:
   - cat travis/wayang.properties
   - rm -rf /home/travis/build/apache/incubator-wayang/target/rat.txt || echo "file doesn't exist"
   - rm -rf result.log || echo "file doesn't exist"
-  - export LOG_LEVEL=info
-  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=${LOG_LEVEL}" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=${LOG_LEVEL}" "-Dlog4j.rootLogger=${LOG_LEVEL} -DskipTests")
+  - export LOG_LEVEL=error
+  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=${LOG_LEVEL}" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=${LOG_LEVEL}" "-Dlog4j.rootLogger=${LOG_LEVEL}")
+  - if [ "${GENERATE_DOS}" = "true"  ] ; then mvn_opts=(${mvn_opts[@]} "-Pweb-documentation") ; fi
 #  - chmod +x ./docs/script/cibuild
 script:
   #- jdk_switcher use openjdk8
@@ -81,8 +83,9 @@ script:
 
 after_success:
   # generate the documentation and create a update of the documentation if something change there
-  - if [ -z $(git diff HEAD --name-only | grep "wayang-docs") ] ; then mvn gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site:site -pl wayang-docs ; fi
+  - if [ "${GENERATE_DOS}" = "true" ] ; then mvn gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site:site -pl wayang-docs -Pweb-documentation ; fi
 
 env:
   global:
     - NOKOGIRI_USE_SYSTEM_LIBRARIES=true # speeds up installation of html-proofer
+    - GENERATE_DOCS=false
