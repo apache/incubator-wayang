@@ -214,6 +214,12 @@
 
             </build>
         </profile>
+        <profile>
+            <id>web-documentation</id>
+            <modules>
+                <module>wayang-docs</module>
+            </modules>
+        </profile>
 
         <profile>
             <!-- Perform steps to deploy Wayang. -->
@@ -1165,6 +1171,5 @@
         <module>wayang-profiler</module>
         <module>wayang-extensions</module>
         <module>wayang-resources</module>
-        <module>wayang-docs</module>
     </modules>
 </project>
