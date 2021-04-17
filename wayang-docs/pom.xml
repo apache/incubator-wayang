@@ -32,6 +32,7 @@
 
     <properties>
         <github.global.server>github</github.global.server>
+        <current.time>${maven.build.timestamp}</current.time>
     </properties>
 
     <build>
@@ -99,7 +100,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.9.1</version>
                 <executions>
                     <execution>
                         <id>timestamp-property</id>
@@ -108,7 +108,7 @@
                         </goals>
                         <configuration>
                             <name>current.time</name>
-                            <pattern>yyyy/MM/dd-HH:mm:ss</pattern>
+                            <pattern>yyyy/MM/dd HH:mm:ss</pattern>
                         </configuration>
                     </execution>
                 </executions>
@@ -139,6 +139,12 @@
                 </executions>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
     </build>
 
     <scm>
