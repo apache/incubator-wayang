@@ -46,11 +46,13 @@ install:
 before_script:
   - echo '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' > ~/.m2/settings.xml
   - echo 'xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">' >> ~/.m2/settings.xml
-  - echo ' <server>' >> ~/.m2/settings.xml
+  - echo ' <servers>' >> ~/.m2/settings.xml
+  - echo '  <server>' >> ~/.m2/settings.xml
   - echo '   <id>github</id>' >> ~/.m2/settings.xml
   - echo "   <username>${USER}</username>" >> ~/.m2/settings.xml
   - echo "   <password>${TOKEN}</password>" >> ~/.m2/settings.xml
-  - echo ' </server>' >> ~/.m2/settings.xml
+  - echo '  </server>' >> ~/.m2/settings.xml
+  - echo ' </servers>' >> ~/.m2/settings.xml
   - echo '</settings>' >> ~/.m2/settings.xml
   - mkdir -p travis/tmp
   - echo "#" >> travis/wayang.properties
