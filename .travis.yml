@@ -44,6 +44,14 @@ install:
   - if [ "${GENERATE_DOCS}" = "true"  ] ; then gem install jekyll bundler ; fi
 
 before_script:
+  - echo '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' > ~/.m2/settings.xml
+  - echo 'xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">' >> ~/.m2/settings.xml
+  - echo ' <server>' >> ~/.m2/settings.xml
+  - echo '   <id>github</id>' >> ~/.m2/settings.xml
+  - echo "   <username>${USER}</username>" >> ~/.m2/settings.xml
+  - echo "   <password>${TOKEN}</password>" >> ~/.m2/settings.xml
+  - echo ' </server>' >> ~/.m2/settings.xml
+  - echo '</settings>' >> ~/.m2/settings.xml
   - mkdir -p travis/tmp
   - echo "#" >> travis/wayang.properties
   - echo "# Licensed to the Apache Software Foundation (ASF) under one or more" >> travis/wayang.properties
@@ -73,7 +81,6 @@ before_script:
   - rm -rf result.log || echo "file doesn't exist"
   - export LOG_LEVEL=error
   - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=${LOG_LEVEL}" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=${LOG_LEVEL}" "-Dlog4j.rootLogger=${LOG_LEVEL}")
-  - if [ "${GENERATE_DOCS}" = "true"  ] ; then mvn_opts=(${mvn_opts[@]} "-Pweb-documentation") ; fi
 #  - chmod +x ./docs/script/cibuild
 script:
   #- jdk_switcher use openjdk8
@@ -83,7 +90,7 @@ script:
 
 after_success:
   # generate the documentation and create a update of the documentation if something change there
-  - if [ "${GENERATE_DOCS}" = "true" ] ; then mvn gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site:site -pl wayang-docs -Pweb-documentation ; fi
+  - if [ "${GENERATE_DOCS}" = "true" ] ; then mvn clean gem:exec@bundle-install gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site -pl wayang-docs -Pweb-documentation ; fi
 
 env:
   global:

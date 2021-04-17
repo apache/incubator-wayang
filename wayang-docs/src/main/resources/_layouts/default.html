@@ -40,7 +40,7 @@
   <div class="row flex-xl-nowrap">
     <div class="col-md-3 col-xl-2 bd-sidebar pt-3 px-0" style="min-height: 95vh; border-right: solid 1px #a00e5a; background-color: #F5F7F9">
       <ul id="main-menu" class="nav flex-column nav-pills">
-        {% for item in site.menus.header | sort:weight %}
+        {% for item in site.menus.header %}
           {%- include sub-menu.html -%}
         {% endfor %}
 
