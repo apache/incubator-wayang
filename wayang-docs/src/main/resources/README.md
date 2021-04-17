@@ -4,7 +4,9 @@
 the menus is using the plugin jekyll-menus, the documentation is [here](https://github.com/forestryio/jekyll-menus)
 
 
+Strcture of documentatio
 
+[comment]: <> (TODO: add the internal structure of every topics)
 What is Wayang?
     Concepts
     Overview
