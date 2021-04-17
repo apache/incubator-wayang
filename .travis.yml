@@ -35,8 +35,6 @@ notification:
 
 before_install:
   - echo "${GENERATE_DOCS}"
-  - if [ -z $(git diff HEAD  HEAD~1 --name-only | grep "wayang-docs") ] ; then export GENERATE_DOCS="true" ; GENERATE_DOCS="true" ; fi
-  - echo "${GENERATE_DOCS}"
   - if [ "${GENERATE_DOCS}" = "true"  ] ; then sudo apt-get update ; fi
   - if [ "${GENERATE_DOCS}" = "true"  ] ; then sudo apt-get -y install ruby-full build-essential zlib1g-dev ; fi
   - if [ "${GENERATE_DOCS}" = "true"  ] ; then echo 'export GEM_HOME="$HOME/gems"' >> ~/.bashrc ; fi
@@ -90,4 +88,4 @@ after_success:
 env:
   global:
     - NOKOGIRI_USE_SYSTEM_LIBRARIES=true # speeds up installation of html-proofer
-    - GENERATE_DOCS=false
+    - GENERATE_DOCS="true"
