@@ -49,8 +49,8 @@ before_script:
   - echo ' <servers>' >> ~/.m2/settings.xml
   - echo '  <server>' >> ~/.m2/settings.xml
   - echo '   <id>github</id>' >> ~/.m2/settings.xml
-  - echo "   <username>${USER}</username>" >> ~/.m2/settings.xml
-  - echo "   <password>${TOKEN}</password>" >> ~/.m2/settings.xml
+  - echo "   <username>${GIT_USERNAME}</username>" >> ~/.m2/settings.xml
+  - echo "   <password>${GIT_TOKEN}</password>" >> ~/.m2/settings.xml
   - echo '  </server>' >> ~/.m2/settings.xml
   - echo ' </servers>' >> ~/.m2/settings.xml
   - echo '</settings>' >> ~/.m2/settings.xml
