@@ -17,7 +17,14 @@
  */
 package org.apache.wayang.plugin.hackit.core.action;
 
+/**
+ * SendOut is the {@link Action} that will perform the send to the external debugger.
+ */
 public interface SendOut extends Action{
 
-    public boolean isSendOut();
+    /**
+     * Said if the element have or not SendOut {@link Action}
+     * @return Boolean
+     */
+    boolean isSendOut();
 }

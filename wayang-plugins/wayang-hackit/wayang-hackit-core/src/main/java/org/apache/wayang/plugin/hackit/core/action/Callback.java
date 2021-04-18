@@ -17,8 +17,15 @@
  */
 package org.apache.wayang.plugin.hackit.core.action;
 
+/**
+ * Callback is an {@link Action} that defines behavior after some condition occurs.
+ */
 public interface Callback extends Action{
 
-    public boolean hasCallback();
+    /**
+     * Said if the element have or not Callback {@link Action}
+     * @return Boolean
+     */
+    boolean hasCallback();
 
 }

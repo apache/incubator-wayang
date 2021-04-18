@@ -17,5 +17,10 @@
  */
 package org.apache.wayang.plugin.hackit.core.action;
 
-public interface Action {
-}
+/**
+ * Action defines the possible behaviour that can occur inside of Hackit.
+ *
+ * Each Action is independent and not exclusive; this means that the Action's
+ * is executed with others Action's in parallel.
+ */
+public interface Action { }
