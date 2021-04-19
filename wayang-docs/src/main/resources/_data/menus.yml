@@ -55,8 +55,8 @@ getting_start:
     identifier: run
     weight: 2
 
-  - url: /getting_start/writting_plan_wayang/
-    title: Writting a Plan with Wayang
+  - url: /getting_start/writting_wayang_plan/
+    title: Writting a Wayang Plan
     identifier: writting
     weight: 3
 

@@ -46,13 +46,13 @@
 .nav-link.main-link > a{
     color: #ff8724 !important;
     font-weight: bold;
-    text-transform: uppercase;
+    text-transform: capitalize;
 }
 
 .nav-link.main-link > a:hover{
     color: #ff8724 !important;
     font-weight: bold;
-    text-transform: uppercase;
+    text-transform: capitalize;
     text-decoration: none;
 }
 
@@ -115,6 +115,7 @@ h1 {
 .sub-menu{
     margin-left: 1em;
     border-left: 1px solid #a00e5a;
+    background-color: rgba(160, 14, 90, 0.05);
 }
 
 .link-btn {
@@ -136,3 +137,7 @@ h1 {
 div.sub-menu ul li:last-child {
     border-bottom: solid 1px #a00e5a;
 }
+
+/*div.sub-menu ul li:nth-child(2n) {*/
+/*    background-color: rgba(100, 100, 100, 0.1);*/
+/*}*/

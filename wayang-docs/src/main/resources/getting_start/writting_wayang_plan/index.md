@@ -15,7 +15,7 @@ license: |
     See the License for the specific language governing permissions and
     limitations under the License.
 layout: default
-title: "Writting a Plan in Wayang"
+title: "Writting a Wayang Plan"
 previous:
     url: /
     title: previous
@@ -24,4 +24,4 @@ next:
     title: next
 ---
 
-Writting a Plan in Wayang
+Writting a Wayang Plan
