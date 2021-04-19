@@ -1,0 +1,75 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*TODO: bring the css to scss*/
+.bg-gray-dark {
+    background-color: #4C5459 !important;
+}
+
+.bg-gray-light {
+    #background-color: #A6A6A6 !important;
+    background-color: #111111 !important;
+}
+
+.bg-brown-light {
+    background-color: #D9C2A7 !important;
+}
+
+.bg-brown-dark {
+    background-color: #593825 !important;
+}
+
+.bg-black {
+    background-color: #261816 !important;
+}
+
+.letter-gray-dark {
+    color: #4C5459 !important;
+}
+
+.letter-grey-light {
+    color: #A6A6A6 !important;
+}
+
+.letter-brown-light {
+    color: #D9C2A7 !important;
+}
+
+.letter-brown-dark {
+    color: #593825 !important;
+}
+
+.letter-black {
+    color: #261816 !important;
+}
+
+#logo-full {
+    background-image: url(../img/wayang-logo.svg);
+}
+
+.rotateimg15 {
+    -webkit-transform:rotate(-15deg);
+    -moz-transform: rotate(-15deg);
+    -ms-transform: rotate(-15deg);
+    -o-transform: rotate(-15deg);
+    transform: rotate(-15deg);
+}
+
+.service-item > *{
+    text-align: center;
+}

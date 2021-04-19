@@ -1,4 +1,34 @@
-# Apache Wayang <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
+---
+license: |
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+    
+         http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+layout: default
+title: "Read Me"
+menus: header
+previous: 
+    url: /
+    title: previous
+next: 
+    url: /
+    title: next
+menus:
+    header:
+        weight: 0
+---
+
+# Apache Wayang <img align="right" style="margin-top: -0.5em;" width="170px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
 
 [![Build Status (Travis)](https://travis-ci.org/wayang-ecosystem/wayang.svg?branch=master)](https://travis-ci.org/wayang-ecosystem/wayang)
 [![Gitter chat](https://badges.gitter.im/wayang-ecosystem/Lobby.png)](https://gitter.im/wayang-ecosystem/Lobby)
@@ -54,15 +84,15 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
 
 1. Adapt the version variables (e.g., `spark.version`) in the main `pom.xml` file.
 2. Build Wayang with the adapted versions.
-	```shell
-	$ mvn clean install
-	```
-	Note the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
-	Also, note the `distro` profile, which assembles a binary Wayang distribution.
-	To activate these profiles, you need to specify them when running maven, i.e.,
-	 ```shell
-	 mvn clean install -P<profile name>
-	 ```
+   ```shell
+   $ mvn clean install
+   ```
+   Note the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
+   Also, note the `distro` profile, which assembles a binary Wayang distribution.
+   To activate these profiles, you need to specify them when running maven, i.e.,
+    ```shell
+    mvn clean install -P<profile name>
+    ```
 
 **Configure Wayang.** In order for Wayang to work properly, it is necessary to tell Wayang about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Wayang right away, we recommend to create a properties file to adapt the configuration where necessary. To have Wayang use that configuration transparently, just run you app via
 ```shell
@@ -71,38 +101,38 @@ $ java -Dwayang.configuration=url://to/my/wayang.properties ...
 
 You can find the most relevant settings in the following:
 * General settings
-  * `wayang.core.log.enabled (= true)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
-  * `wayang.core.log.executions (= ~/.wayang/executions.json)` where to log execution times of operator groups
-  * `wayang.core.log.cardinalities (= ~/.wayang/cardinalities.json)` where to log cardinality measurements
-  * `wayang.core.optimizer.instrumentation (= org.apache.wayang.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Wayang plans; other options are `org.apache.wayang.core.profiling.NoInstrumentationStrategy` and `org.apache.wayang.core.profiling.FullInstrumentationStrategy`
-  * `wayang.core.optimizer.reoptimize (= false)`: whether to progressively optimize Wayang plans
-  * `wayang.basic.tempdir (= file:///tmp)`: where to store temporary files, in particular for inter-platform communication
+    * `wayang.core.log.enabled (= true)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
+    * `wayang.core.log.executions (= ~/.wayang/executions.json)` where to log execution times of operator groups
+    * `wayang.core.log.cardinalities (= ~/.wayang/cardinalities.json)` where to log cardinality measurements
+    * `wayang.core.optimizer.instrumentation (= org.apache.wayang.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Wayang plans; other options are `org.apache.wayang.core.profiling.NoInstrumentationStrategy` and `org.apache.wayang.core.profiling.FullInstrumentationStrategy`
+    * `wayang.core.optimizer.reoptimize (= false)`: whether to progressively optimize Wayang plans
+    * `wayang.basic.tempdir (= file:///tmp)`: where to store temporary files, in particular for inter-platform communication
 * Java Streams
-  * `wayang.java.cpu.mhz (= 2700)`: clock frequency of processor the JVM runs on in MHz
-  * `wayang.java.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to JVM in ms/MB
+    * `wayang.java.cpu.mhz (= 2700)`: clock frequency of processor the JVM runs on in MHz
+    * `wayang.java.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to JVM in ms/MB
 * Apache Spark
-  * `spark.master (= local)`: Spark master
-    * various other Spark settings are supported, e.g., `spark.executor.memory`, `spark.serializer`, ...
-  * `wayang.spark.cpu.mhz (= 2700)`: clock frequency of processor the Spark workers run on in MHz
-  * `wayang.spark.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to the Spark workers in ms/MB
-  * `wayang.spark.network.ms-per-mb (= 8.6)`: average network throughput of the Spark workers in ms/MB
-  * `wayang.spark.init.ms (= 4500)`: time it takes Spark to initialize in ms
+    * `spark.master (= local)`: Spark master
+        * various other Spark settings are supported, e.g., `spark.executor.memory`, `spark.serializer`, ...
+    * `wayang.spark.cpu.mhz (= 2700)`: clock frequency of processor the Spark workers run on in MHz
+    * `wayang.spark.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to the Spark workers in ms/MB
+    * `wayang.spark.network.ms-per-mb (= 8.6)`: average network throughput of the Spark workers in ms/MB
+    * `wayang.spark.init.ms (= 4500)`: time it takes Spark to initialize in ms
 * GraphChi
-  * `wayang.graphchi.cpu.mhz (= 2700)`: clock frequency of processor GraphChi runs on in MHz
-  * `wayang.graphchi.cpu.cores (= 2)`: number of cores GraphChi runs on
-  * `wayang.graphchi.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to GraphChi in ms/MB
+    * `wayang.graphchi.cpu.mhz (= 2700)`: clock frequency of processor GraphChi runs on in MHz
+    * `wayang.graphchi.cpu.cores (= 2)`: number of cores GraphChi runs on
+    * `wayang.graphchi.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to GraphChi in ms/MB
 * SQLite
-  * `wayang.sqlite3.jdbc.url`: JDBC URL to use SQLite
-  * `wayang.sqlite3.jdbc.user`: optional user name
-  * `wayang.sqlite3.jdbc.password`: optional password
-  * `wayang.sqlite3.cpu.mhz (= 2700)`: clock frequency of processor SQLite runs on in MHz
-  * `wayang.sqlite3.cpu.cores (= 2)`: number of cores SQLite runs on
+    * `wayang.sqlite3.jdbc.url`: JDBC URL to use SQLite
+    * `wayang.sqlite3.jdbc.user`: optional user name
+    * `wayang.sqlite3.jdbc.password`: optional password
+    * `wayang.sqlite3.cpu.mhz (= 2700)`: clock frequency of processor SQLite runs on in MHz
+    * `wayang.sqlite3.cpu.cores (= 2)`: number of cores SQLite runs on
 * PostgreSQL
-  * `wayang.postgres.jdbc.url`: JDBC URL to use PostgreSQL
-  * `wayang.postgres.jdbc.user`: optional user name
-  * `wayang.postgres.jdbc.password`: optional password
-  * `wayang.postgres.cpu.mhz (= 2700)`: clock frequency of processor PostgreSQL runs on in MHz
-  * `wayang.postgres.cpu.cores (= 2)`: number of cores PostgreSQL runs on
+    * `wayang.postgres.jdbc.url`: JDBC URL to use PostgreSQL
+    * `wayang.postgres.jdbc.user`: optional user name
+    * `wayang.postgres.jdbc.password`: optional password
+    * `wayang.postgres.cpu.mhz (= 2700)`: clock frequency of processor PostgreSQL runs on in MHz
+    * `wayang.postgres.cpu.cores (= 2)`: number of cores PostgreSQL runs on
 
 **Code with Wayang.** The recommended way to specify your apps with Wayang is via its Scala or Java API from the `wayang-api` module. You can find examples below.
 

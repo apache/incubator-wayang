@@ -33,8 +33,27 @@ notification:
 #    - .autoconf
 #    - $HOME/.m2
 
-install: true
+before_install:
+  - echo "${GENERATE_DOCS}"
+  - if [ "${GENERATE_DOCS}" = "true"  ] ; then sudo apt-get update ; fi
+  - if [ "${GENERATE_DOCS}" = "true"  ] ; then sudo apt-get -y install ruby-full build-essential zlib1g-dev ; fi
+  - if [ "${GENERATE_DOCS}" = "true"  ] ; then echo 'export GEM_HOME="$HOME/gems"' >> ~/.bashrc ; fi
+  - if [ "${GENERATE_DOCS}" = "true"  ] ; then echo 'export PATH="$HOME/gems/bin:$PATH"' >> ~/.bashrc ; fi
+  - if [ "${GENERATE_DOCS}" = "true"  ] ; then source ~/.bashrc ; fi
+install:
+  - if [ "${GENERATE_DOCS}" = "true"  ] ; then gem install jekyll bundler ; fi
+
 before_script:
+  - echo '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' > ~/.m2/settings.xml
+  - echo 'xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">' >> ~/.m2/settings.xml
+  - echo ' <servers>' >> ~/.m2/settings.xml
+  - echo '  <server>' >> ~/.m2/settings.xml
+  - echo '   <id>github</id>' >> ~/.m2/settings.xml
+  - echo "   <username>${GIT_USERNAME}</username>" >> ~/.m2/settings.xml
+  - echo "   <password>${GIT_TOKEN}</password>" >> ~/.m2/settings.xml
+  - echo '  </server>' >> ~/.m2/settings.xml
+  - echo ' </servers>' >> ~/.m2/settings.xml
+  - echo '</settings>' >> ~/.m2/settings.xml
   - mkdir -p travis/tmp
   - echo "#" >> travis/wayang.properties
   - echo "# Licensed to the Apache Software Foundation (ASF) under one or more" >> travis/wayang.properties
@@ -62,9 +81,20 @@ before_script:
   - cat travis/wayang.properties
   - rm -rf /home/travis/build/apache/incubator-wayang/target/rat.txt || echo "file doesn't exist"
   - rm -rf result.log || echo "file doesn't exist"
-  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=error" "-Dlog4j.rootLogger=ERROR")
+  - export LOG_LEVEL=error
+  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=${LOG_LEVEL}" "-Dwayang.configuration=file://$(pwd)/travis/wayang.properties" "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=${LOG_LEVEL}" "-Dlog4j.rootLogger=${LOG_LEVEL}")
+#  - chmod +x ./docs/script/cibuild
 script:
   #- jdk_switcher use openjdk8
   - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}" &> result.log
   - cat /home/travis/build/apache/incubator-wayang/target/rat.txt || echo "file doesn't exist"
   - tail -n 2000 result.log
+
+after_success:
+  # generate the documentation and create a update of the documentation if something change there
+  - if [ "${GENERATE_DOCS}" = "true" ] ; then mvn clean gem:exec@bundle-install gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site -pl wayang-docs -Pweb-documentation ; fi
+
+env:
+  global:
+    - NOKOGIRI_USE_SYSTEM_LIBRARIES=true # speeds up installation of html-proofer
+    - GENERATE_DOCS="false"

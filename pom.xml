@@ -214,6 +214,12 @@
 
             </build>
         </profile>
+        <profile>
+            <id>web-documentation</id>
+            <modules>
+                <module>wayang-docs</module>
+            </modules>
+        </profile>
 
         <profile>
             <!-- Perform steps to deploy Wayang. -->
@@ -857,7 +863,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.6</version>
+                    <version>3.7</version>
                     <configuration>
 
                     </configuration>
@@ -871,6 +877,7 @@
             <plugin>
                 <groupId>org.codehaus.gmaven</groupId>
                 <artifactId>groovy-maven-plugin</artifactId>
+                <version>2.1.1</version>
                 <executions>
                     <!-- Do some pre-build checks and report any findings to the user -->
                     <execution>
@@ -940,6 +947,11 @@
 
                         <exclude>**/*.log</exclude>
                         <exclude>**/0-to-10000.sequence_file</exclude>
+
+                        <exclude>**/*.svg</exclude>
+                        <exclude>**/Gemfile.lock</exclude>
+                        <exclude>**/.jekyll-cache/**</exclude>
+                        <exclude>**/README.md</exclude>
                         <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
                         <exclude>src/test/resources/ulysses.txt</exclude>
                         <exclude>src/test/resources/test.edgelist</exclude>
