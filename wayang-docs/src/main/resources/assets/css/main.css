@@ -1,0 +1,143 @@
+/**
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+.nav-link{
+    color: #3B454E !important;
+    width: 100%;
+    border-radius: 0 !important;
+}
+
+.nav-link:hover{
+    background: #E6ECF1;
+}
+
+.nav-link.active{
+    background: #fff !important;
+    border-bottom: 1px solid #a00e5a;
+    border-left: 7px solid #a00e5a;
+    border-top: 1px solid #a00e5a;
+    border-right: 1px solid #fff;
+    color: #a00e5a !important;
+    font-weight: bold;
+    width: calc(100% + 1px);
+}
+
+.nav-link.main-link{
+    color: #ff8724 !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom: 1px solid #a00e5a;
+}
+
+.nav-link.main-link > a{
+    color: #ff8724 !important;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.nav-link.main-link > a:hover{
+    color: #ff8724 !important;
+    font-weight: bold;
+    text-transform: capitalize;
+    text-decoration: none;
+}
+
+.nav-link.main-link.active {
+    color: #a00e5a !important;
+}
+
+
+h1, h2, h3, h4 {
+    color: #ff8724 !important;
+}
+
+h1 {
+    border-bottom: 2px solid #a00e5a;
+    padding-top: 0.5em;
+    padding-bottom: 0.1em;
+    font-weight: bold;
+}
+
+.green{
+    background-color: green;
+}
+
+.red{
+    background-color: red;
+}
+
+.page-btn {
+    width: 100%;
+    height: 100px;
+    border: #a00e5a solid 1px;
+    padding: 1em;
+    color: #a00e5a;
+    text-decoration: none;
+    transition: border 0.3s linear;
+}
+
+.page-btn:focus, .page-btn:hover{
+    color: #a00e5a;
+    text-decoration: none;
+    border: #a00e5a solid 5px;
+}
+
+.title-page-btn{
+    color: #ff8724 !important;
+    font-size: 2em;
+    margin: 0;
+    margin-top: -0.3em;
+    padding: 0;
+    font-weight: 900;
+}
+
+.btn-area-page{
+    margin-top: 3em;
+    padding-top: 2em;
+    border-top: #a00e5a solid 2px;
+    margin-bottom: 2em;
+}
+
+.sub-menu{
+    margin-left: 1em;
+    border-left: 1px solid #a00e5a;
+    background-color: rgba(160, 14, 90, 0.05);
+}
+
+.link-btn {
+    width: 10%;
+    background-color: transparent;
+    vertical-align: middle !important;
+}
+
+.sub-menu:before {
+    content:'';
+    position: relative;
+    top: 0.25em;
+    left: -0.5em;
+    border-top: solid 0.5em #a00e5a;
+    border-left: solid 0.5em transparent;
+    border-right: solid 0.5em transparent;
+}
+
+div.sub-menu ul li:last-child {
+    border-bottom: solid 1px #a00e5a;
+}
+
+/*div.sub-menu ul li:nth-child(2n) {*/
+/*    background-color: rgba(100, 100, 100, 0.1);*/
+/*}*/
