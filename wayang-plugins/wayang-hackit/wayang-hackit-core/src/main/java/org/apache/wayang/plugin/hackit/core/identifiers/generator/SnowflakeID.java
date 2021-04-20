@@ -21,7 +21,10 @@ import org.apache.wayang.plugin.hackit.core.identifiers.HackitIDGenerator;
 
 import java.time.Instant;
 
-public class TwitterSnowflake extends HackitIDGenerator<Integer, Long> {
+/**
+ * SnowflackID is and implementation of <a href="https://en.wikipedia.org/wiki/Snowflake_ID">this</a>
+ */
+public class SnowflakeID extends HackitIDGenerator<Integer, Long> {
     private static final int TOTAL_BITS = 64;
     private static final int EPOCH_BITS = 42;
     private static final int NODE_ID_BITS = 10;
@@ -31,21 +34,26 @@ public class TwitterSnowflake extends HackitIDGenerator<Integer, Long> {
     private static final int maxSequence = (int)(Math.pow(2, SEQUENCE_BITS) - 1);
 
     // Custom Epoch (January 1, 2015 Midnight UTC = 2015-01-01T00:00:00Z)
+    //TODO: add this element from configuration
     private static final long CUSTOM_EPOCH = 1420070400000L;
 
     private volatile long lastTimestamp = -1L;
     private volatile long sequence = 0L;
 
-    // Create SequenceGenerator with a nodeId
-    public TwitterSnowflake(int nodeId) {
+    /**
+     * Create SequenceGenerator with a nodeId
+     */
+    public SnowflakeID(int nodeId) {
         if(nodeId < 0 || nodeId > maxNodeId) {
             throw new IllegalArgumentException(String.format("NodeId must be between %d and %d", 0, maxNodeId));
         }
         this.identify_process = nodeId;
     }
 
-    // Let SequenceGenerator generate a nodeId
-    public TwitterSnowflake() {
+    /**
+     * Let SequenceGenerator generate a nodeId
+     */
+    public SnowflakeID() {
         this( createNodeId() & maxNodeId);
     }
 
@@ -54,6 +62,12 @@ public class TwitterSnowflake extends HackitIDGenerator<Integer, Long> {
         return this.nextId();
     }
 
+    /**
+     * Generate the next ID, this method is synchronized because several {@link Thread} could exist
+     * on one unique worker.
+     *
+     * @return the new ID
+     */
     public synchronized long nextId() {
         long currentTimestamp = timestamp();
 
@@ -80,12 +94,23 @@ public class TwitterSnowflake extends HackitIDGenerator<Integer, Long> {
         return id;
     }
 
-    // Get current timestamp in milliseconds, adjust for the custom epoch.
+    /**
+     * Get current timestamp in milliseconds, adjust for the custom epoch.
+     *
+     * @return the Timestamp
+     */
     private static long timestamp() {
         return Instant.now().toEpochMilli() - CUSTOM_EPOCH;
     }
 
-    // Block and wait till next millisecond
+    /**
+     * Block and wait till next millisecond, this is used when the number of elements of one epoch
+     * overflow the max possible number of one epoch
+     *
+     * @param currentTimestamp
+     *
+     * @return the new timestamp after the waiting time
+     */
     private long waitNextMillis(long currentTimestamp) {
         while (currentTimestamp == lastTimestamp) {
             currentTimestamp = timestamp();
