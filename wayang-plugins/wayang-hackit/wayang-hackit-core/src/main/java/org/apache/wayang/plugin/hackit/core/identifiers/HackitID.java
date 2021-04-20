@@ -17,5 +17,8 @@
  */
 package org.apache.wayang.plugin.hackit.core.identifiers;
 
+/**
+ * TODO Maybe need to be deleted, however, need to be validate it
+ */
 public class HackitID {
 }
