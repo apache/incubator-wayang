@@ -19,13 +19,38 @@ package org.apache.wayang.plugin.hackit.core.iterator;
 
 import java.util.Iterator;
 
+/**
+ * ElementPlusIterator extends from {@link Iterator}.
+ *
+ * ElementPlusIterator add one unique element to a know {@link Iterator}, this unique element
+ * it will be consumed first.
+ *
+ * @param <T> type of the element of the iterator
+ */
 public class ElementPlusIterator<T> implements Iterator<T> {
 
+    /**
+     * Indicate if the first element it was consumed or not yet
+     */
     private boolean element_consumed = false;
+
+    /**
+     * The element that was included to the iterator
+     */
     private T element;
+
+    /**
+     * The iterator where the element was added
+     */
     private Iterator<T> iterator;
 
 
+    /**
+     * Construct of ElementPlusIterator
+     *
+     * @param element is the object that will be consumed first
+     * @param iterator iterator that will be consumed after the original element
+     */
     public ElementPlusIterator(T element, Iterator<T> iterator) {
         if(element == null){
             throw new RuntimeException("the element can't be null");
