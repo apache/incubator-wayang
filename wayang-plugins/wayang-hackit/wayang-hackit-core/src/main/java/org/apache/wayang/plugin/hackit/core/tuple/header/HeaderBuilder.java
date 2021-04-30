@@ -17,14 +17,27 @@
  */
 package org.apache.wayang.plugin.hackit.core.tuple.header;
 
+/**
+ * HeaderBuilder it the generator of {@link Header} to one kind of {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ */
 public class HeaderBuilder {
 
 
+    /**
+     * Default Construct
+     */
     public HeaderBuilder(){
         //TODO: take from the configuration
     }
 
+    /**
+     * generate a new Header depending on the configuration provided
+     *
+     * @param <T> is the type that will be provided
+     * @return {@link Header} is new instance of the header requested
+     */
     public <T> Header<T> generateHeader(){
+        //TODO: take and works from the configuration provided either on a file or by parameters at runtime
         return (Header<T>) new HeaderLong();
     }
 

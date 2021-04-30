@@ -17,21 +17,45 @@
  */
 package org.apache.wayang.plugin.hackit.core.tuple.header;
 
+/**
+ * HeaderLong extend {@link Header} just a simple implementation of correlative number
+ */
 public class HeaderLong extends Header<Long> {
+
+    /**
+     * base is the current correlative that is used in this generator
+     */
     static long base;
 
+    /*
+    TODO: maybe it need to be remove or change to be load form configurations
+     */
     static{
         base = 0;//(new Random()).nextLong();
     }
 
-    public HeaderLong(Long id){
-        super(id);
-    }
-
+    /**
+     * Default Construct
+     */
     public HeaderLong() {
         super();
     }
 
+    /**
+     * Construct where is possible to define the identifier
+     *
+     * @param id is the identifier that it will be used by the {@link Header}
+     */
+    public HeaderLong(Long id){
+        super(id);
+    }
+
+    /**
+     * Construct where is possible to define the identifier and child number
+     *
+     * @param id is the identifier that it will be used by the {@link Header}
+     * @param child is the identifier as child of the original element giving by <code>id</code>
+     */
     public HeaderLong(Long id, int child) {
         super(id, child);
     }
