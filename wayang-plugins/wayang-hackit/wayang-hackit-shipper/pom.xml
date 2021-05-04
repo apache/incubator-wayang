@@ -30,7 +30,7 @@
     <artifactId>wayang-hackit-shipper</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>wayang-hackit-shipper-rabbitmq</module>
+        <module>wayang-hackit-shipper-kafka</module>
     </modules>
 
     <properties>
