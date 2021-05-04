@@ -27,7 +27,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wayang-hackit-shipper-rabbitmq</artifactId>
+    <artifactId>wayang-hackit-shipper-kafka</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
