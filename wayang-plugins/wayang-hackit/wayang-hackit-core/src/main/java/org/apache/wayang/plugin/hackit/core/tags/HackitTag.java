@@ -26,16 +26,38 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * HackitTag extend from {@link ActionGroup} becuase is the element that allows to create
+ * an element that contains the flags for the {@link org.apache.wayang.plugin.hackit.core.tagger.HackitTagger}
+ * and {@link org.apache.wayang.plugin.hackit.core.sniffer.HackitSniffer} could perform the right logic
+ * to {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} that have the tag
+ *
+ * HachitTag implements {@link Serializable} because the element could be send it out.
+ */
 public abstract class HackitTag implements Serializable, ActionGroup {
 
+    /**
+     * TODO: add comment, validate if apply for the use case
+     */
     private List<TaggerFunction<?>> callbacks;
+
+    /**
+     * TODO: add comment, validate if apply for the use case
+     */
     private Map<String, Object> callback_results;
 
+    /**
+     * Default Construct
+     */
     protected HackitTag(){
+        //TODO: validate is is not better to go by delay option
         this.callbacks = new ArrayList<>();
         this.callback_results = new HashMap<>();
     }
 
+    /**
+     * TODO: add comment, validate if apply for the use case
+     */
     public void callback(){
         if(hasCallback()) {
             this.callbacks.stream().forEach(
@@ -43,10 +65,22 @@ public abstract class HackitTag implements Serializable, ActionGroup {
             );
         }
     }
+
+    /**
+     * TODO: add comment, validate if apply for the use case
+     *
+     * @param name
+     * @param value
+     */
     public void addValue(String name, Object value){
         this.callback_results.put(name, value);
     }
 
+    /**
+     * TODO: add comment, validate if apply for the use case
+     *
+     * @return
+     */
     public abstract HackitTag getInstance();
 
     @Override

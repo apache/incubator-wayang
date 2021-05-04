@@ -17,30 +17,47 @@
  */
 package org.apache.wayang.plugin.hackit.core.tags;
 
+/**
+ * SkipTag is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ * that not need to be process by the {@link org.apache.wayang.plugin.hackit.core.sniffer.HackitSniffer} and
+ * also need to be removed and not continues with the process.
+ */
 public class SkipTag extends HackitTag  {
+
+    /**
+     * seed is the element that allow to have small overhead in memory, is like use
+     * singleton.
+     */
     private static SkipTag seed = null;
 
+    /**
+     * default construct
+     */
     private SkipTag(){
         super();
     }
 
     @Override
     public boolean isSendOut() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isSkip() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isHaltJob() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean hasCallback() {
+        //TODO: set the correct value to this return
         return false;
     }
 
