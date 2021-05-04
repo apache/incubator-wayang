@@ -17,30 +17,46 @@
  */
 package org.apache.wayang.plugin.hackit.core.tags;
 
+/**
+ * Display is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ * as an element that need to be sent it out to just print the values
+ */
 public class DisplayTag extends HackitTag  {
+
+    /**
+     * seed is the element that allow to have small overhead in memory, is like use
+     * singleton.
+     */
     private static DisplayTag seed = null;
 
+    /**
+     * default construct
+     */
     private DisplayTag(){
         super();
     }
 
     @Override
     public boolean isSendOut() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isSkip() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isHaltJob() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean hasCallback() {
+        //TODO: set the correct value to this return
         return false;
     }
 

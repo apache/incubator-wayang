@@ -17,30 +17,46 @@
  */
 package org.apache.wayang.plugin.hackit.core.tags;
 
+/**
+ * PauseTag is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ * where is need to pause all the process and wait for a signal that tell what to do, either kill the process or continues
+ */
 public class PauseTag extends HackitTag  {
+
+    /**
+     * seed is the element that allow to have small overhead in memory, is like use
+     * singleton.
+     */
     private static PauseTag seed = null;
 
+    /**
+     * default construct
+     */
     private PauseTag(){
         super();
     }
 
     @Override
     public boolean isSendOut() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isSkip() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isHaltJob() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean hasCallback() {
+        //TODO: set the correct value to this return
         return false;
     }
 

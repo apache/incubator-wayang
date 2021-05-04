@@ -17,31 +17,46 @@
  */
 package org.apache.wayang.plugin.hackit.core.tags;
 
+/**
+ * CrashTag is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} that
+ * produce and exception that goes from UDF context and could make that the process stop.
+ */
 public class CrashTag extends HackitTag {
 
+    /**
+     * seed is the element that allow to have small overhead in memory, is like use
+     * singleton.
+     */
     private static CrashTag seed = null;
 
+    /**
+     * default construct
+     */
     private CrashTag(){
         super();
     }
 
     @Override
     public boolean isSendOut() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isSkip() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isHaltJob() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean hasCallback() {
+        //TODO: set the correct value to this return
         return false;
     }
 

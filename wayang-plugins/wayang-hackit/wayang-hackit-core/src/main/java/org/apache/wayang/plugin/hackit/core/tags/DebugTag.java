@@ -17,31 +17,46 @@
  */
 package org.apache.wayang.plugin.hackit.core.tags;
 
+/**
+ * DebugTag is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ * as an element that need to capture the timestamp and send it out to analyse the values
+ */
 public class DebugTag extends HackitTag  {
 
+    /**
+     * seed is the element that allow to have small overhead in memory, is like use
+     * singleton.
+     */
     private static DebugTag seed = null;
 
+    /**
+     * default construct
+     */
     private DebugTag(){
         super();
     }
 
     @Override
     public boolean isSendOut() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isSkip() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean isHaltJob() {
+        //TODO: set the correct value to this return
         return false;
     }
 
     @Override
     public boolean hasCallback() {
+        //TODO: set the correct value to this return
         return false;
     }
 
