@@ -18,12 +18,14 @@
 
 package org.apache.wayang.plugin.hackit.core.sniffer.shipper.sender;
 
+/**
+ *
+ * @param <T>
+ */
 public class EmptySender<T> implements Sender<T> {
 
     @Override
-    public void init() {
-
-    }
+    public void init() {}
 
     @Override
     public void send(T value) {}

@@ -30,19 +30,75 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.function.Function;
 
-public class HackitSniffer<K, T, SentType, SenderObj extends Sender<SentType>, ReceiverObj extends Receiver<HackitTuple<K,T>> > implements Function<HackitTuple<K, T>, Iterator<HackitTuple<K, T>>>, Serializable {
+/**
+ *
+ * @param <K>
+ * @param <T>
+ * @param <SentType>
+ * @param <SenderObj>
+ * @param <ReceiverObj>
+ */
+public class
+    HackitSniffer<
+        K,
+        T,
+        SentType,
+        SenderObj extends Sender<SentType>,
+        ReceiverObj extends Receiver<HackitTuple<K,T>>
+    >
+    implements
+        Function<
+            HackitTuple<K, T>,
+            Iterator<HackitTuple<K, T>>
+        >,
+        Serializable {
 
+    /**
+     *
+     */
     private transient boolean not_first = false;
+
+    /**
+     *
+     */
     private Injector<HackitTuple<K, T>> hackItInjector;
 
+    /**
+     *
+     */
     private Actor<HackitTuple<K, T>> actorFunction;
 
+    /**
+     *
+     */
     private Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper;
 
+    /**
+     *
+     */
     private Sniff<HackitTuple<K, T>> hackItSniff;
+
+    /**
+     *
+     */
     private Cloner<HackitTuple<K, T>, SentType> hackItCloner;
 
-    public HackitSniffer(Injector<HackitTuple<K, T>> hackItInjector, Actor<HackitTuple<K, T>> actorFunction, Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper, Sniff<HackitTuple<K, T>> hackItSniff, Cloner<HackitTuple<K, T>, SentType> hackItCloner) {
+    /**
+     *
+     * @param hackItInjector
+     * @param actorFunction
+     * @param shipper
+     * @param hackItSniff
+     * @param hackItCloner
+     */
+    //TODO: it may private, because need to be executed just at the creation moment
+    public HackitSniffer(
+            Injector<HackitTuple<K, T>> hackItInjector,
+            Actor<HackitTuple<K, T>> actorFunction,
+            Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper,
+            Sniff<HackitTuple<K, T>> hackItSniff,
+            Cloner<HackitTuple<K, T>, SentType> hackItCloner
+    ) {
         this.hackItInjector = hackItInjector;
         this.actorFunction = actorFunction;
         this.shipper = shipper;
@@ -51,6 +107,9 @@ public class HackitSniffer<K, T, SentType, SenderObj extends Sender<SentType>, R
         this.not_first = false;
     }
 
+    /**
+     * Default Construct, this get all the components from configuration files
+     */
     public HackitSniffer() {
         //TODO this over configuration file
         this.not_first = false;
@@ -76,26 +135,51 @@ public class HackitSniffer<K, T, SentType, SenderObj extends Sender<SentType>, R
         return this.hackItInjector.inject(ktHackItTuple, inyection);
     }
 
+    /**
+     *
+     * @param hackItInjector
+     * @return
+     */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItInjector(Injector<HackitTuple<K, T>> hackItInjector) {
         this.hackItInjector = hackItInjector;
         return this;
     }
 
+    /**
+     *
+     * @param actorFunction
+     * @return
+     */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setActorFunction(Actor<HackitTuple<K, T>> actorFunction) {
         this.actorFunction = actorFunction;
         return this;
     }
 
+    /**
+     *
+     * @param shipper
+     * @return
+     */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setShipper(Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper) {
         this.shipper = shipper;
         return this;
     }
 
+    /**
+     *
+     * @param hackItSniff
+     * @return
+     */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItSniff(Sniff<HackitTuple<K, T>> hackItSniff) {
         this.hackItSniff = hackItSniff;
         return this;
     }
 
+    /**
+     *
+     * @param hackItCloner
+     * @return
+     */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItCloner(Cloner<HackitTuple<K, T>, SentType> hackItCloner) {
         this.hackItCloner = hackItCloner;
         return this;

@@ -21,6 +21,18 @@ package org.apache.wayang.plugin.hackit.core.sniffer.shipper;
  * Publish and Subscribed Protocol
  */
 public interface PSProtocol {
+
+    /**
+     *
+     * @param topic
+     * @return
+     */
     public PSProtocol addTopic(String... topic);
+
+    /**
+     *
+     * @param exchange
+     * @return
+     */
     public PSProtocol addExchange(String exchange);
 }

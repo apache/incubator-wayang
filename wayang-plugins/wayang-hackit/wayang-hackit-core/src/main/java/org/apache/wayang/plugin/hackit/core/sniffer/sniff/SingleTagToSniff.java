@@ -20,14 +20,29 @@ package org.apache.wayang.plugin.hackit.core.sniffer.sniff;
 
 import org.apache.wayang.plugin.hackit.core.tags.HackitTag;
 
+/**
+ *
+ */
 public class SingleTagToSniff implements Sniff {
 
+    /**
+     *
+     */
     public HackitTag tags2sniff;
 
+    /**
+     *
+     * @param tag
+     * @return
+     */
     public boolean sniff(HackitTag tag){
         return this.tags2sniff.equals(tag);
     }
 
+    /**
+     *
+     * @param tag
+     */
     public void addTag2sniff(HackitTag tag) {
         if(this.tags2sniff != null){
             throw new RuntimeException("The SingleTagToSniff already got the tag, if you need more of one tag use CollectionTagsToSniff class");

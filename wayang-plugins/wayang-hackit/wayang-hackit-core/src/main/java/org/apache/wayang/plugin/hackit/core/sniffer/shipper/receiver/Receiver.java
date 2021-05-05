@@ -20,13 +20,30 @@ package org.apache.wayang.plugin.hackit.core.sniffer.shipper.receiver;
 import java.io.Serializable;
 import java.util.Iterator;
 
+/**
+ *
+ * @param <T>
+ */
 public abstract class Receiver<T> implements Serializable {
 
+    /**
+     *
+     */
     private transient BufferReceiver<T> bufferReceive;
 
+    /**
+     *
+     */
     public abstract void init();
 
+    /**
+     *
+     * @return
+     */
     public abstract Iterator<T> getElements();
 
+    /**
+     *
+     */
     public abstract void close();
 }

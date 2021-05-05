@@ -24,6 +24,10 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
 
+/**
+ *
+ * @param <T>
+ */
 public class EmptyInjector<T> implements Injector<T>{
 
     @Override
