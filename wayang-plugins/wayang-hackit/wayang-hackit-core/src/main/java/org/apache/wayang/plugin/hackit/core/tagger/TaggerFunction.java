@@ -17,9 +17,24 @@
  */
 package org.apache.wayang.plugin.hackit.core.tagger;
 
+/**
+ * TaggerFunction is the template for the function that will be use inside of {@link HackitTagger}
+ *
+ * @param <T> output type of the execution
+ */
 public interface TaggerFunction<T> {
-    public T execute();
+    /**
+     * It execute the function of tagger, and generate and output
+     *
+     * @return result of the execution
+     */
+    T execute();
 
-    public String getName();
+    /**
+     * Get the name of the function, this is use a identifier
+     *
+     * @return {@link String} that contains the name of the {@link TaggerFunction}
+     */
+    String getName();
 
 }

@@ -21,10 +21,29 @@ import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
 import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.FunctionTemplate;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
-public class PredicateWrapperHackit<IDType, I> extends HackitTagger implements FunctionTemplate<HackitTuple<IDType, I>, Boolean> {
+/**
+ * PredicateWrapperHackit is an implementation of {@link FunctionTemplate} where Hackit manage the logic
+ * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
+ * original function. The original {@link FunctionTemplate} it an predicate function because return a
+ * {@link Boolean}
+ *
+ * @param <IDType> Type of {@link org.apache.wayang.plugin.hackit.core.tuple.header.Header} key of the {@link HackitTuple}
+ * @param <I> Input Type of the original Tuple to be evaluated
+ */
+public class PredicateWrapperHackit<IDType, I>
+        extends HackitTagger
+        implements FunctionTemplate<HackitTuple<IDType, I>, Boolean> {
 
+    /**
+     * Original predicate that will evaluate the data to give a True or False value
+     */
     private FunctionTemplate<I, Boolean> function;
 
+    /**
+     * Default Construct
+     *
+     * @param function is the predicate that will be Wrapped by the {@link PredicateWrapperHackit}
+     */
     public PredicateWrapperHackit(FunctionTemplate<I, Boolean> function) {
         this.function = function;
     }

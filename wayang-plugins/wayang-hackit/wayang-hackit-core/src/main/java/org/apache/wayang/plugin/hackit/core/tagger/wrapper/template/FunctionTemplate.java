@@ -17,7 +17,20 @@
  */
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper.template;
 
+/**
+ * FunctionTemplate is the template that provide the abstraction to work with Transformation operations and also
+ * allows to wrap some function made by the user.
+ *
+ * @param <I> Input type of the original Function
+ * @param <O> Output type of the original function
+ */
 public interface FunctionTemplate<I, O> {
 
+    /**
+     * Execute the logic over one element and generate as output <code>T</code>
+     *
+     * @param input element to transform
+     * @return <code>O</code> that is the transformation of the <code>input</code>
+     */
     public O execute(I input);
 }
