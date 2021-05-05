@@ -23,18 +23,36 @@ import org.apache.wayang.plugin.hackit.core.tags.HackitTag;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ *
+ */
 public class CollectionTagsToSniff implements Sniff {
 
+    /**
+     *
+     */
     public Set<HackitTag> tags2sniff;
 
+    /**
+     * Default Construct
+     */
     public CollectionTagsToSniff(){
         this.tags2sniff = new HashSet<>();
     }
 
+    /**
+     *
+     * @param tag
+     * @return
+     */
     public boolean sniff(HackitTag tag){
         return this.tags2sniff.contains(tag);
     }
 
+    /**
+     *
+     * @param tag
+     */
     public void addTag2sniff(HackitTag tag) {
         this.tags2sniff.add(tag);
     }

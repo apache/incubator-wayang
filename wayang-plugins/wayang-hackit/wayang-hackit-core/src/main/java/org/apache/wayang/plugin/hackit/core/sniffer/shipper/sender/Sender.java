@@ -19,11 +19,25 @@ package org.apache.wayang.plugin.hackit.core.sniffer.shipper.sender;
 
 import java.io.Serializable;
 
+/**
+ *
+ * @param <T>
+ */
 public interface Sender<T> extends Serializable {
 
-    public void init();
+    /**
+     *
+     */
+    void init();
 
-    public void send(T value);
+    /**
+     *
+     * @param value
+     */
+    void send(T value);
 
-    public void close();
+    /**
+     *
+     */
+    void close();
 }

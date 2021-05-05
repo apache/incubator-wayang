@@ -20,11 +20,31 @@ package org.apache.wayang.plugin.hackit.core.sniffer.inject;
 import java.io.Serializable;
 import java.util.Iterator;
 
+/**
+ *
+ * @param <T>
+ */
 public interface Injector<T> extends Serializable {
 
-    public Iterator<T> inject(T element, Iterator<T> iterator);
+    /**
+     *
+     * @param element
+     * @param iterator
+     * @return
+     */
+    Iterator<T> inject(T element, Iterator<T> iterator);
 
-    public boolean is_skip_element(T element);
+    /**
+     *
+     * @param element
+     * @return
+     */
+    boolean is_skip_element(T element);
 
-    public boolean is_halt_job(T element);
+    /**
+     *
+     * @param element
+     * @return
+     */
+    boolean is_halt_job(T element);
 }

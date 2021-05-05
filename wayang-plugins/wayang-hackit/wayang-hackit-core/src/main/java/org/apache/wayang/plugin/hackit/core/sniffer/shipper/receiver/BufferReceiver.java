@@ -21,6 +21,10 @@ import java.io.Serializable;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ *
+ * @param <T>
+ */
 public class BufferReceiver<T> implements Serializable {
     //TODO implement the doble buffering
     private transient Queue<T> queue;

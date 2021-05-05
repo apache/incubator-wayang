@@ -19,7 +19,21 @@ package org.apache.wayang.plugin.hackit.core.sniffer.clone;
 
 import java.io.Serializable;
 
+/**
+ * Cloner is the template for the functionality that take care about the clone phase
+ *
+ * @param <I> type of the element that it will get cloned
+ * @param <O> type of the element after cloning it, it possible that could be different
+ */
 public interface Cloner<I, O> extends Serializable {
 
-    public O clone(I input);
+    /**
+     * get <code>input</code> and create a clone, the output cloud be different
+     * to the original, this doesn't change the behavior it just a to reduce overhead
+     * in some case that is not need to have the same kind.
+     *
+     * @param input element to get cloned
+     * @return Clone of the <code>input</code> element
+     */
+    O clone(I input);
 }

@@ -21,6 +21,10 @@ package org.apache.wayang.plugin.hackit.core.sniffer.shipper.receiver;
 import java.util.Collections;
 import java.util.Iterator;
 
+/**
+ *
+ * @param <T>
+ */
 public class EmptyReceiver<T> extends Receiver<T> {
 
     @Override

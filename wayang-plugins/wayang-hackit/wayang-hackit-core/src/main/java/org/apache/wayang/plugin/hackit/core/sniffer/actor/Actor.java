@@ -19,7 +19,16 @@ package org.apache.wayang.plugin.hackit.core.sniffer.actor;
 
 import java.io.Serializable;
 
+/**
+ *
+ * @param <T>
+ */
 public interface Actor<T> extends Serializable {
 
-    public boolean is_sendout(T value);
+    /**
+     *
+     * @param value
+     * @return
+     */
+    boolean is_sendout(T value);
 }
