@@ -19,5 +19,14 @@
 
 package org.apache.wayang.hackit.sidecar;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class HackitSidecar {
+
+    public static void main(String[] args) {
+        SpringApplication.run(HackitSidecar.class, args);
+    }
+
 }
