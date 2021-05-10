@@ -19,7 +19,7 @@
 package org.apache.wayang.plugin.hackit.core.sniffer.shipper.sender;
 
 /**
- *
+ * EmptySender is a dummy implementation of the {@link Sender}
  * @param <T>
  */
 public class EmptySender<T> implements Sender<T> {

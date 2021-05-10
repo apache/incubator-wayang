@@ -23,6 +23,7 @@ package org.apache.wayang.plugin.hackit.core.sniffer.shipper;
 public interface PSProtocol {
 
     /**
+     * Add the topics on the server and messages
      *
      * @param topic
      * @return
@@ -30,7 +31,7 @@ public interface PSProtocol {
     public PSProtocol addTopic(String... topic);
 
     /**
-     *
+     * Add places where the data need to be published or retrieved
      * @param exchange
      * @return
      */

@@ -22,8 +22,9 @@ import java.util.Collections;
 import java.util.Iterator;
 
 /**
+ * EmptyReceiver is a dummy implementation of {@link Receiver}
  *
- * @param <T>
+ * @param <T> type of process data
  */
 public class EmptyReceiver<T> extends Receiver<T> {
 

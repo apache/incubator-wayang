@@ -21,7 +21,7 @@ package org.apache.wayang.plugin.hackit.core.sniffer.sniff;
 import org.apache.wayang.plugin.hackit.core.tags.HackitTag;
 
 /**
- *
+ * TODO validate if is correct implementation
  */
 public class SingleTagToSniff implements Sniff {
 

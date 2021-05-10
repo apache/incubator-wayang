@@ -21,29 +21,32 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 /**
+ * Receiver is the component that handle the connection with the side car, and get
+ * external elements, this can be instructions to perform or new {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
  *
- * @param <T>
+ * @param <T> Type of received elements
  */
 public abstract class Receiver<T> implements Serializable {
 
     /**
-     *
+     * bufferReceiver is an instance of {@link BufferReceiver}
      */
-    private transient BufferReceiver<T> bufferReceive;
+    private transient BufferReceiver<T> bufferReceiver;
 
     /**
-     *
+     * Start the the Receiver service that will be waiting the new elements.
      */
     public abstract void init();
 
     /**
+     * Provide the newest elements received, either the process {@link #init()} or the previous call of {@link #getElements()}
      *
-     * @return
+     * @return {@link Iterator} with the elements
      */
     public abstract Iterator<T> getElements();
 
     /**
-     *
+     * Stop the service and clean the {@link BufferReceiver}
      */
     public abstract void close();
 }

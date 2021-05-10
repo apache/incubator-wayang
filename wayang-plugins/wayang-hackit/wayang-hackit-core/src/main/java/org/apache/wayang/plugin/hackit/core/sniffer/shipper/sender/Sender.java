@@ -20,24 +20,29 @@ package org.apache.wayang.plugin.hackit.core.sniffer.shipper.sender;
 import java.io.Serializable;
 
 /**
+ * Sender is the component that send the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} out from
+ * the main pipeline
  *
- * @param <T>
+ * @param <T> type of the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} that will be send out
  */
 public interface Sender<T> extends Serializable {
 
     /**
-     *
+     * Start the service or connect to the server where the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+     * need to be sended it
      */
     void init();
 
     /**
+     * Place in a buffer or send inmediatly the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} this will
+     * depends on the configuration
      *
-     * @param value
+     * @param value to be send out
      */
     void send(T value);
 
     /**
-     *
+     * Terminate the connection and clean the buffers if is need
      */
     void close();
 }
