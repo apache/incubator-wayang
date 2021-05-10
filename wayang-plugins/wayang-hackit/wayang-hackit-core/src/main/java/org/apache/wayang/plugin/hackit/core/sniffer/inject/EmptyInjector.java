@@ -25,8 +25,9 @@ import java.util.Spliterators;
 import java.util.stream.StreamSupport;
 
 /**
+ * EmptyInjector is a dummy implementation of the {@link Injector} to show how it need to looks and Inyector implementation
  *
- * @param <T>
+ * @param <T> type of the element processed.
  */
 public class EmptyInjector<T> implements Injector<T>{
 

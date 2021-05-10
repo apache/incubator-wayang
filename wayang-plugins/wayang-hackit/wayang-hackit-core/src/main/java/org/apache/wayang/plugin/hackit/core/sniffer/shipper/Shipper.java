@@ -24,41 +24,46 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 /**
+ * Shipper is the component that it handle the reception and emision of the message from the main pipeline and sidecar
+ * pipeline to enable a smoothly connection between them.
  *
- * @param <T>
- * @param <ST>
- * @param <SenderObj>
- * @param <ReceiverObj>
+ * @param <T_IN> type of the tuple that it come from the sidecar to the main pipeline
+ * @param <T_OUT> type of the tuple that it go from the main to sidecar pipeline
+ * @param <SenderObj> type of {@link Sender} that the shipper will use
+ * @param <ReceiverObj> type of {@link Receiver} that the shipper will use
  */
-public abstract class Shipper<T, ST, SenderObj extends Sender<ST>, ReceiverObj extends Receiver<T>> implements Iterator<T>, Serializable {
+public abstract class Shipper<T_IN, T_OUT, SenderObj extends Sender<T_OUT>, ReceiverObj extends Receiver<T_IN>> implements Iterator<T_IN>, Serializable {
 
     /**
-     *
+     * <code>sender_instance</code> instance that have {@link Sender} implementation
      */
     protected Sender sender_instance;
 
     /**
-     *
+     * <code>receiver_instance</code> instance that have {@link Receiver} implementation
      */
     protected Receiver receiver_instance;
 
     /**
+     * Generate an instance of the {@link Sender}, it could be take it by configurations
      *
-     * @return
+     * @return {@link Sender} instance
      */
     protected abstract Sender createSenderInstance();
 
     /**
+     * Generate an instance of the {@link Receiver}, it could be take it by configurations
      *
-     * @return
+     * @return {@link Receiver} instance
      */
     protected abstract Receiver createReceiverInstance();
 
     /**
-     * Connect with the a Message queue service
-     * @param value
+     * Connect with the a Message queue service and send the message
+     *
+     * @param value is the element that it will be send out form the main pipeline
      */
-    public void publish(ST value){
+    public void publish(T_OUT value){
         if(this.sender_instance == null){
             throw new RuntimeException("The Sender of the Shipper is not instanciated");
         }
@@ -74,17 +79,16 @@ public abstract class Shipper<T, ST, SenderObj extends Sender<ST>, ReceiverObj e
     }
 
     /**
-     *
-     * @param topic
+     * @see #subscribeAsProducer()
+     * @param topic list of topic where the messages need to be seeded
      */
     public void subscribeAsProducer(String... topic){
         this.subscribeAsProducer("default", topic);
     }
 
     /**
-     *
-     * @param metatopic
-     * @param topic
+     * @see #subscribeAsProducer(String...)
+     * @param metatopic If the metatopic is different to the Default, need to be provided here
      */
     public void subscribeAsProducer(String metatopic, String... topic){
         this.subscribeAsProducer();
@@ -95,7 +99,7 @@ public abstract class Shipper<T, ST, SenderObj extends Sender<ST>, ReceiverObj e
     }
 
     /**
-     * Close connection
+     * Close connection and send the remaind elements
      */
     public void unsubscribeAsProducer(){
         if( this.sender_instance == null) return;
@@ -113,17 +117,16 @@ public abstract class Shipper<T, ST, SenderObj extends Sender<ST>, ReceiverObj e
     }
 
     /**
-     *
-     * @param topic
+     * @see #subscribeAsConsumer()
+     * @param topic list of topic where the consumer it will be consuming
      */
     public void subscribeAsConsumer(String... topic){
         this.subscribeAsProducer("default", topic);
     }
 
     /**
-     *
-     * @param metatopic
-     * @param topic
+     * @see #subscribeAsProducer(String...)
+     * @param metatopic If the metatopic is different to the Default, need to be provided here
      */
     public void subscribeAsConsumer(String metatopic, String... topic){
         this.subscribeAsConsumer();
@@ -134,7 +137,7 @@ public abstract class Shipper<T, ST, SenderObj extends Sender<ST>, ReceiverObj e
     }
 
     /**
-     * Close connection
+     * Close connection and stop consuming elements form the sidecar pipeline
      */
     public void unsubscribeAsConsumer() {
         if( this.receiver_instance == null) return;
@@ -142,7 +145,7 @@ public abstract class Shipper<T, ST, SenderObj extends Sender<ST>, ReceiverObj e
     }
 
     /**
-     *
+     * Close the {@link Sender} and {@link Receiver}
      */
     public void close(){
         this.unsubscribeAsConsumer();
@@ -153,13 +156,14 @@ public abstract class Shipper<T, ST, SenderObj extends Sender<ST>, ReceiverObj e
     public abstract boolean hasNext();
 
     @Override
-    public abstract T next();
+    public abstract T_IN next();
 
     /**
+     * Get the last elements received to be injected on the main pipeline.
      *
-     * @return
+     * @return {@link Iterator} with the last element on the {@link org.apache.wayang.plugin.hackit.core.sniffer.shipper.receiver.BufferReceiver}
      */
-    public Iterator<T> getNexts(){
+    public Iterator<T_IN> getNexts(){
         if( this.receiver_instance == null){
             throw new RuntimeException("The Receiver of the Shipper is not instanciated");
         }

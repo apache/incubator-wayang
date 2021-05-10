@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- *
+ * TODO validate if is correct implementation
  */
 public class CollectionTagsToSniff implements Sniff {
 

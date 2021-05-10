@@ -31,12 +31,14 @@ import java.util.Iterator;
 import java.util.function.Function;
 
 /**
+ * {@link HackitSniffer} is the one of the main function on Hackit, this function have the resposability of execute the
+ * logic of sniff the tuples and apply the logic of {@link #apply(HackitTuple)}
  *
- * @param <K>
- * @param <T>
- * @param <SentType>
- * @param <SenderObj>
- * @param <ReceiverObj>
+ * @param <K> type of key that it handle the {@link org.apache.wayang.plugin.hackit.core.tuple.header.Header}
+ * @param <T> type that wrapped by {@link HackitTuple}
+ * @param <SentType> Type of the element that it will be send out by {@link Sender}
+ * @param <SenderObj> Object class of the implementation of {@link Sender}
+ * @param <ReceiverObj>Object class of the implementation of {@link Receiver}
  */
 public class
     HackitSniffer<
@@ -54,42 +56,43 @@ public class
         Serializable {
 
     /**
-     *
+     * Indicate if the first execution or not, because some function will need that information
+     * to get instantiated
      */
     private transient boolean not_first = false;
 
     /**
-     *
+     * {@link Injector} instance that will be use by {@link HackitSniffer} as component
      */
     private Injector<HackitTuple<K, T>> hackItInjector;
 
     /**
-     *
+     * {@link Actor} instance that will be use by {@link HackitSniffer} as component
      */
     private Actor<HackitTuple<K, T>> actorFunction;
 
     /**
-     *
+     * {@link Shipper} instance that will be use by {@link HackitSniffer} as component
      */
     private Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper;
 
     /**
-     *
+     * {@link Sniff} instance that will be use by {@link HackitSniffer} as component
      */
     private Sniff<HackitTuple<K, T>> hackItSniff;
 
     /**
-     *
+     * {@link Cloner} instance that will be use by {@link HackitSniffer} as component
      */
     private Cloner<HackitTuple<K, T>, SentType> hackItCloner;
 
     /**
-     *
-     * @param hackItInjector
-     * @param actorFunction
-     * @param shipper
-     * @param hackItSniff
-     * @param hackItCloner
+     * Construct with the components as parameters
+     * @param hackItInjector {@link Injector} instance that will be use by {@link HackitSniffer} as component
+     * @param actorFunction {@link Actor} instance that will be use by {@link HackitSniffer} as component
+     * @param shipper {@link Shipper} instance that will be use by {@link HackitSniffer} as component
+     * @param hackItSniff {@link Sniff} instance that will be use by {@link HackitSniffer} as component
+     * @param hackItCloner {@link Cloner} instance that will be use by {@link HackitSniffer} as component
      */
     //TODO: it may private, because need to be executed just at the creation moment
     public HackitSniffer(
@@ -115,6 +118,24 @@ public class
         this.not_first = false;
     }
 
+    /**
+     * apply contains the logic that need to be executed at each tuple that is process by the main pipeline,
+     * <ol>
+     *     <li>If is the first exection the function perform the connection between the sidecar and the main pipeline</li>
+     *     <li>Validate if the tuple need to be sniffed</li>
+     *     <li>
+     *         <ol>
+     *             <li>validate if the element have the condition to be sent out</li>
+     *             <li>The tuple is cloned </li>
+     *             <li>The Tuple is sended out by publishing it</li>
+     *         </ol>
+     *     </li>
+     *     <li>From the shipper it looks if exist new elements to be injected</li>
+     * </ol>
+     *
+     * @param ktHackItTuple
+     * @return
+     */
     @Override
     public Iterator<HackitTuple<K, T>> apply(HackitTuple<K, T> ktHackItTuple) {
         if(!this.not_first){
@@ -136,9 +157,10 @@ public class
     }
 
     /**
+     * set {@link Injector} instance that will be use by {@link HackitSniffer} as component
      *
-     * @param hackItInjector
-     * @return
+     * @param hackItInjector {@link Injector} instance
+     * @return self instance of the {@link HackitSniffer}
      */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItInjector(Injector<HackitTuple<K, T>> hackItInjector) {
         this.hackItInjector = hackItInjector;
@@ -146,9 +168,10 @@ public class
     }
 
     /**
+     * set {@link Actor} instance that will be use by {@link HackitSniffer} as component
      *
-     * @param actorFunction
-     * @return
+     * @param actorFunction {@link Actor} instance
+     * @return self instance of the {@link HackitSniffer}
      */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setActorFunction(Actor<HackitTuple<K, T>> actorFunction) {
         this.actorFunction = actorFunction;
@@ -156,9 +179,10 @@ public class
     }
 
     /**
+     * set {@link Shipper} instance that will be use by {@link HackitSniffer} as component
      *
-     * @param shipper
-     * @return
+     * @param shipper {@link Shipper} instance
+     * @return self instance of the {@link HackitSniffer}
      */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setShipper(Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper) {
         this.shipper = shipper;
@@ -166,9 +190,10 @@ public class
     }
 
     /**
+     * set {@link Sniff} instance that will be use by {@link HackitSniffer} as component
      *
-     * @param hackItSniff
-     * @return
+     * @param hackItSniff {@link Sniff} instance
+     * @return self instance of the {@link HackitSniffer}
      */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItSniff(Sniff<HackitTuple<K, T>> hackItSniff) {
         this.hackItSniff = hackItSniff;
@@ -176,9 +201,10 @@ public class
     }
 
     /**
+     * set {@link Cloner} instance that will be use by {@link HackitSniffer} as component
      *
-     * @param hackItCloner
-     * @return
+     * @param hackItCloner {@link Cloner} instance
+     * @return self instance of the {@link HackitSniffer}
      */
     public HackitSniffer<K, T, SentType, SenderObj, ReceiverObj> setHackItCloner(Cloner<HackitTuple<K, T>, SentType> hackItCloner) {
         this.hackItCloner = hackItCloner;

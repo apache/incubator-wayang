@@ -23,6 +23,7 @@ import java.io.Serializable;
  *
  * @param <T>
  */
+//TODO it may deleted, but validate if is need it
 public interface Actor<T> extends Serializable {
 
     /**
