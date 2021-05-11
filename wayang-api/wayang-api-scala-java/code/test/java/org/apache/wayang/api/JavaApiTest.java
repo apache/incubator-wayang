@@ -18,6 +18,8 @@
 
 package org.apache.wayang.api;
 
+import org.apache.wayang.api.dataquantabuilder.GlobalReduceDataQuantaBuilder;
+import org.apache.wayang.api.dataquantabuilder.LoadCollectionDataQuantaBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
