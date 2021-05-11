@@ -18,6 +18,7 @@
 
 package org.apache.wayang.api
 
+import org.apache.wayang.api.dataquantabuilder.BasicDataQuantaBuilder
 import org.apache.wayang.api.util.DataQuantaBuilderDecorator
 import org.apache.wayang.basic.data.Record
 import org.apache.wayang.basic.function.ProjectionDescriptor
