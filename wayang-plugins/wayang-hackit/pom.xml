@@ -40,6 +40,7 @@
         <module>wayang-hackit-core</module>
         <module>wayang-hackit-shipper</module>
         <module>wayang-hackit-sidecar</module>
+        <module>wayang-hackit-api</module>
     </modules>
 
     <properties>
