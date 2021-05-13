@@ -18,7 +18,7 @@
 
 package org.apache.wayang.tests;
 
-import org.apache.wayang.api.DataQuantaBuilder;
+import org.apache.wayang.api.dataquanta.DataQuantaBuilder;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;

@@ -18,12 +18,13 @@
 
 package org.apache.wayang.api
 
+import org.apache.wayang.api.dataquanta.DataQuanta
+
 import java.io.File
 import java.net.URI
 import java.nio.file.{Files, Paths}
 import java.sql.{Connection, Statement}
 import java.util.function.Consumer
-
 import org.junit.{Assert, Test}
 import org.apache.wayang.basic.WayangBasics
 import org.apache.wayang.core.api.{Configuration, WayangContext}

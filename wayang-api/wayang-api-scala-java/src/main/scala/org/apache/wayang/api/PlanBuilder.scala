@@ -21,6 +21,7 @@ package org.apache.wayang.api
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api
+import org.apache.wayang.api.dataquanta.DataQuanta
 import org.apache.wayang.basic.data.Record
 import org.apache.wayang.basic.operators.{CollectionSource, TableSource, TextFileSource}
 import org.apache.wayang.core.api.WayangContext

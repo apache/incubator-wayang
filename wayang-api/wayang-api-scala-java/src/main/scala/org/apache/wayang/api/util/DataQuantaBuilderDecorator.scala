@@ -19,7 +19,8 @@
 package org.apache.wayang.api.util
 
 import de.hpi.isg.profiledb.store.model.Experiment
-import org.apache.wayang.api.{DataQuanta, DataQuantaBuilder, JavaPlanBuilder}
+import org.apache.wayang.api.dataquanta.{DataQuanta, DataQuantaBuilder}
+import org.apache.wayang.api.JavaPlanBuilder
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.types.DataSetType

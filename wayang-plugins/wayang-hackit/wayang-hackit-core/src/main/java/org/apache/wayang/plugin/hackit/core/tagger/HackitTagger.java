@@ -32,6 +32,7 @@ import java.util.List;
  * tagging step in Hackit, this logic have and pre and post processing and they are acting like
  * template that follow same behaivor in every tagger
  */
+//TODO add the option of add a custom function
 public class HackitTagger implements Serializable {
 
     /**

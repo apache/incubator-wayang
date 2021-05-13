@@ -18,9 +18,10 @@
 
 package org.apache.wayang.api.graph
 
-import org.apache.wayang.api.dataquantabuilder.BasicDataQuantaBuilder
+import org.apache.wayang.api.dataquanta.{DataQuanta, DataQuantaBuilder}
 import org.apache.wayang.api.util.DataQuantaBuilderDecorator
-import org.apache.wayang.api.{DataQuanta, DataQuantaBuilder, JavaPlanBuilder, _}
+import org.apache.wayang.api.{JavaPlanBuilder,_ }
+import org.apache.wayang.api.dataquanta.builder.BasicDataQuantaBuilder
 import org.apache.wayang.basic.operators.PageRankOperator
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 
