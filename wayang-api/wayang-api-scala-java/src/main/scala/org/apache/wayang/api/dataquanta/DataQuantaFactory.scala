@@ -21,7 +21,11 @@ package org.apache.wayang.api.dataquanta
 
 import org.apache.wayang.api.PlanBuilder
 import org.apache.wayang.core.plan.wayangplan.ElementaryOperator
+import org.reflections.Reflections
+import org.reflections.scanners.{FieldAnnotationsScanner, MethodParameterScanner, ResourcesScanner, SubTypesScanner}
+import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
 
+import scala.collection.immutable.List
 import scala.reflect.ClassTag
 
 /**
@@ -30,6 +34,21 @@ import scala.reflect.ClassTag
  * the [[DataQuantaFactory]] read a configuration files and create the right instance
  */
 object DataQuantaFactory {
+
+  /**
+   * template is the instance of [[DataQuantaCreator]] that will be use in the creation of [[DataQuanta]] instance
+   */
+  var template: DataQuantaCreator = DataQuantaDefault
+
+  /**
+   * set the [[DataQuantaCreator]]
+   *
+   * @param dataQuantaCreator it will be use as creator when the [[DataQuantaFactory.build()]] is called
+   */
+  def setTemplate(dataQuantaCreator: DataQuantaCreator) = {
+    this.template = dataQuantaCreator
+
+  }
 
   /**
    * Given the configuration loaded the [[DataQuantaFactory.build()]] the right extender, if not configuration is
@@ -43,7 +62,7 @@ object DataQuantaFactory {
    */
   def build[T:ClassTag](operator: ElementaryOperator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder): DataQuanta[T] = {
     //TODO validate if the correct way
-    DataQuantaDefault.wrap[T](operator, outputIndex)
+    this.template.wrap[T](operator, outputIndex)
   }
 
 }

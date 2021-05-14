@@ -122,7 +122,7 @@ abstract class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outpu
     * @param operator   the [[Operator]] to connect to
     * @param inputIndex the input index of the [[Operator]]s [[InputSlot]]
     */
-  private[api] def connectTo(operator: Operator, inputIndex: Int): Unit =
+  def connectTo(operator: Operator, inputIndex: Int): Unit =
     this.operator.connectTo(outputIndex, operator, inputIndex)
 
 

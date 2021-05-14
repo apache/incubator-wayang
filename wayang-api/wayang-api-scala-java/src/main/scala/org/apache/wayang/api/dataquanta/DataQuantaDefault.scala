@@ -19,7 +19,7 @@
 
 package org.apache.wayang.api.dataquanta
 
-import org.apache.wayang.api.{PlanBuilder, basicDataUnitType, dataSetType, groupedDataSetType, groupedDataUnitType, toConsumer, toSerializableBinaryOperator, toSerializableFlatteningFunction, toSerializableFunction, toSerializablePartitionFunction, toSerializablePredicate}
+import org.apache.wayang.api.{PlanBuilder, basicDataUnitType, dataSetType, groupedDataSetType, groupedDataUnitType}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators._
@@ -31,7 +31,7 @@ import org.apache.wayang.core.plan.wayangplan._
 
 import java.lang
 import java.lang.{Iterable => JavaIterable}
-import java.util.function.{Consumer, IntUnaryOperator, Function => JavaFunction}
+import java.util.function.{IntUnaryOperator}
 import scala.reflect._
 
 /**
@@ -396,7 +396,7 @@ class DataQuantaDefault[Out: ClassTag]
   }
 }
 
-object DataQuantaDefault {
+object DataQuantaDefault extends DataQuantaCreator {
 
   def wrap[T:ClassTag](operator: ElementaryOperator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder): DataQuantaDefault[T] = {
     new DataQuantaDefault[T](operator, outputIndex)
