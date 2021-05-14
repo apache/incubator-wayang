@@ -21,7 +21,7 @@ package org.apache.wayang.api.dataquanta
 
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
-
+import java.util.function.{ BiFunction => JavaBiFunction }
 import scala.reflect.ClassTag
 
 /**

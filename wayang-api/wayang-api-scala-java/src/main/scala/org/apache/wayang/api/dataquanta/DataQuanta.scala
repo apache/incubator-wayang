@@ -21,7 +21,7 @@ package org.apache.wayang.api.dataquanta
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
-import org.apache.wayang.api.{PlanBuilder, basicDataUnitType, dataSetType, groupedDataSetType, groupedDataUnitType, toConsumer, toSerializableBinaryOperator, toSerializableFlatteningFunction, toSerializableFunction, toSerializablePartitionFunction, toSerializablePredicate}
+import org.apache.wayang.api.{PlanBuilder, basicDataUnitType, dataSetType, toConsumer, toSerializableBinaryOperator, toSerializableFlatteningFunction, toSerializableFunction, toSerializablePartitionFunction, toSerializablePredicate}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators._
@@ -35,7 +35,7 @@ import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 
 import java.lang.{Iterable => JavaIterable}
-import java.util.function.{Consumer, IntUnaryOperator, BiFunction => JavaBiFunction, Function => JavaFunction}
+import java.util.function.{Consumer, IntUnaryOperator, Function => JavaFunction}
 import java.util.{Collection => JavaCollection}
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -43,12 +43,13 @@ import scala.reflect._
 
 /**
   * Represents an intermediate result/data flow edge in a [[WayangPlan]].
+  * However this is just a template that help to be easy extendable the API
   *
   * @param operator    a unary [[Operator]] that produces this instance
   * @param ev$1        the data type of the elements in this instance
   * @param planBuilder keeps track of the [[WayangPlan]] being build
   */
-class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: Int = 0)(implicit val planBuilder: PlanBuilder) {
+abstract class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: Int = 0)(implicit val planBuilder: PlanBuilder) {
 
   Validate.isTrue(operator.getNumOutputs > outputIndex)
 
@@ -67,8 +68,9 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the [[MapOperator]]'s output
     */
   def map[NewOut: ClassTag](udf: Out => NewOut,
-                            udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
+                            udfLoad: LoadProfileEstimator = null):  DataQuanta[NewOut] = {
     mapJava(toSerializableFunction(udf), udfLoad)
+  }
 
   /**
     * Feed this instance into a [[MapOperator]].
@@ -78,13 +80,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the [[MapOperator]]'s output
     */
   def mapJava[NewOut: ClassTag](udf: SerializableFunction[Out, NewOut],
-                                udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] = {
-    val mapOperator = new MapOperator(new TransformationDescriptor(
-      udf, basicDataUnitType[Out], basicDataUnitType[NewOut], udfLoad
-    ))
-    this.connectTo(mapOperator, 0)
-    mapOperator
-  }
+                                udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut]
 
   /**
     * Feed this instance into a [[MapPartitionsOperator]].
@@ -96,8 +92,9 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def mapPartitions[NewOut: ClassTag](udf: Iterable[Out] => Iterable[NewOut],
                                       selectivity: ProbabilisticDoubleInterval = null,
-                                      udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
+                                      udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] = {
     mapPartitionsJava(toSerializablePartitionFunction(udf), selectivity, udfLoad)
+  }
 
   /**
     * Feed this instance into a [[MapPartitionsOperator]].
@@ -109,13 +106,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def mapPartitionsJava[NewOut: ClassTag](udf: SerializableFunction[JavaIterable[Out], JavaIterable[NewOut]],
                                           selectivity: ProbabilisticDoubleInterval = null,
-                                          udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] = {
-    val mapOperator = new MapPartitionsOperator(
-      new MapPartitionsDescriptor(udf, basicDataUnitType[Out], basicDataUnitType[NewOut], selectivity, udfLoad)
-    )
-    this.connectTo(mapOperator, 0)
-    mapOperator
-  }
+                                          udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut]
 
   /**
     * Feed this instance into a [[MapOperator]] with a [[ProjectionDescriptor]].
@@ -123,13 +114,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param fieldNames names of the fields to be projected
     * @return a new instance representing the [[MapOperator]]'s output
     */
-  def project[NewOut: ClassTag](fieldNames: Seq[String]): DataQuanta[NewOut] = {
-    val projectionOperator = new MapOperator(
-      new ProjectionDescriptor(basicDataUnitType[Out], basicDataUnitType[NewOut], fieldNames: _*)
-    )
-    this.connectTo(projectionOperator, 0)
-    projectionOperator
-  }
+  def project[NewOut: ClassTag](fieldNames: Seq[String]): DataQuanta[NewOut]
 
   /**
     * Connects the [[operator]] to a further [[Operator]].
@@ -153,8 +138,9 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def filter(udf: Out => Boolean,
              sqlUdf: String = null,
              selectivity: ProbabilisticDoubleInterval = null,
-             udfLoad: LoadProfileEstimator = null) =
+             udfLoad: LoadProfileEstimator = null) = {
     filterJava(toSerializablePredicate(udf), sqlUdf, selectivity, udfLoad)
+  }
 
   /**
     * Feed this instance into a [[FilterOperator]].
@@ -168,13 +154,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def filterJava(udf: SerializablePredicate[Out],
                  sqlUdf: String = null,
                  selectivity: ProbabilisticDoubleInterval = null,
-                 udfLoad: LoadProfileEstimator = null): DataQuanta[Out] = {
-    val filterOperator = new FilterOperator(new PredicateDescriptor(
-      udf, this.output.getType.getDataUnitType.toBasicDataUnitType, selectivity, udfLoad
-    ).withSqlImplementation(sqlUdf))
-    this.connectTo(filterOperator, 0)
-    filterOperator
-  }
+                 udfLoad: LoadProfileEstimator = null): DataQuanta[Out]
 
   /**
     * Feed this instance into a [[FlatMapOperator]].
@@ -186,8 +166,9 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def flatMap[NewOut: ClassTag](udf: Out => Iterable[NewOut],
                                 selectivity: ProbabilisticDoubleInterval = null,
-                                udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
+                                udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] = {
     flatMapJava(toSerializableFlatteningFunction(udf), selectivity, udfLoad)
+  }
 
   /**
     * Feed this instance into a [[FlatMapOperator]].
@@ -199,13 +180,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def flatMapJava[NewOut: ClassTag](udf: SerializableFunction[Out, JavaIterable[NewOut]],
                                     selectivity: ProbabilisticDoubleInterval = null,
-                                    udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] = {
-    val flatMapOperator = new FlatMapOperator(new FlatMapDescriptor(
-      udf, basicDataUnitType[Out], basicDataUnitType[NewOut], selectivity, udfLoad
-    ))
-    this.connectTo(flatMapOperator, 0)
-    flatMapOperator
-  }
+                                    udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut]
 
   /**
     * Feed this instance into a [[SampleOperator]]. If this operation is inside of a loop, the sampling size
@@ -220,7 +195,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
              datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
              seed: Option[Long] = None,
              sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
-    this.sampleDynamic(_ => sampleSize, datasetSize, seed, sampleMethod)
+    sampleDynamic(_ => sampleSize, datasetSize, seed, sampleMethod)
 
   /**
     * Feed this instance into a [[SampleOperator]]. If this operation is inside of a loop, the sampling size
@@ -234,8 +209,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def sampleDynamic(sampleSizeFunction: Int => Int,
                     datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
                     seed: Option[Long] = None,
-                    sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
-    this.sampleDynamicJava(
+                    sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
+    sampleDynamicJava(
       new IntUnaryOperator {
         override def applyAsInt(operand: Int): Int = sampleSizeFunction(operand)
       },
@@ -243,6 +218,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
       seed,
       sampleMethod
     )
+  }
 
 
   /**
@@ -256,28 +232,18 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def sampleDynamicJava(sampleSizeFunction: IntUnaryOperator,
                         datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
                         seed: Option[Long] = None,
-                        sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
-    if (seed.isEmpty) {
-      val sampleOperator = new SampleOperator(
-        sampleSizeFunction,
-        dataSetType[Out],
-        sampleMethod
-      )
-      sampleOperator.setDatasetSize(datasetSize)
-      this.connectTo(sampleOperator, 0)
-      sampleOperator
-    }
-    else {
-      val sampleOperator = new SampleOperator(
-        sampleSizeFunction,
-        dataSetType[Out],
-        sampleMethod,
-        seed.get
-      )
-      sampleOperator.setDatasetSize(datasetSize)
-      this.connectTo(sampleOperator, 0)
-      sampleOperator
-    }
+                        sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out]
+
+  /**
+    * Assigns this instance a key extractor, which enables some key-based operations.
+    *
+    * @see KeyedDataQuanta
+    * @param keyExtractor extracts the key from the [[DataQuanta]]
+    * @return the [[KeyedDataQuanta]]
+    */
+  //TODO: may need to be build by the extenders
+  def keyBy[Key: ClassTag](keyExtractor: Out => Key) : KeyedDataQuanta[Out, Key] = {
+    keyByJava(keyExtractor)
   }
 
   /**
@@ -287,16 +253,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param keyExtractor extracts the key from the [[DataQuanta]]
     * @return the [[KeyedDataQuanta]]
     */
-  def keyBy[Key: ClassTag](keyExtractor: Out => Key) = new KeyedDataQuanta[Out, Key](this, keyExtractor)
-
-  /**
-    * Assigns this instance a key extractor, which enables some key-based operations.
-    *
-    * @see KeyedDataQuanta
-    * @param keyExtractor extracts the key from the [[DataQuanta]]
-    * @return the [[KeyedDataQuanta]]
-    */
-  def keyByJava[Key: ClassTag](keyExtractor: SerializableFunction[Out, Key]) = new KeyedDataQuanta[Out, Key](this, keyExtractor)
+  //TODO: may need to be build by the extenders
+  def keyByJava[Key: ClassTag](keyExtractor: SerializableFunction[Out, Key]) : KeyedDataQuanta[Out, Key]
 
   /**
     * Feed this instance into a [[ReduceByOperator]].
@@ -308,8 +266,9 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def reduceByKey[Key: ClassTag](keyUdf: Out => Key,
                                  udf: (Out, Out) => Out,
-                                 udfLoad: LoadProfileEstimator = null): DataQuanta[Out] =
+                                 udfLoad: LoadProfileEstimator = null): DataQuanta[Out] = {
     reduceByKeyJava(toSerializableFunction(keyUdf), toSerializableBinaryOperator(udf), udfLoad)
+  }
 
   /**
     * Feed this instance into a [[ReduceByOperator]].
@@ -321,15 +280,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def reduceByKeyJava[Key: ClassTag](keyUdf: SerializableFunction[Out, Key],
                                      udf: SerializableBinaryOperator[Out],
-                                     udfLoad: LoadProfileEstimator = null)
-  : DataQuanta[Out] = {
-    val reduceByOperator = new ReduceByOperator(
-      new TransformationDescriptor(keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
-      new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out], udfLoad)
-    )
-    this.connectTo(reduceByOperator, 0)
-    reduceByOperator
-  }
+                                     udfLoad: LoadProfileEstimator = null) : DataQuanta[Out]
 
   /**
     * Feed this instance into a [[MaterializedGroupByOperator]].
@@ -350,15 +301,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the [[MaterializedGroupByOperator]]'s output
     */
   def groupByKeyJava[Key: ClassTag](keyUdf: SerializableFunction[Out, Key],
-                                    keyUdfLoad: LoadProfileEstimator = null): DataQuanta[java.lang.Iterable[Out]] = {
-    val groupByOperator = new MaterializedGroupByOperator(
-      new TransformationDescriptor(keyUdf, basicDataUnitType[Out], basicDataUnitType[Key], keyUdfLoad),
-      dataSetType[Out],
-      groupedDataSetType[Out]
-    )
-    this.connectTo(groupByOperator, 0)
-    groupByOperator
-  }
+                                    keyUdfLoad: LoadProfileEstimator = null): DataQuanta[java.lang.Iterable[Out]]
 
   /**
     * Feed this instance into a [[GlobalReduceOperator]].
@@ -379,24 +322,14 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the [[GlobalReduceOperator]]'s output
     */
   def reduceJava(udf: SerializableBinaryOperator[Out],
-                 udfLoad: LoadProfileEstimator = null): DataQuanta[Out] = {
-    val globalReduceOperator = new GlobalReduceOperator(
-      new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out], udfLoad)
-    )
-    this.connectTo(globalReduceOperator, 0)
-    globalReduceOperator
-  }
+                 udfLoad: LoadProfileEstimator = null): DataQuanta[Out]
 
   /**
     * Feed this instance into a [[GlobalMaterializedGroupOperator]].
     *
     * @return a new instance representing the [[GlobalMaterializedGroupOperator]]'s output
     */
-  def group(): DataQuanta[java.lang.Iterable[Out]] = {
-    val groupOperator = new GlobalMaterializedGroupOperator(dataSetType[Out], groupedDataSetType[Out])
-    this.connectTo(groupOperator, 0)
-    groupOperator
-  }
+  def group(): DataQuanta[java.lang.Iterable[Out]]
 
   /**
     * Feed this instance and a further instance into a [[UnionAllOperator]].
@@ -404,13 +337,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param that the other instance to union with
     * @return a new instance representing the [[UnionAllOperator]]'s output
     */
-  def union(that: DataQuanta[Out]): DataQuanta[Out] = {
-    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
-    val unionAllOperator = new UnionAllOperator(dataSetType[Out])
-    this.connectTo(unionAllOperator, 0)
-    that.connectTo(unionAllOperator, 1)
-    unionAllOperator
-  }
+  def union(that: DataQuanta[Out]): DataQuanta[Out]
 
   /**
     * Feed this instance and a further instance into a [[IntersectOperator]].
@@ -418,13 +345,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param that the other instance to intersect with
     * @return a new instance representing the [[IntersectOperator]]'s output
     */
-  def intersect(that: DataQuanta[Out]): DataQuanta[Out] = {
-    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
-    val intersectOperator = new IntersectOperator(dataSetType[Out])
-    this.connectTo(intersectOperator, 0)
-    that.connectTo(intersectOperator, 1)
-    intersectOperator
-  }
+  def intersect(that: DataQuanta[Out]): DataQuanta[Out]
 
   /**
     * Feeds this and a further instance into a [[JoinOperator]].
@@ -434,12 +355,11 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param thatKeyUdf UDF to extract keys from data quanta from `that` instance
     * @return a new instance representing the [[JoinOperator]]'s output
     */
-  def join[ThatOut: ClassTag, Key: ClassTag]
-  (thisKeyUdf: Out => Key,
-   that: DataQuanta[ThatOut],
-   thatKeyUdf: ThatOut => Key)
-  : DataQuanta[WayangTuple2[Out, ThatOut]] =
+  def join[ThatOut: ClassTag, Key: ClassTag] (thisKeyUdf: Out => Key,
+                                              that: DataQuanta[ThatOut],
+                                              thatKeyUdf: ThatOut => Key): DataQuanta[WayangTuple2[Out, ThatOut]] = {
     joinJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
+  }
 
   /**
     * Feeds this and a further instance into a [[JoinOperator]].
@@ -449,20 +369,9 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param thatKeyUdf UDF to extract keys from data quanta from `that` instance
     * @return a new instance representing the [[JoinOperator]]'s output
     */
-  def joinJava[ThatOut: ClassTag, Key: ClassTag]
-  (thisKeyUdf: SerializableFunction[Out, Key],
-   that: DataQuanta[ThatOut],
-   thatKeyUdf: SerializableFunction[ThatOut, Key])
-  : DataQuanta[WayangTuple2[Out, ThatOut]] = {
-    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
-    val joinOperator = new JoinOperator(
-      new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
-      new TransformationDescriptor(thatKeyUdf, basicDataUnitType[ThatOut], basicDataUnitType[Key])
-    )
-    this.connectTo(joinOperator, 0)
-    that.connectTo(joinOperator, 1)
-    joinOperator
-  }
+  def joinJava[ThatOut: ClassTag, Key: ClassTag] (thisKeyUdf: SerializableFunction[Out, Key],
+                                                  that: DataQuanta[ThatOut],
+                                                  thatKeyUdf: SerializableFunction[ThatOut, Key]) : DataQuanta[WayangTuple2[Out, ThatOut]]
 
   /**
     * Feeds this and a further instance into a [[CoGroupOperator]].
@@ -472,12 +381,11 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param thatKeyUdf UDF to extract keys from data quanta from `that` instance
     * @return a new instance representing the [[CoGroupOperator]]'s output
     */
-  def coGroup[ThatOut: ClassTag, Key: ClassTag]
-  (thisKeyUdf: Out => Key,
-   that: DataQuanta[ThatOut],
-   thatKeyUdf: ThatOut => Key)
-  : DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
+  def coGroup[ThatOut: ClassTag, Key: ClassTag] (thisKeyUdf: Out => Key,
+                                                 that: DataQuanta[ThatOut],
+                                                  thatKeyUdf: ThatOut => Key): DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] = {
     coGroupJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
+  }
 
   /**
     * Feeds this and a further instance into a [[CoGroupOperator]].
@@ -487,20 +395,9 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param thatKeyUdf UDF to extract keys from data quanta from `that` instance
     * @return a new instance representing the [[CoGroupOperator]]'s output
     */
-  def coGroupJava[ThatOut: ClassTag, Key: ClassTag]
-  (thisKeyUdf: SerializableFunction[Out, Key],
-   that: DataQuanta[ThatOut],
-   thatKeyUdf: SerializableFunction[ThatOut, Key])
-  : DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] = {
-    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
-    val coGroupOperator = new CoGroupOperator(
-      new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
-      new TransformationDescriptor(thatKeyUdf, basicDataUnitType[ThatOut], basicDataUnitType[Key])
-    )
-    this.connectTo(coGroupOperator, 0)
-    that.connectTo(coGroupOperator, 1)
-    coGroupOperator
-  }
+  def coGroupJava[ThatOut: ClassTag, Key: ClassTag] (thisKeyUdf: SerializableFunction[Out, Key],
+                                                     that: DataQuanta[ThatOut],
+                                                     thatKeyUdf: SerializableFunction[ThatOut, Key]): DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]]
 
   /**
     * Feeds this and a further instance into a [[SortOperator]].
@@ -508,10 +405,9 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param keyUdf UDF to extract key from data quanta in this instance
     * @return a new instance representing the [[SortOperator]]'s output
     */
-  def sort[Key: ClassTag]
-  (keyUdf: Out => Key)
-  : DataQuanta[Out] =
+  def sort[Key: ClassTag] (keyUdf: Out => Key): DataQuanta[Out] = {
     sortJava(toSerializableFunction(keyUdf))
+  }
 
   /**
     * Feeds this and a further instance into a [[SortOperator]].
@@ -519,16 +415,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param keyUdf UDF to extract key from data quanta in this instance
     * @return a new instance representing the [[SortOperator]]'s output
     */
-  def sortJava[Key: ClassTag]
-  (keyUdf: SerializableFunction[Out, Key])
-  : DataQuanta[Out] = {
-    val sortOperator = new SortOperator(new TransformationDescriptor(
-      keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]))
-    this.connectTo(sortOperator, 0)
-    sortOperator
-  }
-
-
+  def sortJava[Key: ClassTag] (keyUdf: SerializableFunction[Out, Key]) : DataQuanta[Out]
 
   /**
     * Feeds this and a further instance into a [[CartesianOperator]].
@@ -536,48 +423,28 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param that the other instance
     * @return a new instance representing the [[CartesianOperator]]'s output
     */
-  def cartesian[ThatOut: ClassTag](that: DataQuanta[ThatOut])
-  : DataQuanta[WayangTuple2[Out, ThatOut]] = {
-    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
-    val cartesianOperator = new CartesianOperator(dataSetType[Out], dataSetType[ThatOut])
-    this.connectTo(cartesianOperator, 0)
-    that.connectTo(cartesianOperator, 1)
-    cartesianOperator
-  }
+  def cartesian[ThatOut: ClassTag](that: DataQuanta[ThatOut]) : DataQuanta[WayangTuple2[Out, ThatOut]]
 
   /**
     * Feeds this instance into a [[ZipWithIdOperator]].
     *
     * @return a new instance representing the [[ZipWithIdOperator]]'s output
     */
-  def zipWithId: DataQuanta[WayangTuple2[java.lang.Long, Out]] = {
-    val zipWithIdOperator = new ZipWithIdOperator(dataSetType[Out])
-    this.connectTo(zipWithIdOperator, 0)
-    zipWithIdOperator
-  }
+  def zipWithId: DataQuanta[WayangTuple2[java.lang.Long, Out]]
 
   /**
     * Feeds this instance into a [[DistinctOperator]].
     *
     * @return a new instance representing the [[DistinctOperator]]'s output
     */
-  def distinct: DataQuanta[Out] = {
-    val distinctOperator = new DistinctOperator(dataSetType[Out])
-    this.connectTo(distinctOperator, 0)
-    distinctOperator
-  }
+  def distinct: DataQuanta[Out]
 
   /**
     * Feeds this instance into a [[CountOperator]].
     *
     * @return a new instance representing the [[CountOperator]]'s output
     */
-  def count: DataQuanta[java.lang.Long] = {
-    val countOperator = new CountOperator(dataSetType[Out])
-    this.connectTo(countOperator, 0)
-    countOperator
-  }
-
+  def count: DataQuanta[java.lang.Long]
 
   /**
     * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
@@ -625,13 +492,13 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     this.connectTo(doWhileOperator, DoWhileOperator.INITIAL_INPUT_INDEX)
 
     // Create and wire the loop body.
-    val loopDataQuanta = new DataQuanta[Out](doWhileOperator, DoWhileOperator.ITERATION_OUTPUT_INDEX)
+    val loopDataQuanta = DataQuantaFactory.build[Out](doWhileOperator, DoWhileOperator.ITERATION_OUTPUT_INDEX)
     val iterationResults = bodyBuilder.apply(loopDataQuanta)
     iterationResults.getField0.connectTo(doWhileOperator, DoWhileOperator.ITERATION_INPUT_INDEX)
     iterationResults.getField1.connectTo(doWhileOperator, DoWhileOperator.CONVERGENCE_INPUT_INDEX)
 
     // Return the iteration result.
-    new DataQuanta[Out](doWhileOperator, DoWhileOperator.FINAL_OUTPUT_INDEX)
+    DataQuantaFactory.build[Out](doWhileOperator, DoWhileOperator.FINAL_OUTPUT_INDEX)
   }
 
   /**
@@ -661,12 +528,12 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     this.connectTo(repeatOperator, RepeatOperator.INITIAL_INPUT_INDEX)
 
     // Create and wire the loop body.
-    val loopDataQuanta = new DataQuanta[Out](repeatOperator, RepeatOperator.ITERATION_OUTPUT_INDEX)
+    val loopDataQuanta = DataQuantaFactory.build[Out](repeatOperator, RepeatOperator.ITERATION_OUTPUT_INDEX)
     val iterationResult = bodyBuilder.apply(loopDataQuanta)
     iterationResult.connectTo(repeatOperator, RepeatOperator.ITERATION_INPUT_INDEX)
 
     // Return the iteration result.
-    new DataQuanta[Out](repeatOperator, RepeatOperator.FINAL_OUTPUT_INDEX)
+    DataQuantaFactory.build[Out](repeatOperator, RepeatOperator.FINAL_OUTPUT_INDEX)
   }
 
   /**
@@ -730,6 +597,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @param f the action to perform as Java 8 lambda expression
     */
+  //TODO validate if it is the correct way
   def foreachJava(f: Consumer[Out]): Unit = {
     val sink = new LocalCallbackSink(f, dataSetType[Out])
     sink.setName("foreach()")
@@ -744,6 +612,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @return the data quanta
     */
+  //TODO validate if it is the correct way
   def collect(): Iterable[Out] = {
     // Set up the sink.
     val collector = new java.util.LinkedList[Out]()
@@ -780,6 +649,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param formatterUdf UDF to format data quanta to [[String]]s
     * @param udfLoad      optional [[LoadProfileEstimator]] for the `udf`
     */
+  //TODO validate if it is the correct way
   def writeTextFileJava(url: String,
                         formatterUdf: SerializableFunction[Out, String],
                         udfLoad: LoadProfileEstimator = null): Unit = {
@@ -869,7 +739,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
 
 object DataQuanta {
 
-  def create[T](output: OutputSlot[T])(implicit planBuilder: PlanBuilder): DataQuanta[_] =
-    new DataQuanta(output.getOwner.asInstanceOf[ElementaryOperator], output.getIndex)(ClassTag(output.getType.getDataUnitType.getTypeClass), planBuilder)
+  def create[T](output: OutputSlot[T])(implicit planBuilder: PlanBuilder): DataQuanta[_] = {
+    DataQuantaFactory.build[T](output.getOwner.asInstanceOf[ElementaryOperator], output.getIndex)(ClassTag(output.getType.getDataUnitType.getTypeClass), planBuilder)
+  }
 
 }

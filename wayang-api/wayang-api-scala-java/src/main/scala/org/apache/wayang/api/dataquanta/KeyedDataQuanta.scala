@@ -36,9 +36,9 @@ class KeyedDataQuanta[Out: ClassTag, Key: ClassTag](val dataQuanta: DataQuanta[O
    * @param that the other [[KeyedDataQuanta]] to join with
    * @return the join product [[DataQuanta]]
    */
-  def join[ThatOut: ClassTag](that: KeyedDataQuanta[ThatOut, Key]):
-  DataQuanta[WayangTuple2[Out, ThatOut]] =
+  def join[ThatOut: ClassTag](that: KeyedDataQuanta[ThatOut, Key]): DataQuanta[WayangTuple2[Out, ThatOut]] = {
     dataQuanta.joinJava[ThatOut, Key](this.keyExtractor, that.dataQuanta, that.keyExtractor)
+  }
 
   /**
    * Performs a co-group. The grouping fields are governed by the [[KeyedDataQuanta]]'s keys.
@@ -47,7 +47,8 @@ class KeyedDataQuanta[Out: ClassTag, Key: ClassTag](val dataQuanta: DataQuanta[O
    * @return the co-grouped [[DataQuanta]]
    */
   def coGroup[ThatOut: ClassTag](that: KeyedDataQuanta[ThatOut, Key]):
-  DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
+  DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] = {
     dataQuanta.coGroupJava[ThatOut, Key](this.keyExtractor, that.dataQuanta, that.keyExtractor)
+  }
 
 }

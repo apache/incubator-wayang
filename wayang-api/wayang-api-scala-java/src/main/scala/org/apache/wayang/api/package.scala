@@ -18,7 +18,7 @@
 
 package org.apache.wayang
 
-import org.apache.wayang.api.dataquanta.{DataQuanta, JoinedDataQuanta}
+import org.apache.wayang.api.dataquanta.{DataQuanta, DataQuantaFactory, JoinedDataQuanta}
 
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
@@ -142,10 +142,12 @@ package object api {
 
   implicit def createPlanBuilder(wayangContext: WayangContext): PlanBuilder = new PlanBuilder(wayangContext)
 
-  implicit private[api] def wrap[Out: ClassTag](op: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] =
-    new DataQuanta[Out](op)
+  implicit private[api] def wrap[Out: ClassTag](op: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] = {
+    DataQuantaFactory.build[Out](op)
+  }
 
-  implicit def elevateRecordDataQuanta(dataQuanta: DataQuanta[Record]): RecordDataQuanta =
+  implicit def elevateRecordDataQuanta(dataQuanta: DataQuanta[Record]): RecordDataQuanta = {
     new RecordDataQuanta(dataQuanta)
+  }
 
 }
