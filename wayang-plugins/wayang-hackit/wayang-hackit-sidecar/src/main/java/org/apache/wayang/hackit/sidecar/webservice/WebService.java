@@ -4,10 +4,17 @@ import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.operators.ProjectOperator;
+import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.tuple.Tuple4;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/sidecar")
@@ -32,7 +39,24 @@ public class WebService {
     }
 
     @GetMapping("/debug/start")
-    public HttpStatus serviceStart(){
+    public UUID serviceStart(){
+
+        ProcessBuilder builder_proc1 = new ProcessBuilder("kubectl", "create", "-f", "jobmanager.yaml");
+        ProcessBuilder builder_proc2 = new ProcessBuilder("kubectl", "create", "-f", "jobmanager-service.yaml");
+        ProcessBuilder builder_proc3 = new ProcessBuilder("kubectl", "create", "-f", "taskmanger.yaml");
+
+        List<ProcessBuilder> processes = new ArrayList<>();
+        processes.add(0, builder_proc1);
+        processes.add(1, builder_proc2);
+        processes.add(2, builder_proc3);
+
+        UUID ProcessID = ExecutorManager.addThread(processes);
+
+        return ProcessID;
+    }
+
+    @GetMapping("/debug/demo")
+    public HttpStatus serviceDemo(){
 
         try {
             // LocalEnvironment
