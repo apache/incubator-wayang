@@ -85,4 +85,23 @@ public class WebService {
 
         return HttpStatus.ACCEPTED;
     }
+
+    @PostMapping(path = "/debug/check")
+    public String checkStatus(
+            @RequestParam("key") String key,
+            @RequestParam(value = "startfrom", required = false) Integer startFrom
+    ){
+        List<String> ls;
+
+        if(startFrom == null)
+            ls = ExecutorManager.getProcessLogs(UUID.fromString(key));
+        else
+            ls = ExecutorManager.getProcessLogs(UUID.fromString(key), startFrom);
+
+        String res = "";
+        for (String s: ls)
+            res += s + "\n";
+
+        return res;
+    }
 }
