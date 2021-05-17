@@ -18,41 +18,42 @@
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper;
 
 import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
-import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.TaggerWrapperFunctionTemplate;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
+import java.util.function.Predicate;
+
 /**
- * PredicateWrapperHackit is an implementation of {@link TaggerWrapperFunctionTemplate} where Hackit manage the logic
+ * PredicateWrapperHackit is an implementation of {@link HackitTagger} where Hackit manage the logic
  * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
- * original function. The original {@link TaggerWrapperFunctionTemplate} it an predicate function because return a
- * {@link Boolean}
+ * original function. The original {@link Predicate} function because return a {@link Boolean}
  *
  * @param <IDType> Type of {@link org.apache.wayang.plugin.hackit.core.tuple.header.Header} key of the {@link HackitTuple}
  * @param <I> Input Type of the original Tuple to be evaluated
  */
 public class PredicateWrapperHackit<IDType, I>
         extends HackitTagger
-        implements TaggerWrapperFunctionTemplate<HackitTuple<IDType, I>, Boolean> {
+        implements Predicate<HackitTuple<IDType, I>> {
 
     /**
      * Original predicate that will evaluate the data to give a True or False value
      */
-    private TaggerWrapperFunctionTemplate<I, Boolean> function;
+    private Predicate<I> function;
 
     /**
      * Default Construct
      *
      * @param function is the predicate that will be Wrapped by the {@link PredicateWrapperHackit}
      */
-    public PredicateWrapperHackit(TaggerWrapperFunctionTemplate<I, Boolean> function) {
+    public PredicateWrapperHackit(Predicate<I> function) {
         this.function = function;
     }
 
+
     @Override
-    public Boolean execute(HackitTuple<IDType, I> v1) {
-        this.preTaggingTuple(v1);
-        Boolean result = this.function.execute(v1.getValue());
-        this.postTaggingTuple(v1);
+    public boolean test(HackitTuple<IDType, I> idTypeIHackitTuple) {
+        this.preTaggingTuple(idTypeIHackitTuple);
+        Boolean result = this.function.test(idTypeIHackitTuple.getValue());
+        this.postTaggingTuple(idTypeIHackitTuple);
         return result;
     }
 }

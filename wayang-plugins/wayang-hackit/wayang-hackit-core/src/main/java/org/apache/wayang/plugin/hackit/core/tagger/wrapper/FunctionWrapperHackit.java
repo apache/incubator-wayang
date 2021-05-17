@@ -18,11 +18,12 @@
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper;
 
 import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
-import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.TaggerWrapperFunctionTemplate;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
+import java.util.function.Function;
+
 /**
- * FunctionWrapperHackit is an implementation of {@link TaggerWrapperFunctionTemplate} where Hackit manage the logic
+ * FunctionWrapperHackit is an implementation of {@link HackitTagger} where Hackit manage the logic
  * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
  * original function
  *
@@ -32,26 +33,26 @@ import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
  */
 public class FunctionWrapperHackit<IDType, I, O>
         extends HackitTagger
-        implements TaggerWrapperFunctionTemplate<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
+        implements Function<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
 
     /**
      * Original function that will transform the data
      */
-    private TaggerWrapperFunctionTemplate<I, O> function;
+    private Function<I, O> function;
 
     /**
      * Default Construct
      *
      * @param function is the function that will be Wrapped by the {@link FunctionWrapperHackit}
      */
-    public FunctionWrapperHackit(TaggerWrapperFunctionTemplate<I, O> function) {
+    public FunctionWrapperHackit(Function<I, O> function) {
         this.function = function;
     }
 
     @Override
-    public HackitTuple<IDType, O> execute(HackitTuple<IDType, I> v1) {
-        this.preTaggingTuple(v1);
-        O result = this.function.execute(v1.getValue());
-        return this.postTaggingTuple(v1, result);
+    public HackitTuple<IDType, O> apply(HackitTuple<IDType, I> idTypeIHackitTuple) {
+        this.preTaggingTuple(idTypeIHackitTuple);
+        O result = this.function.apply(idTypeIHackitTuple.getValue());
+        return this.postTaggingTuple(idTypeIHackitTuple, result);
     }
 }

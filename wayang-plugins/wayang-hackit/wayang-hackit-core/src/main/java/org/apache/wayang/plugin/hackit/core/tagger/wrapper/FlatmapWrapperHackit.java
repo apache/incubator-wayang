@@ -18,13 +18,13 @@
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper;
 
 import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
-import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.TaggerWrapperFlatMapTemplate;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
 import java.util.Iterator;
+import java.util.function.Function;
 
 /**
- * FlatmapWrapperHackit is an implementation of {@link TaggerWrapperFlatMapTemplate} where Hackit manage the logic
+ * FlatmapWrapperHackit is an implementation of {@link HackitTagger} where Hackit manage the logic
  * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
  * original function
  *
@@ -34,27 +34,26 @@ import java.util.Iterator;
  */
 public class FlatmapWrapperHackit<IDType, I, O>
         extends HackitTagger
-        implements TaggerWrapperFlatMapTemplate<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
+        implements Function<HackitTuple<IDType, I>, Iterator<HackitTuple<IDType, O>>> {
 
     /**
      * Original function that will transform the data
      */
-    private TaggerWrapperFlatMapTemplate<I, O> function;
+    private Function<I, Iterator<O>> function;
 
     /**
      * Default Construct
      *
      * @param function is the function that will be Wrapped by the {@link FlatmapWrapperHackit}
      */
-    public FlatmapWrapperHackit(TaggerWrapperFlatMapTemplate<I, O> function ) {
+    public FlatmapWrapperHackit(Function<I, Iterator<O>> function ) {
         this.function = function;
     }
 
-
     @Override
-    public Iterator<HackitTuple<IDType, O>> execute(HackitTuple<IDType, I> kiHackItTuple) {
-        this.preTaggingTuple(kiHackItTuple);
-        Iterator<O> result = this.function.execute(kiHackItTuple.getValue());
-        return this.postTaggingTuple(kiHackItTuple, result);
+    public Iterator<HackitTuple<IDType, O>> apply(HackitTuple<IDType, I> idTypeIHackitTuple) {
+        this.preTaggingTuple(idTypeIHackitTuple);
+        Iterator<O> result = this.function.apply(idTypeIHackitTuple.getValue());
+        return this.postTaggingTuple(idTypeIHackitTuple, result);
     }
 }
