@@ -24,6 +24,7 @@ import org.apache.wayang.plugin.hackit.core.tuple.header.HeaderBuilder;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * HackitTuple is the base of Hackit because is the basic structure where the needed elements are added
@@ -120,6 +121,15 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
      */
     public void addTag(HackitTag tag){
         this.header.addTag(tag);
+    }
+
+    /**
+     * add a {@link Set} of {@lin HackitTag} on the {@link Header}
+     *
+     * @param tags {@link HackitTag} that it will need at some point on the process
+     */
+    public void addTag(Set<HackitTag> tags){
+        this.header.addTag(tags);
     }
 
     /**

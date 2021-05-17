@@ -24,8 +24,10 @@ import org.apache.wayang.plugin.hackit.core.tuple.header.Header;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * HackitTagger is class where is allocated all the logic that need to be perform during the
@@ -39,15 +41,13 @@ public class HackitTagger implements Serializable {
      * {@link List} of {@link HackitTag} that are added previous of the execution of the
      * original function
      */
-    //TODO: It may change by a set
-    protected List<HackitTag> pre_tags;
+    protected Set<HackitTag> pre_tags;
 
     /**
      * {@link List} of {@link HackitTag} that are added after of the execution of the
      * original function
      */
-    //TODO: It may change by a set
-    protected List<HackitTag> post_tags;
+    protected Set<HackitTag> post_tags;
 
     /**
      * Default Construct
@@ -62,7 +62,7 @@ public class HackitTagger implements Serializable {
      */
     public HackitTagger addPreTag(HackitTag tag){
         if(this.pre_tags == null){
-            this.pre_tags = new ArrayList<>();
+            this.pre_tags = new HashSet<>();
         }
         this.pre_tags.add(tag);
         return this;
@@ -76,7 +76,7 @@ public class HackitTagger implements Serializable {
      */
     public HackitTagger addPostTag(HackitTag tag){
         if(this.post_tags == null){
-            this.post_tags = new ArrayList<>();
+            this.post_tags = new HashSet<>();
         }
         this.post_tags.add(tag);
         return this;
@@ -108,9 +108,9 @@ public class HackitTagger implements Serializable {
      * @param tuple is {@link HackitTuple} where the tags will be added
      * @param tags {@link List} of {@link HackitTag}'s that will add to {@link HackitTuple}
      */
-    public void taggingTuple(HackitTuple tuple, List<HackitTag> tags){
+    public void taggingTuple(HackitTuple tuple, Set<HackitTag> tags){
         //TODO: change this code for an efficient one
-        tags.stream().forEach(tag -> tuple.addTag(tag.getInstance()));
+        tuple.addTag(tags);
     }
 
     /**

@@ -23,8 +23,10 @@ import org.apache.wayang.plugin.hackit.core.tags.HackitTag;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Header is the container of the metadata asociated to one {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
@@ -49,7 +51,7 @@ public abstract class Header<K> implements Serializable, ActionGroup {
      * tags added to the header, this describe some action that need to be apply to the
      * {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
      */
-    private List<HackitTag> tags;
+    private Set<HackitTag> tags;
 
     /**
      * during the process of adding news {@link HackitTag} could add a new {@link org.apache.wayang.plugin.hackit.core.action.Action} at the header, and this
@@ -121,12 +123,29 @@ public abstract class Header<K> implements Serializable, ActionGroup {
     public void addTag(HackitTag tag){
         //TODO: could be better to use an Set because it just saving uniques elements
         if(this.tags == null){
-            this.tags = new ArrayList<>();
+            this.tags = new HashSet<>();
         }
         this.tags.add(tag);
         //update all the possible actions on the {@link ActionGroup}
         //TODO: just execute this action when the element is inserted the first time
         updateActionVector(tag);
+    }
+
+    /**
+     * do exactly the same of {@link #addTag(HackitTag)} but adding all the element at the same time
+     *
+     * @param tags {@link Set} of {@link HackitTag} that will be added
+     */
+    public void addTag(Set<HackitTag> tags){
+        if(this.tags == null){
+            this.tags = new HashSet<>();
+        }
+        this.tags.addAll(tags);
+        tags.stream()
+            .forEach(
+                this::updateActionVector
+            )
+        ;
     }
 
     /**
