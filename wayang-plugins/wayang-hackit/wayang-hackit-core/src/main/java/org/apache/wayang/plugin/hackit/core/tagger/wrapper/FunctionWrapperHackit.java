@@ -18,12 +18,11 @@
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper;
 
 import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
-import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.FlatMapTemplate;
-import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.FunctionTemplate;
+import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.TaggerWrapperFunctionTemplate;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
 /**
- * FunctionWrapperHackit is an implementation of {@link FunctionTemplate} where Hackit manage the logic
+ * FunctionWrapperHackit is an implementation of {@link TaggerWrapperFunctionTemplate} where Hackit manage the logic
  * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
  * original function
  *
@@ -31,21 +30,21 @@ import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
  * @param <I> Input Type of the original Tuple
  * @param <O> Output Type after the perform the Function
  */
-public class FunctionWrapperHackit <IDType, I, O>
+public class FunctionWrapperHackit<IDType, I, O>
         extends HackitTagger
-        implements FunctionTemplate<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
+        implements TaggerWrapperFunctionTemplate<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
 
     /**
      * Original function that will transform the data
      */
-    private FunctionTemplate<I, O> function;
+    private TaggerWrapperFunctionTemplate<I, O> function;
 
     /**
      * Default Construct
      *
      * @param function is the function that will be Wrapped by the {@link FunctionWrapperHackit}
      */
-    public FunctionWrapperHackit(FunctionTemplate<I, O> function) {
+    public FunctionWrapperHackit(TaggerWrapperFunctionTemplate<I, O> function) {
         this.function = function;
     }
 

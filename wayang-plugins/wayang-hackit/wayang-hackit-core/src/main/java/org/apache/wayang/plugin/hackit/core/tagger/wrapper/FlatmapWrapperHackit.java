@@ -18,13 +18,13 @@
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper;
 
 import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
-import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.FlatMapTemplate;
+import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.TaggerWrapperFlatMapTemplate;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
 import java.util.Iterator;
 
 /**
- * FlatmapWrapperHackit is an implementation of {@link FlatMapTemplate} where Hackit manage the logic
+ * FlatmapWrapperHackit is an implementation of {@link TaggerWrapperFlatMapTemplate} where Hackit manage the logic
  * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
  * original function
  *
@@ -34,19 +34,19 @@ import java.util.Iterator;
  */
 public class FlatmapWrapperHackit<IDType, I, O>
         extends HackitTagger
-        implements FlatMapTemplate<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
+        implements TaggerWrapperFlatMapTemplate<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
 
     /**
      * Original function that will transform the data
      */
-    private FlatMapTemplate<I, O> function;
+    private TaggerWrapperFlatMapTemplate<I, O> function;
 
     /**
      * Default Construct
      *
      * @param function is the function that will be Wrapped by the {@link FlatmapWrapperHackit}
      */
-    public FlatmapWrapperHackit( FlatMapTemplate<I, O> function ) {
+    public FlatmapWrapperHackit(TaggerWrapperFlatMapTemplate<I, O> function ) {
         this.function = function;
     }
 
