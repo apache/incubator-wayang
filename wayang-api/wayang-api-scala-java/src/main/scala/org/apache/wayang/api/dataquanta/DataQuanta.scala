@@ -49,7 +49,7 @@ import scala.reflect._
   * @param ev$1        the data type of the elements in this instance
   * @param planBuilder keeps track of the [[WayangPlan]] being build
   */
-abstract class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: Int = 0)(implicit val planBuilder: PlanBuilder) {
+abstract class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, var outputIndex: Int = 0)(implicit val planBuilder: PlanBuilder) {
 
   Validate.isTrue(operator.getNumOutputs > outputIndex)
 

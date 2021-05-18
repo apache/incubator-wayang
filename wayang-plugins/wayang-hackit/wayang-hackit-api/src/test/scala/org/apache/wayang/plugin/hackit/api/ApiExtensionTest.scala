@@ -19,12 +19,17 @@
 
 package org.apache.wayang.plugin.hackit.api
 
-import org.apache.wayang.api.ApiTest
 import org.apache.wayang.api.dataquanta.DataQuantaFactory
-import org.junit.{BeforeClass, Test}
+import org.apache.wayang.api.createPlanBuilder
+import org.apache.wayang.plugin.hackit.api.Hackit.underHackit
+import org.apache.wayang.core.api.WayangContext
+import org.apache.wayang.java.Java
+import org.apache.wayang.spark.Spark
+import org.junit.{Assert, BeforeClass, Test}
 import org.junit.jupiter.api.{BeforeAll, BeforeEach}
 
-class ApiExtensionTest extends ApiTest {
+
+class ApiExtensionTest {
 
   @BeforeEach
   def setUp() ={
@@ -32,10 +37,35 @@ class ApiExtensionTest extends ApiTest {
   }
 
   @Test
-  override def testReadMapCollect(): Unit = {
-    DataQuantaFactory.setTemplate(DataQuantaHackit);
+  def testReadMapCollectHackit(): Unit = {
 
-    super.testReadMapCollect()
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+
+    // Generate some test data.
+    val inputValues = (for (i <- 1 to 10) yield i).toArray
+
+    // Build and execute a Wayang plan.
+    var outputValues = wayang
+      .loadCollection(inputValues).withName("Load input values")
+      .addTag(null)
+      .map(a => a + 2)//.withName("Add 2")
+      .dataQuanta
+      .collect()
+
+    print(outputValues)
+
+    var lolo = wayang
+      .loadCollection(inputValues).withName("Load input values")
+      .addTag(null)
+      .map(a => a + 2)//.withName("Add 2")
+      .toDataQuanta()
+      .collect()
+
+    print(lolo)
+//    // Check the outcome.
+//    val expectedOutputValues = inputValues.map(_ + 2)
+//    Assert.assertArrayEquals(expectedOutputValues, outputValues.toArray)
   }
 
 }
