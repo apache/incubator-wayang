@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jobmanager-loadbalancer
+  labels:
+    app: jobmanager-loadbalancer
+spec:
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+  selector:
+    app: jobmanager
+  type: LoadBalancer
