@@ -19,6 +19,7 @@
 
 package org.apache.wayang.hackit.sidecar;
 
+import org.apache.wayang.hackit.sidecar.webservice.ExecutorManager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -26,6 +27,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class HackitSidecar {
 
     public static void main(String[] args) {
+
+        ExecutorManager.init();
         SpringApplication.run(HackitSidecar.class, args);
     }
 

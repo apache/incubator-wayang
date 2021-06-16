@@ -13,6 +13,9 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 
 @RestController
@@ -40,22 +43,43 @@ public class WebService {
     @GetMapping("/debug/start")
     public UUID serviceStart(){
 
-        ProcessBuilder builder_proc1 = new ProcessBuilder("kubectl", "create", "-f", "volume.yaml");
-        ProcessBuilder builder_proc2 = new ProcessBuilder("kubectl", "create", "-f", "claim.yaml");
-        ProcessBuilder builder_proc3 = new ProcessBuilder("kubectl", "create", "-f", "jobmanager_new.yaml");
-        ProcessBuilder builder_proc4 = new ProcessBuilder("kubectl", "create", "-f", "jobmanager-service.yaml");
-        ProcessBuilder builder_proc5 = new ProcessBuilder("kubectl", "create", "-f", "taskmanger_new.yaml");
+        try {
 
-        List<ProcessBuilder> processes = new ArrayList<>();
-        processes.add(0, builder_proc1);
-        processes.add(1, builder_proc2);
-        processes.add(2, builder_proc3);
-        processes.add(3, builder_proc4);
-        processes.add(4, builder_proc5);
+            String path = Paths.get(".").toRealPath() + "/wayang-plugins/wayang-hackit/wayang-hackit-sidecar/src/main/resources/";
 
-        UUID ProcessID = ExecutorManager.addThread(processes);
+            ProcessBuilder builder_proc1 = new ProcessBuilder("kubectl", "create", "-f", path + "volume.yaml");
+            ProcessBuilder builder_proc2 = new ProcessBuilder("kubectl", "create", "-f", path + "claim.yaml");
+            ProcessBuilder builder_proc3 = new ProcessBuilder("kubectl", "create", "-f", path + "jobmanager_new.yaml");
+            ProcessBuilder builder_proc4 = new ProcessBuilder("kubectl", "create", "-f", path + "jobmanager-service.yaml");
+            ProcessBuilder builder_proc5 = new ProcessBuilder("kubectl", "create", "-f", path + "taskmanager_new.yaml");
+            ProcessBuilder builder_proc6 = new ProcessBuilder("kubectl", "create", "-f", path + "loadbalancer.yaml");
 
-        return ProcessID;
+            List<ProcessBuilder> processes = new ArrayList<>();
+            processes.add(0, builder_proc1);
+            processes.add(1, builder_proc2);
+            processes.add(2, builder_proc3);
+            processes.add(3, builder_proc4);
+            processes.add(4, builder_proc5);
+            processes.add(5, builder_proc6);
+
+            UUID ProcessID = ExecutorManager.addThread(processes);
+
+            return ProcessID;
+
+            /*
+            System.out.println(Paths.get(".").toRealPath() + "/wayang-plugins/wayang-hackit/wayang-hackit-sidecar/src/main/resources");
+
+            File f = new File(Paths.get(".").toRealPath() + "/wayang-plugins/wayang-hackit/wayang-hackit-sidecar/src/main/resources");
+            for (String s: f.list()
+                 ) {
+                System.out.println(s);
+            }*/
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     @GetMapping("/debug/demo")
@@ -89,7 +113,7 @@ public class WebService {
         try {
             // LocalEnvironment
             ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("127.0.0.1", 8081);
-            
+
             //ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("127.0.0.1", 57261, getJars());
             //DataSet<String> data = env.readTextFile("file:///Users/rodrigopardomeza/flink/count");
             DataSet<String> data = env.readTextFile("/mnt/example/count");
@@ -127,22 +151,34 @@ public class WebService {
     @GetMapping("/debug/stop")
     public UUID serviceStop(){
 
-        ProcessBuilder builder_proc1 = new ProcessBuilder("kubectl", "delete", "-f", "volume.yaml");
-        ProcessBuilder builder_proc2 = new ProcessBuilder("kubectl", "delete", "-f", "claim.yaml");
-        ProcessBuilder builder_proc3 = new ProcessBuilder("kubectl", "delete", "-f", "jobmanager_new.yaml");
-        ProcessBuilder builder_proc4 = new ProcessBuilder("kubectl", "delete", "-f", "jobmanager-service.yaml");
-        ProcessBuilder builder_proc5 = new ProcessBuilder("kubectl", "delete", "-f", "taskmanger_new.yaml");
+        try{
+            String path = Paths.get(".").toRealPath() + "/wayang-plugins/wayang-hackit/wayang-hackit-sidecar/src/main/resources/";
 
-        List<ProcessBuilder> processes = new ArrayList<>();
-        processes.add(0, builder_proc1);
-        processes.add(1, builder_proc2);
-        processes.add(2, builder_proc3);
-        processes.add(3, builder_proc4);
-        processes.add(4, builder_proc5);
+            ProcessBuilder builder_proc1 = new ProcessBuilder("kubectl", "delete", "-f", path + "loadbalancer.yaml");
+            ProcessBuilder builder_proc2 = new ProcessBuilder("kubectl", "delete", "-f", path + "jobmanager-service.yaml");
+            ProcessBuilder builder_proc3 = new ProcessBuilder("kubectl", "delete", "-f", path + "taskmanager_new.yaml");
+            ProcessBuilder builder_proc4 = new ProcessBuilder("kubectl", "delete", "-f", path + "jobmanager_new.yaml");
+            ProcessBuilder builder_proc5 = new ProcessBuilder("kubectl", "delete", "-f", path + "claim.yaml");
+            ProcessBuilder builder_proc6 = new ProcessBuilder("kubectl", "delete", "-f", path + "volume.yaml");
 
-        UUID ProcessID = ExecutorManager.addThread(processes);
+            // For now execute: kubectl port-forward deployment/jobmanager 8081:8081
 
-        return ProcessID;
+            List<ProcessBuilder> processes = new ArrayList<>();
+            processes.add(0, builder_proc1);
+            processes.add(1, builder_proc2);
+            processes.add(2, builder_proc3);
+            processes.add(3, builder_proc4);
+            processes.add(4, builder_proc5);
+            processes.add(5, builder_proc6);
+
+            UUID ProcessID = ExecutorManager.addThread(processes);
+
+            return ProcessID;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     @PostMapping(path = "/debug/check")

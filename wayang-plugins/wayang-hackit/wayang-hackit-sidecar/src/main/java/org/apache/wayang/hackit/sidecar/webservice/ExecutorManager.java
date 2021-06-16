@@ -57,19 +57,23 @@ public class ExecutorManager {
 
         processesLogs.put(key, logs);
 
+        System.out.println("Submitting processes");
         ex.submit(() -> {
             try {
 
                 BufferedReader stdInput;
                 for (ProcessBuilder pb : processesNotExecuted) {
                     Process p = pb.start();
+                    System.out.println("Executing process " + pb.toString());
                     stdInput = new BufferedReader(new
                             InputStreamReader(p.getInputStream()));
 
+                    System.out.println("Log:");
                     stdInput.lines()
                             .forEach(
                                     line -> {
                                         logs.add(line);
+                                        System.out.println(line);
                                     }
                             );
                 }
