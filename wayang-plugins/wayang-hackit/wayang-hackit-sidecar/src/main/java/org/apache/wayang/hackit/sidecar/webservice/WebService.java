@@ -52,7 +52,15 @@ public class WebService {
             ProcessBuilder builder_proc3 = new ProcessBuilder("kubectl", "create", "-f", path + "jobmanager_new.yaml");
             ProcessBuilder builder_proc4 = new ProcessBuilder("kubectl", "create", "-f", path + "jobmanager-service.yaml");
             ProcessBuilder builder_proc5 = new ProcessBuilder("kubectl", "create", "-f", path + "taskmanager_new.yaml");
-            ProcessBuilder builder_proc6 = new ProcessBuilder("kubectl", "create", "-f", path + "loadbalancer.yaml");
+            //ProcessBuilder builder_proc6 = new ProcessBuilder("kubectl", "create", "-f", path + "loadbalancer.yaml");
+
+            ProcessBuilder builder_proc6 = new ProcessBuilder("kubectl", "create", "namespace", "kafka");
+
+            ProcessBuilder builder_proc7 = new ProcessBuilder("kubectl", "create", "-f", "https://strimzi.io/install/latest?namespace=kafka", "-n", "kafka");
+
+            ProcessBuilder builder_proc8 = new ProcessBuilder("kubectl", "apply", "-f", "https://strimzi.io/examples/latest/kafka/kafka-persistent-single.yaml", "-n", "kafka");
+
+            ProcessBuilder builder_proc9 = new ProcessBuilder("kubectl", "wait", "kafka/my-cluster", "--for=condition=Ready", "--timeout=300s", "-n", "kafka");
 
             List<ProcessBuilder> processes = new ArrayList<>();
             processes.add(0, builder_proc1);
@@ -60,7 +68,12 @@ public class WebService {
             processes.add(2, builder_proc3);
             processes.add(3, builder_proc4);
             processes.add(4, builder_proc5);
+            //processes.add(5, builder_proc6);
+
             processes.add(5, builder_proc6);
+            processes.add(6, builder_proc7);
+            processes.add(7, builder_proc8);
+            processes.add(8, builder_proc9);
 
             UUID ProcessID = ExecutorManager.addThread(processes);
 
@@ -154,12 +167,17 @@ public class WebService {
         try{
             String path = Paths.get(".").toRealPath() + "/wayang-plugins/wayang-hackit/wayang-hackit-sidecar/src/main/resources/";
 
-            ProcessBuilder builder_proc1 = new ProcessBuilder("kubectl", "delete", "-f", path + "loadbalancer.yaml");
-            ProcessBuilder builder_proc2 = new ProcessBuilder("kubectl", "delete", "-f", path + "jobmanager-service.yaml");
-            ProcessBuilder builder_proc3 = new ProcessBuilder("kubectl", "delete", "-f", path + "taskmanager_new.yaml");
-            ProcessBuilder builder_proc4 = new ProcessBuilder("kubectl", "delete", "-f", path + "jobmanager_new.yaml");
-            ProcessBuilder builder_proc5 = new ProcessBuilder("kubectl", "delete", "-f", path + "claim.yaml");
-            ProcessBuilder builder_proc6 = new ProcessBuilder("kubectl", "delete", "-f", path + "volume.yaml");
+            //ProcessBuilder builder_proc1 = new ProcessBuilder("kubectl", "delete", "-f", path + "loadbalancer.yaml");
+            ProcessBuilder builder_proc1 = new ProcessBuilder("kubectl", "delete", "-f", path + "jobmanager-service.yaml");
+            ProcessBuilder builder_proc2 = new ProcessBuilder("kubectl", "delete", "-f", path + "taskmanager_new.yaml");
+            ProcessBuilder builder_proc3 = new ProcessBuilder("kubectl", "delete", "-f", path + "jobmanager_new.yaml");
+            ProcessBuilder builder_proc4 = new ProcessBuilder("kubectl", "delete", "-f", path + "claim.yaml");
+            ProcessBuilder builder_proc5 = new ProcessBuilder("kubectl", "delete", "-f", path + "volume.yaml");
+
+            ProcessBuilder builder_proc6 = new ProcessBuilder("kubectl", "delete", "namespace", "kafka");
+
+            ProcessBuilder builder_proc7 = new ProcessBuilder("kubectl", "delete", "-f", "'https://strimzi.io/install/latest?namespace=kafka'", "-n", "kafka");
+
 
             // For now execute: kubectl port-forward deployment/jobmanager 8081:8081
 
@@ -169,7 +187,11 @@ public class WebService {
             processes.add(2, builder_proc3);
             processes.add(3, builder_proc4);
             processes.add(4, builder_proc5);
+
+
             processes.add(5, builder_proc6);
+            processes.add(6, builder_proc7);
+            //processes.add(5, builder_proc6);
 
             UUID ProcessID = ExecutorManager.addThread(processes);
 
