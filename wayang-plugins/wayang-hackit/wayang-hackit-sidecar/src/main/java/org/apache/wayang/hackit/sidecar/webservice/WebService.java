@@ -176,7 +176,7 @@ public class WebService {
 
             ProcessBuilder builder_proc6 = new ProcessBuilder("kubectl", "delete", "namespace", "kafka");
 
-            ProcessBuilder builder_proc7 = new ProcessBuilder("kubectl", "delete", "-f", "'https://strimzi.io/install/latest?namespace=kafka'", "-n", "kafka");
+            ProcessBuilder builder_proc7 = new ProcessBuilder("kubectl", "delete", "-f", "https://strimzi.io/install/latest?namespace=kafka", "-n", "kafka");
 
 
             // For now execute: kubectl port-forward deployment/jobmanager 8081:8081
