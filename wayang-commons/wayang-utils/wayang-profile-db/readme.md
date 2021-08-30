@@ -25,6 +25,6 @@ The code that is based on the mentioned repository starts and ends with the comm
 
 - start: [5344336f68bb9038e701435e9859321b6e8cbcfc](https://github.com/apache/incubator-wayang/commit/5344336f68bb9038e701435e9859321b6e8cbcfc)
 
-- end: 
+- end: [fdb7ac352c5fb7eb69a436a5b4dc42c8d9d0a268](https://github.com/apache/incubator-wayang/commit/fdb7ac352c5fb7eb69a436a5b4dc42c8d9d0a268)
 
 All the code that has been added after those commits is totally independent of the mentioned repository. 
