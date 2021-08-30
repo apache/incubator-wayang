@@ -32,6 +32,8 @@ public abstract class Storage {
         this.storageFile = uri;
     }
 
+
+
     /**
      * Sets the ProfileDB for this instance that manages all the Measurement subclasses
      * */
@@ -47,18 +49,48 @@ public abstract class Storage {
         this.storageFile = uri;
     }
 
-    public void save(Experiment... experiments) throws IOException {
-        System.out.println("llegue");
-    }
+    /**
+     * Receive an array of {@link Experiment}s and persist them
+     *
+     * @param experiments Array of {@link Experiment}s to be persisted
+     * @throws IOException
+     */
+    public abstract void save(Experiment... experiments) throws IOException;
 
-    public void save(Collection<Experiment> experiments) throws IOException {}
+    /**
+     * Receive a Collection of {@link Experiment}s and persist them
+     *
+     * @param experiments Collection of {@link Experiment}s to be persisted
+     * @throws IOException
+     */
+    public abstract void save(Collection<Experiment> experiments) throws IOException;
 
-    public void append(Experiment... experiments) throws IOException {}
+    /**
+     * Related to file based storage, Receive an array of {@link Experiment}s and persist them at the end of a file
+     *
+     * @param experiments Array of {@link Experiment}s to be persisted
+     * @throws IOException
+     */
+    public abstract void append(Experiment... experiments) throws IOException;
 
-    public void append(Collection<Experiment> experiments) throws IOException {}
+    /**
+     * Related to file based storage, Receive a Collection of {@link Experiment}s and persist them at the end of a file
+     *
+     * @param experiments Collection of {@link Experiment}s to be persisted
+     * @throws IOException
+     */
+    public abstract void append(Collection<Experiment> experiments) throws IOException ;
 
-    public Collection<Experiment> load() throws IOException { return null; }
+    /**
+     * Bring {@link Experiment}s from current Storage to local variable
+     *
+     * @return Collection of {@link Experiment}s
+     * @throws IOException
+     */
+    public abstract Collection<Experiment> load() throws IOException;
 
+
+    //TODO The following methods should be moved to file storage implementation
     /**
      * Write {@link Experiment}s to an {@link OutputStream}.
      *

@@ -15,7 +15,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -25,32 +27,28 @@ public class ProfileDBTest {
     public void testPolymorphSaveAndLoad() throws IOException {
 
         try {
-            URI uri = new URI("file:///Users/rodrigopardomeza/Desktop/random/myfile.txt");
+            Path temp = Files.createTempFile("", ".tmp");
+
+            String absolutePath = temp.toString();
+            System.out.println("Temp file : " + absolutePath);
+
+            URI uri = new URI("my-file4");
+
             FileStorage store = new FileStorage(uri);
 
             ProfileDB profileDB = new ProfileDB(store)
                     .registerMeasurementClass(TestMemoryMeasurement.class)
                     .registerMeasurementClass(TestTimeMeasurement.class);
 
-            /**
-             * Esto es lo que se espera del codigo del cliente
-             * Tiene que usar la API para registrar medidas
-             */
-            // crea un experimento falso
             final Experiment experiment = new Experiment("test-xp", new Subject("PageRank", "1.0"), "test experiment");
 
-            // Agrega medidas falsas hardcoded
             Measurement timeMeasurement = new TestTimeMeasurement("exec-time", 12345L);
             Measurement memoryMeasurement = new TestMemoryMeasurement("exec-time", System.currentTimeMillis(), 54321L);
 
-            /*Agrega las medidas al experimento*/
             experiment.addMeasurement(timeMeasurement);
             experiment.addMeasurement(memoryMeasurement);
 
             // Save the experiment.
-            /**
-             * Guarda el experimento en memoria
-             */
             byte[] buffer;
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             profileDB.save(Collections.singleton(experiment), bos);
@@ -59,9 +57,6 @@ public class ProfileDBTest {
             System.out.println("Buffer contents: " + new String(buffer, "UTF-8"));
 
             // Load the experiment.
-            /**
-             * Lee el experimento desde el buffer en memoria
-             */
             ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
             Collection<Experiment> loadedExperiments = profileDB.load(bis);
 
@@ -86,7 +81,7 @@ public class ProfileDBTest {
     @Test
     public void testRecursiveSaveAndLoad() throws IOException {
         try {
-            URI uri = new URI("file:///Users/rodrigopardomeza/Desktop/random/myfile.txt");
+            URI uri = new URI("my-file2");
             FileStorage store = new FileStorage(uri);
 
             ProfileDB profileDB = new ProfileDB(store)
@@ -128,78 +123,64 @@ public class ProfileDBTest {
 
     @Test
     public void testFileOperations() throws IOException {
+        File tempDir = Files.createTempDirectory("profiledb").toFile();
+        File file = new File(tempDir, "profiledb.json");
+        file.createNewFile();
+        FileStorage store = new FileStorage(file.toURI());
 
-        try {
-            URI uri = new URI("file:///Users/rodrigopardomeza/Desktop/random/myfile.txt");
-            FileStorage store = new FileStorage(uri);
+        ProfileDB profileDB = new ProfileDB(store)
+                .registerMeasurementClass(TestMemoryMeasurement.class)
+                .registerMeasurementClass(TestTimeMeasurement.class);
 
-            ProfileDB profileDB = new ProfileDB(store)
-                    .registerMeasurementClass(TestMemoryMeasurement.class)
-                    .registerMeasurementClass(TestTimeMeasurement.class);
+        // Create example experiments.
+        final Experiment experiment1 = new Experiment("xp1", new Subject("PageRank", "1.0"), "test experiment 1");
+        experiment1.addMeasurement(new TestTimeMeasurement("exec-time", 1L));
+        final Experiment experiment2 = new Experiment("xp2", new Subject("KMeans", "1.1"), "test experiment 2");
+        experiment2.addMeasurement(new TestTimeMeasurement("exec-time", 2L));
+        final Experiment experiment3 = new Experiment("xp3", new Subject("Apriori", "2.0"), "test experiment 3");
+        experiment3.addMeasurement(new TestMemoryMeasurement("ram", System.currentTimeMillis(), 3L));
 
-            // Create example experiments.
-            final Experiment experiment1 = new Experiment("xp1", new Subject("PageRank", "1.0"), "test experiment 1");
-            experiment1.addMeasurement(new TestTimeMeasurement("exec-time", 1L));
-            final Experiment experiment2 = new Experiment("xp2", new Subject("KMeans", "1.1"), "test experiment 2");
-            experiment2.addMeasurement(new TestTimeMeasurement("exec-time", 2L));
-            final Experiment experiment3 = new Experiment("xp3", new Subject("Apriori", "2.0"), "test experiment 3");
-            experiment3.addMeasurement(new TestMemoryMeasurement("ram", System.currentTimeMillis(), 3L));
+        // Save the experiments.
+        profileDB.save(experiment1);
+        profileDB.append(experiment2, experiment3);
 
-            // Save the experiments.
-            File tempDir = Files.createTempDirectory("profiledb").toFile();
-            //File dir = Files.createTempDirectory(Paths.get("/Users/rodrigopardomeza/Desktop/random/"), "profiledb").toFile();
-            //File dir = Paths.get("/Users/rodrigopardomeza/Desktop/random/").toFile();
-            File file = new File(tempDir, "profiledb.json");
-            file.createNewFile();
-            profileDB.save(experiment1);
-            profileDB.append(experiment2, experiment3);
+        Files.lines(file.toPath()).forEach(System.out::println);
 
-            System.out.println("File plat" + file.toPath().toUri().toString());
-            Files.lines(file.toPath()).forEach(System.out::println);
-
-            // Load and compare.
-            final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.load());
-            final List<Experiment> expectedExperiments = Arrays.asList(experiment1, experiment2, experiment3);
-            Assert.assertEquals(expectedExperiments.size(), loadedExperiments.size());
-            Assert.assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        // Load and compare.
+        final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.load());
+        final List<Experiment> expectedExperiments = Arrays.asList(experiment1, experiment2, experiment3);
+        Assert.assertEquals(expectedExperiments.size(), loadedExperiments.size());
+        Assert.assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
     }
 
     @Test
     public void testAppendOnNonExistentFile() throws IOException {
 
-        try {
-            URI uri = new URI("file:///Users/rodrigopardomeza/Desktop/random/myfile.txt");
-            FileStorage store = new FileStorage(uri);
+        File tempDir = Files.createTempDirectory("profiledb").toFile();
+        File file = new File(tempDir, "new-profiledb.json");
+        file.createNewFile();
+        FileStorage store = new FileStorage(file.toURI());
 
-            // This seems to be an issue on Linux.
-            ProfileDB profileDB = new ProfileDB(store)
-                    .registerMeasurementClass(TestMemoryMeasurement.class)
-                    .registerMeasurementClass(TestTimeMeasurement.class);
+        // This seems to be an issue on Linux.
+        ProfileDB profileDB = new ProfileDB(store)
+                .registerMeasurementClass(TestMemoryMeasurement.class)
+                .registerMeasurementClass(TestTimeMeasurement.class);
 
-            // Create example experiments.
-            final Experiment experiment1 = new Experiment("xp1", new Subject("PageRank", "1.0"), "test experiment 1");
-            experiment1.addMeasurement(new TestTimeMeasurement("exec-time", 1L));
+        // Create example experiments.
+        final Experiment experiment1 = new Experiment("xp1", new Subject("PageRank", "1.0"), "test experiment 1");
+        experiment1.addMeasurement(new TestTimeMeasurement("exec-time", 1L));
 
-            // Save the experiments.
-            File tempDir = Files.createTempDirectory("profiledb").toFile();
-            File file = new File(tempDir, "new-profiledb.json");
-            file.createNewFile();
-            Assert.assertTrue(!file.exists() || file.delete());
-            profileDB.append(experiment1);
+        // Save the experiments.
+        Assert.assertTrue(!file.exists() || file.delete());
+        profileDB.append(experiment1);
 
-            Files.lines(file.toPath()).forEach(System.out::println);
+        Files.lines(file.toPath()).forEach(System.out::println);
 
-            // Load and compare.
-            final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.load());
-            final List<Experiment> expectedExperiments = Collections.singletonList(experiment1);
-            Assert.assertEquals(expectedExperiments.size(), loadedExperiments.size());
-            Assert.assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        // Load and compare.
+        final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.load());
+        final List<Experiment> expectedExperiments = Collections.singletonList(experiment1);
+        Assert.assertEquals(expectedExperiments.size(), loadedExperiments.size());
+        Assert.assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
     }
 
 }

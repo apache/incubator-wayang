@@ -40,30 +40,74 @@ public class ProfileDB {
      */
     private Gson gson;
 
+    /**
+     * Receive an array of {@link Experiment}s and persist them
+     *
+     * @param experiments Array of {@link Experiment}s to be persisted
+     * @throws IOException
+     */
     public void save(Experiment... experiments) throws IOException {
         this.storage.save(experiments);
     }
 
+    /**
+     * Receive a Collection of {@link Experiment}s and persist them
+     *
+     * @param experiments Collection of {@link Experiment}s to be persisted
+     * @throws IOException
+     */
     public void save(Collection<Experiment> experiments) throws IOException {
         this.storage.save(experiments);
     }
 
+    /**
+     * Receive a Collection of {@link Experiment}s and persist them
+     *
+     * @param experiments Collection of {@link Experiment}s to be persisted
+     * @param outputStream Indicates where the data must to be written
+     * @throws IOException
+     */
     public void save(Collection<Experiment> experiments, OutputStream outputStream) throws IOException {
         this.storage.save(experiments, outputStream);
     }
 
+    /**
+     * Related to file based storage, Receive an array of {@link Experiment}s and persist them at the end of a file
+     *
+     * @param experiments Array of {@link Experiment}s to be persisted
+     * @throws IOException
+     */
     public void append(Experiment... experiments) throws IOException {
         this.storage.append(experiments);
     }
 
+    /**
+     * Related to file based storage, Receive a Collection of {@link Experiment}s and persist them at the end of a file
+     *
+     * @param experiments Collection of {@link Experiment}s to be persisted
+     * @throws IOException
+     */
     public void append(Collection<Experiment> experiments) throws IOException {
         this.storage.append(experiments);
     }
 
+    /**
+     * Bring {@link Experiment}s from current Storage to local variable
+     *
+     * @return Collection of {@link Experiment}s
+     * @throws IOException
+     */
     public Collection<Experiment> load() throws IOException {
         return this.storage.load();
     }
 
+    /**
+     * Bring {@link Experiment}s from current Storage to local variable
+     *
+     * @param inputStream Data to be read
+     * @return Collection of {@link Experiment}s
+     * @throws IOException
+     */
     public Collection<Experiment> load(InputStream inputStream) throws IOException {
         return this.storage.load(inputStream);
     }
