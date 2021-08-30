@@ -47,7 +47,9 @@ public abstract class Storage {
         this.storageFile = uri;
     }
 
-    public void save(Experiment... experiments) throws IOException {}
+    public void save(Experiment... experiments) throws IOException {
+        System.out.println("llegue");
+    }
 
     public void save(Collection<Experiment> experiments) throws IOException {}
 

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class ProfileDBTest {
@@ -52,7 +53,7 @@ public class ProfileDBTest {
              */
             byte[] buffer;
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            profileDB.getStorage().save(Collections.singleton(experiment), bos);
+            profileDB.save(Collections.singleton(experiment), bos);
             bos.close();
             buffer = bos.toByteArray();
             System.out.println("Buffer contents: " + new String(buffer, "UTF-8"));
@@ -62,7 +63,7 @@ public class ProfileDBTest {
              * Lee el experimento desde el buffer en memoria
              */
             ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
-            Collection<Experiment> loadedExperiments = profileDB.getStorage().load(bis);
+            Collection<Experiment> loadedExperiments = profileDB.load(bis);
 
             // Compare the experiments.
             Assert.assertEquals(1, loadedExperiments.size());
@@ -102,14 +103,14 @@ public class ProfileDBTest {
             // Save the experiment.
             byte[] buffer;
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            profileDB.getStorage().save(Collections.singleton(experiment), bos);
+            profileDB.save(Collections.singleton(experiment), bos);
             bos.close();
             buffer = bos.toByteArray();
             System.out.println("Buffer contents: " + new String(buffer, "UTF-8"));
 
             // Load the experiment.
             ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
-            Collection<Experiment> loadedExperiments = profileDB.getStorage().load(bis);
+            Collection<Experiment> loadedExperiments = profileDB.load(bis);
 
             // Compare the experiments.
             Assert.assertEquals(1, loadedExperiments.size());
@@ -146,14 +147,18 @@ public class ProfileDBTest {
 
             // Save the experiments.
             File tempDir = Files.createTempDirectory("profiledb").toFile();
+            //File dir = Files.createTempDirectory(Paths.get("/Users/rodrigopardomeza/Desktop/random/"), "profiledb").toFile();
+            //File dir = Paths.get("/Users/rodrigopardomeza/Desktop/random/").toFile();
             File file = new File(tempDir, "profiledb.json");
-            profileDB.getStorage().save(experiment1);
-            profileDB.getStorage().append(experiment2, experiment3);
+            file.createNewFile();
+            profileDB.save(experiment1);
+            profileDB.append(experiment2, experiment3);
 
+            System.out.println("File plat" + file.toPath().toUri().toString());
             Files.lines(file.toPath()).forEach(System.out::println);
 
             // Load and compare.
-            final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.getStorage().load());
+            final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.load());
             final List<Experiment> expectedExperiments = Arrays.asList(experiment1, experiment2, experiment3);
             Assert.assertEquals(expectedExperiments.size(), loadedExperiments.size());
             Assert.assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
@@ -181,13 +186,14 @@ public class ProfileDBTest {
             // Save the experiments.
             File tempDir = Files.createTempDirectory("profiledb").toFile();
             File file = new File(tempDir, "new-profiledb.json");
+            file.createNewFile();
             Assert.assertTrue(!file.exists() || file.delete());
-            profileDB.getStorage().append(experiment1);
+            profileDB.append(experiment1);
 
             Files.lines(file.toPath()).forEach(System.out::println);
 
             // Load and compare.
-            final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.getStorage().load());
+            final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.load());
             final List<Experiment> expectedExperiments = Collections.singletonList(experiment1);
             Assert.assertEquals(expectedExperiments.size(), loadedExperiments.size());
             Assert.assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));

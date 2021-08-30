@@ -40,6 +40,34 @@ public class ProfileDB {
      */
     private Gson gson;
 
+    public void save(Experiment... experiments) throws IOException {
+        this.storage.save(experiments);
+    }
+
+    public void save(Collection<Experiment> experiments) throws IOException {
+        this.storage.save(experiments);
+    }
+
+    public void save(Collection<Experiment> experiments, OutputStream outputStream) throws IOException {
+        this.storage.save(experiments, outputStream);
+    }
+
+    public void append(Experiment... experiments) throws IOException {
+        this.storage.append(experiments);
+    }
+
+    public void append(Collection<Experiment> experiments) throws IOException {
+        this.storage.append(experiments);
+    }
+
+    public Collection<Experiment> load() throws IOException {
+        return this.storage.load();
+    }
+
+    public Collection<Experiment> load(InputStream inputStream) throws IOException {
+        return this.storage.load(inputStream);
+    }
+
     /**
      * Creates a new instance.
      */
