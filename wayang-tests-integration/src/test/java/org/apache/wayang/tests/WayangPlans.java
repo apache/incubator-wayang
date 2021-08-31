@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Provides plans that can be used for integration testing..
+ * Provides plans that can be used for integration testing.
  */
 public class WayangPlans {
 
@@ -89,7 +89,7 @@ public class WayangPlans {
 
     public static URI createUri(String resourcePath) {
         try {
-            return Thread.currentThread().getClass().getResource(resourcePath).toURI();
+            return WayangPlans.class.getResource(resourcePath).toURI();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Illegal URI.", e);
         }

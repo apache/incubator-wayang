@@ -39,7 +39,6 @@
         <module>wayang-java</module>
         <module>wayang-spark</module>
         <module>wayang-postgres</module>
-        <module>wayang-graphchi</module>
         <module>wayang-jdbc-template</module>
         <module>wayang-sqlite3</module>
         <module>wayang-giraph</module>
@@ -58,5 +57,13 @@
         </dependencies>
     </dependencyManagement>
 
+    <profiles>
+        <profile>
+            <id>scala-11</id>
+            <modules>
+                <module>wayang-graphchi</module>
+            </modules>
+        </profile>
+    </profiles>
 
 </project>

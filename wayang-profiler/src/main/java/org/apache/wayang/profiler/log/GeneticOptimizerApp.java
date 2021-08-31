@@ -33,7 +33,6 @@ import org.apache.wayang.core.util.Bitmask;
 import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.graphchi.GraphChi;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
 import org.apache.wayang.spark.Spark;
@@ -110,7 +109,7 @@ public class GeneticOptimizerApp {
         Spark.platform();
         Sqlite3.platform();
         Postgres.platform();
-        GraphChi.platform();
+        //TODO: add dinamically Graphchi, if the version of scala is 2.11
 
         // Load the ExecutionLog.
         double samplingFactor = this.configuration.getDoubleProperty("wayang.profiler.ga.sampling", 1d);

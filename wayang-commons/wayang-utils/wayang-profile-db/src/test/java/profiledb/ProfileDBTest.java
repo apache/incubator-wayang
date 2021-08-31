@@ -43,100 +43,89 @@ public class ProfileDBTest {
 
     @Test
     public void testPolymorphSaveAndLoad() throws IOException {
+        File tempDir = Files.createTempDirectory("profiledb").toFile();
+        File file = new File(tempDir, "new-profiledb.json");
+        file.createNewFile();
 
-        try {
-            Path temp = Files.createTempFile("", ".tmp");
+        FileStorage store = new FileStorage(file.toURI());
 
-            String absolutePath = temp.toString();
-            System.out.println("Temp file : " + absolutePath);
+        ProfileDB profileDB = new ProfileDB(store)
+                .registerMeasurementClass(TestMemoryMeasurement.class)
+                .registerMeasurementClass(TestTimeMeasurement.class);
 
-            URI uri = new URI("my-file4");
+        final Experiment experiment = new Experiment("test-xp", new Subject("PageRank", "1.0"), "test experiment");
 
-            FileStorage store = new FileStorage(uri);
+        Measurement timeMeasurement = new TestTimeMeasurement("exec-time", 12345L);
+        Measurement memoryMeasurement = new TestMemoryMeasurement("exec-time", System.currentTimeMillis(), 54321L);
 
-            ProfileDB profileDB = new ProfileDB(store)
-                    .registerMeasurementClass(TestMemoryMeasurement.class)
-                    .registerMeasurementClass(TestTimeMeasurement.class);
+        experiment.addMeasurement(timeMeasurement);
+        experiment.addMeasurement(memoryMeasurement);
 
-            final Experiment experiment = new Experiment("test-xp", new Subject("PageRank", "1.0"), "test experiment");
+        // Save the experiment.
+        byte[] buffer;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        profileDB.save(Collections.singleton(experiment), bos);
+        bos.close();
+        buffer = bos.toByteArray();
+        System.out.println("Buffer contents: " + new String(buffer, "UTF-8"));
 
-            Measurement timeMeasurement = new TestTimeMeasurement("exec-time", 12345L);
-            Measurement memoryMeasurement = new TestMemoryMeasurement("exec-time", System.currentTimeMillis(), 54321L);
+        // Load the experiment.
+        ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
+        Collection<Experiment> loadedExperiments = profileDB.load(bis);
 
-            experiment.addMeasurement(timeMeasurement);
-            experiment.addMeasurement(memoryMeasurement);
+        // Compare the experiments.
+        Assert.assertEquals(1, loadedExperiments.size());
+        Experiment loadedExperiment = loadedExperiments.iterator().next();
+        Assert.assertEquals(experiment, loadedExperiment);
 
-            // Save the experiment.
-            byte[] buffer;
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            profileDB.save(Collections.singleton(experiment), bos);
-            bos.close();
-            buffer = bos.toByteArray();
-            System.out.println("Buffer contents: " + new String(buffer, "UTF-8"));
-
-            // Load the experiment.
-            ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
-            Collection<Experiment> loadedExperiments = profileDB.load(bis);
-
-            // Compare the experiments.
-            Assert.assertEquals(1, loadedExperiments.size());
-            Experiment loadedExperiment = loadedExperiments.iterator().next();
-            Assert.assertEquals(experiment, loadedExperiment);
-
-            // Compare the measurements.
-            Assert.assertEquals(2, loadedExperiment.getMeasurements().size());
-            Set<Measurement> expectedMeasurements = new HashSet<>(2);
-            expectedMeasurements.add(timeMeasurement);
-            expectedMeasurements.add(memoryMeasurement);
-            Set<Measurement> loadedMeasurements = new HashSet<>(loadedExperiment.getMeasurements());
-            Assert.assertEquals(expectedMeasurements, loadedMeasurements);
-
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        // Compare the measurements.
+        Assert.assertEquals(2, loadedExperiment.getMeasurements().size());
+        Set<Measurement> expectedMeasurements = new HashSet<>(2);
+        expectedMeasurements.add(timeMeasurement);
+        expectedMeasurements.add(memoryMeasurement);
+        Set<Measurement> loadedMeasurements = new HashSet<>(loadedExperiment.getMeasurements());
+        Assert.assertEquals(expectedMeasurements, loadedMeasurements);
     }
 
     @Test
     public void testRecursiveSaveAndLoad() throws IOException {
-        try {
-            URI uri = new URI("my-file2");
-            FileStorage store = new FileStorage(uri);
+        File tempDir = Files.createTempDirectory("profiledb").toFile();
+        File file = new File(tempDir, "new-profiledb.json");
+        file.createNewFile();
+        FileStorage store = new FileStorage(file.toURI());
 
-            ProfileDB profileDB = new ProfileDB(store)
-                    .registerMeasurementClass(TestMemoryMeasurement.class)
-                    .registerMeasurementClass(TestTimeMeasurement.class);
+        ProfileDB profileDB = new ProfileDB(store)
+                .registerMeasurementClass(TestMemoryMeasurement.class)
+                .registerMeasurementClass(TestTimeMeasurement.class);
 
-            // Create an example experiment.
-            final Experiment experiment = new Experiment("test-xp", new Subject("PageRank", "1.0"), "test experiment");
-            TestTimeMeasurement topLevelMeasurement = new TestTimeMeasurement("exec-time", 12345L);
-            TestTimeMeasurement childMeasurement = new TestTimeMeasurement("sub-exec-time", 2345L);
-            topLevelMeasurement.addSubmeasurements(childMeasurement);
-            experiment.addMeasurement(topLevelMeasurement);
+        // Create an example experiment.
+        final Experiment experiment = new Experiment("test-xp", new Subject("PageRank", "1.0"), "test experiment");
+        TestTimeMeasurement topLevelMeasurement = new TestTimeMeasurement("exec-time", 12345L);
+        TestTimeMeasurement childMeasurement = new TestTimeMeasurement("sub-exec-time", 2345L);
+        topLevelMeasurement.addSubmeasurements(childMeasurement);
+        experiment.addMeasurement(topLevelMeasurement);
 
-            // Save the experiment.
-            byte[] buffer;
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            profileDB.save(Collections.singleton(experiment), bos);
-            bos.close();
-            buffer = bos.toByteArray();
-            System.out.println("Buffer contents: " + new String(buffer, "UTF-8"));
+        // Save the experiment.
+        byte[] buffer;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        profileDB.save(Collections.singleton(experiment), bos);
+        bos.close();
+        buffer = bos.toByteArray();
+        System.out.println("Buffer contents: " + new String(buffer, "UTF-8"));
 
-            // Load the experiment.
-            ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
-            Collection<Experiment> loadedExperiments = profileDB.load(bis);
+        // Load the experiment.
+        ByteArrayInputStream bis = new ByteArrayInputStream(buffer);
+        Collection<Experiment> loadedExperiments = profileDB.load(bis);
 
-            // Compare the experiments.
-            Assert.assertEquals(1, loadedExperiments.size());
-            Experiment loadedExperiment = loadedExperiments.iterator().next();
-            Assert.assertEquals(experiment, loadedExperiment);
+        // Compare the experiments.
+        Assert.assertEquals(1, loadedExperiments.size());
+        Experiment loadedExperiment = loadedExperiments.iterator().next();
+        Assert.assertEquals(experiment, loadedExperiment);
 
-            // Compare the measurements.
-            Assert.assertEquals(1, loadedExperiment.getMeasurements().size());
-            final Measurement loadedMeasurement = loadedExperiment.getMeasurements().iterator().next();
-            Assert.assertEquals(topLevelMeasurement, loadedMeasurement);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        // Compare the measurements.
+        Assert.assertEquals(1, loadedExperiment.getMeasurements().size());
+        final Measurement loadedMeasurement = loadedExperiment.getMeasurements().iterator().next();
+        Assert.assertEquals(topLevelMeasurement, loadedMeasurement);
     }
 
     @Test

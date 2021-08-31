@@ -18,6 +18,7 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
+import java.util.Map.Entry;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,9 +39,9 @@ public class SlotMapping {
 
     private final Logger logger = LogManager.getLogger(this.getClass());
 
-    private final Map<Slot, Slot> upstreamMapping = new HashMap<>();
+    private final Map<Slot<?>, Slot<?>> upstreamMapping = new HashMap<>();
 
-    private Map<Slot, Collection> downstreamMapping = null;
+    private Map<Slot<?>, Collection> downstreamMapping = null;
 
     /**
      * Create a new instance that maps all {@link Slot}s of the given {@link Operator} to themselves.
@@ -68,7 +69,7 @@ public class SlotMapping {
         return slotMapping;
     }
 
-    public void mapAllUpsteam(InputSlot[] sources, InputSlot[] targets) {
+    public void mapAllUpsteam(InputSlot<?>[] sources, InputSlot<?>[] targets) {
         if (sources.length != targets.length) {
             throw new IllegalArgumentException(String.format("Incompatible number of input slots between %s and %s.",
                     Arrays.toString(sources), Arrays.toString(targets)));
@@ -78,7 +79,7 @@ public class SlotMapping {
         }
     }
 
-    public void mapAllUpsteam(OutputSlot[] sources, OutputSlot[] targets) {
+    public void mapAllUpsteam(OutputSlot<?>[] sources, OutputSlot<?>[] targets) {
         if (sources.length != targets.length) throw new IllegalArgumentException();
         for (int i = 0; i < sources.length; i++) {
             this.mapUpstream(sources[i], targets[i]);
@@ -142,14 +143,15 @@ public class SlotMapping {
      *
      * @return {@link #downstreamMapping}
      */
-    private Map<Slot, Collection> getOrCreateDownstreamMapping() {
+    private Map<Slot<?>, Collection> getOrCreateDownstreamMapping() {
         if (this.downstreamMapping == null) {
-            this.downstreamMapping = this.upstreamMapping.entrySet().stream().collect(
-                    Collectors.groupingBy(
-                            Map.Entry::getValue,
-                            Collectors.mapping(
-                                    Map.Entry::getKey,
-                                    Collectors.toCollection(LinkedList::new))));
+            Map<Slot<?>, Collection> map = new HashMap<>();
+            for (Entry<Slot<?>, Slot<?>> slotSlotEntry : this.upstreamMapping.entrySet()) {
+                Object key = slotSlotEntry.getKey();
+                map.computeIfAbsent(slotSlotEntry.getValue(), k -> new LinkedList<Object>())
+                    .add(key);
+            }
+            this.downstreamMapping = map;
         }
 
         return this.downstreamMapping;
@@ -227,7 +229,7 @@ public class SlotMapping {
     public void replaceOutputSlotMappings(Operator oldOperator, Operator newOperator) {
         if (oldOperator.getParent() == newOperator) {
             // Default strategy: The oldOperator is now wrapped by the newOperator.
-            final Map<Slot, Collection> downstreamMapping = this.getOrCreateDownstreamMapping();
+            final Map<Slot<?>, Collection> downstreamMapping = this.getOrCreateDownstreamMapping();
             final SlotMapping oldToNewSlotMapping = oldOperator.getContainer().getSlotMapping();
             for (int i = 0; i < oldOperator.getNumOutputs(); i++) {
                 final OutputSlot<?> oldOutput = oldOperator.getOutput(i);
@@ -296,7 +298,7 @@ public class SlotMapping {
      *
      * @return the upstream mapping
      */
-    public Map<Slot, Slot> getUpstreamMapping() {
+    public Map<Slot<?>, Slot<?>> getUpstreamMapping() {
         return this.upstreamMapping;
     }
 

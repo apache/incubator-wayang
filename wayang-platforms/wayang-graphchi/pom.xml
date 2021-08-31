@@ -26,7 +26,7 @@
         <version>0.6.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>wayang-graphchi_2.11</artifactId>
+    <artifactId>wayang-graphchi</artifactId>
     <version>0.6.0-SNAPSHOT</version>
 
     <name>Wayang Graphchi</name>
