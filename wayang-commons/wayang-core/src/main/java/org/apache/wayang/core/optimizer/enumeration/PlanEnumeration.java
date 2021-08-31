@@ -18,7 +18,8 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import de.hpi.isg.profiledb.store.model.TimeMeasurement;
+
+import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.channels.ChannelConversionGraph;

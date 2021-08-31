@@ -28,7 +28,7 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.execution.JavaExecutor;
 
 /**
- * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.
+ * {@link Platform} for a single JVM executor based on the {@link java.util.stream.Stream} library.
  */
 public class JavaPlatform extends Platform {
 

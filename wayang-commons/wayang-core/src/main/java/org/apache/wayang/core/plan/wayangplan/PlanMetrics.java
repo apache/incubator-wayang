@@ -18,10 +18,10 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import de.hpi.isg.profiledb.store.model.Measurement;
-import de.hpi.isg.profiledb.store.model.Type;
 
 import java.util.Collection;
+import org.apache.wayang.commons.util.profiledb.model.Measurement;
+import org.apache.wayang.commons.util.profiledb.model.Type;
 
 /**
  * This class collects metrics for {@link WayangPlan}s.

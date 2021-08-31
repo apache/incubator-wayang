@@ -18,9 +18,10 @@
 
 package org.apache.wayang.jdbc.operators;
 
-import de.hpi.isg.profiledb.instrumentation.StopWatch;
-import de.hpi.isg.profiledb.store.model.Experiment;
-import de.hpi.isg.profiledb.store.model.Subject;
+
+import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
+import org.apache.wayang.commons.util.profiledb.model.Experiment;
+import org.apache.wayang.commons.util.profiledb.model.Subject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;

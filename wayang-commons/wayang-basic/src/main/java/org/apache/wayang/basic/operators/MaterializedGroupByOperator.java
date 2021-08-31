@@ -65,7 +65,7 @@ public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator
      *
      * @param keyDescriptor describes how to extract the key from data units
      * @param inputType     type of the input elements
-     * @param inputType     type of the element groups
+     * @param outputType    type of the element groups
      */
     public MaterializedGroupByOperator(TransformationDescriptor<Type, Key> keyDescriptor,
                                        DataSetType<Type> inputType,
