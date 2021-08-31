@@ -949,7 +949,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.10.4</version>
+                    <version>3.3.0</version>
                     <executions>
                         <execution>
                             <id>attach-javadocs</id>
@@ -959,6 +959,8 @@
                         </execution>
                     </executions>
                     <configuration>
+                        <detectLinks>false</detectLinks>
+                        <detectJavaApiLink>true</detectJavaApiLink>
                         <additionalparam>-Xdoclint:none</additionalparam>
                     </configuration>
                 </plugin>
@@ -1215,9 +1217,6 @@
                     <additionalOptions>
                         <additionalOption>-Xdoclint:none</additionalOption>
                     </additionalOptions>
-                    <links>
-                        <link>https://docs.oracle.com/javase/8/docs/api/</link>
-                    </links>
                 </configuration>
             </plugin>
 
