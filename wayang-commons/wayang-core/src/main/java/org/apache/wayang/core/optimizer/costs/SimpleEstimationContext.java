@@ -18,8 +18,7 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import gnu.trove.map.TObjectDoubleMap;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
+import java.util.HashMap;
 import org.json.JSONObject;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.util.JsonSerializables;
@@ -34,8 +33,8 @@ import java.util.List;
 public class SimpleEstimationContext implements EstimationContext {
 
     private final CardinalityEstimate[] inputCardinalities, outputCardinalities;
-
-    private final TObjectDoubleMap<String> doubleProperties;
+    //TODO: change a for efficient Hashmap
+    private final HashMap<String, Double> doubleProperties;
 
     private final int numExecutions;
 
@@ -44,7 +43,7 @@ public class SimpleEstimationContext implements EstimationContext {
      */
     public SimpleEstimationContext(CardinalityEstimate[] inputCardinalities,
                                    CardinalityEstimate[] outputCardinalities,
-                                   TObjectDoubleMap<String> doubleProperties,
+                                   HashMap<String, Double> doubleProperties,
                                    int numExecutions) {
         this.inputCardinalities = inputCardinalities;
         this.outputCardinalities = outputCardinalities;
@@ -106,7 +105,7 @@ public class SimpleEstimationContext implements EstimationContext {
                             CardinalityEstimate.class
                     );
 
-                    final TObjectDoubleHashMap<String> doubleProperties = new TObjectDoubleHashMap<>();
+                    final HashMap<String, Double> doubleProperties = new HashMap<String, Double>();
                     final JSONObject doublePropertiesJson = json.optJSONObject("properties");
                     if (doublePropertiesJson != null) {
                         for (String key : doublePropertiesJson.keySet()) {
