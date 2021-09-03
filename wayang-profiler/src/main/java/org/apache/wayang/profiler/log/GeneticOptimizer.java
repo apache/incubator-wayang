@@ -18,8 +18,7 @@
 
 package org.apache.wayang.profiler.log;
 
-import gnu.trove.map.TObjectIntMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
+import java.util.HashMap;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.platform.AtomicExecution;
@@ -61,7 +60,8 @@ public class GeneticOptimizer {
     /**
      * Counts observation instances, such as an operator or a platform initialization, in the training data.
      */
-    private final TObjectIntMap<Object> numObservations;
+    //TODO: change for efficient map
+    private final HashMap<Object, Integer> numObservations;
 
     /**
      * {@link Variable}s to learn the overhead of {@link Platform} initialization.
@@ -164,16 +164,31 @@ public class GeneticOptimizer {
         }
 
         // Count the distinct elements in the PartialExecutions.
-        this.numObservations = new TObjectIntHashMap<>();
+        this.numObservations = new HashMap<>();
         this.runtimeSum = 0L;
         for (PartialExecution observation : this.observations) {
             for (String key : getLoadProfileEstimatorKeys(observation)) {
-                this.numObservations.adjustOrPutValue(key, 1, 1);
+                this.adjustOrPutValue(key, 1, 1);
             }
             for (Platform platform : observation.getInitializedPlatforms()) {
-                this.numObservations.adjustOrPutValue(platform, 1, 1);
+                this.adjustOrPutValue(platform, 1, 1);
             }
             this.runtimeSum += observation.getMeasuredExecutionTime();
+        }
+    }
+
+    /**
+     * simulate the process on the Trove4j library
+     * @param key key to modify on the map
+     * @param default_value default value in the case of not key
+     * @param correction element to add the array in the case of the key exist
+     */
+    private void adjustOrPutValue(Object key, int default_value, int correction){
+        if(this.numObservations.containsKey(key)){
+            Integer value = this.numObservations.get(key);
+            this.numObservations.replace(key, value + correction );
+        }else{
+            this.numObservations.put(key, default_value);
         }
     }
 
@@ -283,7 +298,7 @@ public class GeneticOptimizer {
         return observations;
     }
 
-    public TObjectIntMap<Object> getNumObservations() {
+    public HashMap<Object, Integer> getNumObservations() {
         return numObservations;
     }
 

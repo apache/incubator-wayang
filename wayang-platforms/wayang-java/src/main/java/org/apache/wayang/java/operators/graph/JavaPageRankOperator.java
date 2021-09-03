@@ -18,11 +18,9 @@
 
 package org.apache.wayang.java.operators.graph;
 
-import gnu.trove.iterator.TLongFloatIterator;
-import gnu.trove.map.TLongFloatMap;
-import gnu.trove.map.TLongIntMap;
-import gnu.trove.map.hash.TLongFloatHashMap;
-import gnu.trove.map.hash.TLongIntHashMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.PageRankOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -67,8 +65,8 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
         final Collection<Tuple2<Long, Long>> edges = input.provideCollection();
-        final TLongFloatMap pageRanks = this.pageRank(edges);
-        final Stream<Tuple2<Long, Float>> pageRankStream = this.stream(pageRanks);
+        final Map<Long, Float> pageRanks = this.pageRank(edges);
+        final Stream<Tuple2<Long, Float>> pageRankStream = pageRanks.entrySet().stream().map(entry -> new Tuple2<>(entry.getKey(), entry.getValue()));
 
         output.accept(pageRankStream);
 
@@ -81,31 +79,33 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
      * @param edgeDataSet edges of a graph
      * @return the page ranks
      */
-    private TLongFloatMap pageRank(Collection<Tuple2<Long, Long>> edgeDataSet) {
+    //TODO: change for efficient map
+    private Map<Long, Float> pageRank(Collection<Tuple2<Long, Long>> edgeDataSet) {
         // Get the degress of all vertices and make sure we collect *all* vertices.
-        TLongIntMap degrees = new TLongIntHashMap();
+        //TODO: change for efficient map
+        HashMap<Long, Integer> degrees = new HashMap<>();
         for (Tuple2<Long, Long> edge : edgeDataSet) {
-            degrees.adjustOrPutValue(edge.field0, 1, 1);
-            degrees.adjustOrPutValue(edge.field0, 0, 0);
+            this.adjustOrPutValue(degrees, edge.field0, 1, 1, Integer::sum);
+            this.adjustOrPutValue(degrees, edge.field0, 0, 0, Integer::sum);
         }
         int numVertices = degrees.size();
         float initialRank = 1f / numVertices;
         float dampingRank = (1 - this.dampingFactor) / numVertices;
 
         // Initialize the rank map.
-        TLongFloatMap initialRanks = new TLongFloatHashMap();
-        degrees.forEachKey(k -> {
+        //TODO: change for efficient map
+        HashMap<Long, Float> initialRanks = new HashMap<>();
+        degrees.forEach( (k, v) -> {
             initialRanks.putIfAbsent(k, initialRank);
-            return true;
         });
 
-        TLongFloatMap currentRanks = initialRanks;
+        HashMap<Long, Float> currentRanks = initialRanks;
         for (int iteration = 0; iteration < this.getNumIterations(); iteration++) {
             // Add the damping first.
-            TLongFloatMap newRanks = new TLongFloatHashMap(currentRanks.size());
-            degrees.forEachKey(k -> {
+            //TODO: change for efficient map
+            HashMap<Long, Float> newRanks = new HashMap<Long, Float>(currentRanks.size());
+            degrees.forEach( (k, v) -> {
                 newRanks.putIfAbsent(k, dampingRank);
-                return true;
             });
 
             // Now add the other ranks.
@@ -115,7 +115,7 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
                 final int degree = degrees.get(sourceVertex);
                 final float currentRank = currentRanks.get(sourceVertex);
                 final float partialRank = this.dampingFactor * currentRank / degree;
-                newRanks.adjustOrPutValue(targetVertex, partialRank, partialRank);
+                this.adjustOrPutValue(newRanks, targetVertex, partialRank, partialRank, Float::sum);
             }
 
             currentRanks = newRanks;
@@ -124,23 +124,20 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         return currentRanks;
     }
 
-    private Stream<Tuple2<Long, Float>> stream(TLongFloatMap map) {
-        final TLongFloatIterator tLongFloatIterator = map.iterator();
-        Iterator<Tuple2<Long, Float>> iterator = new Iterator<Tuple2<Long, Float>>() {
-            @Override
-            public boolean hasNext() {
-                return tLongFloatIterator.hasNext();
-            }
-
-            @Override
-            public Tuple2<Long, Float> next() {
-                tLongFloatIterator.advance();
-                return new Tuple2<>(tLongFloatIterator.key(), tLongFloatIterator.value());
-            }
-        };
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
+    /**
+     * simulate the process on the Trove4j library
+     * @param key key to modify on the map
+     * @param default_value default value in the case of not key
+     * @param correction element to add the array in the case of the key exist
+     */
+    private <T> void adjustOrPutValue(Map<Long, T> map, Long key, T default_value, T correction, BiFunction<T, T, T> update){
+        if(map.containsKey(key)){
+            T value = map.get(key);
+            map.replace(key, update.apply(value, correction) );
+        }else{
+            map.put(key, default_value);
+        }
     }
-
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
