@@ -18,7 +18,7 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import de.hpi.isg.profiledb.store.model.TimeMeasurement;
+import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;

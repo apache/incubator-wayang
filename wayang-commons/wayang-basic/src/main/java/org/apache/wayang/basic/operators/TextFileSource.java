@@ -18,8 +18,9 @@
 
 package org.apache.wayang.basic.operators;
 
-import de.hpi.isg.profiledb.store.model.TimeMeasurement;
+
 import org.apache.commons.lang3.Validate;
+import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;

@@ -24,10 +24,7 @@ import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.giraph.Giraph;
-import org.apache.wayang.graphchi.GraphChi;
 import org.apache.wayang.java.Java;
-import org.apache.wayang.spark.Spark;
-import org.apache.wayang.tests.WayangPlans;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Integration tests for the integration of GraphChi with Wayang.
+ * Integration tests for the integration of Giraph with Wayang.
  */
 public class GiraphIntegrationIT {
 

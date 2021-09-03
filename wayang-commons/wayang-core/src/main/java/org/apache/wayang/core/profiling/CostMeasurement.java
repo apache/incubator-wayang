@@ -18,8 +18,9 @@
 
 package org.apache.wayang.core.profiling;
 
-import de.hpi.isg.profiledb.store.model.Measurement;
-import de.hpi.isg.profiledb.store.model.Type;
+
+import org.apache.wayang.commons.util.profiledb.model.Measurement;
+import org.apache.wayang.commons.util.profiledb.model.Type;
 
 /**
  * This measurement captures execution costs w.r.t. to Wayang's cost model.

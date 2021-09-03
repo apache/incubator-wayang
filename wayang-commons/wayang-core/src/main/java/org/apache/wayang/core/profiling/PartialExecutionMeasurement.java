@@ -18,8 +18,9 @@
 
 package org.apache.wayang.core.profiling;
 
-import de.hpi.isg.profiledb.store.model.Measurement;
-import de.hpi.isg.profiledb.store.model.Type;
+
+import org.apache.wayang.commons.util.profiledb.model.Measurement;
+import org.apache.wayang.commons.util.profiledb.model.Type;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.TimeEstimate;
 import org.apache.wayang.core.platform.PartialExecution;

@@ -18,8 +18,9 @@
 
 package org.apache.wayang.core.profiling;
 
-import de.hpi.isg.profiledb.store.model.Measurement;
-import de.hpi.isg.profiledb.store.model.Type;
+
+import org.apache.wayang.commons.util.profiledb.model.Measurement;
+import org.apache.wayang.commons.util.profiledb.model.Type;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;

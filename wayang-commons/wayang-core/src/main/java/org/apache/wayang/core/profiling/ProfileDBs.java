@@ -18,13 +18,14 @@
 
 package org.apache.wayang.core.profiling;
 
-import de.hpi.isg.profiledb.ProfileDB;
+
+import org.apache.wayang.commons.util.profiledb.ProfileDB;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
 import org.apache.wayang.core.plan.wayangplan.PlanMetrics;
 
 /**
- * Utilities to work with {@link de.hpi.isg.profiledb.ProfileDB}s.
+ * Utilities to work with {@link ProfileDB}s.
  */
 public class ProfileDBs {
 
@@ -34,7 +35,7 @@ public class ProfileDBs {
      * @return the {@link ProfileDB}
      */
     public static ProfileDB createProfileDB() {
-        final ProfileDB profileDB = new ProfileDB();
+        final ProfileDB profileDB = new ProfileDB(null);
         customize(profileDB);
         return profileDB;
     }

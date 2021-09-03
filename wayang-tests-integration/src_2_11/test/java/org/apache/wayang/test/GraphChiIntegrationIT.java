@@ -16,8 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.tests;
+package org.apache.wayang.test;
 
+import org.apache.wayang.tests.WayangPlans;
 import org.junit.Assert;
 import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
