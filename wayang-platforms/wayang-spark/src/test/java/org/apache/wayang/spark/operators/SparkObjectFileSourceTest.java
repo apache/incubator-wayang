@@ -44,7 +44,7 @@ public class SparkObjectFileSourceTest extends SparkOperatorTestBase {
         try {
 
             // Prepare the source.
-            final URL inputUrl = this.getClass().getResource("/0-to-10000.sequence_file");
+            final URL inputUrl = this.getClass().getResource("/0-to-10000.input");
             SparkObjectFileSource<Integer> source = new SparkObjectFileSource<>(
                     inputUrl.toString(), DataSetType.createDefault(Integer.class));
 

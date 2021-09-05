@@ -60,7 +60,7 @@ public class TextFileSourceTest {
         when(optimizationContext.getJob()).thenReturn(job);
         when(job.getStopWatch()).thenReturn(new StopWatch(new Experiment("mock", new Subject("mock", "mock"))));
         when(optimizationContext.getConfiguration()).thenReturn(new Configuration());
-        final URL testFile = this.getClass().getResource("/ulysses.txt");
+        final URL testFile = this.getClass().getResource("/ulysses.input");
         final TextFileSource textFileSource = new TextFileSource(testFile.toString());
 
         final BufferedReader bufferedReader = new BufferedReader(

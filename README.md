@@ -135,10 +135,6 @@ java ... org.apache.wayang.profiler.ga.GeneticOptimizerApp [configuration URL [e
 This app will try to find appropriate values for the question marks (`?`) in the load profile estimator templates to fit the gathered execution data and ready-made configuration entries for the load profile estimators.
 You can then copy them into your configuration.
 
-## Examples
-
-For some executable examples, have a look at [this repository](https://github.com/sekruse/rheem-examples).
-
 ### WordCount
 
 The "Hello World!" of data processing systems is the wordcount.
