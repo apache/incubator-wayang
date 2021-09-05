@@ -77,15 +77,15 @@ import java.util.stream.Stream;
  */
 public class WayangPlans {
 
-    public static final URI FILE_SOME_LINES_TXT = createUri("/some-lines.txt");
+    public static final URI FILE_SOME_LINES_TXT = createUri("/some-lines.input");
 
-    public static final URI FILE_OTHER_LINES_TXT = createUri("/other-lines.txt");
+    public static final URI FILE_OTHER_LINES_TXT = createUri("/other-lines.input");
 
-    public static final URI ULYSSES_TXT = createUri("/ulysses.txt");
+    public static final URI ULYSSES_TXT = createUri("/ulysses.input");
 
-    public static final URI FILE_WITH_KEY_1 = createUri("/lines-with-key1.txt");
+    public static final URI FILE_WITH_KEY_1 = createUri("/lines-with-key1.input");
 
-    public static final URI FILE_WITH_KEY_2 = createUri("/lines-with-key2.txt");
+    public static final URI FILE_WITH_KEY_2 = createUri("/lines-with-key2.input");
 
     public static URI createUri(String resourcePath) {
         try {

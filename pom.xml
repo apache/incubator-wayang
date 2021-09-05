@@ -1083,18 +1083,15 @@
                         <exclude>**/*.iml</exclude>
 
                         <exclude>**/*.yaml</exclude>
+                        <exclude>**/*.json</exclude>
 
                         <exclude>**/*.log</exclude>
-                        <exclude>**/0-to-10000.sequence_file</exclude>
+                        <exclude>**/*.input</exclude>
 
                         <exclude>**/*.svg</exclude>
                         <exclude>**/Gemfile.lock</exclude>
                         <exclude>**/.jekyll-cache/**</exclude>
                         <exclude>**/README.md</exclude>
-                        <!-- TODO: I am pretty sure we need to remove this and replace it with a different text -->
-                        <exclude>**/src/test/resources/ulysses.txt</exclude>
-                        <exclude>**/src/test/resources/test.edgelist</exclude>
-                        <exclude>**/src/test/resources/*.txt</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -1305,5 +1302,6 @@
         <module>wayang-profiler</module>
         <module>wayang-plugins</module>
         <module>wayang-resources</module>
+      <module>wayang-benchmark</module>
     </modules>
 </project>

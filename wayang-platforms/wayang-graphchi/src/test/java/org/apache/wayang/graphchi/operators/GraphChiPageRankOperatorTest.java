@@ -69,7 +69,7 @@ public class GraphChiPageRankOperatorTest {
         FileChannel.Instance inputChannelInstance =
                 (FileChannel.Instance) new FileChannel(FileChannel.HDFS_TSV_DESCRIPTOR)
                         .createInstance(graphChiExecutor, null, -1);
-        inputChannelInstance.addPath(this.getClass().getResource("/test.edgelist").toString());
+        inputChannelInstance.addPath(this.getClass().getResource("/test.edgelist.input").toString());
         inputChannelInstance.getLineage().collectAndMark();
 
         final ExecutionOperator inputOperator = mock(ExecutionOperator.class);
