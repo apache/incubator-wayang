@@ -51,7 +51,8 @@ public class SparkOperatorTestBase {
     @Before
     public void setUp() {
         this.configuration = new Configuration();
-        this.sparkExecutor = (SparkExecutor) SparkPlatform.getInstance().getExecutorFactory().create(this.mockJob());
+        if(sparkExecutor == null)
+            this.sparkExecutor = (SparkExecutor) SparkPlatform.getInstance().getExecutorFactory().create(this.mockJob());
     }
 
     Job mockJob() {
