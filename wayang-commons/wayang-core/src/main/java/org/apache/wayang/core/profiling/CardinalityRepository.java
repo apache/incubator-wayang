@@ -19,8 +19,6 @@
 package org.apache.wayang.core.profiling;
 
 import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -41,6 +39,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import org.apache.wayang.core.util.json.JSONArray;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * Stores cardinalities that have been collected by the {@link CrossPlatformExecutor}. Current version uses

@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.platform;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.EstimationContext;
 import org.apache.wayang.core.optimizer.costs.LoadProfile;
@@ -29,6 +28,7 @@ import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Collection;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * This class groups {@link AtomicExecution}s with a common {@link EstimationContext} and {@link Platform}.

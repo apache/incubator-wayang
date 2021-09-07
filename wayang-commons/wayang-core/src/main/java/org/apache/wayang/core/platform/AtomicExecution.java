@@ -19,8 +19,6 @@
 package org.apache.wayang.core.platform;
 
 import org.apache.commons.lang3.SerializationException;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.ConstantLoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.EstimationContext;
@@ -29,6 +27,8 @@ import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
+import org.apache.wayang.core.util.json.JSONArray;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * An atomic execution describes the smallest work unit considered by Wayang's cost model.

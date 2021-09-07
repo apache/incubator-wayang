@@ -19,7 +19,8 @@
 package org.apache.wayang.core.util;
 
 import org.apache.commons.lang3.SerializationException;
-import org.json.JSONObject;
+import org.apache.wayang.core.util.json.JSONObject;
+
 
 /**
  * Alternative to {@link JsonSerializable}: Externalizes serialization logic.

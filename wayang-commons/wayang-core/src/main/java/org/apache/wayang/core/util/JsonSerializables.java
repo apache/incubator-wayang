@@ -19,12 +19,13 @@
 package org.apache.wayang.core.util;
 
 import org.apache.commons.lang3.SerializationException;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.apache.wayang.core.util.json.JSONArray;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * Utility to deal with {@link JsonSerializable}s.

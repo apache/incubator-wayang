@@ -37,6 +37,7 @@
     <properties>
         <java-module-name>org.apache.wayang.platform.spark</java-module-name>
         <spark.version>3.1.2</spark.version>
+        <scala.mayor.version>2.12</scala.mayor.version>
     </properties>
 
 
