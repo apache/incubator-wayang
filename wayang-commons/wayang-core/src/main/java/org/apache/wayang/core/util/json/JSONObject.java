@@ -33,6 +33,16 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import org.apache.wayang.core.api.exception.WayangException;
 
+/**
+ * JSONObject is the wrapper for the {@link ObjectNode} to enable the
+ * similar functionality as the http://javadox.com/org.json/json/20151123/org/json/JSONObject.html
+ *
+ * TODO: require implement the rest of the functionalities follow the link below
+ * https://github.com/stleary/JSON-java/blob/master/src/main/java/org/json/JSONObject.java
+ *
+ * TODO: the java doc is not done because is missing implementation and it performed some
+ *       modification on the code
+ */
 public class JSONObject {
   public static final NullNode NULL = NullNode.getInstance();
 

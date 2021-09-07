@@ -34,6 +34,16 @@ import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 import org.apache.wayang.core.api.exception.WayangException;
 
+/**
+ * JSONArray is the wrapper for the {@link ArrayNode} to enable the
+ * similar functionality as the http://javadox.com/org.json/json/20151123/org/json/JSONArray.html
+ *
+ * TODO: require implement the rest of the functionalities follow the link below
+ * https://github.com/stleary/JSON-java/blob/master/src/main/java/org/json/JSONArray.java
+ *
+ * TODO: the java doc is not done because is missing implementation and it performed some
+ *       modification on the code
+ */
 public class JSONArray implements Iterable<Object>{
 
   private ArrayNode node;
