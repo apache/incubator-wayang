@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.platform;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
@@ -34,6 +33,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * Captures data of a execution of a set of {@link ExecutionOperator}s.

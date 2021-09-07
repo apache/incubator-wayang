@@ -161,13 +161,11 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
-            <!-- Miscellaneous -->
             <dependency>
-                <groupId>org.json</groupId>
-                <artifactId>json</artifactId>
-                <version>20160212</version>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
             </dependency>
+            <!-- Miscellaneous -->
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>

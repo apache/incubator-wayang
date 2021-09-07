@@ -36,6 +36,7 @@
         <java-module-name>org.apache.wayang.test.integration</java-module-name>
         <graphchi.version>0.2.2</graphchi.version>
         <spark.version>3.1.2</spark.version>
+        <scala.mayor.version>2.12</scala.mayor.version>
         <flink.version>1.7.1</flink.version>
         <giraph.version>1.2.0-hadoop2</giraph.version>
     </properties>

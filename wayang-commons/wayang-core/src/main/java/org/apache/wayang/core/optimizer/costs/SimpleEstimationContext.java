@@ -19,13 +19,13 @@
 package org.apache.wayang.core.optimizer.costs;
 
 import java.util.HashMap;
-import org.json.JSONObject;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Collection;
 import java.util.List;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * This {@link EstimationContext} implementation just stores all required variables without any further logic.

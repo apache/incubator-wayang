@@ -19,7 +19,6 @@
 package org.apache.wayang.core.profiling;
 
 import org.apache.commons.io.IOUtils;
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.platform.CrossPlatformExecutor;
@@ -40,6 +39,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * Stores execution data have been collected by the {@link CrossPlatformExecutor}.

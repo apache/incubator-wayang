@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.util.JsonSerializable;
@@ -26,6 +25,7 @@ import org.apache.wayang.core.util.JsonSerializables;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * Reflects the (estimated) required resources of an {@link Operator} or {@link FunctionDescriptor}.
