@@ -34,8 +34,6 @@
 
     <properties>
         <java-module-name>org.apache.wayang.profiler</java-module-name>
-        <spark.version>3.1.2</spark.version>
-        <scala.mayor.version>2.12</scala.mayor.version>
     </properties>
 
     <dependencyManagement>
@@ -99,7 +97,7 @@
                 </dependency>
                 <dependency>
                     <groupId>org.graphchi</groupId>
-                    <artifactId>graphchi-java_${scala.mayor.version}</artifactId>
+                    <artifactId>graphchi-java_2.11</artifactId>
                     <version>0.2.2</version>
                     <scope>test</scope>
                     <exclusions>
