@@ -1092,7 +1092,7 @@
                 <configuration>
                     <licenseMerges>
                         <licenseMerge>ASF 2.0 | The Apache Software License, Version 2.0 | Apache License, Version 2.0 | Apache 2.0 License | Apache License Version 2.0 | Apache 2.0 | Apache-2.0 | The Apache License, Version 2.0 | Apache License Version 2 | Apache 2 | http://www.apache.org/licenses/LICENSE-2.0.txt | Apache License 2.0 | Apache Software License - Version 2.0</licenseMerge>
-                        <licenseMerge>BSD 3-claus | 3-Clause BSD License | BSD 3 Clause License | BSD 3 Clause | BSD 3-Clause "New" or "Revised" License (BSD-3-Clause) | BSD licence | BSD | New BSD License | Revised BSD | The BSD 3-Clause License | The BSD License | The New BSD License | New BSD license | BSD 3-clause</licenseMerge>
+                        <licenseMerge>BSD 3-claus | 3-Clause BSD License | BSD 3 Clause License | BSD 3 Clause | BSD 3-Clause "New" or "Revised" License (BSD-3-Clause) | BSD licence | BSD | New BSD License | Revised BSD | The BSD 3-Clause License | The BSD License | The New BSD License | New BSD license | BSD 3-clause | BSD 3-Clause </licenseMerge>
                         <licenseMerge>MIT | MIT License | The MIT License </licenseMerge>
                         <licenseMerge>BSD 2-claus | BSD 2-Clause License | BSD 2-Clause</licenseMerge>
                         <licenseMerge>HSQLDB | HSQLDB License, a BSD open source license</licenseMerge>
