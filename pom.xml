@@ -1103,7 +1103,7 @@
                     </includedLicenses>
                     <failOnBlacklist>true</failOnBlacklist>
                     <excludedGroups>
-                        org.apache.spark.*|org.apache.hadoop.*|org.apache.giraph.*|org.antlr.*|junit.*
+                        org.apache.spark.*|org.apache.hadoop.*|org.apache.giraph.*|org.antlr.*|junit.*|org.graphchi.*
                     </excludedGroups>
                     <excludeTransitiveDependencies>true</excludeTransitiveDependencies>
                 </configuration>
