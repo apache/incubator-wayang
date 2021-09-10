@@ -21,7 +21,7 @@ package org.apache.wayang.apps.simwords
 import org.apache.wayang.core.function.ExecutionContext
 import org.apache.wayang.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.apache.wayang.core.util.WayangCollections
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
 
 import scala.collection.JavaConversions._
 import scala.util.Random
@@ -33,7 +33,7 @@ import scala.util.Random
 class SelectNearestCentroidFunction(broadcastName: String)
   extends ExtendedSerializableFunction[(Int, SparseVector), (Int, SparseVector, Int)] {
 
-  private lazy val logger = LoggerFactory.getLogger(getClass)
+  private lazy val logger = LogManager.getLogger(getClass)
 
   private var centroids: java.util.List[(Int, SparseVector)] = _
 
