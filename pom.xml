@@ -113,8 +113,6 @@
         <hadoop.version>2.7.7</hadoop.version>
         <!-- To be overridden by individual modules -->
         <java-module-name>org.apache.wayang.default</java-module-name>
-        <scala.version>2.11.12</scala.version>
-        <scala.mayor.version>2.11</scala.mayor.version>
         <code.coverage.project.folder>${basedir}/</code.coverage.project.folder>
         <code.coverage.overall.data.folder>${basedir}/target/aggregate.exec</code.coverage.overall.data.folder>
     </properties>
@@ -579,6 +577,7 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.mayor.version>2.11</scala.mayor.version>
+                <spark.version>2.4.8</spark.version>
             </properties>
         </profile>
 
@@ -587,6 +586,7 @@
             <properties>
                 <scala.version>2.12.12</scala.version>
                 <scala.mayor.version>2.12</scala.mayor.version>
+                <spark.version>3.1.2</spark.version>
             </properties>
         </profile>
 
@@ -595,6 +595,7 @@
             <properties>
                 <scala.version>2.13.3</scala.version>
                 <scala.mayor.version>2.13</scala.mayor.version>
+                <spark.version>3.1.2</spark.version>
             </properties>
         </profile>
 
@@ -1091,7 +1092,7 @@
                 <configuration>
                     <licenseMerges>
                         <licenseMerge>ASF 2.0 | The Apache Software License, Version 2.0 | Apache License, Version 2.0 | Apache 2.0 License | Apache License Version 2.0 | Apache 2.0 | Apache-2.0 | The Apache License, Version 2.0 | Apache License Version 2 | Apache 2 | http://www.apache.org/licenses/LICENSE-2.0.txt | Apache License 2.0 | Apache Software License - Version 2.0</licenseMerge>
-                        <licenseMerge>BSD 3-claus | 3-Clause BSD License | BSD 3 Clause License | BSD 3 Clause | BSD 3-Clause "New" or "Revised" License (BSD-3-Clause) | BSD licence | BSD | New BSD License | Revised BSD | The BSD 3-Clause License | The BSD License | The New BSD License | New BSD license | BSD 3-clause</licenseMerge>
+                        <licenseMerge>BSD 3-claus | 3-Clause BSD License | BSD 3 Clause License | BSD 3 Clause | BSD 3-Clause "New" or "Revised" License (BSD-3-Clause) | BSD licence | BSD | New BSD License | Revised BSD | The BSD 3-Clause License | The BSD License | The New BSD License | New BSD license | BSD 3-clause | BSD 3-Clause </licenseMerge>
                         <licenseMerge>MIT | MIT License | The MIT License </licenseMerge>
                         <licenseMerge>BSD 2-claus | BSD 2-Clause License | BSD 2-Clause</licenseMerge>
                         <licenseMerge>HSQLDB | HSQLDB License, a BSD open source license</licenseMerge>
@@ -1102,7 +1103,7 @@
                     </includedLicenses>
                     <failOnBlacklist>true</failOnBlacklist>
                     <excludedGroups>
-                        org.apache.spark.*|org.apache.hadoop.*|org.apache.giraph.*|org.antlr.*|junit.*
+                        org.apache.spark.*|org.apache.hadoop.*|org.apache.giraph.*|org.antlr.*|junit.*|org.graphchi.*
                     </excludedGroups>
                     <excludeTransitiveDependencies>true</excludeTransitiveDependencies>
                 </configuration>

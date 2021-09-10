@@ -28,10 +28,10 @@ notification:
     on_success: never
     on_failure: never
     on_start: false
-#cache:
-#  directories:
-#    - .autoconf
-#    - $HOME/.m2
+cache:
+  directories:
+    - .autoconf
+    - $HOME/.m2
 
 before_install:
   - echo "${GENERATE_DOCS}"
@@ -86,7 +86,8 @@ before_script:
 #  - chmod +x ./docs/script/cibuild
 script:
   #- jdk_switcher use openjdk8
-  - bin/change-scala-version.sh 2.12.12 && mvn clean install -Pdistro,scala-12 "${mvn_opts[@]}" &> result.log
+  - bin/change-scala-version.sh 2.11.12 && mvn clean install -Pdistro,scala-11 "${mvn_opts[@]}" &> result.log
+  - bin/change-scala-version.sh 2.12.12 && mvn clean install -Pdistro,scala-12 "${mvn_opts[@]}" &>> result.log
   - cat /home/travis/build/apache/incubator-wayang/target/rat.txt || echo "file doesn't exist"
   - tail -n 2000 result.log
 
