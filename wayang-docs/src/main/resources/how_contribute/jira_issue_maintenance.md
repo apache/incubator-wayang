@@ -48,9 +48,19 @@ When resolving [Issue](https://issues.apache.org/jira/projects/WAYANG/issues), o
 
 ## Types of Label of the Issues
 
-TODO: complete this part
-* Bug:
-* Feature Request:
-* Suggestion: 
 
+* Change : Requesting a change in the current IT profile.
 
+* IT help: Requesting help for an IT related problem.
+
+* Incident: Reporting an incident or IT service outage.
+
+* New feature: Requesting new capability or software feature.
+
+* Problem: Investigating and reporting the root cause of multiple incidents.
+
+* Service request: Requesting help from an internal or customer service team.
+
+* Service request with approval: Requesting help that requires a manager or board approval.
+
+* Support: Requesting help for customer support issues. 
