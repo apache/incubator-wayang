@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobmanager
+spec:
+  selector:
+    matchLabels:
+      app: flink
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: master
+    spec:
+      volumes:
+        - name: task-pv-storage
+          persistentVolumeClaim:
+            claimName: task-pv-claim
+      containers:
+        - name: master
+          image: flink:1.13.0-scala_2.11-java8
+          workingDir: /opt/flink
+          args:
+            - jobmanager
+          ports:
+            - containerPort: 6123
+              name: rpc
+            - containerPort: 6124
+              name: blob
+            - containerPort: 6125
+              name: query
+            - containerPort: 6126
+              name: ui
+          env:
+            - name: JOB_MANAGER_RPC_ADDRESS
+              value: jobmanager
+          volumeMounts:
+            - mountPath: "/mnt/example"
+              name: task-pv-storage
