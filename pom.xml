@@ -66,7 +66,7 @@
         <connection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</developerConnection>
         <url>https://github.com/apache/incubator-wayang</url>
-        <tag>0.6.0</tag>
+        <tag>rel/0.6.0</tag>
     </scm>
 
     <issueManagement>
