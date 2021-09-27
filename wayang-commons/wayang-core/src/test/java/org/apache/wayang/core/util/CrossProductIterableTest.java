@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link CrossProductIterable}.

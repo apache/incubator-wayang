@@ -18,6 +18,12 @@
 
 package org.apache.wayang.profiler.java;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.function.Supplier;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.FlatMapDescriptor;
 import org.apache.wayang.core.function.FunctionDescriptor;
@@ -40,13 +46,6 @@ import org.apache.wayang.java.operators.JavaReduceByOperator;
 import org.apache.wayang.java.operators.JavaSortOperator;
 import org.apache.wayang.java.operators.JavaUnionAllOperator;
 import org.apache.wayang.profiler.data.DataGenerators;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.function.Supplier;
 
 /**
  * Utilities to create {@link OperatorProfiler} instances.

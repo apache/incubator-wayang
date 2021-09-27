@@ -18,6 +18,9 @@
 
 package org.apache.wayang.spark.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
@@ -34,10 +37,6 @@ import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file. Consistent with Spark's object files.

@@ -18,6 +18,9 @@
 
 package org.apache.wayang.java.channels;
 
+import java.util.Collection;
+import java.util.OptionalLong;
+import java.util.stream.Stream;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.Channel;
@@ -26,10 +29,6 @@ import org.apache.wayang.core.platform.AbstractChannelInstance;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
-
-import java.util.Collection;
-import java.util.OptionalLong;
-import java.util.stream.Stream;
 
 /**
  * {@link Channel} between two {@link JavaExecutionOperator}s using a {@link Stream}.

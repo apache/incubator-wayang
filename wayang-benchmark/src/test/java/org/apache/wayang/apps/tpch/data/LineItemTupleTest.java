@@ -18,11 +18,10 @@
 
 package org.apache.wayang.apps.tpch.data;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suited for {@link LineItemTuple}.

@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.api.configuration;
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.exception.WayangException;
+import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.Optional;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
 
 /**
  * Used by {@link Configuration}s to provide some value.

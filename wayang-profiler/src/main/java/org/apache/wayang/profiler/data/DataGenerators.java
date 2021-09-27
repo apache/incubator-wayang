@@ -18,12 +18,11 @@
 
 package org.apache.wayang.profiler.data;
 
-import org.apache.commons.lang3.Validate;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
+import org.apache.commons.lang3.Validate;
 
 /**
  * Utility to create common data generators.

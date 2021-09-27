@@ -18,6 +18,10 @@
 
 package org.apache.wayang.spark.operators;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.operators.TextFileSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -29,11 +33,6 @@ import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Provides a {@link Collection} to a Spark job.

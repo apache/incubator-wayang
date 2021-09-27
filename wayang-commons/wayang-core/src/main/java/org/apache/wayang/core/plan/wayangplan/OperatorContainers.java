@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.commons.lang3.Validate;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.Validate;
 
 /**
  * Utilities to deal with {@link OperatorContainer}s.

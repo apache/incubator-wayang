@@ -18,14 +18,6 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
-import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
-import org.apache.wayang.core.platform.Platform;
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,6 +28,13 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.apache.wayang.core.platform.Platform;
 
 /**
  * An operator is any node that within a {@link WayangPlan}.

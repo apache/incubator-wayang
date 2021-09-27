@@ -583,6 +583,9 @@
 
         <profile>
             <id>scala-12</id>
+            <activation>
+                <jdk>11</jdk>
+            </activation>
             <properties>
                 <scala.version>2.12.12</scala.version>
                 <scala.mayor.version>2.12</scala.mayor.version>

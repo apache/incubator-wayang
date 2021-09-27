@@ -18,12 +18,11 @@
 
 package org.apache.wayang.commons.util.profiledb.measurement;
 
-import org.apache.wayang.commons.util.profiledb.model.Measurement;
-import org.apache.wayang.commons.util.profiledb.model.Type;
-
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
+import org.apache.wayang.commons.util.profiledb.model.Measurement;
+import org.apache.wayang.commons.util.profiledb.model.Type;
 
 /**
  * {@link Measurement} implementation for test purposes.

@@ -18,8 +18,19 @@
 
 package org.apache.wayang.apps.wordcount;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.operators.*;
+import org.apache.wayang.basic.operators.FilterOperator;
+import org.apache.wayang.basic.operators.FlatMapOperator;
+import org.apache.wayang.basic.operators.LocalCallbackSink;
+import org.apache.wayang.basic.operators.MapOperator;
+import org.apache.wayang.basic.operators.ReduceByOperator;
+import org.apache.wayang.basic.operators.TextFileSource;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.function.FlatMapDescriptor;
 import org.apache.wayang.core.function.ReduceDescriptor;
@@ -32,14 +43,6 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
-import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Example Apache Wayang App that does a word count -- the Hello World of Map/Reduce-like systems.

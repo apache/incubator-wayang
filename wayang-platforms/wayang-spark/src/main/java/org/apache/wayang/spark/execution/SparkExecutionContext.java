@@ -18,6 +18,10 @@
 
 package org.apache.wayang.spark.execution;
 
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.ExecutionContext;
@@ -26,11 +30,6 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.spark.channels.BroadcastChannel;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * {@link ExecutionContext} implementation for the {@link SparkPlatform}.

@@ -18,6 +18,7 @@
 
 package org.apache.wayang.jdbc.channels;
 
+import java.util.Objects;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
@@ -29,8 +30,6 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
-
-import java.util.Objects;
 
 /**
  * Implementation of a {@link Channel} that is given by a SQL query.

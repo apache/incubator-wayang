@@ -18,28 +18,6 @@
 
 package org.apache.wayang.profiler.log;
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.wayang.core.optimizer.costs.EstimationContext;
-import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
-import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.wayang.core.platform.AtomicExecution;
-import org.apache.wayang.core.platform.AtomicExecutionGroup;
-import org.apache.wayang.core.platform.PartialExecution;
-import org.apache.wayang.core.platform.Platform;
-import org.apache.wayang.core.profiling.ExecutionLog;
-import org.apache.wayang.core.util.Bitmask;
-import org.apache.wayang.core.util.Formats;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.java.Java;
-import org.apache.wayang.postgres.Postgres;
-import org.apache.wayang.spark.Spark;
-import org.apache.wayang.sqlite3.Sqlite3;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -56,6 +34,27 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.platform.AtomicExecution;
+import org.apache.wayang.core.platform.AtomicExecutionGroup;
+import org.apache.wayang.core.platform.PartialExecution;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.profiling.ExecutionLog;
+import org.apache.wayang.core.util.Bitmask;
+import org.apache.wayang.core.util.Formats;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.postgres.Postgres;
+import org.apache.wayang.spark.Spark;
+import org.apache.wayang.sqlite3.Sqlite3;
 
 /**
  * This app tries to infer good {@link LoadProfileEstimator}s for {@link ExecutionOperator}s using data from an

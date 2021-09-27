@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.platform.lineage;
 
-import org.apache.wayang.core.platform.ChannelInstance;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.logging.log4j.LogManager;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.util.Tuple;
 
 /**
  * A node wraps a {@link ChannelInstance} and keeps track of predecessor nodes.

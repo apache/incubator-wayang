@@ -18,10 +18,10 @@
 
 package org.apache.wayang.giraph.channels;
 
-import org.apache.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.wayang.giraph.platform.GiraphPlatform;
 import java.util.Collection;
 import java.util.Collections;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
 
 /**
  * {@link ChannelConversion}s for the {@link GiraphPlatform}.

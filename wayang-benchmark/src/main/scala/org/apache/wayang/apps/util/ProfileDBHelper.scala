@@ -20,9 +20,6 @@ package org.apache.wayang.apps.util
 
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.Configuration
-import org.apache.wayang.core.profiling.ProfileDBs
-
-import java.io.File
 
 /**
   * Helper utility to employ with [[ProfileDB]].

@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.function;
 
+import java.util.function.Function;
 import org.apache.wayang.core.optimizer.costs.LoadEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.apache.wayang.core.types.BasicDataUnitType;
-
-import java.util.function.Function;
 
 /**
  * This descriptor pertains to functions that consume a single data unit and output a single data unit.

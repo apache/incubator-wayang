@@ -18,7 +18,6 @@
 
 package org.apache.wayang.giraph.platform;
 
-import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.apache.wayang.core.optimizer.costs.LoadToTimeConverter;

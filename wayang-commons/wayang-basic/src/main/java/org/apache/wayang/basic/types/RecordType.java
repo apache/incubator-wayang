@@ -18,11 +18,10 @@
 
 package org.apache.wayang.basic.types;
 
-import org.apache.wayang.basic.data.Record;
-import org.apache.wayang.core.types.BasicDataUnitType;
-
 import java.util.Arrays;
 import java.util.Objects;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.core.types.BasicDataUnitType;
 
 /**
  * This is a specific {@link BasicDataUnitType} for {@link Record}s. In particular, it adds schema information.

@@ -18,11 +18,15 @@
 
 package org.apache.wayang.spark.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSink;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.UnarySink;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
@@ -31,28 +35,24 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.
  *
  * @see SparkObjectFileSource
  */
-public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecutionOperator {
+public class SparkObjectFileSink<T> extends ObjectFileSink<T> implements SparkExecutionOperator {
 
-    private final String targetPath;
+    public SparkObjectFileSink(ObjectFileSink<T> that) {
+        super(that);
+    }
 
     public SparkObjectFileSink(DataSetType<T> type) {
         this(null, type);
     }
 
     public SparkObjectFileSink(String targetPath, DataSetType<T> type) {
-        super(type);
-        this.targetPath = targetPath;
+        super(targetPath, type);
     }
 
     @Override
@@ -64,8 +64,14 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
         assert inputs.length == this.getNumInputs();
         assert outputs.length <= 1;
 
-        final FileChannel.Instance output = (FileChannel.Instance) outputs[0];
-        final String targetPath = output.addGivenOrTempPath(this.targetPath, sparkExecutor.getConfiguration());
+        final String targetPath;
+        if(outputs.length > 0) {
+            final FileChannel.Instance output = (FileChannel.Instance) outputs[0];
+            targetPath = output.addGivenOrTempPath(this.textFileUrl, sparkExecutor.getConfiguration());
+        }else{
+            targetPath = this.textFileUrl;
+        }
+
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
 
         input.provideRdd()
@@ -78,7 +84,7 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkObjectFileSink<>(targetPath, this.getType());
+        return new SparkObjectFileSink<>(this.textFileUrl, this.getType());
     }
 
     @Override

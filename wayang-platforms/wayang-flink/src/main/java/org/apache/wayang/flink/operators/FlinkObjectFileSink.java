@@ -18,13 +18,16 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.flink.api.java.operators.DataSink;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSink;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.UnarySink;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
@@ -35,27 +38,23 @@ import org.apache.wayang.flink.compiler.WayangFileOutputFormat;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.flink.platform.FlinkPlatform;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * {@link Operator} for the {@link FlinkPlatform} that creates a sequence file.
  *
  * @see FlinkObjectFileSink
  */
-public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkExecutionOperator {
+public class FlinkObjectFileSink<Type> extends ObjectFileSink<Type> implements FlinkExecutionOperator {
 
-    private final String targetPath;
-
+    public FlinkObjectFileSink(ObjectFileSink<Type> that) {
+        super(that);
+    }
 
     public FlinkObjectFileSink(DataSetType<Type> type) {
         this(null, type);
     }
 
     public FlinkObjectFileSink(String targetPath, DataSetType<Type> type) {
-        super(type);
-        this.targetPath = targetPath;
+        super(targetPath, type);
     }
 
     @Override
@@ -68,10 +67,16 @@ public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkE
 
         assert inputs.length == this.getNumInputs();
         assert outputs.length <= 1;
+        final FileChannel.Instance output;
+        final String targetPath;
+        if(outputs.length == 1) {
+            output = (FileChannel.Instance) outputs[0];
+            targetPath = output.addGivenOrTempPath(this.textFileUrl, flinkExecutor.getConfiguration());
+        }else{
+            targetPath = this.textFileUrl;
+        }
 
-        final FileChannel.Instance output = (FileChannel.Instance) outputs[0];
-        final String targetPath = output.addGivenOrTempPath(this.targetPath, flinkExecutor.getConfiguration());
-
+        //TODO: remove the set parallelism 1
         DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSink<Type> tDataSink = input.<Type>provideDataSet()
                 .write(new WayangFileOutputFormat<Type>(targetPath), targetPath, FileSystem.WriteMode.OVERWRITE)
@@ -83,7 +88,7 @@ public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkE
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new FlinkObjectFileSink<>(targetPath, this.getType());
+        return new FlinkObjectFileSink<>(this.textFileUrl, this.getType());
     }
 
     @Override

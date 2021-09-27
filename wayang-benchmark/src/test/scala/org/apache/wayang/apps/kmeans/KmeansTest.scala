@@ -19,11 +19,11 @@
 package org.apache.wayang.apps.kmeans
 
 import org.apache.wayang.commons.util.profiledb.model.{Experiment, Subject}
-import org.junit.Assert._
-import org.junit.Test
 import org.apache.wayang.core.api.Configuration
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
+import org.junit.Assert._
+import org.junit.Test
 
 /**
   * Test suite for [[Kmeans]].

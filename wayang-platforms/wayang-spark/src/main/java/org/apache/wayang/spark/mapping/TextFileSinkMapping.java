@@ -18,6 +18,8 @@
 
 package org.apache.wayang.spark.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.CollectionSource;
 import org.apache.wayang.basic.operators.TextFileSink;
 import org.apache.wayang.core.mapping.Mapping;
@@ -29,9 +31,6 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.operators.SparkCollectionSource;
 import org.apache.wayang.spark.operators.SparkTextFileSink;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link CollectionSource} to {@link SparkCollectionSource}.

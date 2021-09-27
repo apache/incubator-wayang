@@ -18,6 +18,7 @@
 
 package org.apache.wayang.flink.channels;
 
+import java.util.OptionalLong;
 import org.apache.flink.api.java.DataSet;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.Channel;
@@ -27,8 +28,6 @@ import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.flink.execution.FlinkExecutor;
-
-import java.util.OptionalLong;
 
 /**
  * Describes the situation where one {@link DataSet} is operated on, producing a further {@link DataSet}.

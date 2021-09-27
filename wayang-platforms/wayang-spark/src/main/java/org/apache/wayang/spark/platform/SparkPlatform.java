@@ -18,6 +18,10 @@
 
 package org.apache.wayang.spark.platform;
 
+import java.util.Collections;
+import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.wayang.basic.plugin.WayangBasic;
@@ -37,11 +41,6 @@ import org.apache.wayang.spark.execution.SparkContextReference;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkCollectionSource;
 import org.apache.wayang.spark.operators.SparkLocalCallbackSink;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * {@link Platform} for Apache Spark.

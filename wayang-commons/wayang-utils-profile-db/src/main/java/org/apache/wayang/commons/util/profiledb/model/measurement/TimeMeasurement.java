@@ -18,11 +18,10 @@
 
 package org.apache.wayang.commons.util.profiledb.model.measurement;
 
-import org.apache.wayang.commons.util.profiledb.model.Measurement;
-import org.apache.wayang.commons.util.profiledb.model.Type;
-
 import java.util.Collection;
 import java.util.LinkedList;
+import org.apache.wayang.commons.util.profiledb.model.Measurement;
+import org.apache.wayang.commons.util.profiledb.model.Type;
 
 /**
  * A {@link Measurement} that captures a certain amount of time in milliseconds. Instances can be nested within

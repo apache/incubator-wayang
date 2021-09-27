@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.util.mathex.model;
 
-import org.apache.wayang.core.util.mathex.Context;
-import org.apache.wayang.core.util.mathex.Expression;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import org.apache.wayang.core.util.mathex.Context;
+import org.apache.wayang.core.util.mathex.Expression;
 
 /**
  * {@link Expression} implementation that represents a function with a static implementation.

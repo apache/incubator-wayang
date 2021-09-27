@@ -18,9 +18,9 @@
 
 package org.apache.wayang.core.mapping;
 
+import org.apache.wayang.core.test.DummyExecutionOperator;
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.wayang.core.test.DummyExecutionOperator;
 
 /**
  * Tests for {@link OperatorPattern}.

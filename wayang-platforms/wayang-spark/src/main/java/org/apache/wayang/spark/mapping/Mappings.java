@@ -18,11 +18,10 @@
 
 package org.apache.wayang.spark.mapping;
 
-import org.apache.wayang.core.mapping.Mapping;
-import org.apache.wayang.spark.mapping.graph.PageRankMapping;
-
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.spark.mapping.graph.PageRankMapping;
 
 /**
  * Register for {@link Mapping}s for this platform.
@@ -32,6 +31,8 @@ public class Mappings {
     public static Collection<Mapping> BASIC_MAPPINGS = Arrays.asList(
             new TextFileSourceMapping(),
             new TextFileSinkMapping(),
+            new ObjectFileSinkMapping(),
+            new ObjectFileSourceMapping(),
             new MapMapping(),
             new MapPartitionsMapping(),
             new ReduceByMapping(),

@@ -18,11 +18,10 @@
 
 package org.apache.wayang.apps.kmeans.postgres
 
-import org.apache.wayang.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper}
-
 import java.util
+
 import org.apache.wayang.api.{PlanBuilder, _}
-import org.apache.wayang.apps.util.ProfileDBHelper
+import org.apache.wayang.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.function.ExecutionContext

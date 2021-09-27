@@ -18,10 +18,9 @@
 
 package org.apache.wayang.flink.mapping;
 
-import org.apache.wayang.core.mapping.Mapping;
-
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.wayang.core.mapping.Mapping;
 
 /**
  * Register for {@link Mapping}s for this platform.
@@ -53,7 +52,9 @@ public class Mappings {
             new SampleMapping(),
             new SortMapping(),
             new TextFileSinkMapping(),
+            new ObjectFileSinkMapping(),
             new TextFileSourceMapping(),
+            new ObjectFileSourceMapping(),
             new UnionAllMapping(),
             new ZipWithIdMapping()
     );

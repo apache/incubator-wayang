@@ -21,14 +21,17 @@ package org.apache.wayang.apps.tpch;
 import org.apache.wayang.apps.tpch.data.LineItemTuple;
 import org.apache.wayang.apps.tpch.data.q1.GroupKey;
 import org.apache.wayang.apps.tpch.data.q1.ReturnTuple;
-import org.apache.wayang.basic.operators.*;
+import org.apache.wayang.basic.operators.FilterOperator;
+import org.apache.wayang.basic.operators.LocalCallbackSink;
+import org.apache.wayang.basic.operators.MapOperator;
+import org.apache.wayang.basic.operators.ReduceByOperator;
+import org.apache.wayang.basic.operators.TextFileSource;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
-import org.apache.wayang.spark.platform.SparkPlatform;
 
 /**
  * Main class for the TPC-H app based on Apache Wayang.

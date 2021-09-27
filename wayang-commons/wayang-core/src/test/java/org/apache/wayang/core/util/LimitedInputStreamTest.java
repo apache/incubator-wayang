@@ -18,11 +18,10 @@
 
 package org.apache.wayang.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for the {@link LimitedInputStream}.

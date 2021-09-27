@@ -18,21 +18,20 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.function.ProjectionDescriptor;
-import org.apache.wayang.core.platform.ChannelInstance;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.types.DataUnitType;
-import org.apache.wayang.spark.channels.RddChannel;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.function.ProjectionDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.types.DataUnitType;
+import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link SparkMaterializedGroupByOperator}.

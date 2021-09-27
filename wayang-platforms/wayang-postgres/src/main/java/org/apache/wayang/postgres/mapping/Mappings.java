@@ -18,10 +18,9 @@
 
 package org.apache.wayang.postgres.mapping;
 
-import org.apache.wayang.core.mapping.Mapping;
-
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.wayang.core.mapping.Mapping;
 
 /**
  * Register for the {@link Mapping}s supported for this platform.

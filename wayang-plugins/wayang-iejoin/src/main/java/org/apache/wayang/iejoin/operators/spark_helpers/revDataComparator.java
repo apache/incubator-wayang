@@ -19,10 +19,9 @@
 package org.apache.wayang.iejoin.operators.spark_helpers;
 
 
-import org.apache.wayang.iejoin.data.Data;
-
 import java.io.Serializable;
 import java.util.Comparator;
+import org.apache.wayang.iejoin.data.Data;
 
 public class revDataComparator implements Serializable, Comparator<Data> {
 

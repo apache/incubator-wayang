@@ -18,6 +18,9 @@
 
 package org.apache.wayang.spark.mapping.graph;
 
+import java.lang.reflect.Constructor;
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.PageRankOperator;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.mapping.Mapping;
@@ -27,10 +30,6 @@ import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
 import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.lang.reflect.Constructor;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link PageRankOperator} to org.apache.wayang.spark.operators.graph.SparkPageRankOperator .

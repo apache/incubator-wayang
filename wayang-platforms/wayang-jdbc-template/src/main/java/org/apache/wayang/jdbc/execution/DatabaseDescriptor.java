@@ -18,10 +18,9 @@
 
 package org.apache.wayang.jdbc.execution;
 
-import org.apache.wayang.core.api.exception.WayangException;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
+import org.apache.wayang.core.api.exception.WayangException;
 
 /**
  * This class describes a database.

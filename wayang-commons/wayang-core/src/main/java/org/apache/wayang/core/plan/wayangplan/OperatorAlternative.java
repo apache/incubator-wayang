@@ -18,12 +18,6 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
-import org.apache.wayang.core.optimizer.cardinality.OperatorAlternativeCardinalityPusher;
-import org.apache.wayang.core.util.WayangCollections;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -31,6 +25,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.wayang.core.optimizer.cardinality.OperatorAlternativeCardinalityPusher;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * This operator encapsulates operators that are alternative to each other.

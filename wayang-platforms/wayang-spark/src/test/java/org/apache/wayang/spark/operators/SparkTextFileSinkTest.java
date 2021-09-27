@@ -18,15 +18,14 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Test;
-import org.apache.wayang.core.function.TransformationDescriptor;
-import org.apache.wayang.core.platform.ChannelInstance;
-import org.apache.wayang.spark.channels.RddChannel;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.Test;
 
 /**
  * Test suite for {@link SparkTextFileSink}.

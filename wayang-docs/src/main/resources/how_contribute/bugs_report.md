@@ -47,4 +47,9 @@ It is possible to propose new features as well. These are generally not helpful 
 
 ### Label meaning
 
-TODO: add the label meaning
+Description of error types:
+
+* Functional error: It is a Generic error type that requires further analysis. Happens whenever software does not behave as intended. For example, if the end user clicks the “Save” button, but their entered data isn’t saved, this is a functional error.
+* Logic error: The error represents a mistake in the software flow and causes the software to behave incorrectly. This type of error can cause the program to produce an incorrect output, or even hang or crash.
+* Calculation error: Anytime software returns an incorrect value. There may be used an incorrect algorithm or a data type mismatch during arithmetic operations.
+* Out of bounds error: End user interacts with the software in ways that were not expected. This often occurs when the user sets a parameter outside the limits of intended use.

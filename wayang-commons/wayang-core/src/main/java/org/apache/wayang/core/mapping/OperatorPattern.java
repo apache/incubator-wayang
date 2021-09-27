@@ -18,6 +18,9 @@
 
 package org.apache.wayang.core.mapping;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.function.Predicate;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
@@ -25,10 +28,6 @@ import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.Slot;
 import org.apache.wayang.core.plan.wayangplan.TopDownPlanVisitor;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.function.Predicate;
 
 /**
  * An operator pattern matches to a class of operator instances.

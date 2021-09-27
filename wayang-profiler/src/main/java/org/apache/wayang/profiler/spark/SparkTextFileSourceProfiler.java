@@ -18,16 +18,15 @@
 
 package org.apache.wayang.profiler.spark;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.function.Supplier;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.spark.operators.SparkTextFileSource;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.function.Supplier;
 
 /**
  * {@link SparkOperatorProfiler} for the {@link SparkTextFileSource}.

@@ -18,9 +18,8 @@
 
 package org.apache.wayang.core.optimizer.channels;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import java.util.Arrays;
+import java.util.function.Supplier;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -38,9 +37,9 @@ import org.apache.wayang.core.test.DummyNonReusableChannel;
 import org.apache.wayang.core.test.DummyReusableChannel;
 import org.apache.wayang.core.test.MockFactory;
 import org.apache.wayang.core.util.WayangCollections;
-
-import java.util.Arrays;
-import java.util.function.Supplier;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Test suite for {@link ChannelConversionGraph}.

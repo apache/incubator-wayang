@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-
 import java.util.Arrays;
 import java.util.function.ToLongBiFunction;
 import java.util.function.ToLongFunction;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
 
 /**
  * Default implementation of the {@link CardinalityEstimator}. Generalizes a single-point estimation function.

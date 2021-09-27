@@ -29,4 +29,26 @@ menus:
 
 # Pull Request
 
-TODO: add this
+The simplest way to submit code changes, is via a GitHub pull-request.
+
+In order to do this first create a GitHub account and sign into you account.
+
+After that’s done, please visit our GitHub site and create a so-called Fork.
+
+
+
+What happens now, is that GitHub creates a full copy of the Wayang repository in your account. Only you can commit to this.
+
+Now ideally you check-out your cloned repository:
+
+* git clone https://github.com/{your-user-id}/incubator-wayang.git
+
+Now you have a copy of Wayang on your computer and you can change whatever you want and as it’s your copy, you can even commit these changes without any danger of breaking things.
+
+As soon as you’re finished with your changes and want us to have a look, it’s time to create a so-called Pull-Request.
+
+You do that by going to your forked repository page on GitHub.
+
+Every forked repository has an additional button called "New Pull Request":
+
+If you click on it, we will receive a notification on your changes and can review them. We also can discuss your changes and have you perfect your pull request before we accept and merge it into Wayang.

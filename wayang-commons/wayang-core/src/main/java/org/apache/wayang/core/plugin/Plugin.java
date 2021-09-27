@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.plugin;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
 import org.apache.wayang.core.platform.Platform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * A plugin contributes the following components to a {@link WayangContext}:

@@ -18,6 +18,8 @@
 
 package org.apache.wayang.sqlite3.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.MapOperator;
@@ -28,9 +30,6 @@ import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
 import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.sqlite3.operators.Sqlite3ProjectionOperator;
 import org.apache.wayang.sqlite3.platform.Sqlite3Platform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link MapOperator} to {@link Sqlite3ProjectionOperator}.

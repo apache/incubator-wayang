@@ -24,7 +24,6 @@ import java.nio.file.{Files, Paths}
 import java.sql.{Connection, Statement}
 import java.util.function.Consumer
 
-import org.junit.{Assert, Test}
 import org.apache.wayang.basic.WayangBasics
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.function.FunctionDescriptor.ExtendedSerializablePredicate
@@ -35,6 +34,7 @@ import org.apache.wayang.java.operators.JavaMapOperator
 import org.apache.wayang.spark.Spark
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.sqlite3.operators.Sqlite3TableSource
+import org.junit.{Assert, Test}
 
 /**
   * Tests the Wayang API.

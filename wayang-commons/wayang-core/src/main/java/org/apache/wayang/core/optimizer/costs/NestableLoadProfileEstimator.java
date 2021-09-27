@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
-
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.function.Function;
 import java.util.function.ToDoubleBiFunction;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 
 /**
  * {@link LoadProfileEstimator} that can host further {@link LoadProfileEstimator}s.

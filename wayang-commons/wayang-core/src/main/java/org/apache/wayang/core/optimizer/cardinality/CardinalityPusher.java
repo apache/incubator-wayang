@@ -18,16 +18,15 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
+import java.util.Arrays;
+import java.util.Objects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.costs.TimeEstimate;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.util.WayangArrays;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * Pushes a input {@link CardinalityEstimate}s through an {@link Operator} and yields its output

@@ -18,12 +18,11 @@
 
 package org.apache.wayang.jdbc.test;
 
+import java.util.List;
 import org.apache.wayang.basic.operators.TableSource;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.jdbc.operators.JdbcFilterOperator;
 import org.apache.wayang.jdbc.operators.JdbcTableSource;
-
-import java.util.List;
 
 /**
  * Test implementation of {@link JdbcFilterOperator}.

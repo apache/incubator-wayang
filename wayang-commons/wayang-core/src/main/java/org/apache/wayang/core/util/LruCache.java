@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.util;
 
-import org.apache.commons.lang3.Validate;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.commons.lang3.Validate;
 
 /**
  * Key-value cache with "least recently used" eviction strategy.

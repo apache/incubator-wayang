@@ -18,6 +18,7 @@
 
 package org.apache.wayang.jdbc.platform;
 
+import java.sql.Connection;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.apache.wayang.core.optimizer.costs.LoadToTimeConverter;
@@ -29,8 +30,6 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.execution.DatabaseDescriptor;
 import org.apache.wayang.jdbc.execution.JdbcExecutor;
-
-import java.sql.Connection;
 
 /**
  * {@link Platform} implementation for a JDBC-accessible database.

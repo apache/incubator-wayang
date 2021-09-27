@@ -18,6 +18,9 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Collection;
+import java.util.Optional;
+import java.util.function.Consumer;
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.ConsumerDescriptor;
@@ -26,10 +29,6 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.plan.wayangplan.UnarySink;
 import org.apache.wayang.core.types.BasicDataUnitType;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Collection;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * This sink executes a callback on each received data unit into a Java {@link Collection}.

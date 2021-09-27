@@ -18,10 +18,9 @@
 
 package org.apache.wayang.commons.util.profiledb.measurement;
 
+import java.util.Objects;
 import org.apache.wayang.commons.util.profiledb.model.Measurement;
 import org.apache.wayang.commons.util.profiledb.model.Type;
-
-import java.util.Objects;
 
 /**
  * {@link Measurement} implementation for test purposes.

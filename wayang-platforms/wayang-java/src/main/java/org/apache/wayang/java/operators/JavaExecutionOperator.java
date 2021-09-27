@@ -18,6 +18,8 @@
 
 package org.apache.wayang.java.operators;
 
+import java.util.Collection;
+import java.util.stream.Stream;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -29,9 +31,6 @@ import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Collection;
-import java.util.stream.Stream;
 
 /**
  * Execution operator for the Java platform.

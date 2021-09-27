@@ -18,11 +18,10 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import org.apache.wayang.core.api.Configuration;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
+import org.apache.wayang.core.api.Configuration;
 
 /**
  * This {@link PlanEnumerationPruningStrategy} retains only the best {@code k} {@link PlanImplementation}s.

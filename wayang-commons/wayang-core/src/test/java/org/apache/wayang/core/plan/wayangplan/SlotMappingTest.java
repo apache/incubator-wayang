@@ -18,15 +18,14 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.core.plan.wayangplan.test.TestSink;
-import org.apache.wayang.core.plan.wayangplan.test.TestSource;
-import org.apache.wayang.core.types.DataSetType;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.apache.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.wayang.core.plan.wayangplan.test.TestSource;
+import org.apache.wayang.core.types.DataSetType;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link SlotMapping}.

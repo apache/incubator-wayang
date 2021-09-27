@@ -18,12 +18,11 @@
 
 package org.apache.wayang.basic.operators;
 
-import org.junit.Test;
+import java.util.stream.StreamSupport;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
-
-import java.util.stream.StreamSupport;
+import org.junit.Test;
 
 /**
  * Tests for the {@link MaterializedGroupByOperator}.

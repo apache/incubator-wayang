@@ -18,6 +18,11 @@
 
 package org.apache.wayang.core.optimizer;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.channels.ChannelConversionGraph;
 import org.apache.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
@@ -25,15 +30,9 @@ import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.Subplan;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.WayangArrays;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * This implementation of {@link OptimizationContext} represents a direct mapping from {@link OptimizationContext.OperatorContext}

@@ -18,30 +18,6 @@
 
 package org.apache.wayang.java.operators;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.Validate;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.wayang.basic.channels.FileChannel;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.UnarySource;
-import org.apache.wayang.core.platform.ChannelDescriptor;
-import org.apache.wayang.core.platform.ChannelInstance;
-import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.core.util.fs.FileSystems;
-import org.apache.wayang.java.channels.StreamChannel;
-import org.apache.wayang.java.execution.JavaExecutor;
-import org.apache.wayang.java.platform.JavaPlatform;
-import org.apache.logging.log4j.LogManager;
-
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -54,23 +30,46 @@ import java.util.List;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.logging.log4j.LogManager;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSource;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.fs.FileSystems;
+import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.java.platform.JavaPlatform;
 
 /**
  * {@link Operator} for the {@link JavaPlatform} that creates a sequence file. Consistent with Spark's object files.
  *
  * @see JavaObjectFileSink
  */
-public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecutionOperator {
+public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements JavaExecutionOperator {
 
-    private final String sourcePath;
-
-    public JavaObjectFileSource(DataSetType<T> type) {
-        this(null, type);
+    public JavaObjectFileSource(ObjectFileSource<T> that) {
+        super(that);
     }
 
+    public JavaObjectFileSource(DataSetType<T> type) {
+        super(null, type);
+    }
     public JavaObjectFileSource(String sourcePath, DataSetType<T> type) {
-        super(type);
-        this.sourcePath = sourcePath;
+        super(sourcePath, type);
     }
 
     @Override
@@ -83,12 +82,12 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
 
         SequenceFileIterator sequenceFileIterator;
         final String path;
-        if (this.sourcePath == null) {
+        if (this.getInputUrl() == null) {
             final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
             path = input.getSinglePath();
         } else {
             assert inputs.length == 0;
-            path = this.sourcePath;
+            path = this.getInputUrl();
         }
         try {
             final String actualInputPath = FileSystems.findActualSingleInputPath(path);
@@ -110,7 +109,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaObjectFileSource<>(this.sourcePath, this.getType());
+        return new JavaObjectFileSource<>(this.getInputUrl(), this.getType());
     }
 
     @Override

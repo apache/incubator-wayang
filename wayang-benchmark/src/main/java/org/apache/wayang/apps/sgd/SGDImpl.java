@@ -18,6 +18,9 @@
 
 package org.apache.wayang.apps.sgd;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.apache.wayang.api.DataQuantaBuilder;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Tuple2;
@@ -27,12 +30,8 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.function.ExecutionContext;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.plugin.Plugin;
-import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * This class executes a stochastic gradient descent optimization on Apache Wayang.

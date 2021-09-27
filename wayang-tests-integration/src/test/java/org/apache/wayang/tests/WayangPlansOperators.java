@@ -18,6 +18,10 @@
 
 package org.apache.wayang.tests;
 
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.CartesianOperator;
 import org.apache.wayang.basic.operators.CoGroupOperator;
@@ -40,11 +44,6 @@ import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangArrays;
-
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Provides plans that can be used for integration testing..

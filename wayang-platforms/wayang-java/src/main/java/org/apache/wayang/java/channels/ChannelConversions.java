@@ -18,6 +18,8 @@
 
 package org.apache.wayang.java.channels;
 
+import java.util.Arrays;
+import java.util.Collection;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -29,9 +31,6 @@ import org.apache.wayang.java.operators.JavaObjectFileSource;
 import org.apache.wayang.java.operators.JavaTsvFileSink;
 import org.apache.wayang.java.operators.JavaTsvFileSource;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * {@link ChannelConversion}s for the {@link JavaPlatform}.

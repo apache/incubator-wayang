@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link ReflectionUtils}.

@@ -19,16 +19,15 @@
 package org.apache.wayang.core.monitor;
 
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.util.fs.FileSystem;
-import org.apache.wayang.core.util.fs.FileSystems;
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.core.util.json.JSONObject;
 
 public class FileMonitor extends Monitor {

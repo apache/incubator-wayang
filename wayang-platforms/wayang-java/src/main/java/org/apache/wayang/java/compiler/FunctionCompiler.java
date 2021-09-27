@@ -18,16 +18,15 @@
 
 package org.apache.wayang.java.compiler;
 
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.FlatMapDescriptor;
 import org.apache.wayang.core.function.MapPartitionsDescriptor;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
-
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * A compiler translates Wayang functions into executable Java functions.

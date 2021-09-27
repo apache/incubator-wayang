@@ -18,7 +18,6 @@
 
 package org.apache.wayang.apps.simwords
 
-import java.lang.Iterable
 import java.util
 
 import org.apache.wayang.core.function.ExecutionContext
@@ -33,7 +32,7 @@ class ScrubFunction extends ExtendedSerializableFunction[String, java.lang.Itera
 
   override def open(ctx: ExecutionContext): Unit = {}
 
-  override def apply(line: String): Iterable[String] = {
+  override def apply(line: String): java.lang.Iterable[String] = {
     val result = new util.LinkedList[String]()
     textScrubber.splitAndScrub(line, result)
     result

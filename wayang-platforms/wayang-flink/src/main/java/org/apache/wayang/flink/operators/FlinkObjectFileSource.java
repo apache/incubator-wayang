@@ -18,6 +18,11 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
@@ -27,10 +32,10 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.UnarySource;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
@@ -40,29 +45,24 @@ import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.flink.platform.FlinkPlatform;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 
 /**
  * {@link Operator} for the {@link FlinkPlatform} that creates a sequence file.
  *
  * @see FlinkObjectFileSource
  */
-public class FlinkObjectFileSource<Type> extends UnarySource<Type> implements FlinkExecutionOperator {
+public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implements FlinkExecutionOperator {
 
-    private final String sourcePath;
+    public FlinkObjectFileSource(ObjectFileSource<Type> that) {
+        super(that);
+    }
 
     public FlinkObjectFileSource(DataSetType<Type> type) {
         this(null, type);
     }
 
     public FlinkObjectFileSource(String sourcePath, DataSetType<Type> type) {
-        super(type);
-        this.sourcePath = sourcePath;
+        super(sourcePath, type);
     }
 
     @Override
@@ -76,12 +76,12 @@ public class FlinkObjectFileSource<Type> extends UnarySource<Type> implements Fl
         assert outputs.length == this.getNumOutputs();
 
         final String path;
-        if (this.sourcePath == null) {
+        if (this.getInputUrl() == null) {
             final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
             path = input.getSinglePath();
         } else {
             assert inputs.length == 0;
-            path = this.sourcePath;
+            path = this.getInputUrl();
         }
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
         flinkExecutor.fee.setParallelism(flinkExecutor.getNumDefaultPartitions());
@@ -109,7 +109,7 @@ public class FlinkObjectFileSource<Type> extends UnarySource<Type> implements Fl
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new FlinkObjectFileSource<Type>(sourcePath, this.getType());
+        return new FlinkObjectFileSource<Type>(this.getInputUrl(), this.getType());
     }
 
     @Override

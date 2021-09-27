@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.platform;
 
+import java.util.Collection;
 import org.apache.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
 import org.apache.wayang.core.plan.executionplan.Channel;
-
-import java.util.Collection;
 
 /**
  * Contains a state of the execution of an {@link ExecutionTaskFlow}.

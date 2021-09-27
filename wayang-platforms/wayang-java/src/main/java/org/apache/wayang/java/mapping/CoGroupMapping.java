@@ -18,6 +18,8 @@
 
 package org.apache.wayang.java.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.CoGroupOperator;
 import org.apache.wayang.basic.operators.JoinOperator;
 import org.apache.wayang.core.mapping.Mapping;
@@ -29,9 +31,6 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.operators.JavaCoGroupOperator;
 import org.apache.wayang.java.operators.JavaJoinOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link JoinOperator} to {@link JavaJoinOperator}.

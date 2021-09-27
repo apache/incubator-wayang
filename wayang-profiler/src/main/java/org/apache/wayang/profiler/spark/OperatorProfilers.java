@@ -18,6 +18,9 @@
 
 package org.apache.wayang.profiler.spark;
 
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.function.Supplier;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.FlatMapDescriptor;
 import org.apache.wayang.core.function.FunctionDescriptor;
@@ -42,10 +45,6 @@ import org.apache.wayang.spark.operators.SparkReduceByOperator;
 import org.apache.wayang.spark.operators.SparkSortOperator;
 import org.apache.wayang.spark.operators.SparkTextFileSource;
 import org.apache.wayang.spark.operators.SparkUnionAllOperator;
-
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.function.Supplier;
 
 /**
  * Utilities to create {@link SparkOperatorProfiler} instances.

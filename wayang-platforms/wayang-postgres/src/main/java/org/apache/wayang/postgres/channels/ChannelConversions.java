@@ -18,14 +18,13 @@
 
 package org.apache.wayang.postgres.channels;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
 import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.jdbc.operators.SqlToStreamOperator;
 import org.apache.wayang.postgres.platform.PostgresPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Register for the {@link ChannelConversion}s supported for this platform.

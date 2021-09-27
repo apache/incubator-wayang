@@ -18,7 +18,14 @@
 
 package org.apache.wayang.profiler.log;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.function.ToDoubleFunction;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.platform.AtomicExecution;
@@ -28,14 +35,6 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.util.Bitmask;
 import org.apache.wayang.profiler.log.sampling.Sampler;
 import org.apache.wayang.profiler.log.sampling.TournamentSampler;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.function.ToDoubleFunction;
 
 /**
  * Implementation of the genetic optimization technique for finding good {@link LoadProfileEstimator}s.

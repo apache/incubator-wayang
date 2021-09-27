@@ -18,6 +18,11 @@
 
 package org.apache.wayang.spark.operators;
 
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Consumer;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -29,12 +34,6 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
-
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Implementation of the {@link LocalCallbackSink} operator for the Spark platform.

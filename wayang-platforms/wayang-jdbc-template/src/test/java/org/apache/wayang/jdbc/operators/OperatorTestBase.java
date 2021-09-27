@@ -18,7 +18,9 @@
 
 package org.apache.wayang.jdbc.operators;
 
-import org.junit.BeforeClass;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -31,9 +33,7 @@ import org.apache.wayang.core.profiling.FullInstrumentationStrategy;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.BeforeClass;
 
 /**
  * Test base for {@link JdbcExecutionOperator}s and other {@link ExecutionOperator}s in this module.

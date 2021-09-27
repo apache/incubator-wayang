@@ -18,11 +18,10 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.optimizer.OptimizationContext;
 
 /**
  * {@link CardinalityEstimator} implementation that can have multiple ways of calculating a {@link CardinalityEstimate}.

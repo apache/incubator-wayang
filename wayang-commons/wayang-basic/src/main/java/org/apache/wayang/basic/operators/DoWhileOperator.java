@@ -18,6 +18,10 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
@@ -30,11 +34,6 @@ import org.apache.wayang.core.plan.wayangplan.OperatorBase;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.ReflectionUtils;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
 
 /**
  * This operator has three inputs and two outputs.

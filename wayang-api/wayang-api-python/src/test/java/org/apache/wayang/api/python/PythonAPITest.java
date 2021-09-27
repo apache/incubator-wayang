@@ -18,8 +18,6 @@
 
 package org.apache.wayang.api.python;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class PythonAPITest {
 
 }

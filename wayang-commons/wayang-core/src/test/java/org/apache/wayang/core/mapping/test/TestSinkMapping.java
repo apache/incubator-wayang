@@ -18,6 +18,8 @@
 
 package org.apache.wayang.core.mapping.test;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
 import org.apache.wayang.core.mapping.PlanTransformation;
@@ -27,9 +29,6 @@ import org.apache.wayang.core.plan.wayangplan.test.TestSink;
 import org.apache.wayang.core.plan.wayangplan.test.TestSink2;
 import org.apache.wayang.core.test.DummyPlatform;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Dummy {@link Mapping} implementation from {@link TestSink} to {@link TestSink2}.

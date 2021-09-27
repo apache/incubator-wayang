@@ -18,9 +18,6 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.configuration.FunctionalKeyValueProvider;
@@ -38,6 +35,9 @@ import org.apache.wayang.core.plan.wayangplan.test.TestLoopHead;
 import org.apache.wayang.core.plan.wayangplan.test.TestSource;
 import org.apache.wayang.core.test.MockFactory;
 import org.apache.wayang.core.util.WayangCollections;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test suite for {@link LoopSubplanCardinalityPusher}.

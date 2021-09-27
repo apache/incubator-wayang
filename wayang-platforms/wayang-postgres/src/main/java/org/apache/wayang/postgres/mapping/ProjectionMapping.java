@@ -18,6 +18,8 @@
 
 package org.apache.wayang.postgres.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.MapOperator;
@@ -29,9 +31,6 @@ import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.postgres.operators.PostgresProjectionOperator;
 import org.apache.wayang.postgres.platform.PostgresPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * /**

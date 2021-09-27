@@ -18,12 +18,11 @@
 
 package org.apache.wayang.iejoin.operators.java_helpers;
 
+import java.util.ArrayList;
+import java.util.BitSet;
 import org.apache.wayang.iejoin.data.Data;
 import org.apache.wayang.iejoin.operators.IEJoinMasterOperator;
 import scala.Tuple2;
-
-import java.util.ArrayList;
-import java.util.BitSet;
 
 /**
  * Created by khayyzy on 5/28/16.

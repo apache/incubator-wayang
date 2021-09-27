@@ -18,6 +18,10 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
+import java.util.Collections;
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.OptimizationUtils;
@@ -30,11 +34,8 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.ExecutionState;
 import org.apache.wayang.core.platform.Junction;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;;
 
-import java.util.Collections;
-import java.util.Map;
+;
 
 /**
  * Handles the {@link CardinalityEstimate}s of a {@link WayangPlan}.

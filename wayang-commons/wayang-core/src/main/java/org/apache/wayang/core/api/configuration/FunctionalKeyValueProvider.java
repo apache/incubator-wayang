@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.api.configuration;
 
-import org.apache.wayang.core.api.Configuration;
-
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import org.apache.wayang.core.api.Configuration;
 
 /**
  * Implementation of {@link KeyValueProvider} that uses a {@link Function} to provide a value.

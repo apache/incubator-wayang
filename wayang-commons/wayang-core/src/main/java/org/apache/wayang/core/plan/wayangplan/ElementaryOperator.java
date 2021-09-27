@@ -18,11 +18,10 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
+import java.util.Optional;
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
-
-import java.util.Optional;
 
 /**
  * Indivisible {@link Operator} that is not containing other {@link Operator}s.

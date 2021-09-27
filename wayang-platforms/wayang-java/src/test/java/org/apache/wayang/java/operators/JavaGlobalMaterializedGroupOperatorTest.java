@@ -18,15 +18,14 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.java.channels.CollectionChannel;
-import org.apache.wayang.java.channels.JavaChannelInstance;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link JavaGlobalReduceOperator}.

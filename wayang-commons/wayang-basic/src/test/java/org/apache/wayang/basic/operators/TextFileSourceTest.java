@@ -19,19 +19,8 @@
 package org.apache.wayang.basic.operators;
 
 
-import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
-import org.apache.wayang.commons.util.profiledb.model.Experiment;
-import org.apache.wayang.commons.util.profiledb.model.Subject;
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.Job;
-import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -41,9 +30,18 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
+import org.apache.wayang.commons.util.profiledb.model.Experiment;
+import org.apache.wayang.commons.util.profiledb.model.Subject;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link TextFileSource}.

@@ -18,6 +18,8 @@
 
 package org.apache.wayang.core.mapping;
 
+import java.util.Map;
+import java.util.function.BiFunction;
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.plan.wayangplan.ActualOperator;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
@@ -26,9 +28,6 @@ import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.Subplan;
-
-import java.util.Map;
-import java.util.function.BiFunction;
 
 /**
  * This factory takes an {@link SubplanMatch} and derives a replacement {@link Subplan} from it.

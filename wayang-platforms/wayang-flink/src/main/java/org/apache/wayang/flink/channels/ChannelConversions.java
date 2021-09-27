@@ -18,6 +18,8 @@
 
 package org.apache.wayang.flink.channels;
 
+import java.util.Arrays;
+import java.util.Collection;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -30,9 +32,6 @@ import org.apache.wayang.flink.operators.FlinkObjectFileSource;
 import org.apache.wayang.flink.operators.FlinkTsvFileSink;
 import org.apache.wayang.flink.platform.FlinkPlatform;
 import org.apache.wayang.java.channels.CollectionChannel;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * {@link ChannelConversion}s used by the {@link FlinkPlatform}.

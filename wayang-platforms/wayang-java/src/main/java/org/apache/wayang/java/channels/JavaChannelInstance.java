@@ -18,10 +18,9 @@
 
 package org.apache.wayang.java.channels;
 
+import java.util.stream.Stream;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.platform.ChannelInstance;
-
-import java.util.stream.Stream;
 
 /**
  * Defines execution logic to handle a {@link Channel}.

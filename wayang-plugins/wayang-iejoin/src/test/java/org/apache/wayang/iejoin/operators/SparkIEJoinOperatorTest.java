@@ -18,8 +18,8 @@
 
 package org.apache.wayang.iejoin.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.function.TransformationDescriptor;
@@ -27,9 +27,8 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.spark.channels.RddChannel;
-
-import java.util.Arrays;
-import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link SparkIEJoinOperator}.

@@ -18,9 +18,8 @@
 
 package org.apache.wayang.core.types;
 
-import org.apache.wayang.core.util.ReflectionUtils;
-
 import java.util.Objects;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 /**
  * A grouped data unit type describes just the structure of data units within a grouped dataset.

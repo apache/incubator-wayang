@@ -18,12 +18,11 @@
 
 package org.apache.wayang.sqlite3.operators;
 
+import java.util.List;
 import org.apache.wayang.basic.operators.TableSource;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.jdbc.operators.JdbcTableSource;
 import org.apache.wayang.sqlite3.platform.Sqlite3Platform;
-
-import java.util.List;
 
 /**
  * Implementation of the {@link TableSource} for the {@link Sqlite3Platform}.

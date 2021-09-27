@@ -18,6 +18,12 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
@@ -33,13 +39,6 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.platform.lineage.LazyExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * An execution operator is handled by a certain platform.

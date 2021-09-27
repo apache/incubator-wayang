@@ -21,7 +21,7 @@ package org.apache.wayang.api
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api
 import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.{CollectionSource, TableSource, TextFileSource}
+import org.apache.wayang.basic.operators.{CollectionSource, ObjectFileSource, TableSource, TextFileSource}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
@@ -110,6 +110,15 @@ class PlanBuilder(wayangContext: WayangContext, private var jobName: String = nu
     * @return [[DataQuanta]] representing the file
     */
   def readTextFile(url: String): DataQuanta[String] = load(new TextFileSource(url))
+
+
+  /**
+   * Read a object's file and provide it as a dataset of [[Object]]s.
+   *
+   * @param url the URL of the Object's file
+   * @return [[DataQuanta]] representing the file
+   */
+  def readObjectFile[T: ClassTag](url: String): DataQuanta[T] = load(new ObjectFileSource(url, dataSetType[T]))
 
   /**
     * Reads a database table and provides them as a dataset of [[Record]]s.

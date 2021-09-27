@@ -18,15 +18,14 @@
 
 package org.apache.wayang.spark.compiler;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.wayang.core.function.FunctionDescriptor;
-import org.apache.wayang.core.util.Iterators;
-import org.apache.wayang.spark.execution.SparkExecutionContext;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.util.Iterators;
+import org.apache.wayang.spark.execution.SparkExecutionContext;
 
 /**
  * Wraps a {@link Function} as a {@link FlatMapFunction}.

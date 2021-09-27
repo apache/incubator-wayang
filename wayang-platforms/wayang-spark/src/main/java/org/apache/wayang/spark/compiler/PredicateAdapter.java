@@ -18,9 +18,8 @@
 
 package org.apache.wayang.spark.compiler;
 
-import org.apache.spark.api.java.function.Function;
-
 import java.util.function.Predicate;
+import org.apache.spark.api.java.function.Function;
 
 /**
  * Wraps a {@link Predicate} as a {@link Function}.

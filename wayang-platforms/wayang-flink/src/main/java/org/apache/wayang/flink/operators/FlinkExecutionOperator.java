@@ -18,6 +18,8 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.io.Serializable;
+import java.util.Collection;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelInstance;
@@ -25,9 +27,6 @@ import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-
-import java.io.Serializable;
-import java.util.Collection;
 
 /**
  * Execution operator for the Flink platform.

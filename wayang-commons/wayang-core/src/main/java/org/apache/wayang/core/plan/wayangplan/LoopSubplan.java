@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
 import org.apache.wayang.core.optimizer.cardinality.LoopSubplanCardinalityPusher;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Wraps a loop of {@link Operator}s.

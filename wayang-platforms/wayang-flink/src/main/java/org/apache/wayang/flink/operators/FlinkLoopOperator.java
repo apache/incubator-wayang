@@ -18,6 +18,9 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.flink.api.common.aggregators.ConvergenceCriterion;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.operators.IterativeDataSet;
@@ -35,10 +38,6 @@ import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.compiler.criterion.WayangAggregator;
 import org.apache.wayang.flink.compiler.criterion.WayangFilterCriterion;
 import org.apache.wayang.flink.execution.FlinkExecutor;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Flink implementation of the {@link RepeatOperator}.

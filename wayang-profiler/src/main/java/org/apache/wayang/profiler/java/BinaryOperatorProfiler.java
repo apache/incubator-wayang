@@ -18,13 +18,12 @@
 
 package org.apache.wayang.profiler.java;
 
-import org.apache.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.wayang.java.channels.JavaChannelInstance;
-import org.apache.wayang.java.operators.JavaExecutionOperator;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Supplier;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.apache.wayang.java.operators.JavaExecutionOperator;
 
 /**
  * {@link OperatorProfiler} specifically for {@link JavaExecutionOperator}s with a single {@link InputSlot}.

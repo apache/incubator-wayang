@@ -18,11 +18,10 @@
 
 package org.apache.wayang.jdbc.test;
 
+import java.util.List;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.jdbc.operators.JdbcFilterOperator;
-
-import java.util.List;
 
 /**
  * Test implementation of {@link JdbcFilterOperator}.

@@ -18,9 +18,8 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.wayang.core.types.DataSetType;
-
 import java.util.List;
+import org.apache.wayang.core.types.DataSetType;
 
 /**
  * An input slot declares an input of an {@link Operator}.

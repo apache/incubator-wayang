@@ -18,11 +18,6 @@
 
 package org.apache.wayang.core.plan.executionplan;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
-import org.apache.wayang.core.platform.Platform;
-import org.apache.wayang.core.util.WayangCollections;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,6 +29,10 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Wayang.

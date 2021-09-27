@@ -18,17 +18,16 @@
 
 package org.apache.wayang.jdbc.operators;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.basic.operators.TableSource;
 import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
-import org.apache.logging.log4j.LogManager;
-
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /**
  * PostgreSQL implementation for the {@link TableSource}.

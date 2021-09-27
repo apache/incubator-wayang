@@ -18,6 +18,7 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Optional;
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
@@ -29,8 +30,6 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Optional;
 
 /**
  * A map operator represents semantics as they are known from frameworks, such as Spark and Flink. It pulls each

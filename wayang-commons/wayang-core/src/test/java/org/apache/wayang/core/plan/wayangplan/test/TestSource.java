@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.plan.wayangplan.test;
 
+import java.util.Optional;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
-
-import java.util.Optional;
 
 /**
  * Dummy source for testing purposes.

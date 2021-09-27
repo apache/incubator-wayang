@@ -18,15 +18,14 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-
-import java.util.Arrays;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link AggregatingCardinalityEstimator}.

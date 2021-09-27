@@ -18,8 +18,11 @@
 
 package org.apache.wayang.core.plugin;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.mockito.Mockito.mock;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.test.TestSinkMapping;
@@ -30,12 +33,8 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.test.DummyPlatform;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangCollections;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-
-import static org.mockito.Mockito.mock;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for the {@link DynamicPlugin} class.

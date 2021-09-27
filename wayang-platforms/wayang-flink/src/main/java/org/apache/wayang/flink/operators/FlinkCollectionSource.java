@@ -18,6 +18,9 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.apache.flink.api.java.DataSet;
 import org.apache.wayang.basic.operators.CollectionSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -30,10 +33,6 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.java.channels.CollectionChannel;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * This is execution operator implements the {@link CollectionSource}.

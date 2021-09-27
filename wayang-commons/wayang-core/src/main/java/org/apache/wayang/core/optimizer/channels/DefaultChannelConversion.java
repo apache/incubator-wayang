@@ -18,6 +18,9 @@
 
 package org.apache.wayang.core.optimizer.channels;
 
+import java.util.Collection;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
@@ -27,10 +30,6 @@ import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.platform.ChannelDescriptor;
-
-import java.util.Collection;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 /**
  * Default implementation of the {@link ChannelConversion}. Can be used without further subclassing.

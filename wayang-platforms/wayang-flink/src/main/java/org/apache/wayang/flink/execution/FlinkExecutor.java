@@ -18,6 +18,9 @@
 
 package org.apache.wayang.flink.execution;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -35,10 +38,6 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.compiler.FunctionCompiler;
 import org.apache.wayang.flink.operators.FlinkExecutionOperator;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * {@link Executor} implementation for the {@link FlinkPlatform}.

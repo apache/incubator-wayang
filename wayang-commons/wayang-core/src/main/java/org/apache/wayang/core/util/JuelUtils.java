@@ -21,13 +21,12 @@ package org.apache.wayang.core.util;
 import de.odysseus.el.ExpressionFactoryImpl;
 import de.odysseus.el.TreeValueExpression;
 import de.odysseus.el.util.SimpleContext;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.optimizer.OptimizationUtils;
-import org.apache.logging.log4j.LogManager;
-
-import javax.el.ValueExpression;
 import java.util.HashMap;
 import java.util.Map;
+import javax.el.ValueExpression;
+import org.apache.logging.log4j.LogManager;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationUtils;
 
 /**
  * Utilities to deal with JUEL expressions.

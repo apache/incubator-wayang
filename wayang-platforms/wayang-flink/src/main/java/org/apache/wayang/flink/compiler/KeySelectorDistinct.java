@@ -18,12 +18,11 @@
 
 package org.apache.wayang.flink.compiler;
 
-import org.apache.flink.api.java.functions.KeySelector;
-
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Base64;
+import org.apache.flink.api.java.functions.KeySelector;
 
 /**
  * Wrapper for {@Link KeySelector}

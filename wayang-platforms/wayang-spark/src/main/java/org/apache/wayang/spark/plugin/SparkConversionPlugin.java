@@ -18,6 +18,9 @@
 
 package org.apache.wayang.spark.plugin;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -26,10 +29,6 @@ import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.channels.ChannelConversions;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * This {@link Plugin} enables to create {@link org.apache.spark.rdd.RDD}s.

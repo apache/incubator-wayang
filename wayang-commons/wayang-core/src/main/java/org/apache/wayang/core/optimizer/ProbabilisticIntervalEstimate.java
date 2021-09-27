@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.optimizer;
 
-import org.apache.wayang.core.util.Formats;
-
 import java.util.Comparator;
 import java.util.Objects;
+import org.apache.wayang.core.util.Formats;
 
 /***
  * An estimate that is capable of expressing uncertainty.

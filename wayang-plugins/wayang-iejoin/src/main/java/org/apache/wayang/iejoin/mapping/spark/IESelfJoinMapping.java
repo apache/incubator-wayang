@@ -18,6 +18,8 @@
 
 package org.apache.wayang.iejoin.mapping.spark;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
@@ -31,9 +33,6 @@ import org.apache.wayang.iejoin.operators.IEJoinMasterOperator;
 import org.apache.wayang.iejoin.operators.IESelfJoinOperator;
 import org.apache.wayang.iejoin.operators.SparkIESelfJoinOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link IESelfJoinOperator} to {@link SparkIESelfJoinOperator}.

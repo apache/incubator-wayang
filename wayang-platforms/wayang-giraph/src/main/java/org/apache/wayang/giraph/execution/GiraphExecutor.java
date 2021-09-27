@@ -18,19 +18,27 @@
 
 package org.apache.wayang.giraph.execution;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.wayang.core.platform.*;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.ExecutionState;
+import org.apache.wayang.core.platform.Executor;
+import org.apache.wayang.core.platform.ExecutorTemplate;
+import org.apache.wayang.core.platform.PartialExecution;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.giraph.operators.GiraphExecutionOperator;
 import org.apache.wayang.giraph.platform.GiraphPlatform;
-
-import java.util.*;
 
 /**
  * {@link Executor} for the {@link GiraphPlatform}.

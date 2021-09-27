@@ -29,7 +29,7 @@ menus:
 
 # Helping Other Users
 
-A great way to contribute to Wayang is to help answer user questions on the StackOverflow. There are always many new Wayang users; taking a few minutes to help answer a question is a very valuable community service.
+A great way to contribute to Wayang is to help answer user questions on StackOverflow. There are always many new Wayang users; taking a few minutes to help answer a question is a very valuable community service.
 
 Contributors should subscribe to email list (`dev@wayang.apache.org`) and follow it in order to keep up to date on what’s happening in Wayang. Answering questions is an excellent and visible way to help the community, which also demonstrates your expertise.
 

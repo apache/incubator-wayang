@@ -18,13 +18,11 @@
 
 package org.apache.wayang.apps.sindy
 
-import java.lang.Iterable
 import java.util
+
 import org.apache.wayang.api._
-import org.apache.wayang.apps
-import Sindy.{CellCreator, CellMerger, IndCandidateGenerator, IndCandidateMerger}
+import org.apache.wayang.apps.sindy.Sindy.{CellCreator, CellMerger, IndCandidateGenerator, IndCandidateMerger}
 import org.apache.wayang.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper, StdOut}
-import org.apache.wayang.apps.util.ProfileDBHelper
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
@@ -149,7 +147,7 @@ object Sindy extends ExperimentDescriptor {
     */
   class CellCreator(val offset: Int, val separator: Char) extends SerializableFunction[String, java.lang.Iterable[(String, Int)]] {
 
-    override def apply(row: String): Iterable[(String, Int)] = {
+    override def apply(row: String): java.lang.Iterable[(String, Int)] = {
       val fields = row.split(separator)
       val cells = new util.ArrayList[(String, Int)](fields.length)
       var columnId = offset

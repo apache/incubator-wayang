@@ -18,11 +18,10 @@
 
 package org.apache.wayang.core.function;
 
+import java.util.Optional;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.types.BasicDataUnitType;
-
-import java.util.Optional;
 
 /**
  * This descriptor pertains to predicates that consume a single data unit.

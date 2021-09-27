@@ -18,6 +18,19 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.ToDoubleBiFunction;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongBiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.FunctionDescriptor;
@@ -33,20 +46,6 @@ import org.apache.wayang.core.util.mathex.DefaultContext;
 import org.apache.wayang.core.util.mathex.Expression;
 import org.apache.wayang.core.util.mathex.ExpressionBuilder;
 import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.ToDoubleBiFunction;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongBiFunction;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Utilities to deal with {@link LoadProfileEstimator}s.

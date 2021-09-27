@@ -18,11 +18,10 @@
 
 package org.apache.wayang.postgres.operators;
 
+import java.util.List;
 import org.apache.wayang.basic.operators.TableSource;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.jdbc.operators.JdbcTableSource;
-
-import java.util.List;
 
 /**
  * PostgreSQL implementation for the {@link TableSource}.

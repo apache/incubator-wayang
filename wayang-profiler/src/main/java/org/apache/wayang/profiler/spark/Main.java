@@ -19,6 +19,13 @@
 package org.apache.wayang.profiler.spark;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
@@ -28,14 +35,6 @@ import org.apache.wayang.core.util.WayangArrays;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.profiler.data.DataGenerators;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Starts a profiling run of Spark.

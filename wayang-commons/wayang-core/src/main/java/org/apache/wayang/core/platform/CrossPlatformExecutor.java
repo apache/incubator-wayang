@@ -18,6 +18,18 @@
 
 package org.apache.wayang.core.platform;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.function.Supplier;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -33,19 +45,8 @@ import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.profiling.InstrumentationStrategy;
 import org.apache.wayang.core.util.AbstractReferenceCountable;
 import org.apache.wayang.core.util.Formats;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.function.Supplier;
+;
 
 /**
  * Executes a (cross-platform) {@link ExecutionPlan}.

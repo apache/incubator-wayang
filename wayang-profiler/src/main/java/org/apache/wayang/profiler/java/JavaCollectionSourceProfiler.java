@@ -18,12 +18,11 @@
 
 package org.apache.wayang.profiler.java;
 
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.java.operators.JavaCollectionSource;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Supplier;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.java.operators.JavaCollectionSource;
 
 /**
  * {@link OperatorProfiler} for {@link JavaCollectionSource}s.

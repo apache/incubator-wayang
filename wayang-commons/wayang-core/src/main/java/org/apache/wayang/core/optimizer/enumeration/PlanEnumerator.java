@@ -18,30 +18,6 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.optimizer.OptimizationUtils;
-import org.apache.wayang.core.plan.executionplan.Channel;
-import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
-import org.apache.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
-import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
-import org.apache.wayang.core.plan.wayangplan.OperatorContainer;
-import org.apache.wayang.core.plan.wayangplan.Operators;
-import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.core.plan.wayangplan.Slot;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -59,6 +35,29 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.OptimizationUtils;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.wayang.core.plan.wayangplan.OperatorContainer;
+import org.apache.wayang.core.plan.wayangplan.Operators;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.Slot;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * The plan partitioner recursively dissects a {@link WayangPlan} into {@link PlanEnumeration}s and then assembles

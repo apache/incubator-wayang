@@ -18,6 +18,8 @@
 
 package org.apache.wayang.iejoin.mapping.java;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
 import org.apache.wayang.core.mapping.PlanTransformation;
@@ -28,9 +30,6 @@ import org.apache.wayang.iejoin.operators.IEJoinMasterOperator;
 import org.apache.wayang.iejoin.operators.IEJoinOperator;
 import org.apache.wayang.iejoin.operators.JavaIEJoinOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link IEJoinOperator} to {@link JavaIEJoinOperator}.

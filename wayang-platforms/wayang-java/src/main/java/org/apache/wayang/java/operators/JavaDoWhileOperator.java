@@ -18,6 +18,12 @@
 
 package org.apache.wayang.java.operators;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 import org.apache.wayang.basic.operators.DoWhileOperator;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.PredicateDescriptor;
@@ -34,13 +40,6 @@ import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * Java implementation of the {@link DoWhileOperator}.

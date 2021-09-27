@@ -19,6 +19,7 @@
 package org.apache.wayang.api
 
 import java.util.{Collection => JavaCollection}
+
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api.util.DataQuantaBuilderCache
 import org.apache.wayang.basic.data.Record

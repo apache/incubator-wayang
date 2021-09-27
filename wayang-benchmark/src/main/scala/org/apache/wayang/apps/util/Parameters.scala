@@ -18,8 +18,8 @@
 
 package org.apache.wayang.apps.util
 
-import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.basic.WayangBasics
+import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.plugin.{DynamicPlugin, Plugin}
 //import org.apache.wayang.graphchi.GraphChi

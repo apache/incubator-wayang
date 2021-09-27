@@ -18,14 +18,13 @@
 
 package org.apache.wayang.giraph.operators;
 
+import java.util.Collection;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.giraph.execution.GiraphExecutor;
-
-import java.util.Collection;
 
 /**
  * {@link ExecutionOperator} that can be run by the {@link GiraphExecutor}.

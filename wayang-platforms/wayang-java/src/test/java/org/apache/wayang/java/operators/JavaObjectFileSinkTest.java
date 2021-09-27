@@ -18,18 +18,17 @@
 
 package org.apache.wayang.java.operators;
 
-import org.apache.commons.lang3.Validate;
-import org.junit.Test;
-import org.apache.wayang.basic.channels.FileChannel;
-import org.apache.wayang.core.platform.ChannelInstance;
-import org.apache.wayang.core.types.DataSetType;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.types.DataSetType;
+import org.junit.Test;
 
 /**
  * Test suite for {@link JavaObjectFileSink}.

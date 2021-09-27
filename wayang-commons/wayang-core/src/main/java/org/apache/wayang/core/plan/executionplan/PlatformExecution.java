@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.plan.executionplan;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.platform.Platform;
-
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.platform.Platform;
 
 /**
  * Complete data flow on a single platform, that consists of multiple {@link ExecutionStage}s.

@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.util.OneTimeExecutable;
-import org.apache.logging.log4j.LogManager;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.wayang.core.util.OneTimeExecutable;
 
 /**
  * Goes over a {@link WayangPlan} and isolates its loops.

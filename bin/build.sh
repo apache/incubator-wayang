@@ -48,15 +48,14 @@ if [ "$(pwd)" != "$basedir" ]; then
 fi
 
 
-scala_versions=(2.11.8) # 2.12.2 was not supported as of creating this script
+scala_versions=(scala-11 scala-12)
 failures=()
 successes=()
 
 for scala_version in "${scala_versions[@]}"; do
 	echo "Running 'mvn ${mvn_opts[@]}' with Scala $scala_version..."
 
-	"$basedir/bin/change-scala-version.sh" "$scala_version"
-	if mvn "${mvn_opts[@]}"; then
+	if mvn "${mvn_opts[@]}" -P $scala_version; then
 		successes+=("$scala_version")
 	else
 		failures+=("$scala_version")
@@ -64,7 +63,7 @@ for scala_version in "${scala_versions[@]}"; do
 done
 
 echo "Summary:"
-echo "* Successes with Scala versions ${successes[@]}"
-echo "* Failures with Scala versions ${failures[@]}"
+echo "* Successes with Scala versions: ${successes[@]}"
+echo "* Failures with Scala versions: ${failures[@]}"
 
 exit ${#failures[@]}

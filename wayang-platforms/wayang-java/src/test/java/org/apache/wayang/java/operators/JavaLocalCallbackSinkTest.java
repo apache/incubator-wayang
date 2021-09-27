@@ -18,14 +18,13 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.java.channels.JavaChannelInstance;
-
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link JavaLocalCallbackSink}.

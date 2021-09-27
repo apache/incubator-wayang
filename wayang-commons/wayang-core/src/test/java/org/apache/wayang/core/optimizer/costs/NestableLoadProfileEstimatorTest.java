@@ -19,8 +19,7 @@
 package org.apache.wayang.core.optimizer.costs;
 
 import java.util.HashMap;
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.List;
 import org.apache.wayang.core.optimizer.OptimizationUtils;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -28,8 +27,8 @@ import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for the {@link NestableLoadProfileEstimator}.
