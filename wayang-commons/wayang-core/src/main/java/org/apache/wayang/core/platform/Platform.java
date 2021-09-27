@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.platform;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -31,6 +30,7 @@ import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
 import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.

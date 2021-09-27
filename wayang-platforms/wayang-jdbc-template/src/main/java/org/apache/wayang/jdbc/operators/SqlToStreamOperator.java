@@ -18,7 +18,6 @@
 
 package org.apache.wayang.jdbc.operators;
 
-import org.json.JSONObject;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.types.RecordType;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -33,6 +32,7 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.JsonSerializable;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.json.JSONObject;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;

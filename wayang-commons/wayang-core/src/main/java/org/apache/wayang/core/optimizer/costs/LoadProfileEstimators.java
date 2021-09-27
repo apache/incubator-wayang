@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.FunctionDescriptor;
@@ -28,6 +27,7 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.costs.LoadEstimator.SinglePointEstimationFunction;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.util.JuelUtils;
+import org.apache.wayang.core.util.json.JSONObject;
 import org.apache.wayang.core.util.mathex.Context;
 import org.apache.wayang.core.util.mathex.DefaultContext;
 import org.apache.wayang.core.util.mathex.Expression;

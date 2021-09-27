@@ -24,7 +24,6 @@
 
     <properties>
         <java-module-name>org.apache.wayang.extensions.iejoin</java-module-name>
-        <spark.version>2.4.0</spark.version>
     </properties>
 
     <dependencies>

@@ -19,6 +19,8 @@
 ##
 ################################################################################
 
+# THIS SCRIPT IS DEPRECATED since https://github.com/apache/incubator-wayang/pull/26
+
 if [ $# -eq 0 ]; then
 	>&2 echo "No parameters given."
 	echo "This script changes the Scala version used in this project."

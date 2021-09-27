@@ -28,10 +28,10 @@ notification:
     on_success: never
     on_failure: never
     on_start: false
-#cache:
-#  directories:
-#    - .autoconf
-#    - $HOME/.m2
+cache:
+  directories:
+    - .autoconf
+    - $HOME/.m2
 
 before_install:
   - echo "${GENERATE_DOCS}"
@@ -86,12 +86,14 @@ before_script:
 #  - chmod +x ./docs/script/cibuild
 script:
   #- jdk_switcher use openjdk8
-  - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro,scala-11 "${mvn_opts[@]}" &> result.log
+  - mvn clean install -Pdistro,scala-11 "${mvn_opts[@]}" &> result.log
+  - mvn clean install -Pdistro,scala-12 "${mvn_opts[@]}" &>> result.log
+  #- mvn clean install -Pdistro,scala-13 "${mvn_opts[@]}" &>> result.log # This is not working for now because of Spark and Flink not supporting Scala 2.13
   - cat /home/travis/build/apache/incubator-wayang/target/rat.txt || echo "file doesn't exist"
   - tail -n 2000 result.log
 
 after_success:
-  # generate the documentation and create a update of the documentation if something change there
+  # generate the documentation and create an update of the documentation if something changes there
   - if [ "${GENERATE_DOCS}" = "true" ] ; then mvn clean gem:exec@bundle-install gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site -pl wayang-docs -Pweb-documentation ; fi
 
 env:

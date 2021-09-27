@@ -18,7 +18,8 @@
 
 package org.apache.wayang.profiler.log;
 
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.costs.EstimationContext;
@@ -650,10 +651,11 @@ public class DynamicLoadProfileEstimators {
                                                                  String specification,
                                                                  OptimizationSpace optimizationSpace) {
         try {
-            final JSONObject spec = new JSONObject(specification);
-            if (!spec.has("type") || "mathex".equalsIgnoreCase(spec.getString("type"))) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode spec = mapper.readTree(specification);
+            if (!spec.has("type") || "mathex".equalsIgnoreCase(spec.get("type").asText())) {
                 return createFromMathExTemplate(configKey, spec, optimizationSpace);
-            } else if ("juel".equalsIgnoreCase(spec.getString("type"))) {
+            } else if ("juel".equalsIgnoreCase(spec.get("type").asText())) {
                 throw new IllegalStateException("JUEL templates not supported");
             } else {
                 throw new WayangException(String.format("Unknown specification type: %s", spec.get("type")));
@@ -672,21 +674,21 @@ public class DynamicLoadProfileEstimators {
      * @return the {@link DynamicLoadEstimator}
      */
     private static DynamicLoadProfileEstimator createFromMathExTemplate(String configKey,
-                                                                        JSONObject spec,
+                                                                        JsonNode spec,
                                                                         OptimizationSpace optimizationSpace) {
-        int numInputs = spec.getInt("in");
-        int numOutputs = spec.getInt("out");
+        int numInputs = spec.get("in").asInt();
+        int numOutputs = spec.get("out").asInt();
 
         DynamicLoadEstimator cpuEstimator =
-                DynamicLoadEstimator.createFor(configKey, "cpu", spec.getString("cpu"), optimizationSpace);
+                DynamicLoadEstimator.createFor(configKey, "cpu", spec.get("cpu").textValue(), optimizationSpace);
 //        DynamicLoadEstimator ramEstimator =
 //                DynamicLoadEstimator.createFor(configKey, "ram", spec.getString("ram"), optimizationSpace);
         DynamicLoadEstimator diskEstimator = !spec.has("disk") ?
                 DynamicLoadEstimator.zeroLoad :
-                DynamicLoadEstimator.createFor(configKey, "disk", spec.getString("disk"), optimizationSpace);
+                DynamicLoadEstimator.createFor(configKey, "disk", spec.get("disk").textValue(), optimizationSpace);
         DynamicLoadEstimator networkEstimator = !spec.has("network") ?
                 DynamicLoadEstimator.zeroLoad :
-                DynamicLoadEstimator.createFor(configKey, "network", spec.getString("network"), optimizationSpace);
+                DynamicLoadEstimator.createFor(configKey, "network", spec.get("network").textValue(), optimizationSpace);
 
         if (spec.has("overhead")) {
             logger.warn("Overhead specification in {} will be ignored.", configKey);

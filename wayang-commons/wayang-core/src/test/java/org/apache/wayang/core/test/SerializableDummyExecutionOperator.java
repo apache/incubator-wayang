@@ -18,9 +18,9 @@
 
 package org.apache.wayang.core.test;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.util.JsonSerializable;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * Dummy {@link ExecutionOperator} for test purposes.

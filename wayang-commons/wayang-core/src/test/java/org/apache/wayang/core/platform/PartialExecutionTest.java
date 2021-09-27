@@ -18,7 +18,7 @@
 
 package org.apache.wayang.core.platform;
 
-import org.json.JSONObject;
+import org.apache.wayang.core.util.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;

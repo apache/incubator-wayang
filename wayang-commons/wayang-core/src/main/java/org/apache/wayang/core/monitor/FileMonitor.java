@@ -19,7 +19,6 @@
 package org.apache.wayang.core.monitor;
 
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;
@@ -30,6 +29,7 @@ import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.wayang.core.util.json.JSONObject;
 
 public class FileMonitor extends Monitor {
 
@@ -48,6 +48,7 @@ public class FileMonitor extends Monitor {
             jsonPlanMap.put("stages", initialExecutionPlan);
             jsonPlanMap.put("run_id", runId);
             JSONObject jsonPlan = new JSONObject(jsonPlanMap);
+
             writer.write(jsonPlan.toString());
         } catch (UncheckedIOException e) {
             throw e.getCause();

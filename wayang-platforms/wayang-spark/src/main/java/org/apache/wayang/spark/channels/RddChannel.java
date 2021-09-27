@@ -18,8 +18,9 @@
 
 package org.apache.wayang.spark.channels;
 
-import org.apache.spark.Accumulator;
+import org.apache.spark.util.AccumulatorV2;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.util.LongAccumulator;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.Channel;
@@ -75,7 +76,7 @@ public class RddChannel extends Channel {
 
         private JavaRDD<?> rdd;
 
-        private Accumulator<Integer> accumulator;
+        private LongAccumulator accumulator;
 
         public Instance(SparkExecutor executor,
                         OptimizationContext.OperatorContext producerOperatorContext,
@@ -85,7 +86,8 @@ public class RddChannel extends Channel {
 
         public void accept(JavaRDD<?> rdd, SparkExecutor sparkExecutor) throws WayangException {
             if (this.isMarkedForInstrumentation() && !this.isRddCached()) {
-                final Accumulator<Integer> accumulator = sparkExecutor.sc.accumulator(0);
+                final LongAccumulator accumulator = sparkExecutor.sc.sc().longAccumulator();
+                accumulator.setValue(0);
                 this.rdd = rdd.filter(dataQuantum -> {
                     accumulator.add(1);
                     return true;

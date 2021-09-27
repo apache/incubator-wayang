@@ -18,11 +18,11 @@
 
 package org.apache.wayang.core.util;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.exception.WayangException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * This interface prescribes implementing instances to be able to provide itself as a {@link JSONObject}. To allow
