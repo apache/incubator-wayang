@@ -18,9 +18,8 @@
 
 package org.apache.wayang.spark.compiler;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-
 import java.util.Iterator;
+import org.apache.spark.api.java.function.FlatMapFunction;
 
 /**
  * Wraps a {@link java.util.function.Function} as a {@link FlatMapFunction}.

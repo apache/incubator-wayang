@@ -18,13 +18,12 @@
 
 package org.apache.wayang.profiler.log;
 
-import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 
 /**
  * Context for the optimization of {@link LoadProfileEstimator}s.

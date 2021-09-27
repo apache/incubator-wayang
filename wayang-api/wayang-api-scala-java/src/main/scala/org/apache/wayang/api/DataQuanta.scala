@@ -22,9 +22,12 @@ package org.apache.wayang.api
 import _root_.java.lang.{Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, IntUnaryOperator, BiFunction => JavaBiFunction, Function => JavaFunction}
 import _root_.java.util.{Collection => JavaCollection}
+
 import org.apache.commons.lang3.Validate
+import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators._
+import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.apache.wayang.core.function._
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
@@ -33,8 +36,6 @@ import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator
 import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
-import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
-import org.apache.wayang.commons.util.profiledb.model.Experiment
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._

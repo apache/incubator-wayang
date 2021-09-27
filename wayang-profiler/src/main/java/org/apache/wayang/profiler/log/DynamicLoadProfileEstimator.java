@@ -18,15 +18,14 @@
 
 package org.apache.wayang.profiler.log;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.costs.EstimationContext;
 import org.apache.wayang.core.optimizer.costs.LoadProfile;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * Adjustable {@link LoadProfileEstimator} implementation.

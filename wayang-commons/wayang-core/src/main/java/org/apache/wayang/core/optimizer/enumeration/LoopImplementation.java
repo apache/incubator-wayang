@@ -18,6 +18,9 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Stream;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 import org.apache.wayang.core.optimizer.costs.TimeEstimate;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -26,10 +29,6 @@ import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.platform.Junction;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Describes the enumeration of a {@link LoopSubplan}.

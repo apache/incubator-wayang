@@ -18,17 +18,6 @@
 
 package org.apache.wayang.core.plugin;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.mapping.Mapping;
-import org.apache.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.wayang.core.platform.Platform;
-import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.wayang.core.util.fs.FileSystem;
-import org.apache.wayang.core.util.fs.FileSystems;
-import org.yaml.snakeyaml.Yaml;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -39,6 +28,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * This {@link Plugin} can be arbitrarily customized.

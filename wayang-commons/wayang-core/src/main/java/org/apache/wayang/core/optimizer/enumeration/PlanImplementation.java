@@ -18,31 +18,6 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
-import org.apache.wayang.core.optimizer.costs.TimeEstimate;
-import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
-import org.apache.wayang.core.plan.executionplan.Channel;
-import org.apache.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
-import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
-import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.core.plan.wayangplan.Slot;
-import org.apache.wayang.core.platform.Junction;
-import org.apache.wayang.core.platform.Platform;
-import org.apache.wayang.core.util.Canonicalizer;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,6 +33,30 @@ import java.util.Set;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.Slot;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.platform.Junction;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.Canonicalizer;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * Represents a partial execution plan.

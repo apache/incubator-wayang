@@ -18,11 +18,10 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
+import java.util.Collection;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
 import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
-
-import java.util.Collection;
 
 /**
  * Head of a {@link LoopSubplan}.

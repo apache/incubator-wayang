@@ -18,12 +18,11 @@
 
 package org.apache.wayang.basic.function;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.function.Function;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.types.RecordType;
-
-import java.util.function.Function;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for the {@link ProjectionDescriptor}.

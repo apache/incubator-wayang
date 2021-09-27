@@ -18,6 +18,8 @@
 
 package org.apache.wayang.java.plugin;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -27,9 +29,6 @@ import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.java.channels.ChannelConversions;
 import org.apache.wayang.java.mapping.Mappings;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * This {@link Plugin} enables to use the basic Wayang {@link Operator}s on the {@link JavaPlatform}.

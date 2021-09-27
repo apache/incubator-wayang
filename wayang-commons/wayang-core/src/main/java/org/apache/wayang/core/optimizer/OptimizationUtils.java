@@ -18,6 +18,10 @@
 
 package org.apache.wayang.core.optimizer;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
@@ -26,14 +30,9 @@ import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.Slot;
 import org.apache.wayang.core.plan.wayangplan.SlotMapping;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 
 /**
  * Utility methods for the optimization process.

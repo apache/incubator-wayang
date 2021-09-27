@@ -18,6 +18,14 @@
 
 package org.apache.wayang.java.operators;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -37,15 +45,6 @@ import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * {@link Operator} for the {@link JavaPlatform} that creates a TSV file.

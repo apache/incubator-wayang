@@ -18,16 +18,15 @@
 
 package org.apache.wayang.profiler.util;
 
+import java.io.IOException;
+import java.util.Arrays;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.rrd4j.ConsolFun;
 import org.rrd4j.core.FetchData;
 import org.rrd4j.core.FetchRequest;
 import org.rrd4j.core.RrdBackendFactory;
 import org.rrd4j.core.RrdDb;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Utility to read from an RRD file.

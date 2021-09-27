@@ -18,9 +18,9 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.logging.log4j.LogManager;
 
 /**
  * Forwards the {@link CardinalityEstimate} of any given {@link InputSlot} that is not {@code null}. Asserts that

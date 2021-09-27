@@ -21,7 +21,6 @@ package org.apache.wayang.flink.mapping;
 import java.util.Collection;
 import java.util.Collections;
 import org.apache.wayang.basic.operators.ObjectFileSource;
-import org.apache.wayang.basic.operators.TextFileSource;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
 import org.apache.wayang.core.mapping.PlanTransformation;
@@ -29,7 +28,6 @@ import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
 import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.operators.FlinkObjectFileSource;
-import org.apache.wayang.flink.operators.FlinkTextFileSource;
 import org.apache.wayang.flink.platform.FlinkPlatform;
 
 /**

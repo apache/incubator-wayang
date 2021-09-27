@@ -22,9 +22,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import org.apache.wayang.commons.util.profiledb.model.Measurement;
-
 import java.lang.reflect.Type;
+import org.apache.wayang.commons.util.profiledb.model.Measurement;
 
 /**
  * Custom serializer for {@link Measurement}s

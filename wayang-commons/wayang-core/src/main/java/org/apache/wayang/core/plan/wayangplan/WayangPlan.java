@@ -18,19 +18,18 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.mapping.PlanTransformation;
-import org.apache.wayang.core.optimizer.SanityChecker;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.optimizer.SanityChecker;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * A Wayang plan consists of a set of {@link Operator}s.

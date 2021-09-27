@@ -18,6 +18,9 @@
 
 package org.apache.wayang.spark.compiler;
 
+import java.util.Iterator;
+import java.util.function.BinaryOperator;
+import java.util.function.Predicate;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
@@ -33,10 +36,6 @@ import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.spark.execution.SparkExecutionContext;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
-
-import java.util.Iterator;
-import java.util.function.BinaryOperator;
-import java.util.function.Predicate;
 
 /**
  * A compiler translates Wayang functions into executable Java functions.

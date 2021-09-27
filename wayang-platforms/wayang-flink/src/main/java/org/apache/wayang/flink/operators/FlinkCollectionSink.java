@@ -18,6 +18,10 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.Validate;
 import org.apache.flink.api.java.DataSet;
 import org.apache.wayang.core.api.Configuration;
@@ -34,11 +38,6 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.java.channels.CollectionChannel;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 
 /**

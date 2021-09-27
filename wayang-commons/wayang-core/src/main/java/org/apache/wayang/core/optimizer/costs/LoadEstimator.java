@@ -18,11 +18,10 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
+import java.util.Arrays;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-
-import java.util.Arrays;
 
 /**
  * Describes the resource utilization of something executable within an {@link EstimationContext}, such as an

@@ -19,7 +19,15 @@
 package org.apache.wayang.basic.operators;
 
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
 import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -29,15 +37,6 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.LimitedInputStream;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.OptionalLong;
 
 /**
  * This source reads a text file and outputs the lines as data units.

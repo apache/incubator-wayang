@@ -20,18 +20,14 @@ package org.apache.wayang.spark.mapping;
 
 import java.util.Collection;
 import java.util.Collections;
-import org.apache.wayang.basic.operators.CollectionSource;
 import org.apache.wayang.basic.operators.ObjectFileSource;
-import org.apache.wayang.basic.operators.TextFileSource;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
 import org.apache.wayang.core.mapping.PlanTransformation;
 import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
 import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.spark.operators.SparkCollectionSource;
 import org.apache.wayang.spark.operators.SparkObjectFileSource;
-import org.apache.wayang.spark.operators.SparkTextFileSource;
 import org.apache.wayang.spark.platform.SparkPlatform;
 
 /**

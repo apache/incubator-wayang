@@ -18,17 +18,16 @@
 
 package org.apache.wayang.java.test;
 
-import org.junit.Before;
+import static org.mockito.Mockito.mock;
+
+import java.util.Collection;
+import java.util.stream.Stream;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
-
-import java.util.Collection;
-import java.util.stream.Stream;
-
-import static org.mockito.Mockito.mock;
+import org.junit.Before;
 
 /**
  * Utility to create {@link Channel}s in tests.

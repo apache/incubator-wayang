@@ -18,6 +18,8 @@
 
 package org.apache.wayang.java.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.ZipWithIdOperator;
 import org.apache.wayang.core.function.ExecutionContext;
@@ -31,9 +33,6 @@ import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.operators.JavaMapOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link ZipWithIdMapping} to a subplan.

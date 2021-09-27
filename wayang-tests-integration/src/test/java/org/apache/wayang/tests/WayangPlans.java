@@ -18,6 +18,18 @@
 
 package org.apache.wayang.tests;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.wayang.api.DataQuantaBuilder;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Record;
@@ -53,24 +65,11 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.wayang.core.util.WayangArrays;
 import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.WayangArrays;
 import org.apache.wayang.spark.operators.SparkShufflePartitionSampleOperator;
 import org.apache.wayang.sqlite3.Sqlite3;
 import org.apache.wayang.sqlite3.operators.Sqlite3TableSource;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Provides plans that can be used for integration testing.

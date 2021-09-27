@@ -18,7 +18,7 @@
 
 package org.apache.wayang.spark.channels;
 
-import org.apache.spark.util.AccumulatorV2;
+import java.util.OptionalLong;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.util.LongAccumulator;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -31,8 +31,6 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.core.util.Actions;
 import org.apache.wayang.spark.execution.SparkExecutor;
-
-import java.util.OptionalLong;
 
 /**
  * Describes the situation where one {@link JavaRDD} is operated on, producing a further {@link JavaRDD}.

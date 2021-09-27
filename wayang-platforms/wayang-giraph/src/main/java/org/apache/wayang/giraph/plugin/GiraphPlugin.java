@@ -18,6 +18,9 @@
 
 package org.apache.wayang.giraph.plugin;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -27,10 +30,6 @@ import org.apache.wayang.core.util.fs.LocalFileSystem;
 import org.apache.wayang.giraph.channels.ChannelConversions;
 import org.apache.wayang.giraph.mappings.Mappings;
 import org.apache.wayang.giraph.platform.GiraphPlatform;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * This {@link Plugin} activates default capabilities of the {@link GiraphPlatform}.

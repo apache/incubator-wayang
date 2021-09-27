@@ -18,6 +18,9 @@
 
 package org.apache.wayang.java.execution;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.ExtendedFunction;
@@ -34,10 +37,6 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.compiler.FunctionCompiler;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * {@link Executor} implementation for the {@link JavaPlatform}.

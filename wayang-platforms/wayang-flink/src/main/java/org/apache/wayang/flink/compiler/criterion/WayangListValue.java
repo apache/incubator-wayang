@@ -18,9 +18,8 @@
 
 package org.apache.wayang.flink.compiler.criterion;
 
-import org.apache.flink.types.ListValue;
-
 import java.util.Collection;
+import org.apache.flink.types.ListValue;
 
 /**
  * Is a Wrapper for used in the criterion of the Loops

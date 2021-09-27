@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
+import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
 import org.apache.wayang.core.optimizer.cardinality.LoopHeadAlternativeCardinalityPusher;
 import org.apache.wayang.core.util.WayangCollections;
-
-import java.util.Collection;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Special {@link OperatorAlternative} for {@link LoopHeadOperator}s.

@@ -18,12 +18,10 @@
 
 package org.apache.wayang.core.util;
 
-import org.apache.commons.lang3.SerializationException;
-
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.apache.commons.lang3.SerializationException;
 import org.apache.wayang.core.util.json.JSONArray;
 import org.apache.wayang.core.util.json.JSONObject;
 

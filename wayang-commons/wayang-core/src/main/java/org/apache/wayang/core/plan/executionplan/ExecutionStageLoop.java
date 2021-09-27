@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.plan.executionplan;
 
+import java.util.Collection;
+import java.util.HashSet;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
 import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
-
-import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * This class models the execution equivalent of {@link LoopSubplan}s.

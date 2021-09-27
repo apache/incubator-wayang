@@ -18,6 +18,7 @@
 
 package org.apache.wayang.spark.operators;
 
+import java.util.Collection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -27,8 +28,6 @@ import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Collection;
 
 /**
  * Execution operator for the {@link SparkPlatform}.

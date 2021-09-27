@@ -18,6 +18,11 @@
 
 package org.apache.wayang.profiler.log;
 
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Random;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.DoubleStream;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.EstimationContext;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
@@ -26,12 +31,6 @@ import org.apache.wayang.core.platform.AtomicExecutionGroup;
 import org.apache.wayang.core.platform.PartialExecution;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.util.Bitmask;
-
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Random;
-import java.util.function.ToDoubleFunction;
-import java.util.stream.DoubleStream;
 
 /**
  * Context for the optimization of {@link LoadProfileEstimator}s.

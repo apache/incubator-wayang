@@ -18,6 +18,9 @@
 
 package org.apache.wayang.spark.execution;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -35,10 +38,6 @@ import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.compiler.FunctionCompiler;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * {@link Executor} implementation for the {@link SparkPlatform}.

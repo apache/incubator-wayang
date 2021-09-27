@@ -19,6 +19,8 @@
 package org.apache.wayang.giraph.Algorithm;
 
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.util.List;
 import org.apache.giraph.aggregators.DoubleMaxAggregator;
 import org.apache.giraph.aggregators.DoubleMinAggregator;
 import org.apache.giraph.aggregators.LongSumAggregator;
@@ -40,9 +42,6 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Basic PageRank implementation.

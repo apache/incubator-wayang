@@ -18,6 +18,10 @@
 
 package org.apache.wayang.spark.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.Validate;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.core.api.Configuration;
@@ -33,11 +37,6 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Converts an uncached {@link RddChannel} into a cached {@link RddChannel}.

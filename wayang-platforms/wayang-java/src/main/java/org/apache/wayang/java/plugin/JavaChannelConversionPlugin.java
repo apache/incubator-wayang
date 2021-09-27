@@ -18,6 +18,8 @@
 
 package org.apache.wayang.java.plugin;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -25,9 +27,6 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.java.channels.ChannelConversions;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * This {@link Plugin} is a subset of the {@link JavaBasicPlugin} and only ships with the {@link ChannelConversion}s.

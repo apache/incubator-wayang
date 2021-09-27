@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.profiling;
 
+import java.util.Arrays;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
-
-import java.util.Arrays;
 
 /**
  * Instruments only outbound {@link Channel}s.

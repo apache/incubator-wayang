@@ -19,7 +19,6 @@
 package org.apache.wayang.apps.sgd
 
 import org.apache.wayang.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper}
-import org.apache.wayang.apps.util.ProfileDBHelper
 import org.apache.wayang.core.api.Configuration
 
 /**

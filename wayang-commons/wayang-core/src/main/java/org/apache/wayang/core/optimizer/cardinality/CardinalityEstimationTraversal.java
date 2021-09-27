@@ -18,17 +18,6 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.plan.wayangplan.InputSlot;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.OperatorContainer;
-import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.wayang.core.util.OneTimeExecutable;
-import org.apache.wayang.core.util.WayangCollections;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,6 +30,16 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorContainer;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.wayang.core.util.OneTimeExecutable;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * {@link CardinalityEstimator} that subsumes a DAG of operators, each one providing a local {@link CardinalityEstimator}.

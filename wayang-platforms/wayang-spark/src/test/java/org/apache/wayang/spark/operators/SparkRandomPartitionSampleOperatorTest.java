@@ -18,16 +18,15 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
-
-import java.util.Arrays;
-import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link SparkRandomPartitionSampleOperator}.

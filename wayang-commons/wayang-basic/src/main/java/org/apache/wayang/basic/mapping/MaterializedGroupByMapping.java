@@ -18,6 +18,8 @@
 
 package org.apache.wayang.basic.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.GroupByOperator;
 import org.apache.wayang.basic.operators.MaterializedGroupByOperator;
 import org.apache.wayang.core.mapping.Mapping;
@@ -28,9 +30,6 @@ import org.apache.wayang.core.mapping.SubplanMatch;
 import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * This mapping translates the {@link GroupByOperator} into the {@link MaterializedGroupByOperator}.

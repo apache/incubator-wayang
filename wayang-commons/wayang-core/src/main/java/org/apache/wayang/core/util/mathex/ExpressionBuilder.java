@@ -18,6 +18,8 @@
 
 package org.apache.wayang.core.util.mathex;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -32,9 +34,6 @@ import org.apache.wayang.core.util.mathex.model.Constant;
 import org.apache.wayang.core.util.mathex.model.NamedFunction;
 import org.apache.wayang.core.util.mathex.model.UnaryOperation;
 import org.apache.wayang.core.util.mathex.model.Variable;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This utility builds {@link Expression}s from an input {@link String}.

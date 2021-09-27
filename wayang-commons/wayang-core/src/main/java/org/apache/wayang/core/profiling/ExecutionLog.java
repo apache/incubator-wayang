@@ -18,16 +18,6 @@
 
 package org.apache.wayang.core.profiling;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.platform.CrossPlatformExecutor;
-import org.apache.wayang.core.platform.PartialExecution;
-import org.apache.wayang.core.util.JsonSerializables;
-import org.apache.wayang.core.util.JsonSerializer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,6 +29,15 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.wayang.core.platform.PartialExecution;
+import org.apache.wayang.core.util.JsonSerializables;
+import org.apache.wayang.core.util.JsonSerializer;
 import org.apache.wayang.core.util.json.JSONObject;
 
 /**

@@ -1,9 +1,5 @@
 package org.apache.wayang.basic.operators;
 
-import java.util.Objects;
-import org.apache.wayang.core.function.TransformationDescriptor;
-import org.apache.wayang.core.optimizer.costs.DefaultLoadEstimator;
-import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.apache.wayang.core.plan.wayangplan.UnarySink;
 import org.apache.wayang.core.types.DataSetType;
 

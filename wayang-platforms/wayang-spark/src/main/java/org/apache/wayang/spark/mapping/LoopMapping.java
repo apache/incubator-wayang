@@ -18,6 +18,8 @@
 
 package org.apache.wayang.spark.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.LoopOperator;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.mapping.Mapping;
@@ -28,9 +30,6 @@ import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.operators.SparkLoopOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link LoopOperator} to {@link SparkLoopOperator}.

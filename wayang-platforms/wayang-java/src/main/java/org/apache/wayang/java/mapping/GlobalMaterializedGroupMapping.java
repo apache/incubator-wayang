@@ -18,6 +18,8 @@
 
 package org.apache.wayang.java.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.GlobalMaterializedGroupOperator;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
@@ -27,9 +29,6 @@ import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.operators.JavaGlobalMaterializedGroupOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link GlobalMaterializedGroupOperator} to {@link JavaGlobalMaterializedGroupOperator}.

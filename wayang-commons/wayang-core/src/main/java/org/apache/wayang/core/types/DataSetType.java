@@ -18,9 +18,8 @@
 
 package org.apache.wayang.core.types;
 
-import org.apache.wayang.core.util.ReflectionUtils;
-
 import java.util.Objects;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 /**
  * A data set is an abstraction of the Wayang programming model. Although never directly materialized, a data set

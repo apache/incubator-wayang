@@ -18,6 +18,11 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.wayang.basic.operators.FilterOperator;
@@ -34,12 +39,6 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Flink implementation of the {@link FilterOperator}.

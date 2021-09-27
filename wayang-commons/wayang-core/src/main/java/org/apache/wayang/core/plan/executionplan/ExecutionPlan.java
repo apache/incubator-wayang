@@ -18,12 +18,6 @@
 
 package org.apache.wayang.core.plan.executionplan;
 
-import org.apache.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
-import org.apache.wayang.core.optimizer.enumeration.StageAssignmentTraversal;
-import org.apache.wayang.core.util.Counter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +29,11 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
+import org.apache.wayang.core.optimizer.enumeration.StageAssignmentTraversal;
+import org.apache.wayang.core.util.Counter;
 
 /**
  * Represents an executable, cross-platform data flow. Consists of muliple {@link PlatformExecution}s.

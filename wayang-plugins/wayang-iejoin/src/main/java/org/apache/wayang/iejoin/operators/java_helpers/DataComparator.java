@@ -18,11 +18,10 @@
 
 package org.apache.wayang.iejoin.operators.java_helpers;
 
-import org.apache.wayang.iejoin.data.Data;
-import scala.Tuple2;
-
 import java.io.Serializable;
 import java.util.Comparator;
+import org.apache.wayang.iejoin.data.Data;
+import scala.Tuple2;
 
 /**
  * Created by khayyzy on 5/28/16.

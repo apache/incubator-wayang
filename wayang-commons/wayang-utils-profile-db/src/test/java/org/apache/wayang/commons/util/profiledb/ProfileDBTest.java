@@ -18,6 +18,17 @@
 
 package org.apache.wayang.commons.util.profiledb;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.apache.wayang.commons.util.profiledb.measurement.TestMemoryMeasurement;
 import org.apache.wayang.commons.util.profiledb.measurement.TestTimeMeasurement;
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
@@ -26,13 +37,6 @@ import org.apache.wayang.commons.util.profiledb.model.Subject;
 import org.apache.wayang.commons.util.profiledb.storage.FileStorage;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.*;
 
 public class ProfileDBTest {
 

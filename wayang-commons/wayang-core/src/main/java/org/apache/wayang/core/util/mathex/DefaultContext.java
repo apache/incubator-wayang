@@ -18,11 +18,10 @@
 
 package org.apache.wayang.core.util.mathex;
 
-import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
+import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
 
 /**
  * Default {@link Context} implementation that can be configured.

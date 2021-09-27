@@ -18,13 +18,12 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Optional;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Optional;
 
 /**
  * This operator groups the elements of a data set into a single data quantum.

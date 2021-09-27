@@ -18,15 +18,14 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.postgres.platform.PostgresPlatform;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.postgres.platform.PostgresPlatform;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 
 
 /**

@@ -18,6 +18,8 @@
 
 package org.apache.wayang.core.optimizer.channels;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
@@ -25,9 +27,6 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Can convert a given {@link Channel} to another {@link Channel}.

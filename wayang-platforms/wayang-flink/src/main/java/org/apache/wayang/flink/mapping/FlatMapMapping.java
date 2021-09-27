@@ -18,6 +18,8 @@
 
 package org.apache.wayang.flink.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.FlatMapOperator;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
@@ -27,9 +29,6 @@ import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.operators.FlinkFlatMapOperator;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link FlatMapOperator} to {@link FlinkFlatMapOperator}.

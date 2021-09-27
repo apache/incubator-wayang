@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.function;
 
+import java.util.Optional;
+import java.util.function.Function;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.types.BasicDataUnitType;
 import org.apache.wayang.core.types.DataUnitType;
-
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * This descriptor pertains to functions that consume a single data unit and output a group of data units.

@@ -18,6 +18,14 @@
 
 package org.apache.wayang.java.operators;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.wayang.basic.operators.MaterializedGroupByOperator;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.TransformationDescriptor;
@@ -34,15 +42,6 @@ import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Java implementation of the {@link MaterializedGroupByOperator}.

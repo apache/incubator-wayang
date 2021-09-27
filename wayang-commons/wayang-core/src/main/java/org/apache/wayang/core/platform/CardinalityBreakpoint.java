@@ -19,6 +19,8 @@
 package org.apache.wayang.core.platform;
 
 import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
@@ -27,8 +29,6 @@ import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.Slot;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * {@link Breakpoint} implementation that is based on the {@link CardinalityEstimate}s of {@link Channel}s.

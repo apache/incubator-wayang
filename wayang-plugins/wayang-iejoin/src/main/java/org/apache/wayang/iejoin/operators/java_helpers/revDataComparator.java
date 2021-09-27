@@ -18,11 +18,10 @@
 
 package org.apache.wayang.iejoin.operators.java_helpers;
 
-import org.apache.wayang.iejoin.data.Data;
-import scala.Tuple2;
-
 import java.io.Serializable;
 import java.util.Comparator;
+import org.apache.wayang.iejoin.data.Data;
+import scala.Tuple2;
 
 public class revDataComparator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>, Input>
         implements Serializable, Comparator<Tuple2<Data<Type0, Type1>, Input>> {

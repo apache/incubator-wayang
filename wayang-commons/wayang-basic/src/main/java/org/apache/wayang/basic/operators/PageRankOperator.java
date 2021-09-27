@@ -18,6 +18,7 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Optional;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
@@ -27,8 +28,6 @@ import org.apache.wayang.core.plan.wayangplan.EstimationContextProperty;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Optional;
 
 /**
  * {@link Operator} for the PageRank algorithm. It takes as input a list of directed edges, whereby each edge

@@ -18,6 +18,8 @@
 
 package org.apache.wayang.core.api;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
 import org.apache.wayang.core.monitor.Monitor;
@@ -27,8 +29,6 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.core.profiling.CardinalityRepository;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * This is the entry point for users to work with Wayang.

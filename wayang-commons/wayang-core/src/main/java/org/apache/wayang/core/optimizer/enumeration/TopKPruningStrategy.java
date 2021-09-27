@@ -18,9 +18,8 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import org.apache.wayang.core.api.Configuration;
-
 import java.util.ArrayList;
+import org.apache.wayang.core.api.Configuration;
 
 /**
  * This {@link PlanEnumerationPruningStrategy} retains only the best {@code k} {@link PlanImplementation}s.

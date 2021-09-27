@@ -18,14 +18,13 @@
 
 package org.apache.wayang.flink.execution;
 
+import java.io.Serializable;
+import java.util.Collection;
 import org.apache.flink.api.common.functions.RichFunction;
 import org.apache.wayang.core.function.ExecutionContext;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.flink.operators.FlinkExecutionOperator;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-
-import java.io.Serializable;
-import java.util.Collection;
 
 /**
  * {@link ExecutionContext} implementation for the {@link FlinkPlatform}.

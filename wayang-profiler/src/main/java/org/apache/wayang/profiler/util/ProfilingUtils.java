@@ -18,6 +18,7 @@
 
 package org.apache.wayang.profiler.util;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
@@ -27,7 +28,6 @@ import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.apache.logging.log4j.LogManager;
 
 /**
  * Utilities to fake Wayang internals etc..

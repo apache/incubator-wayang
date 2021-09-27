@@ -18,6 +18,7 @@
 
 package org.apache.wayang.core.platform;
 
+import java.util.Collection;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.EstimationContext;
 import org.apache.wayang.core.optimizer.costs.LoadProfile;
@@ -26,8 +27,6 @@ import org.apache.wayang.core.optimizer.costs.SimpleEstimationContext;
 import org.apache.wayang.core.optimizer.costs.TimeEstimate;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
-
-import java.util.Collection;
 import org.apache.wayang.core.util.json.JSONObject;
 
 /**

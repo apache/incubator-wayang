@@ -18,10 +18,9 @@
 
 package org.apache.wayang.iejoin.operators.spark_helpers;
 
+import java.io.Serializable;
 import org.apache.wayang.iejoin.data.Data;
 import scala.Tuple2;
-
-import java.io.Serializable;
 
 /**
  * Created by khayyzy on 5/28/16.

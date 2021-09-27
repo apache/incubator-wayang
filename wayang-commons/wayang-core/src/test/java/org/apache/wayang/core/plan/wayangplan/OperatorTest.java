@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.Collection;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangCollections;
-
-import java.util.Collection;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for the {@link Operator} class.

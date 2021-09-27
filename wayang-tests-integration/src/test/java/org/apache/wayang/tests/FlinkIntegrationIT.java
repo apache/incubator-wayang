@@ -18,20 +18,6 @@
 
 package org.apache.wayang.tests;
 
-import org.apache.wayang.java.plugin.JavaBasicPlugin;
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.core.api.Job;
-import org.apache.wayang.core.api.WayangContext;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.core.plugin.Plugin;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.wayang.flink.Flink;
-import org.apache.wayang.java.Java;
-import org.apache.wayang.tests.platform.MyMadeUpPlatform;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -46,6 +32,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.flink.Flink;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.tests.platform.MyMadeUpPlatform;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test the Spark integration with Wayang.

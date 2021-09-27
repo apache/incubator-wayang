@@ -18,20 +18,28 @@
 
 package org.apache.wayang.java.operators;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.UncheckedIOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.operators.ObjectFileSink;
-import org.apache.wayang.basic.operators.TextFileSink;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.UnarySink;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
@@ -42,17 +50,6 @@ import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
-import org.apache.logging.log4j.LogManager;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.UncheckedIOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.stream.Stream;
 
 /**
  * {@link Operator} for the {@link JavaPlatform} that creates a sequence file. Consistent with Spark's object files.

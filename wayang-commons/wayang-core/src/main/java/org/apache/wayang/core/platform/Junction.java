@@ -18,6 +18,11 @@
 
 package org.apache.wayang.core.platform;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 import org.apache.wayang.core.optimizer.costs.TimeEstimate;
@@ -27,12 +32,6 @@ import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.util.WayangCollections;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Describes the implementation of one {@link OutputSlot} to its occupied {@link InputSlot}s.

@@ -18,6 +18,8 @@
 
 package org.apache.wayang.flink.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.DoWhileOperator;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.mapping.Mapping;
@@ -28,9 +30,6 @@ import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.operators.FlinkDoWhileOperator;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link DoWhileOperator} to {@link FlinkDoWhileOperator}.

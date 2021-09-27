@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.optimizer;
 
-import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.wayang.core.plan.wayangplan.Operator;
 
 /**
  * This {@link OptimizationContext} implementation aggregates several {@link OptimizationContext}s and exposes

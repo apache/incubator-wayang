@@ -18,12 +18,11 @@
 
 package org.apache.wayang.profiler.java;
 
-import org.apache.wayang.java.operators.JavaTextFileSource;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.function.Supplier;
+import org.apache.wayang.java.operators.JavaTextFileSource;
 
 /**
  * {@link OperatorProfiler} for sources.

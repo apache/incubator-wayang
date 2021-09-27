@@ -18,15 +18,14 @@
 
 package org.apache.wayang.jdbc.operators;
 
+import java.sql.Connection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.wayang.basic.operators.TableSource;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
-
-import java.sql.Connection;
-import java.util.Collections;
-import java.util.List;
 
 public interface JdbcExecutionOperator extends ExecutionOperator {
 

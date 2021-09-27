@@ -18,13 +18,12 @@
 
 package org.apache.wayang.profiler.spark;
 
+import java.util.ArrayList;
+import java.util.function.Supplier;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.operators.SparkCollectionSource;
 import org.apache.wayang.spark.operators.SparkTextFileSource;
-
-import java.util.ArrayList;
-import java.util.function.Supplier;
 
 /**
  * {@link SparkOperatorProfiler} for the {@link SparkTextFileSource}.

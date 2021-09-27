@@ -18,11 +18,10 @@
 
 package org.apache.wayang.java.mapping;
 
-import org.apache.wayang.core.mapping.Mapping;
-import org.apache.wayang.java.mapping.graph.PageRankMapping;
-
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.java.mapping.graph.PageRankMapping;
 
 /**
  * Register for {@link Mapping}s for this platform.

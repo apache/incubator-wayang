@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.platform;
 
+import java.util.OptionalLong;
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.lineage.ChannelLineageNode;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.OptionalLong;
 
 /**
  * Template for {@link ChannelInstance} implementations.

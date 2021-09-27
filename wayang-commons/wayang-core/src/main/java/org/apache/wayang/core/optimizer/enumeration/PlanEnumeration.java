@@ -19,6 +19,19 @@
 package org.apache.wayang.core.optimizer.enumeration;
 
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -33,22 +46,8 @@ import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.util.MultiMap;
-import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * Represents a collection of {@link PlanImplementation}s that all implement the same section of a {@link WayangPlan} (which

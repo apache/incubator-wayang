@@ -18,6 +18,10 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.io.PrintingOutputFormat;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
@@ -31,11 +35,6 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
-
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Implementation of the {@link LocalCallbackSink} operator for the Flink platform.

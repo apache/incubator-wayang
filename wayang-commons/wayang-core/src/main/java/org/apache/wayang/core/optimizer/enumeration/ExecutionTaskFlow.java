@@ -18,16 +18,6 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import org.apache.wayang.core.plan.executionplan.Channel;
-import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
-import org.apache.wayang.core.plan.executionplan.ExecutionStage;
-import org.apache.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.wayang.core.plan.executionplan.PlatformExecution;
-import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.wayang.core.plan.wayangplan.traversal.AbstractTopologicalTraversal;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,6 +26,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.plan.executionplan.PlatformExecution;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.traversal.AbstractTopologicalTraversal;
 
 /**
  * Graph of {@link ExecutionTask}s and {@link Channel}s. Does not define {@link ExecutionStage}s and

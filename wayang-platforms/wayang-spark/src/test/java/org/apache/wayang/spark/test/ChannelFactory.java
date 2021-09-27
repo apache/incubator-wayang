@@ -18,7 +18,9 @@
 
 package org.apache.wayang.spark.test;
 
-import org.junit.Before;
+import static org.mockito.Mockito.mock;
+
+import java.util.Collection;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -26,10 +28,7 @@ import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
-
-import java.util.Collection;
-
-import static org.mockito.Mockito.mock;
+import org.junit.Before;
 
 /**
  * Utility to create {@link Channel}s in tests.

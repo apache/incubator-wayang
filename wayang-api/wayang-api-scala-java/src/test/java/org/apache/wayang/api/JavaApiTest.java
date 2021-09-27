@@ -18,27 +18,6 @@
 
 package org.apache.wayang.api;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.WayangContext;
-import org.apache.wayang.core.function.ExecutionContext;
-import org.apache.wayang.core.function.FunctionDescriptor;
-import org.apache.wayang.core.function.PredicateDescriptor;
-import org.apache.wayang.core.function.TransformationDescriptor;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.util.WayangArrays;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.core.util.fs.LocalFileSystem;
-import org.apache.wayang.java.Java;
-import org.apache.wayang.java.operators.JavaMapOperator;
-import org.apache.wayang.spark.Spark;
-import org.apache.wayang.sqlite3.Sqlite3;
-import org.apache.wayang.sqlite3.operators.Sqlite3TableSource;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -56,6 +35,26 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.function.ExecutionContext;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.PredicateDescriptor;
+import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.WayangArrays;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.util.fs.LocalFileSystem;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.java.operators.JavaMapOperator;
+import org.apache.wayang.spark.Spark;
+import org.apache.wayang.sqlite3.Sqlite3;
+import org.apache.wayang.sqlite3.operators.Sqlite3TableSource;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test suite for the Java API.

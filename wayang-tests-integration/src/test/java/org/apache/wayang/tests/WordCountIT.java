@@ -18,8 +18,16 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.FlatMapOperator;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
@@ -45,17 +53,8 @@ import org.apache.wayang.spark.Spark;
 import org.apache.wayang.spark.operators.SparkFlatMapOperator;
 import org.apache.wayang.spark.operators.SparkMapOperator;
 import org.apache.wayang.spark.operators.SparkTextFileSource;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Word count integration test. Besides going through different {@link Platform} combinations, each test addresses a different

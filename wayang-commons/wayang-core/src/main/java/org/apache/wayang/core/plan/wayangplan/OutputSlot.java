@@ -18,8 +18,6 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.wayang.core.types.DataSetType;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -29,6 +27,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.wayang.core.types.DataSetType;
 
 /**
  * An output slot declares an output of an {@link Operator}.

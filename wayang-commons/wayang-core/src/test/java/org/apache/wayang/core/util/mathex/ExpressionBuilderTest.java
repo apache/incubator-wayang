@@ -19,12 +19,11 @@
 package org.apache.wayang.core.util.mathex;
 
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.core.util.mathex.exceptions.ParseException;
-
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.wayang.core.util.mathex.exceptions.ParseException;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for the class {@link ExpressionBuilder}.

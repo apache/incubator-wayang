@@ -18,11 +18,10 @@
 
 package org.apache.wayang.apps.tpch.queries
 
+import org.apache.wayang.api._
 import org.apache.wayang.apps.tpch.CsvUtils
 import org.apache.wayang.apps.tpch.data.{Customer, LineItem, Order}
 import org.apache.wayang.apps.util.ExperimentDescriptor
-import org.apache.wayang.api._
-import org.apache.wayang.apps.tpch.data.LineItem
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.plugin.Plugin

@@ -18,10 +18,9 @@
 
 package org.apache.wayang.giraph.mappings;
 
-import org.apache.wayang.core.mapping.Mapping;
-
 import java.util.Collection;
 import java.util.Collections;
+import org.apache.wayang.core.mapping.Mapping;
 
 /**
  * Register for {@link Mapping}s for this platform.

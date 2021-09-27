@@ -18,6 +18,10 @@
 
 package org.apache.wayang.core.platform;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
@@ -28,11 +32,6 @@ import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
-
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.wayang.core.util.json.JSONObject;
 
 /**

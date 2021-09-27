@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.platform;
 
+import java.lang.reflect.Constructor;
+import java.util.Objects;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-
-import java.lang.reflect.Constructor;
-import java.util.Objects;
 
 /**
  * Describes a certain {@link Channel} type including further parameters.

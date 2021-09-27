@@ -18,8 +18,11 @@
 
 package org.apache.wayang.spark.operators;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Collection;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.junit.Before;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -33,11 +36,7 @@ import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.wayang.spark.test.ChannelFactory;
-
-import java.util.Collection;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Before;
 
 /**
  * Test base for {@link SparkExecutionOperator} tests.

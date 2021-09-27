@@ -18,22 +18,21 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.function.ProjectionDescriptor;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.types.DataUnitType;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.java.channels.CollectionChannel;
-import org.apache.wayang.java.channels.JavaChannelInstance;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.function.ProjectionDescriptor;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.types.DataUnitType;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link JavaJoinOperator}.

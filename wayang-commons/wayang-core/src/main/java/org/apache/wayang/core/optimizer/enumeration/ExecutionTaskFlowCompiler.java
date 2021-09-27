@@ -18,6 +18,17 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.core.optimizer.OptimizationUtils;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
@@ -33,18 +44,6 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.traversal.AbstractTopologicalTraversal;
 import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.platform.Platform;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Creates an {@link ExecutionTaskFlow} from a {@link PlanImplementation}.

@@ -18,15 +18,16 @@
 
 package org.apache.wayang.giraph.mappings;
 
-import org.apache.wayang.basic.operators.PageRankOperator;
-import org.apache.wayang.core.mapping.*;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.Subplan;
-import org.apache.wayang.giraph.operators.GiraphPageRankOperator;
-import org.apache.wayang.giraph.platform.GiraphPlatform;
-
 import java.util.Collection;
 import java.util.Collections;
+import org.apache.wayang.basic.operators.PageRankOperator;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.giraph.operators.GiraphPageRankOperator;
+import org.apache.wayang.giraph.platform.GiraphPlatform;
 
 /**
  * Maps {@link PageRankOperator}s to {@link GiraphPageRankOperator}s.

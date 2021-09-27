@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.platform;
 
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
-import org.apache.wayang.core.plan.executionplan.ExecutionStage;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 
 /**
  * Describes when to interrupt the execution of an {@link ExecutionPlan}.

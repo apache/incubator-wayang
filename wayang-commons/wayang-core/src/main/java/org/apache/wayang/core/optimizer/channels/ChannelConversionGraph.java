@@ -18,6 +18,22 @@
 
 package org.apache.wayang.core.optimizer.channels;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -37,25 +53,8 @@ import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.util.Bitmask;
 import org.apache.wayang.core.util.OneTimeExecutable;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * This graph contains a set of {@link ChannelConversion}s.

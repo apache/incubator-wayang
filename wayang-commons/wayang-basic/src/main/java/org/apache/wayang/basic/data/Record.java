@@ -18,12 +18,11 @@
 
 package org.apache.wayang.basic.data;
 
-import org.apache.wayang.core.util.Copyable;
-import org.apache.wayang.core.util.ReflectionUtils;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
+import org.apache.wayang.core.util.Copyable;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 /**
  * A Type that represents a record with a schema, might be replaced with something standard like JPA entity.

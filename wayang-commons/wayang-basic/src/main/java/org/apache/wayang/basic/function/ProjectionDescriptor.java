@@ -18,16 +18,15 @@
 
 package org.apache.wayang.basic.function;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.types.RecordType;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.types.BasicDataUnitType;
-
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * This descriptor pertains to projections. It takes field names of the input type to describe the projection.

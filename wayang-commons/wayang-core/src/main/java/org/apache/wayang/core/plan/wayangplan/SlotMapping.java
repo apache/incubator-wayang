@@ -18,18 +18,16 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import java.util.Map.Entry;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * This mapping can be used to encapsulate subplans by connecting slots (usually <b>against</b> the data flow direction,

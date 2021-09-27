@@ -18,13 +18,12 @@
 
 package org.apache.wayang.profiler.spark;
 
+import java.util.function.Supplier;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.profiler.util.ProfilingUtils;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
-
-import java.util.function.Supplier;
 
 /**
  * {@link SparkOperatorProfiler} implementation for {@link SparkExecutionOperator}s with one input and one output.

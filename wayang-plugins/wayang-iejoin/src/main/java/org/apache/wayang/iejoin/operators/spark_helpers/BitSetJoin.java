@@ -18,14 +18,13 @@
 
 package org.apache.wayang.iejoin.operators.spark_helpers;
 
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Iterator;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.wayang.iejoin.data.Data;
 import org.apache.wayang.iejoin.operators.IEJoinMasterOperator;
 import scala.Tuple2;
-
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Iterator;
 
 /**
  * Created by khayyzy on 5/28/16.

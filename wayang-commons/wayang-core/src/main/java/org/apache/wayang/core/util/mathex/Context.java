@@ -18,9 +18,8 @@
 
 package org.apache.wayang.core.util.mathex;
 
-import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
-
 import java.util.function.ToDoubleFunction;
+import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
 
 /**
  * Provides contextual variables and functions in order to evaluate an {@link Expression}.

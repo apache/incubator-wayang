@@ -18,15 +18,14 @@
 
 package org.apache.wayang.iejoin.mapping;
 
+import java.util.Arrays;
+import java.util.Collection;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.iejoin.mapping.spark.IEJoinMapping;
 import org.apache.wayang.iejoin.mapping.spark.IESelfJoinMapping;
 import org.apache.wayang.iejoin.operators.IEJoinOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * {@link Mapping}s for the {@link IEJoinOperator}.

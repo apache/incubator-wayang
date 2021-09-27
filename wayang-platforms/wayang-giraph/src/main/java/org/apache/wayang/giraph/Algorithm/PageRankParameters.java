@@ -18,12 +18,9 @@
 
 package org.apache.wayang.giraph.Algorithm;
 
-import org.apache.wayang.core.api.exception.WayangException;
-
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
-import java.util.Stack;
+import org.apache.wayang.core.api.exception.WayangException;
 
 /**
  * Parameters for Basic PageRank implementation.

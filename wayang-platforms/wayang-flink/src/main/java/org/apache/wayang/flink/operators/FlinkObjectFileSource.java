@@ -18,6 +18,11 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
@@ -31,7 +36,6 @@ import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.UnarySource;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
@@ -40,12 +44,6 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 
 /**

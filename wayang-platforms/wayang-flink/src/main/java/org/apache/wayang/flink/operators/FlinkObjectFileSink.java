@@ -18,6 +18,9 @@
 
 package org.apache.wayang.flink.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.flink.api.java.operators.DataSink;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.wayang.basic.channels.FileChannel;
@@ -25,7 +28,6 @@ import org.apache.wayang.basic.operators.ObjectFileSink;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.UnarySink;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
@@ -35,10 +37,6 @@ import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.compiler.WayangFileOutputFormat;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * {@link Operator} for the {@link FlinkPlatform} that creates a sequence file.

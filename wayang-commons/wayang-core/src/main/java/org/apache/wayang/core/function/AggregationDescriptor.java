@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.function;
 
+import java.util.Iterator;
 import org.apache.wayang.core.optimizer.costs.LoadEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.apache.wayang.core.types.BasicDataUnitType;
 import org.apache.wayang.core.types.DataUnitGroupType;
 import org.apache.wayang.core.types.DataUnitType;
-
-import java.util.Iterator;
 
 /**
  * This descriptor pertains to functions that take multiple data units and aggregate them into a single data unit.

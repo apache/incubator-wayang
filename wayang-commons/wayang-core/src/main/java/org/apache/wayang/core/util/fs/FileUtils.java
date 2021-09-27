@@ -18,9 +18,6 @@
 
 package org.apache.wayang.core.util.fs;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.wayang.core.api.exception.WayangException;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,6 +26,8 @@ import java.util.Iterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.commons.io.IOUtils;
+import org.apache.wayang.core.api.exception.WayangException;
 
 public class FileUtils {
 

@@ -18,8 +18,17 @@
 
 package org.apache.wayang.giraph.operators;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
 import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.giraph.job.GiraphJob;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.PageRankOperator;
@@ -40,13 +49,6 @@ import org.apache.wayang.giraph.Algorithm.PageRankParameters;
 import org.apache.wayang.giraph.execution.GiraphExecutor;
 import org.apache.wayang.giraph.platform.GiraphPlatform;
 import org.apache.wayang.java.channels.StreamChannel;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.*;
-import java.net.URISyntaxException;
-import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * PageRank {@link Operator} implementation for the {@link GiraphPlatform}.

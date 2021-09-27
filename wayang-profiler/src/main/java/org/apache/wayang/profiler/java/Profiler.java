@@ -19,6 +19,13 @@
 package org.apache.wayang.profiler.java;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
@@ -29,14 +36,6 @@ import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.profiler.data.DataGenerators;
 import org.apache.wayang.profiler.util.ProfilingUtils;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Utility to support finding reasonable {@link LoadProfileEstimator}s for {@link JavaExecutionOperator}s.

@@ -18,6 +18,8 @@
 
 package org.apache.wayang.spark.mapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.basic.operators.FlatMapOperator;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
@@ -27,9 +29,6 @@ import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.operators.SparkFlatMapOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Mapping from {@link FlatMapOperator} to {@link SparkFlatMapOperator}.

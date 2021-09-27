@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import org.apache.wayang.core.api.Configuration;
-
 import java.util.Collection;
 import java.util.LinkedList;
+import org.apache.wayang.core.api.Configuration;
 
 /**
  * Estimates the {@link LoadProfile} of some executable artifact that takes some input data quanta and produces them.

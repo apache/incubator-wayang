@@ -18,19 +18,18 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Optional;
+import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Optional;
-import java.util.function.IntUnaryOperator;
-import java.util.function.LongUnaryOperator;
 
 /**
  * A random sample operator randomly selects its inputs from the input slot and pushes that element to the output slot.

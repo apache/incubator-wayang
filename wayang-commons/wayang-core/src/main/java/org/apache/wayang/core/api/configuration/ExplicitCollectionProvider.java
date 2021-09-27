@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.api.configuration;
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.api.Configuration;
 
 /**
  * {@link CollectionProvider} implementation based on a blacklist and a whitelist.

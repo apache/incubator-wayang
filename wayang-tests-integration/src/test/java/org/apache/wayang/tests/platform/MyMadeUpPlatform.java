@@ -18,6 +18,10 @@
 
 package org.apache.wayang.tests.platform;
 
+import static org.mockito.Mockito.mock;
+
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -26,11 +30,6 @@ import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
 import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.plugin.Plugin;
-
-import java.util.Collection;
-import java.util.Collections;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Dummy {@link Platform} that does not provide any {@link Mapping}s.

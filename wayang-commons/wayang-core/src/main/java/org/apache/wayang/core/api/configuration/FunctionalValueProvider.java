@@ -18,9 +18,8 @@
 
 package org.apache.wayang.core.api.configuration;
 
-import org.apache.wayang.core.api.Configuration;
-
 import java.util.function.Function;
+import org.apache.wayang.core.api.Configuration;
 
 /**
  * Used by {@link Configuration}s to provide some value.

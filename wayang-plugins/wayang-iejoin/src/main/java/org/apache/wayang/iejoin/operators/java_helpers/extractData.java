@@ -19,9 +19,8 @@
 package org.apache.wayang.iejoin.operators.java_helpers;
 
 
-import org.apache.wayang.iejoin.data.Data;
-
 import java.util.function.Function;
+import org.apache.wayang.iejoin.data.Data;
 
 /**
  * Created by khayyzy on 5/28/16.

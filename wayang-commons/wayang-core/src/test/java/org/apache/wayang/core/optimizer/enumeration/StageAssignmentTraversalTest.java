@@ -18,8 +18,7 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.Collections;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
@@ -28,8 +27,8 @@ import org.apache.wayang.core.plan.executionplan.test.TestChannel;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.test.MockFactory;
-
-import java.util.Collections;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link StageAssignmentTraversal}.

@@ -18,6 +18,9 @@
 
 package org.apache.wayang.postgres.plugin;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -27,10 +30,6 @@ import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.postgres.channels.ChannelConversions;
 import org.apache.wayang.postgres.platform.PostgresPlatform;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * This {@link Plugin} enables to use some basic Wayang {@link Operator}s on the {@link PostgresPlatform}.

@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.api.configuration;
 
+import java.util.Collection;
+import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * Provides a {@link Collection} of objects.

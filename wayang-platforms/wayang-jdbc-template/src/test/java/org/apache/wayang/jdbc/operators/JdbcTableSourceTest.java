@@ -19,11 +19,15 @@
 package org.apache.wayang.jdbc.operators;
 
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -31,13 +35,8 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.jdbc.test.HsqldbPlatform;
 import org.apache.wayang.jdbc.test.HsqldbTableSource;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link SqlToStreamOperator}.

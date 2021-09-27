@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.platform.lineage;
 
+import java.util.Collection;
+import java.util.LinkedList;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.AtomicExecution;
-
-import java.util.Collection;
-import java.util.LinkedList;
 
 /**
  * Encapsulates {@link AtomicExecution}s with a common {@link OptimizationContext.OperatorContext} in a lazy execution lineage.

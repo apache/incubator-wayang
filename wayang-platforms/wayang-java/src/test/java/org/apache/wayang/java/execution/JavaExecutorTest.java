@@ -18,8 +18,9 @@
 
 package org.apache.wayang.java.execution;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.function.ExecutionContext;
 import org.apache.wayang.core.function.FunctionDescriptor;
@@ -33,10 +34,8 @@ import org.apache.wayang.java.operators.JavaCollectionSource;
 import org.apache.wayang.java.operators.JavaDoWhileOperator;
 import org.apache.wayang.java.operators.JavaLocalCallbackSink;
 import org.apache.wayang.java.operators.JavaMapOperator;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for the {@link JavaExecutor}.

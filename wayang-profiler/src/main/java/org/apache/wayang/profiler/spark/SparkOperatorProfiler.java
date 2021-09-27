@@ -18,6 +18,15 @@
 
 package org.apache.wayang.profiler.spark;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Supplier;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -34,16 +43,6 @@ import org.apache.wayang.spark.compiler.FunctionCompiler;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 import org.rrd4j.ConsolFun;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * Allows to instrument an {@link SparkExecutionOperator}.

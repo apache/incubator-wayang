@@ -18,9 +18,10 @@
 
 package org.apache.wayang.core.platform;
 
-import org.apache.wayang.core.util.json.JSONObject;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.configuration.KeyValueProvider;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -33,11 +34,9 @@ import org.apache.wayang.core.test.DummyPlatform;
 import org.apache.wayang.core.test.SerializableDummyExecutionOperator;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.WayangCollections;
-
-import java.util.Arrays;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.apache.wayang.core.util.json.JSONObject;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suites for {@link PartialExecution}s.

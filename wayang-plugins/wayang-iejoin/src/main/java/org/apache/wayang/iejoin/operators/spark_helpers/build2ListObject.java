@@ -18,14 +18,13 @@
 
 package org.apache.wayang.iejoin.operators.spark_helpers;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.wayang.core.util.Copyable;
 import org.apache.wayang.iejoin.data.Data;
 import scala.Tuple2;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 
 /**
  * Created by khayyzy on 5/28/16.

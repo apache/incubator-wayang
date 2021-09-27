@@ -18,8 +18,11 @@
 
 package org.apache.wayang.jdbc.execution;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.sql.SQLException;
+import java.util.Collections;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -38,12 +41,8 @@ import org.apache.wayang.jdbc.test.HsqldbFilterOperator;
 import org.apache.wayang.jdbc.test.HsqldbPlatform;
 import org.apache.wayang.jdbc.test.HsqldbProjectionOperator;
 import org.apache.wayang.jdbc.test.HsqldbTableSource;
-
-import java.sql.SQLException;
-import java.util.Collections;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link JdbcExecutor}.

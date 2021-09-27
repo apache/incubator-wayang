@@ -18,12 +18,6 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
-import org.apache.wayang.core.optimizer.cardinality.SubplanCardinalityPusher;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +26,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.wayang.core.optimizer.cardinality.SubplanCardinalityPusher;
 
 /**
  * A subplan encapsulates connected operators as a single operator.

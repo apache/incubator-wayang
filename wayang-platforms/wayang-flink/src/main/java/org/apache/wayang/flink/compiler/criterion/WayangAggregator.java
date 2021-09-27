@@ -18,11 +18,10 @@
 
 package org.apache.wayang.flink.compiler.criterion;
 
-import org.apache.flink.api.common.aggregators.Aggregator;
-import org.apache.flink.types.ListValue;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.flink.api.common.aggregators.Aggregator;
+import org.apache.flink.types.ListValue;
 
 /**
  * Class create a {@Link Aggregator} that generate aggregatorWrapper

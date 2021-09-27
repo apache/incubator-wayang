@@ -18,6 +18,17 @@
 
 package org.apache.wayang.core.optimizer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -40,23 +51,11 @@ import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OperatorContainer;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.Slot;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Manages contextual information required during the optimization of a {@link WayangPlan}.

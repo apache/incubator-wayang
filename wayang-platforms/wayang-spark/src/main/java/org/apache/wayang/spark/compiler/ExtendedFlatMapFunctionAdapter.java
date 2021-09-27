@@ -18,13 +18,12 @@
 
 package org.apache.wayang.spark.compiler;
 
+import java.util.Iterator;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.wayang.core.function.ExecutionContext;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.spark.execution.SparkExecutionContext;
-
-import java.util.Iterator;
 
 /**
  * Implements a {@link FlatMapFunction} that calls {@link org.apache.wayang.core.function.ExtendedFunction#open(ExecutionContext)}

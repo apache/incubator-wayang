@@ -18,6 +18,10 @@
 
 package org.apache.wayang.basic.mapping;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.CountOperator;
 import org.apache.wayang.basic.operators.DistinctOperator;
@@ -43,11 +47,6 @@ import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.Subplan;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangCollections;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * This {@link Mapping} translates a {@link PageRankOperator} into a {@link Subplan} of basic {@link Operator}s.

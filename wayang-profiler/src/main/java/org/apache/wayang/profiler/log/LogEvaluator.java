@@ -18,6 +18,17 @@
 
 package org.apache.wayang.profiler.log;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.ProbabilisticIntervalEstimate;
@@ -28,18 +39,6 @@ import org.apache.wayang.core.profiling.ExecutionLog;
 import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Evaluates a {@link Configuration} on a {@link ExecutionLog}.

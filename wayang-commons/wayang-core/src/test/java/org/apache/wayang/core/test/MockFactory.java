@@ -18,7 +18,10 @@
 
 package org.apache.wayang.core.test;
 
-import org.mockito.Answers;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -29,11 +32,7 @@ import org.apache.wayang.core.plan.wayangplan.OperatorContainer;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Collections;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.mockito.Answers;
 
 /**
  * Utility to mock Wayang objects.

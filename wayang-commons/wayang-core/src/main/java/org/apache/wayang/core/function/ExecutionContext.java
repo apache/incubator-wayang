@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.function;
 
+import java.util.Collection;
 import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
 import org.apache.wayang.core.platform.Platform;
-
-import java.util.Collection;
 
 /**
  * While a function is executed on a certain {@link Platform}, allows access to some information of the context in

@@ -18,6 +18,7 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Optional;
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.FlatMapDescriptor;
@@ -27,8 +28,6 @@ import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Optional;
 
 /**
  * A flatmap operator represents semantics as they are known from frameworks, such as Spark and Flink. It pulls each

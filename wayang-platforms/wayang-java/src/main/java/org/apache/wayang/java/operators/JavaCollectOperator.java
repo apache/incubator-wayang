@@ -18,6 +18,11 @@
 
 package org.apache.wayang.java.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -33,12 +38,6 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Converts {@link StreamChannel} into a {@link CollectionChannel}

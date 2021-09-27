@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.wayang.core.util.WayangCollections;
-import org.apache.logging.log4j.LogManager;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.util.WayangCollections;
 
 /**
  * This is not an {@link Operator} in its own right. However, it contains a set of operators and can redirect

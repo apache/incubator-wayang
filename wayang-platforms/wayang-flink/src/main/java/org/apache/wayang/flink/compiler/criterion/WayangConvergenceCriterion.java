@@ -19,12 +19,11 @@
 package org.apache.wayang.flink.compiler.criterion;
 
 
-import org.apache.flink.api.common.aggregators.ConvergenceCriterion;
-import org.apache.wayang.core.function.FunctionDescriptor;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import org.apache.flink.api.common.aggregators.ConvergenceCriterion;
+import org.apache.wayang.core.function.FunctionDescriptor;
 
 /**
  * Class create a {@Link ConvergenceCriterion} that generate aggregatorWrapper

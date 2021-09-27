@@ -18,11 +18,6 @@
 
 package org.apache.wayang.core.util.fs;
 
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.util.LruCache;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,6 +25,10 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.util.LruCache;
 
 /**
  * Tool to work with {@link FileSystem}s.

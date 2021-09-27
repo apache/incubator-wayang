@@ -18,13 +18,12 @@
 
 package org.apache.wayang.profiler.java;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.java.channels.JavaChannelInstance;
-import org.apache.wayang.java.operators.JavaExecutionOperator;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Supplier;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.apache.wayang.java.operators.JavaExecutionOperator;
 
 /**
  * {@link OperatorProfiler} implementation for sinks.

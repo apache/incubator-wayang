@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.platform;
 
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.plan.executionplan.ExecutionStage;
-
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 
 /**
  * {@link Breakpoint} implementation that disrupts execution if all aggregated {@link Breakpoint}s request a disruption.

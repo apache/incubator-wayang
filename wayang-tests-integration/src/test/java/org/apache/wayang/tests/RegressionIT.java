@@ -18,8 +18,8 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.api.LoadCollectionDataQuantaBuilder;
 import org.apache.wayang.api.MapDataQuantaBuilder;
@@ -27,9 +27,8 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.util.WayangArrays;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
-
-import java.util.ArrayList;
-import java.util.Arrays;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * This class hosts and documents some tests for bugs that we encountered. Ultimately, we want to avoid re-introducing

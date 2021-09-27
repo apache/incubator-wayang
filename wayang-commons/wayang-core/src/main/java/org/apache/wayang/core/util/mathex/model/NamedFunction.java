@@ -18,13 +18,12 @@
 
 package org.apache.wayang.core.util.mathex.model;
 
-import org.apache.wayang.core.util.mathex.Context;
-import org.apache.wayang.core.util.mathex.Expression;
-import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
-
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import org.apache.wayang.core.util.mathex.Context;
+import org.apache.wayang.core.util.mathex.Expression;
+import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
 
 /**
  * {@link Expression} implementation that represents a function that is identified

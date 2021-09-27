@@ -18,6 +18,11 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
@@ -25,12 +30,6 @@ import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
 import org.apache.wayang.core.plan.wayangplan.LoopSubplan;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * {@link CardinalityPusher} implementation for {@link LoopSubplan}s.

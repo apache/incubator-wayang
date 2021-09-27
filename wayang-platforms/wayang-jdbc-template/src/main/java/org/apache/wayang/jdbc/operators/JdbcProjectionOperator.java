@@ -18,6 +18,8 @@
 
 package org.apache.wayang.jdbc.operators;
 
+import java.sql.Connection;
+import java.util.Optional;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.MapOperator;
@@ -26,9 +28,6 @@ import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
-
-import java.sql.Connection;
-import java.util.Optional;
 
 /**
  * Projects the fields of {@link Record}s.

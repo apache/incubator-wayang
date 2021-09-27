@@ -18,20 +18,19 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.apache.commons.lang3.Validate;
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.core.platform.ChannelInstance;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.spark.channels.RddChannel;
-import org.apache.wayang.spark.execution.SparkExecutor;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.spark.channels.RddChannel;
+import org.apache.wayang.spark.execution.SparkExecutor;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for {@link SparkObjectFileSource}.

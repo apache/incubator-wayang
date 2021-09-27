@@ -18,13 +18,13 @@
 
 package org.apache.wayang.core;
 
-import org.junit.Test;
 import org.apache.wayang.core.plan.wayangplan.Slot;
 import org.apache.wayang.core.plan.wayangplan.test.TestSink;
 import org.apache.wayang.core.plan.wayangplan.test.TestSource;
 import org.apache.wayang.core.test.TestDataUnit;
 import org.apache.wayang.core.test.TestDataUnit2;
 import org.apache.wayang.core.types.DataSetType;
+import org.junit.Test;
 
 /**
  * Test suite for {@link Slot}s.

@@ -18,6 +18,12 @@
 
 package org.apache.wayang.core.mapping;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
@@ -25,15 +31,8 @@ import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.TopDownPlanVisitor;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 
 /**
  * A subplan pattern describes a class of subplans in a {@link WayangPlan}.

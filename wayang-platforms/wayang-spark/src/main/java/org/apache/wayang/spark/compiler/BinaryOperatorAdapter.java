@@ -18,9 +18,8 @@
 
 package org.apache.wayang.spark.compiler;
 
-import org.apache.spark.api.java.function.Function2;
-
 import java.util.function.BinaryOperator;
+import org.apache.spark.api.java.function.Function2;
 
 /**
  * Wraps a {@link java.util.function.BinaryOperator} as a {@link Function2}.

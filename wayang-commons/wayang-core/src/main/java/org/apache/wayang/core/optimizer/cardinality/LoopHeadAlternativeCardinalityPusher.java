@@ -18,6 +18,9 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
+import java.util.Collection;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
@@ -27,10 +30,6 @@ import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.Slot;
 import org.apache.wayang.core.util.Tuple;
-
-import java.util.Collection;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 /**
  * {@link CardinalityPusher} implementation for {@link LoopHeadAlternative}s.

@@ -18,6 +18,9 @@
 
 package org.apache.wayang.core.plan.wayangplan.test;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
@@ -28,10 +31,6 @@ import org.apache.wayang.core.plan.wayangplan.OperatorBase;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
 
 /**
  * {@link LoopHeadOperator} implementation for test purposes.

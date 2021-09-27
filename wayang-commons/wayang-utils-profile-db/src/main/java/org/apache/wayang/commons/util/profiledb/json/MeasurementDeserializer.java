@@ -22,11 +22,10 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import org.apache.wayang.commons.util.profiledb.model.Measurement;
-
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.wayang.commons.util.profiledb.model.Measurement;
 
 /**
  * Custom deserializer for {@link Measurement}s

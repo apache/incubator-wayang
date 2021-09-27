@@ -18,11 +18,6 @@
 
 package org.apache.wayang.core.function;
 
-import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
-import org.apache.wayang.core.optimizer.costs.LoadEstimator;
-import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
-import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
-
 import java.io.Serializable;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -30,6 +25,10 @@ import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.wayang.core.optimizer.costs.LoadEstimator;
+import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
 
 /**
  * A function operates on single data units or collections of those.

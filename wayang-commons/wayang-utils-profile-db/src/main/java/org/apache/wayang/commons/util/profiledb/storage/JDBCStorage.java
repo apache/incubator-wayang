@@ -18,8 +18,6 @@
 
 package org.apache.wayang.commons.util.profiledb.storage;
 
-import org.apache.wayang.commons.util.profiledb.model.Experiment;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,6 +25,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.wayang.commons.util.profiledb.model.Experiment;
 
 public class JDBCStorage extends Storage {
 

@@ -18,10 +18,10 @@
 
 package org.apache.wayang.apps.simwords
 
+import org.apache.logging.log4j.LogManager
 import org.apache.wayang.core.function.ExecutionContext
 import org.apache.wayang.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.apache.wayang.core.util.WayangCollections
-import org.apache.logging.log4j.LogManager
 
 import scala.collection.JavaConversions._
 import scala.util.Random

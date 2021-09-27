@@ -18,9 +18,13 @@
 
 package org.apache.wayang.java.operators.graph;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.PageRankOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -33,14 +37,6 @@ import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Spliterators;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Java implementation of the {@link PageRankOperator}.

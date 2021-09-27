@@ -18,8 +18,6 @@
 
 package org.apache.wayang.core.util;
 
-import org.apache.commons.lang3.Validate;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +31,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.apache.commons.lang3.Validate;
 
 /**
  * Utilities to operate {@link java.util.Collection}s.

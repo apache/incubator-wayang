@@ -18,9 +18,6 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,6 +25,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Traverse a plan. In each instance, every operator will be traversed only once.

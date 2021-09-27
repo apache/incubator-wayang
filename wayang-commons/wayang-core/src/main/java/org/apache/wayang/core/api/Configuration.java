@@ -18,8 +18,27 @@
 
 package org.apache.wayang.core.api;
 
+import static org.apache.wayang.core.util.ReflectionUtils.instantiateDefault;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
+import java.util.Properties;
+import java.util.Random;
+import java.util.function.ToDoubleFunction;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.configuration.CollectionProvider;
 import org.apache.wayang.core.api.configuration.ConstantValueProvider;
 import org.apache.wayang.core.api.configuration.ExplicitCollectionProvider;
@@ -58,26 +77,6 @@ import org.apache.wayang.core.util.Actions;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.OptionalLong;
-import java.util.Properties;
-import java.util.Random;
-import java.util.function.ToDoubleFunction;
-
-import static org.apache.wayang.core.util.ReflectionUtils.instantiateDefault;
 
 /**
  * Describes both the configuration of a {@link WayangContext} and {@link Job}s.

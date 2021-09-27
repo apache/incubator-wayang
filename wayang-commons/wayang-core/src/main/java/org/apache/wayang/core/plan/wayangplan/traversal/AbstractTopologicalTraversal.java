@@ -18,17 +18,16 @@
 
 package org.apache.wayang.core.plan.wayangplan.traversal;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Queue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Queue;
 
 /**
  * Encapsulates logic to traverse a {@link WayangPlan} in a topological, bottom-up manner.

@@ -18,19 +18,18 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.core.api.WayangContext;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.giraph.Giraph;
-import org.apache.wayang.java.Java;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.giraph.Giraph;
+import org.apache.wayang.java.Java;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Integration tests for the integration of Giraph with Wayang.

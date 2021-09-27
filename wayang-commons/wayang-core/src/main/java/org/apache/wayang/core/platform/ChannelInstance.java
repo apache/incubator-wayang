@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.platform;
 
+import java.util.OptionalLong;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.lineage.ChannelLineageNode;
-
-import java.util.OptionalLong;
 
 /**
  * Represents the actual, allocated resource represented by {@link Channel}.

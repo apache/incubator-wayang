@@ -18,13 +18,17 @@
 
 package org.apache.wayang.spark.operators;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.UnarySource;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
@@ -34,12 +38,6 @@ import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.

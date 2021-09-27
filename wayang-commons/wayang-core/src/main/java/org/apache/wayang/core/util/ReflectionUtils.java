@@ -18,11 +18,6 @@
 
 package org.apache.wayang.core.util;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;;
-
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -46,6 +41,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.api.exception.WayangException;
+
+;
 
 /**
  * Utilities for reflection code.

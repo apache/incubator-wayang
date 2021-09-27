@@ -27,8 +27,6 @@ import org.apache.wayang.core.mapping.PlanTransformation;
 import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
 import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.java.operators.JavaObjectFileSink;
-import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.operators.SparkObjectFileSink;
 import org.apache.wayang.spark.platform.SparkPlatform;
 

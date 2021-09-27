@@ -18,6 +18,12 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.plan.wayangplan.LoopHeadOperator;
@@ -26,13 +32,6 @@ import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.util.OneTimeExecutable;
 import org.apache.wayang.core.util.Tuple;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Enumerator for {@link LoopSubplan}s.

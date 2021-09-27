@@ -18,18 +18,17 @@
 
 package org.apache.wayang.profiler.hardware;
 
-import org.apache.commons.lang.Validate;
-import org.apache.wayang.core.util.Formats;
-import org.apache.wayang.core.util.fs.FileSystem;
-import org.apache.wayang.core.util.fs.FileSystems;
-import org.apache.wayang.profiler.util.ProfilingUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import org.apache.commons.lang.Validate;
+import org.apache.wayang.core.util.Formats;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
+import org.apache.wayang.profiler.util.ProfilingUtils;
 
 /**
  * Profiles the reading and writing speed to some directory.

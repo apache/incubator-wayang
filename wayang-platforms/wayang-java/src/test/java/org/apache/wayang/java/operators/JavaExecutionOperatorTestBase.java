@@ -18,7 +18,11 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.BeforeClass;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Collection;
+import java.util.stream.Stream;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -33,12 +37,7 @@ import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.java.test.ChannelFactory;
-
-import java.util.Collection;
-import java.util.stream.Stream;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.BeforeClass;
 
 /**
  * Superclass for tests of {@link JavaExecutionOperator}s.

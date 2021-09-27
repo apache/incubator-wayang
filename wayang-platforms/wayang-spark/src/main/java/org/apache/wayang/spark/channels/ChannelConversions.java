@@ -18,6 +18,8 @@
 
 package org.apache.wayang.spark.channels;
 
+import java.util.Arrays;
+import java.util.Collection;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
@@ -33,9 +35,6 @@ import org.apache.wayang.spark.operators.SparkObjectFileSink;
 import org.apache.wayang.spark.operators.SparkObjectFileSource;
 import org.apache.wayang.spark.operators.SparkTsvFileSink;
 import org.apache.wayang.spark.operators.SparkTsvFileSource;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * {@link ChannelConversion}s used by the {@link JavaPlatform}.

@@ -18,8 +18,20 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.CollectionSource;
@@ -39,21 +51,8 @@ import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tests.platform.MyMadeUpPlatform;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test the Java integration with Wayang.

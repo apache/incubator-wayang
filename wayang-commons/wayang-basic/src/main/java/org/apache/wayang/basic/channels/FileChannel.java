@@ -18,6 +18,13 @@
 
 package org.apache.wayang.basic.channels;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -30,14 +37,6 @@ import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.core.util.Actions;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
 
 /**
  * Represents a {@link Channel} that is realized via a file/set of files.

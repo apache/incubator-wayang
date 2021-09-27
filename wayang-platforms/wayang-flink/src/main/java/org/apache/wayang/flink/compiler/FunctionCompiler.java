@@ -18,6 +18,9 @@
 
 package org.apache.wayang.flink.compiler;
 
+import java.util.Collection;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import org.apache.flink.api.common.functions.CoGroupFunction;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -40,10 +43,6 @@ import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.flink.compiler.criterion.WayangConvergenceCriterion;
 import org.apache.wayang.flink.execution.FlinkExecutionContext;
-
-import java.util.Collection;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * A compiler translates Wayang functions into executable Flink functions.

@@ -18,14 +18,13 @@
 
 package org.apache.wayang.core.mapping;
 
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.platform.Platform;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.platform.Platform;
 
 /**
  * A subplan match correlates a {@link SubplanPattern} with its actually matched .

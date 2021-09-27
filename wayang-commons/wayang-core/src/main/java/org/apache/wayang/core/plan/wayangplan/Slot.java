@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
+import java.util.Collection;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.types.DataSetType;
-
-import java.util.Collection;
 
 /**
  * Abstract class for inputs and outputs to operators.

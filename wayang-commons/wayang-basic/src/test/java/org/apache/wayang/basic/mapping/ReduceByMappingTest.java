@@ -18,8 +18,6 @@
 
 package org.apache.wayang.basic.mapping;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.GroupByOperator;
@@ -31,11 +29,13 @@ import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.PlanTransformation;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.UnarySink;
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test suite for the {@link ReduceByMapping}.
