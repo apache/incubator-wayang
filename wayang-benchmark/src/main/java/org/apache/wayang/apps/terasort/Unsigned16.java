@@ -21,7 +21,6 @@ package org.apache.wayang.apps.terasort;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-
 import java.io.Serializable;
 import org.apache.hadoop.io.Writable;
 
