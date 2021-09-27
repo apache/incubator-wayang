@@ -47,7 +47,7 @@ object TeraApp extends ExperimentDescriptor {
 
     task match {
       case "generate" => new TeraGen(plugins: _*).apply(output_file, fileSize, partitions)
-      case "sort" => null
+      case "sort" => new TeraSort(plugins: _*).apply(input_file, output_file)
       case "validate" => null
     }
 
