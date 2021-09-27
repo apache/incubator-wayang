@@ -33,6 +33,7 @@ public class Mappings {
             new TextFileSourceMapping(),
             new TextFileSinkMapping(),
             new ObjectFileSinkMapping(),
+            new ObjectFileSourceMapping(),
             new MapMapping(),
             new MapPartitionsMapping(),
             new ReduceByMapping(),

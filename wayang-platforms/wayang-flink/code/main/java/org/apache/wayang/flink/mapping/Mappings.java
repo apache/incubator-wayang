@@ -55,6 +55,7 @@ public class Mappings {
             new TextFileSinkMapping(),
             new ObjectFileSinkMapping(),
             new TextFileSourceMapping(),
+            new ObjectFileSourceMapping(),
             new UnionAllMapping(),
             new ZipWithIdMapping()
     );

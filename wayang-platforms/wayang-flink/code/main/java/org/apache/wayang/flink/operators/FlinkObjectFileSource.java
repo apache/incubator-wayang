@@ -27,6 +27,7 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
@@ -52,17 +53,18 @@ import java.util.List;
  *
  * @see FlinkObjectFileSource
  */
-public class FlinkObjectFileSource<Type> extends UnarySource<Type> implements FlinkExecutionOperator {
+public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implements FlinkExecutionOperator {
 
-    private final String sourcePath;
+    public FlinkObjectFileSource(ObjectFileSource<Type> that) {
+        super(that);
+    }
 
     public FlinkObjectFileSource(DataSetType<Type> type) {
         this(null, type);
     }
 
     public FlinkObjectFileSource(String sourcePath, DataSetType<Type> type) {
-        super(type);
-        this.sourcePath = sourcePath;
+        super(sourcePath, type);
     }
 
     @Override
@@ -76,12 +78,12 @@ public class FlinkObjectFileSource<Type> extends UnarySource<Type> implements Fl
         assert outputs.length == this.getNumOutputs();
 
         final String path;
-        if (this.sourcePath == null) {
+        if (this.getInputUrl() == null) {
             final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
             path = input.getSinglePath();
         } else {
             assert inputs.length == 0;
-            path = this.sourcePath;
+            path = this.getInputUrl();
         }
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
         flinkExecutor.fee.setParallelism(flinkExecutor.getNumDefaultPartitions());
@@ -109,7 +111,7 @@ public class FlinkObjectFileSource<Type> extends UnarySource<Type> implements Fl
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new FlinkObjectFileSource<Type>(sourcePath, this.getType());
+        return new FlinkObjectFileSource<Type>(this.getInputUrl(), this.getType());
     }
 
     @Override
