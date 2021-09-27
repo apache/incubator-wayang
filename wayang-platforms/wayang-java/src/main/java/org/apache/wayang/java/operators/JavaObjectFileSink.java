@@ -83,8 +83,9 @@ public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExec
 
         // Prepare Hadoop's SequenceFile.Writer.
         final String path;
+        FileChannel.Instance output;
         if(outputs.length == 1) {
-            FileChannel.Instance output = (FileChannel.Instance) outputs[0];
+            output = (FileChannel.Instance) outputs[0];
             path = output.addGivenOrTempPath(this.textFileUrl,
                 javaExecutor.getCompiler().getConfiguration());
         }else{
