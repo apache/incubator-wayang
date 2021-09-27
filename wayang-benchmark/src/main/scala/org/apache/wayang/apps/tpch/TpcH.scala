@@ -22,13 +22,13 @@ import org.apache.wayang.apps.tpch.queries.{Query1, Query3Database, Query3File, 
 import org.apache.wayang.apps.util.{Parameters, ProfileDBHelper, StdOut}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.Configuration
+import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.postgres.operators.PostgresTableSource
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.sqlite3.operators.Sqlite3TableSource
 
-import scala.collection.JavaConverters
 
 /**
   * This app adapts some TPC-H queries.
@@ -50,12 +50,15 @@ object TpcH {
       val jdbcPlatforms = plugins
         .flatMap(
           plugin => {
-            JavaConverters
-              .collectionAsScalaIterable(
-                plugin.getRequiredPlatforms
-              )
-              .toSeq
-          })
+            val list = plugin.getRequiredPlatforms
+            var array: List[Platform] = List[Platform]()
+            val iterator = list.iterator()
+            while(iterator.hasNext){
+              array :+= iterator.next()
+            }
+            array
+          }
+        )
         .filter(_.isInstanceOf[JdbcPlatformTemplate])
         .distinct
       if (jdbcPlatforms.size == 1) jdbcPlatforms.head.asInstanceOf[JdbcPlatformTemplate]
