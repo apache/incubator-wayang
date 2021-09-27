@@ -20,6 +20,7 @@ package org.apache.wayang.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
@@ -45,19 +46,20 @@ import java.util.List;
  *
  * @see SparkObjectFileSink
  */
-public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExecutionOperator {
+public class SparkObjectFileSource<T> extends ObjectFileSource<T> implements SparkExecutionOperator {
 
     private final Logger logger = LogManager.getLogger(this.getClass());
 
-    private final String sourcePath;
+    public SparkObjectFileSource(ObjectFileSource that) {
+        super(that);
+    }
 
     public SparkObjectFileSource(DataSetType<T> type) {
         this(null, type);
     }
 
     public SparkObjectFileSource(String sourcePath, DataSetType<T> type) {
-        super(type);
-        this.sourcePath = sourcePath;
+        super(sourcePath, type);
     }
 
     @Override
@@ -67,9 +69,9 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
             SparkExecutor sparkExecutor,
             OptimizationContext.OperatorContext operatorContext) {
         final String sourcePath;
-        if (this.sourcePath != null) {
+        if (this.getInputUrl() != null) {
             assert inputs.length == 0;
-            sourcePath = this.sourcePath;
+            sourcePath = this.getInputUrl();
         } else {
             FileChannel.Instance input = (FileChannel.Instance) inputs[0];
             sourcePath = input.getSinglePath();
@@ -86,7 +88,7 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkObjectFileSource<>(this.sourcePath, this.getType());
+        return new SparkObjectFileSource<>(this.getInputUrl(), this.getType());
     }
 
     @Override
