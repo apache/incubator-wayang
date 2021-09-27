@@ -22,6 +22,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import java.io.Serializable;
 import org.apache.hadoop.io.Writable;
 
 /**
@@ -30,7 +31,7 @@ import org.apache.hadoop.io.Writable;
  *
  *  * code copied from <a href="https://github.com/apache/hadoop/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-examples/src/main/java/org/apache/hadoop/examples/terasort/Unsigned16.java">Terasort Example</a>
  */
-class Unsigned16 implements Writable {
+class Unsigned16 implements Writable, Serializable {
   private long hi8;
   private long lo8;
 

@@ -41,14 +41,14 @@ object TeraApp extends ExperimentDescriptor {
     val partitions = args(4).toInt
     experiment.getSubject.addConfiguration("partitions", partitions)
     val input_file = if(args(5).equals("null")) null else args(5)
-    val output_file = if(args.length >= 5){ if(args(6).equals("null")) null else args(6) } else null
+    val output_file = if(args.length > 6){ if(args(6).equals("null")) null else args(6) } else null
     experiment.getSubject.addConfiguration("inputFile", input_file)
     experiment.getSubject.addConfiguration("outputFile", output_file)
 
     task match {
       case "generate" => new TeraGen(plugins: _*).apply(output_file, fileSize, partitions)
       case "sort" => new TeraSort(plugins: _*).apply(input_file, output_file)
-      case "validate" => null
+      case "validate" => new TeraValidate(plugins: _*).apply(input_file)
     }
 
 
