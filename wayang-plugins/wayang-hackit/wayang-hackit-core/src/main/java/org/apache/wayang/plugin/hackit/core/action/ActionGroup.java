@@ -19,9 +19,9 @@ package org.apache.wayang.plugin.hackit.core.action;
 
 
 /**
- * ActionGroup is an aggregation of the basic {@link Action}'s that Hackit had as predefined behaviour.
+ * ActionGroup is an aggregation of the basic {@link Action}'s that Hackit has as predefined behaviours.
  *
- * The predefined Action's currently are:
+ * The predefined Actions currently are:
  * <ul>
  *     <li>{@link Callback}</li>
  *     <li>{@link HaltJob}</li>

@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Header is the container of the metadata asociated to one {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ * Header is the container of the metadata associated to one {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
  *
  * @param <K> type of the identifier of the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
  */
@@ -41,44 +41,44 @@ public abstract class Header<K> implements Serializable, ActionGroup {
     private K id;
 
     /**
-     * child indicate the number of the child that the current header is from the
-     * original {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} and they share the
-     * same identifier <code>id</code>
+     * Child indicates the number of the child corresponding to the current header, regarding the
+     * original (parent) {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}.
+     * Current child and Original (parent) have the same identifier <code>id</code>
      */
     protected int child = 0;
 
     /**
-     * tags added to the header, this describe some action that need to be apply to the
+     * Tags added to the header, each tag describes some action that needs to be applied to the
      * {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
      */
     private Set<HackitTag> tags;
 
     /**
-     * during the process of adding news {@link HackitTag} could add a new {@link org.apache.wayang.plugin.hackit.core.action.Action} at the header, and this
-     * change the status of <code>has_callback_tag</code>
+     * During the process of adding new {@link HackitTag}s could be added new {@link org.apache.wayang.plugin.hackit.core.action.Action}s
+     * at the header. This change the status of <code>has_callback_tag</code>
      */
     private boolean has_callback_tag = false;
 
     /**
-     * during the process of adding news {@link HackitTag} could add a new {@link org.apache.wayang.plugin.hackit.core.action.Action} at the header, and this
-     * change the status of <code>has_skip_tag</code>
+     * During the process of adding new {@link HackitTag}s could be added new {@link org.apache.wayang.plugin.hackit.core.action.Action}s
+     * at the header. This change the status of <code>has_skip_tag</code>
      */
     private boolean has_skip_tag = false;
 
     /**
-     * during the process of adding news {@link HackitTag} could add a new {@link org.apache.wayang.plugin.hackit.core.action.Action} at the header, and this
-     * change the status of <code>has_sendout_tag</code>
+     * During the process of adding new {@link HackitTag}s could be added new {@link org.apache.wayang.plugin.hackit.core.action.Action}s
+     * at the header. This change the status of <code>has_sendout_tag</code>
      */
     private boolean has_sendout_tag = false;
 
     /**
-     * during the process of adding news {@link HackitTag} could add a new {@link org.apache.wayang.plugin.hackit.core.action.Action} at the header, and this
-     * change the status of <code>has_haltjob_tag</code>
+     * During the process of adding new {@link HackitTag}s could be added new {@link org.apache.wayang.plugin.hackit.core.action.Action}s
+     * at the header. This change the status of <code>has_haltjob_tag</code>
      */
     private boolean has_haltjob_tag = false;
 
     /**
-     * Default Construct, this will call {@link #generateID()} and produce the new identifier
+     * Default Constructor, this will call {@link #generateID()} and produce the new identifier
      */
     public Header() {
         this.id = generateID();
@@ -94,7 +94,7 @@ public abstract class Header<K> implements Serializable, ActionGroup {
     }
 
     /**
-     * Construct with the identifier and child identifier as parameter
+     * Constructor with identifier and child identifier as parameter
      *
      * @param id is the identifier of the Header
      * @param child is the child identifier assigned
@@ -105,7 +105,7 @@ public abstract class Header<K> implements Serializable, ActionGroup {
     }
 
     /**
-     * retrieve the identifier of the Header
+     * Retrieve the identifier of the Header and subsequently the identifier of the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
      *
      * @return current identifier of type <code>K</code>
      */
@@ -115,24 +115,26 @@ public abstract class Header<K> implements Serializable, ActionGroup {
 
     /**
      * Add a {@link HackitTag} that could provide a new {@link org.apache.wayang.plugin.hackit.core.action.Action} to be
-     * perfomed by Hackit to the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}, also update all the
-     * possible action calling the method {@link #updateActionVector(HackitTag)}
+     * performed by Hackit to the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}, also update all the
+     * possible actions calling the method {@link #updateActionVector(HackitTag)}
      *
      * @param tag {@link HackitTag}
      */
     public void addTag(HackitTag tag){
-        //TODO: could be better to use an Set because it just saving uniques elements
+
         if(this.tags == null){
             this.tags = new HashSet<>();
         }
-        this.tags.add(tag);
+
         //update all the possible actions on the {@link ActionGroup}
-        //TODO: just execute this action when the element is inserted the first time
-        updateActionVector(tag);
+        if(this.tags.add(tag)){
+            updateActionVector(tag);
+        }
+        ;
     }
 
     /**
-     * do exactly the same of {@link #addTag(HackitTag)} but adding all the element at the same time
+     * Does exactly the same as {@link #addTag(HackitTag)}, but adding all the elements of the Set at the same time
      *
      * @param tags {@link Set} of {@link HackitTag} that will be added
      */
@@ -149,7 +151,7 @@ public abstract class Header<K> implements Serializable, ActionGroup {
     }
 
     /**
-     * remove all the tags from the header, and set all the possible options as false
+     * Remove all {@link org.apache.wayang.plugin.hackit.core.tuple.header.Header}'s tags and set all possible options to false
      */
     public void clearTags(){
         this.tags.clear();
@@ -160,32 +162,32 @@ public abstract class Header<K> implements Serializable, ActionGroup {
     }
 
     /**
-     * iterate provide an {@link Iterator} that contains all the {@link HackitTag} that were
-     * add on the {@link #tags}
+     * Iterate provides an {@link Iterator} that contains all the {@link HackitTag}s that currently exists in {@link #tags}
      *
-     * If the {@link #tags} is null or empty it will return an {@link Collections#emptyIterator()}
+     * If {@link #tags} is null or empty, it will return an {@link Collections#emptyIterator()}
      *
-     * @return {@link Iterator} with the current {@link HackitTag}'s
+     * @return {@link Iterator} with the current {@link HackitTag}s
      */
     public Iterator<HackitTag> iterate(){
-        //TODO: maybe is need to add the option of empty
-        if(this.tags == null){
+
+        if(this.tags == null || this.tags.isEmpty()){
             return Collections.emptyIterator();
         }
         return this.tags.iterator();
     }
 
     /**
-     * Generate a new header that it related on some way with the father header,
-     * depending on the logic of the extender it will be way of generate the child
+     * Generates a new header {@link Header} that will be related to the father's header
+     * of this tuple {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}.
+     * Depending on the logic of the extender of this class, it will define a way to generate this child header {@link Header}
      *
      *
-     * @return new {@link Header} that correspond to the child
+     * @return new {@link Header} that corresponds to the child
      */
     public abstract Header<K> createChild();
 
     /**
-     * Generate a new identifier of type <code>K</code> that it will use inside of {@link #Header()}
+     * Generates a new identifier of type <code>K</code> that will be used inside of {@link #Header()}
      *
      * @return new identifier of type <code>K</code>
      */
@@ -193,19 +195,15 @@ public abstract class Header<K> implements Serializable, ActionGroup {
 
     @Override
     public String toString() {
-        //TODO: maybe is better to change to String.format
-        return "HackItTupleHeader{" +
-                "id=" + id +
-                ", child=" + child +
-                '}';
+        return String.format("HackItTupleHeader{id=%s, child=%s}", id, child);
     }
 
     /**
-     * Update the possible {@link org.apache.wayang.plugin.hackit.core.action.Action} that could be perfomed
-     * over the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}, this is depending of the new
+     * Updates the possible {@link org.apache.wayang.plugin.hackit.core.action.Action} that could be performed
+     * over the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}, this depends on the new
      * {@link HackitTag}
      *
-     * @param tag {@link HackitTag} that could have new {@link org.apache.wayang.plugin.hackit.core.action.Action}'s
+     * @param tag {@link HackitTag} that could require new {@link org.apache.wayang.plugin.hackit.core.action.Action}s
      */
     private void updateActionVector(HackitTag tag){
         this.has_callback_tag = tag.hasCallback() || this.has_callback_tag;
@@ -214,21 +212,37 @@ public abstract class Header<K> implements Serializable, ActionGroup {
         this.has_skip_tag     = tag.isSkip() || this.has_skip_tag;
     }
 
+    /**
+     *
+     * @return {@link Boolean that specifies if current tuple requires Callback action}
+     */
     @Override
     public boolean hasCallback() {
         return this.has_callback_tag;
     }
 
+    /**
+     *
+     * @return {@link Boolean that specifies if current tuple requires Halt job action}
+     */
     @Override
     public boolean isHaltJob() {
         return this.has_haltjob_tag;
     }
 
+    /**
+     *
+     * @return {@link Boolean that specifies if current tuple requires Send out action}
+     */
     @Override
     public boolean isSendOut() {
         return this.has_sendout_tag;
     }
 
+    /**
+     *
+     * @return {@link Boolean that specifies if current tuple requires Skip action}
+     */
     @Override
     public boolean isSkip() {
         return this.has_skip_tag;

@@ -31,24 +31,24 @@ import java.util.Set;
  * to enable the execution of the logic in the internal pipeline of hackit
  *
  * HackitTuple implements {@link Serializable} because the HackitTuple and the <code>T</code> will sent
- * out or part of the suffle process
+ * out as part of the shuffle process
  *
  * HackitTuple implements {@link ActionGroup} because it could have any {@link org.apache.wayang.plugin.hackit.core.action.Action}
- * to perform, and is easy to validate at runtime what are the operation that need to be performed
+ * to perform, and it is easy to validate at runtime which operations need to be performed
  *
- * @param <K> type of the key that will use as indentifier on the HackitTuple
- * @param <T> type of the element that it will be wrapper inside of the HackitTuple
+ * @param <K> type of the key that will be used as an identifier on the HackitTuple
+ * @param <T> type of the element that it will be wrapped inside the HackitTuple
  */
 public class HackitTuple<K, T> implements Serializable, ActionGroup {
 
     /**
-     * BUILDER is the {@link HeaderBuilder} that produce the identifier on the process
-     * of construction the new {@link Header}
+     * BUILDER is the {@link HeaderBuilder} that produces the identifier on the process
+     * of construction of the new {@link Header}
      */
     private static HeaderBuilder BUILDER;
 
     /**
-     * header is an {@link Header}, this help to save relevant meta data of the tuple
+     * header is a {@link Header}, this helps to save relevant metadata of the tuple. E.g. added Tags.
      */
     private Header<K> header;
 
@@ -58,8 +58,8 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
     private T value;
 
     /**
-     * this static create the {@link HeaderBuilder} that will be use during the process
-     * of geneating the {@link Header}
+     * this static creates the {@link HeaderBuilder} that will be used during the process
+     * of generating the {@link Header}
      */
     static {
         //TODO: the generation of the HeaderBuilder need to be done by configuration and using maybe a Dependency Inyection
@@ -67,9 +67,9 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
     }
 
     /**
-     * Default Construct, internally it generate the tuple
+     * Default Constructor, internally it generates the tuple
      *
-     * @param value that it will wrapper by the {@link HackitTuple}
+     * @param value that will be wrapped by current {@link HackitTuple}
      */
     public HackitTuple(T value){
         this.header = BUILDER.generateHeader();
@@ -77,10 +77,10 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
     }
 
     /**
-     * Construct where the header could be provided an not use the default {@link HeaderBuilder}
+     * Constructor where the header can be provided, instead of using the default {@link HeaderBuilder}
      *
-     * @param header {@link Header} that will be save the relevant metadata
-     * @param value that it will wrapper by the {@link HackitTuple}
+     * @param header {@link Header} that will save the relevant metadata
+     * @param value that will be wrapped by the {@link HackitTuple}
      */
     public HackitTuple(Header<K> header, T value){
         this.header = header;
@@ -88,7 +88,7 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
     }
 
     /**
-     * obtain the header of the tuple
+     * Obtain the header of the tuple
      *
      * @return {@link Header} that contains the relevant metadata
      */
@@ -97,7 +97,7 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
     }
 
     /**
-     * obtains the identifier allocated inside of the {@link Header}
+     * Obtains the identifier allocated inside the {@link Header}
      *
      * @return identifier of the tuple
      */
@@ -106,7 +106,7 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
     }
 
     /**
-     * obtain the wrapped element inside of the {@link HackitTuple}
+     * Obtains the wrapped element inside the {@link HackitTuple}
      *
      * @return original value that was wrapped
      */
@@ -115,7 +115,7 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
     }
 
     /**
-     * add an {@link HackitTag} to the {@link Header}
+     * Adds a {@link HackitTag} to the {@link Header}
      *
      * @param tag {@link HackitTag} that it will need at some point on the process
      */
@@ -124,16 +124,17 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
     }
 
     /**
-     * add a {@link Set} of {@lin HackitTag} on the {@link Header}
+     * Adds a {@link Set} of {@lin HackitTag}s on the {@link Header}
      *
-     * @param tags {@link HackitTag} that it will need at some point on the process
+     * @param tags {@link HackitTag} that will be needed at some point of the process
      */
     public void addTag(Set<HackitTag> tags){
         this.header.addTag(tags);
     }
 
     /**
-     * get a {@link Iterator} of the currents {@link HackitTag} that are inside of the {@link Header}
+     * Gets an {@link Iterator} of the current {@link HackitTag}s that are inside the {@link Header}
+     *
      * @return {@link Iterator} of tags
      */
     public Iterator<HackitTag> getTags(){
@@ -142,29 +143,40 @@ public class HackitTuple<K, T> implements Serializable, ActionGroup {
 
     @Override
     public String toString() {
-        //TODO: change to String.format
-        return "HackItTuple{" +
-                "header=" + header +
-                ", value=" + value +
-                '}';
+        return String.format("HackItTuple{header=%s, value=%s}", header, value);
     }
 
-
+    /**
+     *
+     * @return {@link Boolean that specifies if current tuple requires Callback action}
+     */
     @Override
     public boolean hasCallback() {
         return this.getHeader().hasCallback();
     }
 
+    /**
+     *
+     * @return {@link Boolean that specifies if current tuple requires Halt job action}
+     */
     @Override
     public boolean isHaltJob() {
         return this.getHeader().isHaltJob();
     }
 
+    /**
+     *
+     * @return {@link Boolean that specifies if current tuple requires Send out action}
+     */
     @Override
     public boolean isSendOut() {
         return this.getHeader().isSendOut();
     }
 
+    /**
+     *
+     * @return {@link Boolean that specifies if current tuple requires Skip action}
+     */
     @Override
     public boolean isSkip() {
         return this.getHeader().isSkip();

@@ -31,12 +31,12 @@ import java.util.Iterator;
 import java.util.function.Function;
 
 /**
- * {@link HackitSniffer} is the one of the main function on Hackit, this function have the resposability of execute the
- * logic of sniff the tuples and apply the logic of {@link #apply(HackitTuple)}
+ * {@link HackitSniffer} is one of the main functions of Hackit, this function has the responsibility of executing the
+ * logic of sniffing tuples and applying the logic of {@link #apply(HackitTuple)}
  *
  * @param <K> type of key that it handle the {@link org.apache.wayang.plugin.hackit.core.tuple.header.Header}
- * @param <T> type that wrapped by {@link HackitTuple}
- * @param <SentType> Type of the element that it will be send out by {@link Sender}
+ * @param <T> type of element that is wrapped by {@link HackitTuple}
+ * @param <SentType> Type of the element that will be sent out by {@link Sender}
  * @param <SenderObj> Object class of the implementation of {@link Sender}
  * @param <ReceiverObj>Object class of the implementation of {@link Receiver}
  */
@@ -56,43 +56,43 @@ public class
         Serializable {
 
     /**
-     * Indicate if the first execution or not, because some function will need that information
+     * Indicates if it is the first execution or not, because some function will need that information
      * to get instantiated
      */
     private transient boolean not_first = false;
 
     /**
-     * {@link Injector} instance that will be use by {@link HackitSniffer} as component
+     * {@link Injector} instance that will be used by {@link HackitSniffer} as component
      */
     private Injector<HackitTuple<K, T>> hackItInjector;
 
     /**
-     * {@link Actor} instance that will be use by {@link HackitSniffer} as component
+     * {@link Actor} instance that will be used by {@link HackitSniffer} as component
      */
     private Actor<HackitTuple<K, T>> actorFunction;
 
     /**
-     * {@link Shipper} instance that will be use by {@link HackitSniffer} as component
+     * {@link Shipper} instance that will be used by {@link HackitSniffer} as component
      */
     private Shipper<HackitTuple<K, T>, SentType, SenderObj, ReceiverObj> shipper;
 
     /**
-     * {@link Sniff} instance that will be use by {@link HackitSniffer} as component
+     * {@link Sniff} instance that will be used by {@link HackitSniffer} as component
      */
     private Sniff<HackitTuple<K, T>> hackItSniff;
 
     /**
-     * {@link Cloner} instance that will be use by {@link HackitSniffer} as component
+     * {@link Cloner} instance that will be used by {@link HackitSniffer} as component
      */
     private Cloner<HackitTuple<K, T>, SentType> hackItCloner;
 
     /**
      * Construct with the components as parameters
-     * @param hackItInjector {@link Injector} instance that will be use by {@link HackitSniffer} as component
-     * @param actorFunction {@link Actor} instance that will be use by {@link HackitSniffer} as component
-     * @param shipper {@link Shipper} instance that will be use by {@link HackitSniffer} as component
-     * @param hackItSniff {@link Sniff} instance that will be use by {@link HackitSniffer} as component
-     * @param hackItCloner {@link Cloner} instance that will be use by {@link HackitSniffer} as component
+     * @param hackItInjector {@link Injector} instance that will be used by {@link HackitSniffer} as component
+     * @param actorFunction {@link Actor} instance that will be used by {@link HackitSniffer} as component
+     * @param shipper {@link Shipper} instance that will be used by {@link HackitSniffer} as component
+     * @param hackItSniff {@link Sniff} instance that will be used by {@link HackitSniffer} as component
+     * @param hackItCloner {@link Cloner} instance that will be used by {@link HackitSniffer} as component
      */
     //TODO: it may private, because need to be executed just at the creation moment
     public HackitSniffer(
@@ -119,7 +119,7 @@ public class
     }
 
     /**
-     * apply contains the logic that need to be executed at each tuple that is process by the main pipeline,
+     * Apply contains the logic that need to be executed at each tuple that is process by the main pipeline,
      * <ol>
      *     <li>If is the first exection the function perform the connection between the sidecar and the main pipeline</li>
      *     <li>Validate if the tuple need to be sniffed</li>
@@ -157,7 +157,7 @@ public class
     }
 
     /**
-     * set {@link Injector} instance that will be use by {@link HackitSniffer} as component
+     * Set {@link Injector} instance that will be used by {@link HackitSniffer} as component
      *
      * @param hackItInjector {@link Injector} instance
      * @return self instance of the {@link HackitSniffer}
@@ -168,7 +168,7 @@ public class
     }
 
     /**
-     * set {@link Actor} instance that will be use by {@link HackitSniffer} as component
+     * Set {@link Actor} instance that will be used by {@link HackitSniffer} as component
      *
      * @param actorFunction {@link Actor} instance
      * @return self instance of the {@link HackitSniffer}
@@ -179,7 +179,7 @@ public class
     }
 
     /**
-     * set {@link Shipper} instance that will be use by {@link HackitSniffer} as component
+     * Set {@link Shipper} instance that will be used by {@link HackitSniffer} as component
      *
      * @param shipper {@link Shipper} instance
      * @return self instance of the {@link HackitSniffer}
@@ -190,7 +190,7 @@ public class
     }
 
     /**
-     * set {@link Sniff} instance that will be use by {@link HackitSniffer} as component
+     * Set {@link Sniff} instance that will be used by {@link HackitSniffer} as component
      *
      * @param hackItSniff {@link Sniff} instance
      * @return self instance of the {@link HackitSniffer}
@@ -201,7 +201,7 @@ public class
     }
 
     /**
-     * set {@link Cloner} instance that will be use by {@link HackitSniffer} as component
+     * Set {@link Cloner} instance that will be used by {@link HackitSniffer} as component
      *
      * @param hackItCloner {@link Cloner} instance
      * @return self instance of the {@link HackitSniffer}
@@ -213,13 +213,8 @@ public class
 
     @Override
     public String toString() {
-        return "HackItSniffer{" +
-                "\nfirst=" + not_first +
-                ",\n hackItInjector=" + hackItInjector +
-                ",\n actorFunction=" + actorFunction +
-                ",\n shipper=" + shipper +
-                ",\n hackItSniff=" + hackItSniff +
-                ",\n hackItCloner=" + hackItCloner +
-                "\n}";
+        return String.format("HackItSniffer{\n first=%s, \n hackItInjector=%s, \n actorFunction=%s, " +
+                        "\n shipper=%s, \n hackItSniff=%s, \n hackItCloner=%s\n}"
+                , not_first, hackItInjector, actorFunction, shipper, hackItSniff, hackItCloner);
     }
 }

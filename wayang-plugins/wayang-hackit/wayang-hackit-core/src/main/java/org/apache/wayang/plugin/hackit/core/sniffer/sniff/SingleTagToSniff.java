@@ -19,39 +19,61 @@
 package org.apache.wayang.plugin.hackit.core.sniffer.sniff;
 
 import org.apache.wayang.plugin.hackit.core.tags.HackitTag;
+import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
+
+import java.util.Iterator;
 
 /**
- * TODO validate if is correct implementation
+ * Sniffing {@link Sniff} use case when a single {@link HackitTag} is required to evaluate HackitTuples
  */
 public class SingleTagToSniff implements Sniff {
 
     /**
-     *
+     * Contains the single {@link HackitTag} to be evaluated
      */
-    public HackitTag tags2sniff;
+    public HackitTag tag2sniff;
 
     /**
-     *
-     * @param tag
-     * @return
+     * Default constructor
      */
-    public boolean sniff(HackitTag tag){
-        return this.tags2sniff.equals(tag);
+    public SingleTagToSniff(){
+        this.tag2sniff = null;
+    }
+
+    /**
+     * Constructor that sets the Tag
+     */
+    public SingleTagToSniff(HackitTag tag){
+        this.tag2sniff = tag;
     }
 
     /**
      *
-     * @param tag
+     * @param tag to be Added in this Sniffer {@link Sniff}
      */
     public void addTag2sniff(HackitTag tag) {
-        if(this.tags2sniff != null){
+        if(this.tag2sniff != null){
             throw new RuntimeException("The SingleTagToSniff already got the tag, if you need more of one tag use CollectionTagsToSniff class");
         }
-        this.tags2sniff = tag;
+        this.tag2sniff = tag;
     }
 
+    /**
+     * Returns whether the received {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+     * contains the preset tag in this Sniffer {@link Sniff}
+     *
+     * @param input {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} analyzed to match its tags with the Sniffer preset tag
+     * @return {@link Boolean} Indicates if the Sniffer has found the Tag {@link HackitTag}
+     */
     @Override
-    public boolean sniff(Object input) {
+    public boolean sniff(HackitTuple input) {
+        Iterator<HackitTag> iterator = input.getTags();
+        while (iterator.hasNext()){
+            HackitTag tag = iterator.next();
+            if(tag.equals(this.tag2sniff)){
+                return true;
+            }
+        }
         return false;
     }
 }

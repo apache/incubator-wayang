@@ -18,19 +18,18 @@
 package org.apache.wayang.plugin.hackit.core.tags;
 
 /**
- * CrashTag is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} that
- * produce and exception that goes from UDF context and could make that the process stop.
+ * CrashTag is the {@link HackitTag} that identifies the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} that
+ * produces an exception that goes from UDF context and could make the process stop.
  */
 public class CrashTag extends HackitTag {
 
     /**
-     * seed is the element that allow to have small overhead in memory, is like use
-     * singleton.
+     * Seed is the element that allows to have small overhead in memory, it is like using singleton.
      */
     private static CrashTag seed = null;
 
     /**
-     * default construct
+     * Default constructor
      */
     private CrashTag(){
         super();

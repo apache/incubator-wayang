@@ -18,20 +18,22 @@
 package org.apache.wayang.plugin.hackit.core.tagger;
 
 /**
- * TaggerFunction is the template for the function that will be use inside of {@link HackitTagger}
+ * TaggerFunction is the template for the function that will be used inside of {@link HackitTagger}
  *
  * @param <T> output type of the execution
+ * @deprecated Do not use, if you found a place using it remove ut and use the Wrapper hackit :D
  */
+@Deprecated
 public interface TaggerFunction<T> {
     /**
-     * It execute the function of tagger, and generate and output
+     * It executes the function of tagger, and generates an output
      *
      * @return result of the execution
      */
     T execute();
 
     /**
-     * Get the name of the function, this is use a identifier
+     * Get the name of the function, this is used as an identifier
      *
      * @return {@link String} that contains the name of the {@link TaggerFunction}
      */

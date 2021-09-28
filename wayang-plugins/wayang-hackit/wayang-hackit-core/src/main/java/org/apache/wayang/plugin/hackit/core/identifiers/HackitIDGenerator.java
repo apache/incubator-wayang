@@ -35,8 +35,8 @@ import java.util.Enumeration;
 public abstract class HackitIDGenerator<N, O> {
 
     /**
-     * is_address_calculated indicate if the address of the worker it already calculated,
-     * because the calculation could be costly in time.
+     * is_address_calculated indicates if the address of the worker is already calculated,
+     * because the calculation can be expensive in time.
      */
     private boolean is_address_calculated = false;
 
@@ -46,8 +46,8 @@ public abstract class HackitIDGenerator<N, O> {
     protected InetAddress address_host;
 
     /**
-     * This is the identifier of the process, task, or machine, depends of the platform
-     * but is use for the generators, normally correspond to an {@link Integer}
+     * This is the identifier of the process, task, or machine; composition depends on the platform
+     * this is used for the generators, normally correspond to an {@link Integer}
      * */
     protected N identify_process;
 
@@ -61,7 +61,7 @@ public abstract class HackitIDGenerator<N, O> {
 
     /**
      * Constructor with identifier of the process
-     * @param identify_process identifier it help on the generation of unique ID
+     * @param identify_process identifier helps on the generation of unique IDs
      */
     public HackitIDGenerator(N identify_process) {
         this.identify_process = identify_process;
@@ -69,7 +69,7 @@ public abstract class HackitIDGenerator<N, O> {
     }
 
     /**
-     * Build the address_host from the host information obtained form the context of execution
+     * Build the address_host from the host information obtained from the context of execution
      */
     protected void getAddress(){
         if( ! this.is_address_calculated ){
@@ -82,9 +82,9 @@ public abstract class HackitIDGenerator<N, O> {
     }
 
     /**
-     * create the worker id depending on the network context information
+     * Creates the worker id depending on the network context information
      *
-     * @return unique number that identifier the worker as unique inside of the cluster
+     * @return unique number that identifies the worker as unique among the nodes of the cluster
      */
     protected static int createNodeId() {
         int nodeId;

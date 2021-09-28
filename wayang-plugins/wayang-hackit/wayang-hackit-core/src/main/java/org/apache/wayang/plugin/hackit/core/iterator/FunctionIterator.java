@@ -23,10 +23,10 @@ import java.util.function.Function;
 
 /**
  * FunctionIterator implements {@link Iterator} and {@link Serializable}, because the function could be
- * serializad to be sent to several places at runtime
+ * serialized to be sent to several places at runtime
  *
- * FunctionIterator provide the option of convert the data in the iterator using an {@link Function},
- * this will transform the element to the new kind
+ * FunctionIterator provides the option of converting the data in the iterator using an {@link Function},
+ * this will transform the elements to a new kind given by param <O>
  *
  * @param <I> Type before of the transformation in the iterator
  * @param <O> Type after the transformation, this could be the same to <I>
@@ -39,14 +39,14 @@ public class FunctionIterator<I, O> implements Iterator<O>, Serializable {
     private Iterator<I> base;
 
     /**
-     * function is an {@link Function} that will convert the element inside of <code>base</code>
+     * function is a {@link Function} that will convert the element inside of <code>base</code>
      */
     private Function<I, O> function;
 
     /**
-     * Construct of FunctionIterator
+     * Constructor of FunctionIterator
      *
-     * @param base {@link Iterator} that will be transformed at the consumed time
+     * @param base {@link Iterator} that will be transformed at the time of consumption
      * @param function {@link Function} that will convert the data inside of <code>base</code>
      */
     public FunctionIterator(Iterator<I> base, Function<I, O> function) {

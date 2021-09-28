@@ -17,18 +17,21 @@
  */
 package org.apache.wayang.plugin.hackit.core.sniffer.sniff;
 
+import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
+
 import java.io.Serializable;
 
 /**
- * Sniff is the component that evaluate if some {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} need to
- * be treated on some way
+ * Sniff is the component that evaluate whether some {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} need to
+ * be treated in some way
  *
  * @param <I> type of the element that will be evaluated
  */
-public interface Sniff<I> extends Serializable {
+public interface Sniff<I extends HackitTuple> extends Serializable {
 
     /**
-     * sniff evaluate if the <code>input</code> need to be treated on some way or contains some {@link org.apache.wayang.plugin.hackit.core.tags.HackitTag}
+     * Sniff evaluate if the <code>input</code> needs to be treated in some way
+     * or contains some {@link org.apache.wayang.plugin.hackit.core.tags.HackitTag}
      * to enable the sniff
      *
      * @param input element to evaluate if is sniffable

@@ -22,15 +22,15 @@ import java.util.Iterator;
 /**
  * ElementPlusIterator extends from {@link Iterator}.
  *
- * ElementPlusIterator add one unique element to a know {@link Iterator}, this unique element
- * it will be consumed first.
+ * ElementPlusIterator add one unique element to a known {@link Iterator},
+ * this unique element will be consumed first.
  *
  * @param <T> type of the element of the iterator
  */
 public class ElementPlusIterator<T> implements Iterator<T> {
 
     /**
-     * Indicate if the first element it was consumed or not yet
+     * Indicates if the first element was consumed or not yet
      */
     private boolean element_consumed = false;
 
@@ -40,13 +40,13 @@ public class ElementPlusIterator<T> implements Iterator<T> {
     private T element;
 
     /**
-     * The iterator where the element was added
+     * The iterator where the element was included
      */
     private Iterator<T> iterator;
 
 
     /**
-     * Construct of ElementPlusIterator
+     * Constructor of ElementPlusIterator
      *
      * @param element is the object that will be consumed first
      * @param iterator iterator that will be consumed after the original element

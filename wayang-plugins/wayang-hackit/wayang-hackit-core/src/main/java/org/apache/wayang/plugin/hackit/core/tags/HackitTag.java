@@ -27,12 +27,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * HackitTag extend from {@link ActionGroup} becuase is the element that allows to create
- * an element that contains the flags for the {@link org.apache.wayang.plugin.hackit.core.tagger.HackitTagger}
- * and {@link org.apache.wayang.plugin.hackit.core.sniffer.HackitSniffer} could perform the right logic
- * to {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple} that have the tag
+ * HackitTag extends from {@link ActionGroup} because is the element that allows to create
+ * an element that contains the flags for the {@link org.apache.wayang.plugin.hackit.core.tagger.HackitTagger}.
+ * Then, {@link org.apache.wayang.plugin.hackit.core.sniffer.HackitSniffer} can perform the right logic
+ * to {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}s that have the tag
  *
- * HachitTag implements {@link Serializable} because the element could be send it out.
+ * HachitTag implements {@link Serializable} because the element could be sent out.
  */
 public abstract class HackitTag implements Serializable, ActionGroup {
 
@@ -47,7 +47,7 @@ public abstract class HackitTag implements Serializable, ActionGroup {
     private Map<String, Object> callback_results;
 
     /**
-     * Default Construct
+     * Default Constructor
      */
     protected HackitTag(){
         //TODO: validate is is not better to go by delay option

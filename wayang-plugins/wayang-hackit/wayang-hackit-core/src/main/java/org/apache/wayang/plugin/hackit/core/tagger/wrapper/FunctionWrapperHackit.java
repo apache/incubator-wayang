@@ -23,13 +23,13 @@ import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 import java.util.function.Function;
 
 /**
- * FunctionWrapperHackit is an implementation of {@link HackitTagger} where Hackit manage the logic
- * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
- * original function
+ * FunctionWrapperHackit is an implementation of {@link HackitTagger} where Hackit manages the logic
+ * before and after of tagging process. Additionally, it performs unwrap of the tuple to be handled by the
+ * original function.
  *
  * @param <IDType> Type of {@link org.apache.wayang.plugin.hackit.core.tuple.header.Header} key of the {@link HackitTuple}
  * @param <I> Input Type of the original Tuple
- * @param <O> Output Type after the perform the Function
+ * @param <O> Output Type after performing the Function
  */
 public class FunctionWrapperHackit<IDType, I, O>
         extends HackitTagger
@@ -41,7 +41,7 @@ public class FunctionWrapperHackit<IDType, I, O>
     private Function<I, O> function;
 
     /**
-     * Default Construct
+     * Default Constructor
      *
      * @param function is the function that will be Wrapped by the {@link FunctionWrapperHackit}
      */

@@ -23,47 +23,47 @@ import java.util.NoSuchElementException;
 /**
  * OneElementIterator implements {@link Iterator} and {@link Iterable}
  *
- * OneElementIterator will contains just one element, but that element need to be treated as
- * Iterator, this class allow handler all the functionality that are related to that.
+ * OneElementIterator will contain just one element, but that element need to be treated as
+ * an Iterator, this class allows handle all the functionalities that are related to that.
  *
  * @param <T> type of the element
  */
 public class OneElementIterator<T> implements Iterator<T>, Iterable<T>{
 
     /**
-     * indicate if the element could be removed
+     * Indicates if the element could be removed
      */
     private final boolean removeAllowed;
 
     /**
-     * Indicate if the process is started or not
+     * Indicates whether the process has started or not
      */
     private boolean beforeFirst;
 
     /**
-     * allows to follow the process as the object didn't exist
+     * Allows to follow the process as the object didn't exist
      */
     private boolean removed;
 
     /**
-     * is the element that it will "process" at the iteration time
+     * It is the element that will be processed at iteration time
      */
     private T object;
 
     /**
-     * Default Construct
+     * Default Constructor
      *
-     * @param object element that will be process
+     * @param object element that will be processed
      */
     public OneElementIterator(T object) {
         this(object, true);
     }
 
     /**
-     * Construct that allows indicate the option of remove the object
+     * Constructor that allows indicating the option to remove the object
      *
-     * @param object element that will be process
-     * @param removeAllowed indicate if the element could be removed
+     * @param object element that will be processed
+     * @param removeAllowed indicates if the element could be removed
      */
     public OneElementIterator(T object, boolean removeAllowed) {
         this.beforeFirst = true;

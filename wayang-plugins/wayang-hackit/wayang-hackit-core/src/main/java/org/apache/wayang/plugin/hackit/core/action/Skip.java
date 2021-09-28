@@ -18,12 +18,12 @@
 package org.apache.wayang.plugin.hackit.core.action;
 
 /**
- * Skip is the {@link Action} that helps to filter element either in a typical process or  with the external debugger
+ * Skip is the {@link Action} that helps to filter elements either in a typical process or with the external debugger
  */
 public interface Skip extends Action{
 
     /**
-     * Said if the element have or not a skip {@link Action}
+     * Indicates if the element have or not a skip {@link Action}
      * @return Boolean
      */
     public boolean isSkip();

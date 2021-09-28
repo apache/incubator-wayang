@@ -21,7 +21,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 /**
- * Receiver is the component that handle the connection with the side car, and get
+ * Receiver is the component that handle the connection with the sidecar, and get
  * external elements, this can be instructions to perform or new {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
  *
  * @param <T> Type of received elements
@@ -34,7 +34,7 @@ public abstract class Receiver<T> implements Serializable {
     private transient BufferReceiver<T> bufferReceiver;
 
     /**
-     * Start the the Receiver service that will be waiting the new elements.
+     * Start the Receiver service that will be waiting for new elements.
      */
     public abstract void init();
 

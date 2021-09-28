@@ -24,8 +24,8 @@ import java.util.Iterator;
 import java.util.function.Function;
 
 /**
- * FlatmapWrapperHackit is an implementation of {@link HackitTagger} where Hackit manage the logic
- * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
+ * FlatmapWrapperHackit is an implementation of {@link HackitTagger} where Hackit manages the logic
+ * before and after of tagging process. Additionally, it performs unwrap of the tuple to be handled by the
  * original function
  *
  * @param <IDType> Type of {@link org.apache.wayang.plugin.hackit.core.tuple.header.Header} key of the {@link HackitTuple}

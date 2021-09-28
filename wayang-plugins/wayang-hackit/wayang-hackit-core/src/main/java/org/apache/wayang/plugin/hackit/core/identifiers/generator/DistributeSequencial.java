@@ -20,9 +20,9 @@ package org.apache.wayang.plugin.hackit.core.identifiers.generator;
 import org.apache.wayang.plugin.hackit.core.identifiers.HackitIDGenerator;
 
 /**
- * DistributeSequencial it instance of {@link HackitIDGenerator}.
+ * DistributeSequencial is an instance of {@link HackitIDGenerator}.
  *
- * DistributeSequencial asume not parallel job running, and help in small debugs, or single node work
+ * DistributeSequencial assumes not parallel jobs running, and help in small debugs, or single node work
  */
 public class DistributeSequencial extends HackitIDGenerator<Integer, Long> {
 
@@ -32,7 +32,7 @@ public class DistributeSequencial extends HackitIDGenerator<Integer, Long> {
     long current = 0;
 
     /**
-     * it add 1 to current and assign the previous number to the ID
+     * Adds 1 to <code>current<code/> and assign the previous number to the ID
      *
      * @return long that represent the ID, this could have repetition on parallel processing
      */

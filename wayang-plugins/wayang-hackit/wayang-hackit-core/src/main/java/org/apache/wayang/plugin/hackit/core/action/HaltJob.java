@@ -18,12 +18,12 @@
 package org.apache.wayang.plugin.hackit.core.action;
 
 /**
- * HaltJob in an {@link Action} which the behaviour of stopping the job processing partially or complete
+ * HaltJob is an {@link Action} whose behavior stops the job processing partially or completely.
  */
 public interface HaltJob extends Action{
 
     /**
-     * Said if the element have or not HaltJob {@link Action}
+     * Indicates if the element has or not HaltJob {@link Action}
      * @return Boolean
      */
     boolean isHaltJob();

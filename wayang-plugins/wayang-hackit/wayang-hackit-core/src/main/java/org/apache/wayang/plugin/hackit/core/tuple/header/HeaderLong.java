@@ -17,8 +17,10 @@
  */
 package org.apache.wayang.plugin.hackit.core.tuple.header;
 
+import java.util.Map;
+
 /**
- * HeaderLong extend {@link Header} just a simple implementation of correlative number
+ * HeaderLong extend {@link Header}. It is just a simple implementation with correlative numbers
  */
 public class HeaderLong extends Header<Long> {
 
@@ -27,44 +29,56 @@ public class HeaderLong extends Header<Long> {
      */
     static long base;
 
-    /*
-    TODO: maybe it need to be remove or change to be load form configurations
-     */
     static{
-        base = 0;//(new Random()).nextLong();
+
+        base = 0;
+                //HeaderLong.getConfiguration().getLongProperty("wayang.hackit.core.headerlong.correlative.base");//0 or (new Random()).nextLong();
     }
 
     /**
      * Default Construct
      */
-    public HeaderLong() {
+    public HeaderLong(Map<String, String> configuration) {
         super();
+        base = Long.parseLong(configuration.get("correlative.base"));
     }
 
     /**
-     * Construct where is possible to define the identifier
+     * Constructor where it is possible to define the identifier
      *
-     * @param id is the identifier that it will be used by the {@link Header}
+     * @param id is the identifier that the {@link Header} will use
      */
     public HeaderLong(Long id){
         super(id);
     }
 
     /**
-     * Construct where is possible to define the identifier and child number
+     * Constructor where it is possible to define the identifier and the child number
+     * This constructor assigns an identifier for the tuple relative to its parent
      *
-     * @param id is the identifier that it will be used by the {@link Header}
+     * @param id is the identifier that the {@link Header} will use
      * @param child is the identifier as child of the original element giving by <code>id</code>
      */
     public HeaderLong(Long id, int child) {
         super(id, child);
     }
 
+    /**
+     * Generates a new header {@link HeaderLong} that will be related to the father's header
+     * of this tuple {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}.
+     * Regarding the logic of this class, children will be differentiated by a correlative long
+     *
+     * @return a {@link HeaderLong} that corresponds to the current child
+     */
     @Override
     public HeaderLong createChild() {
         return new HeaderLong(this.getId(), this.child++);
     }
 
+    /**
+     *
+     * @return {@link Long} as an ID for the current Child
+     */
     @Override
     protected Long generateID() {
         return base++;

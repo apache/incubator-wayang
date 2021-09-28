@@ -17,16 +17,22 @@
  */
 package org.apache.wayang.plugin.hackit.core.tuple.header;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * HeaderBuilder it the generator of {@link Header} to one kind of {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
  */
 public class HeaderBuilder {
 
+    //TODO: Use Wayang Configuration
+    Map<String, String> configuration;
 
     /**
      * Default Construct
      */
     public HeaderBuilder(){
+        configuration = new HashMap<>();
         //TODO: take from the configuration
     }
 
@@ -38,7 +44,22 @@ public class HeaderBuilder {
      */
     public <T> Header<T> generateHeader(){
         //TODO: take and works from the configuration provided either on a file or by parameters at runtime
-        return (Header<T>) new HeaderLong();
+        return (Header<T>) new HeaderLong(this.configuration);
     }
 
+    public Map<String, String> getConfiguration() {
+        return configuration;
+    }
+
+    public String getConfiguration(String key) {
+        return configuration.get(key);
+    }
+
+    public void setConfiguration(Map<String, String> configuration) {
+        this.configuration = configuration;
+    }
+
+    public void setConfiguration(String key, String value){
+        this.configuration.put(key, value);
+    }
 }

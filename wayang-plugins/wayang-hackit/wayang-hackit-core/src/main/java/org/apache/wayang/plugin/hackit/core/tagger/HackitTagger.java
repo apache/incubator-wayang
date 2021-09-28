@@ -30,22 +30,19 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * HackitTagger is class where is allocated all the logic that need to be perform during the
- * tagging step in Hackit, this logic have and pre and post processing and they are acting like
- * template that follow same behaivor in every tagger
+ * HackitTagger is a class in which all the logic that needs to be performed during the tagging step in Hackit is assigned,
+ * this logic has pre and post processing, both acting as a template that follows the same behavior on each tagger
  */
 //TODO add the option of add a custom function
 public class HackitTagger implements Serializable {
 
     /**
-     * {@link List} of {@link HackitTag} that are added previous of the execution of the
-     * original function
+     * {@link List} of {@link HackitTag} that are added before the original function execution
      */
     protected Set<HackitTag> pre_tags;
 
     /**
-     * {@link List} of {@link HackitTag} that are added after of the execution of the
-     * original function
+     * {@link List} of {@link HackitTag} that are added after the original function execution
      */
     protected Set<HackitTag> post_tags;
 
@@ -58,7 +55,7 @@ public class HackitTagger implements Serializable {
      * Add a {@link HackitTag} to {@link List} of <code>pre_tags</code>
      *
      * @param tag is a {@link HackitTag} added to change the future behavior
-     * @return {@link HackitTagger} as it self reference
+     * @return {@link HackitTagger} as a self reference
      */
     public HackitTagger addPreTag(HackitTag tag){
         if(this.pre_tags == null){
@@ -72,7 +69,7 @@ public class HackitTagger implements Serializable {
      * Add a {@link HackitTag} to {@link List} of <code>post_tags</code>
      *
      * @param tag is a {@link HackitTag} added to change the future behavior
-     * @return {@link HackitTagger} as it self reference
+     * @return {@link HackitTagger} as a self reference
      */
     public HackitTagger addPostTag(HackitTag tag){
         if(this.post_tags == null){
@@ -83,9 +80,9 @@ public class HackitTagger implements Serializable {
     }
 
     /**
-     * add to the {@link HackitTuple} all the {@link HackitTag}'s add pre-tagging phase are available at that moment
+     * Add to the {@link HackitTuple} all the {@link HackitTag}'s that are available at the moment. Add to pre-tagging phase
      *
-     * @param tuple is a {@link HackitTuple} where that {@link HackitTag} will be added
+     * @param tuple is a {@link HackitTuple} where {@link HackitTag}s will be added
      */
     public void preTaggingTuple(HackitTuple tuple){
         if(this.pre_tags != null)
@@ -93,9 +90,9 @@ public class HackitTagger implements Serializable {
     }
 
     /**
-     * add to the {@link HackitTuple} all the {@link HackitTag}'s add post-tagging phase are available at that moment
+     * Add to the {@link HackitTuple} all the {@link HackitTag}s that are available at the moment. Add to post-tagging phase
      *
-     * @param tuple is a {@link HackitTuple} where that {@link HackitTag} will be added
+     * @param tuple is a {@link HackitTuple} where {@link HackitTag}s will be added
      */
     public void postTaggingTuple(HackitTuple tuple){
         if(this.post_tags != null)
@@ -103,10 +100,10 @@ public class HackitTagger implements Serializable {
     }
 
     /**
-     * add all the {@link HackitTag}'s available on the {@link List} to the {@link HackitTuple}
+     * Add all the {@link HackitTag}s available on the {@link List} to the {@link HackitTuple}
      *
      * @param tuple is {@link HackitTuple} where the tags will be added
-     * @param tags {@link List} of {@link HackitTag}'s that will add to {@link HackitTuple}
+     * @param tags {@link List} of {@link HackitTag}s to be added to {@link HackitTuple}
      */
     public void taggingTuple(HackitTuple tuple, Set<HackitTag> tags){
         //TODO: change this code for an efficient one
@@ -114,18 +111,19 @@ public class HackitTagger implements Serializable {
     }
 
     /**
-     * It take the original {@link HackitTuple} and extract the {@link Header} and start creating the children
-     * from that {@link Header} this enable to follow the lineage of the after a several elements come out from
-     * one {@link HackitTuple}. This generation is possible by inserting a new step at the iterator using {@link HackitIterator}
-     * that allow append a new instruction in the process that will be perform on the original {@link Iterator}
      *
-     * @param origin Original {@link HackitTuple} that it was transformed
-     * @param result is the transformation output inside of an {@link Iterator}
+     * It takes the original {@link HackitTuple}, extracts the {@link Header} and start creating children
+     * from that {@link Header}. This allows the lineage to be tracked after multiple items come out of a
+     * {@link HackitTuple}. This generation is possible by inserting a new step at the iterator using {@link HackitIterator}
+     * that allows appending a new instruction in the process that will be performed on the original {@link Iterator}
+     *
+     * @param origin Original {@link HackitTuple} that was transformed
+     * @param result is the transformation output inside an {@link Iterator}
      * @param <K> type of the identifier of {@link HackitTuple}
-     * @param <I> type of the original element inside of {@link HackitTuple} that it was transformed
+     * @param <I> type of the original element inside of {@link HackitTuple} that was transformed
      * @param <O> type of the output in the transformation
      *
-     * @return {@link Iterator} that is wrapper of the original with the add instruction using {@link HackitIterator}
+     * @return {@link Iterator} wrapper of the original with an added instruction using {@link HackitIterator}
      */
     public <K, I, O> Iterator<HackitTuple<K,O>> postTaggingTuple(HackitTuple<K, I> origin, Iterator<O>result){
         Header<K> header = origin.getHeader();
@@ -144,15 +142,14 @@ public class HackitTagger implements Serializable {
     }
 
     /**
-     * It take the original {@link HackitTuple} and extract the {@link Header} to be enable to follow the lineage of the
-     * same value transformed, then is generate a new {@link HackitTuple} with the <code>result</code> as the wrapped
-     * element, it also add the new {@link HackitTag}'s to the {@link Header}
+     * It takes the original {@link HackitTuple} and extract the {@link Header} to allow the lineage to be tracked regarding the
+     * same value transformed. Then, it is generated a new {@link HackitTuple} with the <code>result</code> as the wrapped
+     * element, it also adds the new {@link HackitTag}'s to the {@link Header}
      *
-     *
-     * @param origin Original {@link HackitTuple} that it was transformed
+     * @param origin Original {@link HackitTuple} that was transformed
      * @param result is the transformation output
      * @param <K> type of the identifier of {@link HackitTuple}
-     * @param <I> type of the original element inside of {@link HackitTuple} that it was transformed
+     * @param <I> type of the original element inside of {@link HackitTuple} that was transformed
      * @param <O> type of the output in the transformation
      *
      * @return {@link HackitTuple} with the new {@link HackitTag}

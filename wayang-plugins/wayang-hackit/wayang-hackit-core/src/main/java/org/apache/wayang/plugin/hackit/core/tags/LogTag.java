@@ -18,19 +18,18 @@
 package org.apache.wayang.plugin.hackit.core.tags;
 
 /**
- * LogTag is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ * LogTag is the {@link HackitTag} that identifies the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
  * as part of logging status, this will produce to send out just the metadata
  */
 public class LogTag extends HackitTag  {
 
     /**
-     * seed is the element that allow to have small overhead in memory, is like use
-     * singleton.
+     * Seed is the element that allows to have small overhead in memory, it is like using singleton.
      */
     private static LogTag seed = null;
 
     /**
-     * default construct
+     * Default constructor
      */
     public LogTag(){
         super();

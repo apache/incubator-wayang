@@ -18,19 +18,18 @@
 package org.apache.wayang.plugin.hackit.core.tags;
 
 /**
- * Display is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
- * as an element that need to be sent it out to just print the values
+ * Display is the {@link HackitTag} that identifies the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ * as an element that needs to be sent out to just print its values
  */
 public class DisplayTag extends HackitTag  {
 
     /**
-     * seed is the element that allow to have small overhead in memory, is like use
-     * singleton.
+     * Seed is the element that allows to have small overhead in memory, it is like using singleton.
      */
     private static DisplayTag seed = null;
 
     /**
-     * default construct
+     * Default constructor
      */
     private DisplayTag(){
         super();

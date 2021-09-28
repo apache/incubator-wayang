@@ -22,29 +22,29 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * BufferReceiver is component where the element getted by the {@link Receiver} are stored waiting for be consumed
+ * BufferReceiver is component where the elements get by the {@link Receiver} are stored waiting to be consumed
  *
- * @param <T> type of the element that it will receive
+ * @param <T> type of the elements that will be received
  */
 //TODO: Implement this class well
 public class BufferReceiver<T> implements Serializable {
 
-    //TODO implement the doble buffering
+    //TODO implement the double buffering
     /**
-     * queue is a {@link Queue} where the element are storage waiting to be consumed
+     * Queue is a {@link Queue} where the element are stored waiting to be consumed
      */
     private transient Queue<T> queue;
 
     /**
-     * Start the Buffer to be enable to get new {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+     * Start the Buffer to be able to get new {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
      *
      * @return True if the Buffer start without problem, False in other cases
      */
     //TODO implement the server to receive the messages
     public boolean start(){
+        
         return true;
     }
-
 
     //TODO registrer on the rest of the worker; validate if is need
     public boolean register(){

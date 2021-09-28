@@ -18,19 +18,18 @@
 package org.apache.wayang.plugin.hackit.core.tags;
 
 /**
- * DebugTag is the {@link HackitTag} that identify the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
- * as an element which will be identifier and also add the timestamp to be enable to follow it
+ * DebugTag is the {@link HackitTag} that identifies the {@link org.apache.wayang.plugin.hackit.core.tuple.HackitTuple}
+ * as an element to be tracked, adds a timestamp to be able to follow it
  */
 public class TraceTag extends HackitTag  {
 
     /**
-     * seed is the element that allow to have small overhead in memory, is like use
-     * singleton.
+     * Seed is the element that allows to have small overhead in memory, it is like using singleton.
      */
     private static TraceTag seed = null;
 
     /**
-     * default construct
+     * Default constructor
      */
     private TraceTag(){
         super();

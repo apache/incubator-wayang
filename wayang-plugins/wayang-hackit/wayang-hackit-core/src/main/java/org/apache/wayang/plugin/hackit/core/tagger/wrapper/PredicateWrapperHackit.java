@@ -23,9 +23,9 @@ import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 import java.util.function.Predicate;
 
 /**
- * PredicateWrapperHackit is an implementation of {@link HackitTagger} where Hackit manage the logic
- * before and after of tagging process, also it perform the unwrap of the tuple to be handle by the
- * original function. The original {@link Predicate} function because return a {@link Boolean}
+ * PredicateWrapperHackit is an implementation of {@link HackitTagger} where Hackit manages the logic
+ * before and after of tagging process. Additionally, it performs unwrap of the tuple to be handled by the
+ * original function. This original function is a {@link Predicate} function and therefore returns a {@link Boolean}
  *
  * @param <IDType> Type of {@link org.apache.wayang.plugin.hackit.core.tuple.header.Header} key of the {@link HackitTuple}
  * @param <I> Input Type of the original Tuple to be evaluated
