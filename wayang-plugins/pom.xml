@@ -41,6 +41,7 @@
     <modules>
         <module>wayang-iejoin</module>
         <module>wayang-hackit</module>
+        <module>wayang-hackit/wayang-hackit-shipper/hackit-shipper-rabbitmq</module>
     </modules>
 
 
