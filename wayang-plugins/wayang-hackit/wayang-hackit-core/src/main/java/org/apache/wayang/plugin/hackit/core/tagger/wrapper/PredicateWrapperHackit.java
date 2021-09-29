@@ -18,6 +18,7 @@
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper;
 
 import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
+import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.FunctionTemplateSystem;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
 import java.util.function.Predicate;
@@ -32,28 +33,27 @@ import java.util.function.Predicate;
  */
 public class PredicateWrapperHackit<IDType, I>
         extends HackitTagger
-        implements Predicate<HackitTuple<IDType, I>> {
+        implements FunctionTemplateSystem<HackitTuple<IDType, I>, Boolean> {
 
     /**
      * Original predicate that will evaluate the data to give a True or False value
      */
-    private Predicate<I> function;
+    private FunctionTemplateSystem<I, Boolean> function;
 
     /**
      * Default Construct
      *
      * @param function is the predicate that will be Wrapped by the {@link PredicateWrapperHackit}
      */
-    public PredicateWrapperHackit(Predicate<I> function) {
+    public PredicateWrapperHackit(FunctionTemplateSystem<I, Boolean> function) {
         this.function = function;
     }
 
-
     @Override
-    public boolean test(HackitTuple<IDType, I> idTypeIHackitTuple) {
-        this.preTaggingTuple(idTypeIHackitTuple);
-        Boolean result = this.function.test(idTypeIHackitTuple.getValue());
-        this.postTaggingTuple(idTypeIHackitTuple);
+    public Boolean execute(HackitTuple<IDType, I> input) {
+        this.preTaggingTuple(input);
+        Boolean result = this.function.execute(input.getValue());
+        this.postTaggingTuple(input);
         return result;
     }
 }

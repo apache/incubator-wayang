@@ -18,6 +18,7 @@
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper;
 
 import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
+import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.FunctionTemplateSystem;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
 import java.util.function.Function;
@@ -33,26 +34,26 @@ import java.util.function.Function;
  */
 public class FunctionWrapperHackit<IDType, I, O>
         extends HackitTagger
-        implements Function<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
+        implements FunctionTemplateSystem<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
 
     /**
      * Original function that will transform the data
      */
-    private Function<I, O> function;
+    private FunctionTemplateSystem<I, O> function;
 
     /**
      * Default Constructor
      *
      * @param function is the function that will be Wrapped by the {@link FunctionWrapperHackit}
      */
-    public FunctionWrapperHackit(Function<I, O> function) {
+    public FunctionWrapperHackit(FunctionTemplateSystem<I, O> function) {
         this.function = function;
     }
 
     @Override
-    public HackitTuple<IDType, O> apply(HackitTuple<IDType, I> idTypeIHackitTuple) {
-        this.preTaggingTuple(idTypeIHackitTuple);
-        O result = this.function.apply(idTypeIHackitTuple.getValue());
-        return this.postTaggingTuple(idTypeIHackitTuple, result);
+    public HackitTuple<IDType, O> execute(HackitTuple<IDType, I> input) {
+        this.preTaggingTuple(input);
+        O result = this.function.execute(input.getValue());
+        return this.postTaggingTuple(input, result);
     }
 }

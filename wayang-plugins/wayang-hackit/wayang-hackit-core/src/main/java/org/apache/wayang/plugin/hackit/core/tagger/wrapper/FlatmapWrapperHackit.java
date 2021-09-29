@@ -18,6 +18,7 @@
 package org.apache.wayang.plugin.hackit.core.tagger.wrapper;
 
 import org.apache.wayang.plugin.hackit.core.tagger.HackitTagger;
+import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.FlatMapTemplateSystem;
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple;
 
 import java.util.Iterator;
@@ -34,26 +35,26 @@ import java.util.function.Function;
  */
 public class FlatmapWrapperHackit<IDType, I, O>
         extends HackitTagger
-        implements Function<HackitTuple<IDType, I>, Iterator<HackitTuple<IDType, O>>> {
+        implements FlatMapTemplateSystem<HackitTuple<IDType, I>, HackitTuple<IDType, O>> {
 
     /**
      * Original function that will transform the data
      */
-    private Function<I, Iterator<O>> function;
+    private FlatMapTemplateSystem<I, O> function;
 
     /**
      * Default Construct
      *
      * @param function is the function that will be Wrapped by the {@link FlatmapWrapperHackit}
      */
-    public FlatmapWrapperHackit(Function<I, Iterator<O>> function ) {
+    public FlatmapWrapperHackit(FlatMapTemplateSystem<I, O> function) {
         this.function = function;
     }
 
     @Override
-    public Iterator<HackitTuple<IDType, O>> apply(HackitTuple<IDType, I> idTypeIHackitTuple) {
-        this.preTaggingTuple(idTypeIHackitTuple);
-        Iterator<O> result = this.function.apply(idTypeIHackitTuple.getValue());
-        return this.postTaggingTuple(idTypeIHackitTuple, result);
+    public Iterator<HackitTuple<IDType, O>> execute(HackitTuple<IDType, I> input) {
+        this.preTaggingTuple(input);
+        Iterator<O> result = this.function.execute(input.getValue());
+        return this.postTaggingTuple(input, result);
     }
 }
