@@ -33,7 +33,7 @@ class ApiExtensionTest {
 
   @BeforeEach
   def setUp() ={
-    DataQuantaFactory.setTemplate(DataQuantaHackit);
+//    DataQuantaFactory.setTemplate(DataQuantaHackit);
   }
 
   @Test

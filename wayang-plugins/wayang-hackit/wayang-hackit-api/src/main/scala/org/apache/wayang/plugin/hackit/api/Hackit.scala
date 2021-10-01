@@ -28,6 +28,7 @@ import org.apache.wayang.plugin.hackit.core.tagger.wrapper.FunctionWrapperHackit
 import org.apache.wayang.plugin.hackit.core.tags.HackitTag
 import org.apache.wayang.plugin.hackit.core.tuple.HackitTuple
 import org.apache.wayang.api.toSerializableFunction
+import org.apache.wayang.plugin.hackit.core.tagger.wrapper.template.FunctionTemplateSystem
 
 import scala.language.implicitConversions
 import scala.reflect.{ClassTag, classTag}
@@ -59,11 +60,22 @@ class Hackit[Key: ClassTag, Type:ClassTag](implicit var planBuilder: PlanBuilder
 
   def map[TypeOut: ClassTag](udf: Type => TypeOut, udfLoad: LoadProfileEstimator = null): Hackit[Key, TypeOut] = {
     val hackit = new Hackit[Key, TypeOut]()
-    val wrapper = new FunctionWrapperHackit[Key, Type, TypeOut](toSerializableFunction(udf))
+    val wrapper = toWayangFunction(udf)
     hackit.dataQuanta = dataQuanta.map[HackitTuple[Key, TypeOut]](element => wrapper.apply(element), udfLoad)
     hackit
   }
 
+  def toWayangFunction[In, Out](scalaFunc: In => Out):SerializableFunction[HackitTuple[Key, In], HackitTuple[Key, Out]] =
+    new SerializableFunction[HackitTuple[Key, In], HackitTuple[Key, Out]] {
+      val fun = new FunctionWrapperHackit[Key, In, Out](toHackitFunction(scalaFunc))
+      override def apply(t: HackitTuple[Key, In]): HackitTuple[Key, Out] = fun(t)
+    }
+
+
+  def toHackitFunction[In, Out](scalaFunc: In => Out): FunctionTemplateSystem[In, Out] =
+    new FunctionTemplateSystem[In, Out] {
+      override def execute(t: In) = scalaFunc(t)
+    }
 }
 
 
@@ -71,8 +83,10 @@ object Hackit {
 
   //TODO: replace the object with a parameter
   implicit def underHackit[T: ClassTag](dataQuanta: DataQuanta[T]): Hackit[java.lang.Object, T] = {
-      return new Hackit[java.lang.Object, T]()(classTag[java.lang.Object], ClassTag(dataQuanta.output.getType.getDataUnitType.getTypeClass), dataQuanta.planBuilder)
+      return new Hackit[java.lang.Object, T]()(classTag[java.lang.Object], ClassTag(dataQuanta.output.getType.getDataUnitType.getTypeClass) : ClassTag[T], dataQuanta.planBuilder)
                   .underHackit(dataQuanta)
   }
+
+
 
 }
