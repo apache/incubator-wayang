@@ -32,7 +32,7 @@ public class SkipTag extends HackitTag  {
     /**
      * Default constructor
      */
-    private SkipTag(){
+    public SkipTag(){
         super();
     }
 

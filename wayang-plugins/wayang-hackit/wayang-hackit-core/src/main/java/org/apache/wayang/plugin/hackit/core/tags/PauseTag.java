@@ -31,7 +31,7 @@ public class PauseTag extends HackitTag  {
     /**
      * Default constructor
      */
-    private PauseTag(){
+    public PauseTag(){
         super();
     }
 

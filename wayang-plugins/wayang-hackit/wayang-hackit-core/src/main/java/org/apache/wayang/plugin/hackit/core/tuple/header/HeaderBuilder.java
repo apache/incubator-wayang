@@ -33,6 +33,7 @@ public class HeaderBuilder {
      */
     public HeaderBuilder(){
         configuration = new HashMap<>();
+        configuration.put("correlative.base", "1");
         //TODO: take from the configuration
     }
 
