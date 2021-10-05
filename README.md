@@ -1,8 +1,11 @@
 # Apache Wayang <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
-
-[![Build Status (Travis)](https://travis-ci.org/wayang-ecosystem/wayang.svg?branch=master)](https://travis-ci.org/wayang-ecosystem/wayang)
-[![Gitter chat](https://badges.gitter.im/wayang-ecosystem/Lobby.png)](https://gitter.im/wayang-ecosystem/Lobby)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.wayang/wayang/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.wayang/wayang)
+![Travis branch](https://img.shields.io/travis/com/apache/incubator-wayang/main?style=for-the-badge)
+[![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg)
+[![License](https://img.shields.io/github/license/apache/incubator-wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Last commit](https://img.shields.io/github/last-commit/apache/incubator-wayang.svg?style=for-the-badge)]()
+![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/m/apache/incubator-wayang?style=for-the-badge)
+![GitHub forks](https://img.shields.io/github/forks/apache/incubator-wayang?style=for-the-badge)
+![GitHub Repo stars](https://img.shields.io/github/stars/apache/incubator-wayang?style=for-the-badge)
 
 #### Turning a shadows into a show
 
@@ -10,7 +13,7 @@
 Apache Wayang in contrast to classical data processing systems that provide one dedicated execution engine, Apache Wayang rather is a *meta processing framework*: You can specify your data processing app via one of Wayang's API and then Wayang will pick an optimal configuration of classical processing frameworks, such as Java Streams or Apache Spark, to run your app on. Finally, Wayang will also perform the execution, thereby hiding the different specific platform APIs and coordinate inter-platform communication.
 
 This approach aims at freeing data engineers and software developers from the burden of knowing the zoo of different data processing systems, their APIs, strengths and weakness; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when tying to a fix set of processing platforms. As of now, Wayang has built in support for the following processing platforms:
-- Java 8 Streams
+- [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
 - [Apache Spark](https://spark.apache.org/)
 - [GraphChi](https://github.com/GraphChi/graphchi-java)
 - [Postgres](http://www.postgresql.org)
@@ -19,7 +22,9 @@ This approach aims at freeing data engineers and software developers from the bu
 ## How to use Wayang
 
 **Requirements.**
-Apache Wayang is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed and Apache Hadoop (The version that you want). Please also consider that processing platforms employed by Wayang might have further requirements.
+
+> **NOTE:** Currently Apache Wayang is updating Java and Scala, consider that for you be enable to utilize Scala 2.12 you will need to install Java 11 in your enviroment
 
 **Get Wayang.**
 Wayang is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:
@@ -27,7 +32,7 @@ Wayang is available via Maven Central. To use it with Maven, for instance, inclu
 <dependency> 
   <groupId>org.apache.wayang</groupId>
   <artifactId>wayang-***</artifactId>
-  <version>0.3.0</version> 
+  <version>0.6.0</version> 
 </dependency>
 ```
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
@@ -43,9 +48,9 @@ In addition, you can obtain the most recent snapshot version of Wayang via Sonat
 ```xml
 <repositories>
   <repository>
-    <id>sonatype-snapshots</id>
-    <name>Sonatype Snapshot Repository</name>
-    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    <id>apache-snapshots</id>
+    <name>Apache Foundation Snapshot Repository</name>
+    <url>https://repository.apache.org/content/repositories/snapshots</url>
   </repository>
 <repositories>
 ```
@@ -54,15 +59,21 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
 
 1. Adapt the version variables (e.g., `spark.version`) in the main `pom.xml` file.
 2. Build Wayang with the adapted versions.
-	```shell
-	$ mvn clean install
-	```
-	Note the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
-	Also, note the `distro` profile, which assembles a binary Wayang distribution.
-	To activate these profiles, you need to specify them when running maven, i.e.,
-	 ```shell
-	 mvn clean install -P<profile name>
-	 ```
+    ```shell
+    $ mvn clean install -Pscala-{11,12}
+    ```
+> **NOTE:** In current maven setup the version of scala are tie to the Java version, you can compile the profile `scala-11` with Java 8 and profile `scala-12` with Java 11 
+
+> **NOTE:** For compiling the code and testing the code it required to have installed hadoop in your machine 
+
+> **NOTE:**  the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
+> 
+> Also, note the `distro` profile, which assembles a binary Wayang distribution.
+    To activate these profiles, you need to specify them when running maven, i.e.,
+
+```shell
+mvn clean install -P<profile name>
+```
 
 **Configure Wayang.** In order for Wayang to work properly, it is necessary to tell Wayang about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Wayang right away, we recommend to create a properties file to adapt the configuration where necessary. To have Wayang use that configuration transparently, just run you app via
 ```shell
