@@ -23,11 +23,11 @@
     <parent>
         <artifactId>wayang-api</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>0.6.0-SNAPSHOT</version>
+        <version>0.6.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-api-python</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.6.1-SNAPSHOT</version>
 
     <name>Wayang API Python</name>
     <description>Wayang implementation of an API of Python to be enable to work with code writed in python</description>

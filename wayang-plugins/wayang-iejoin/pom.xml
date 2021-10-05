@@ -16,11 +16,11 @@
     <parent>
         <artifactId>wayang-plugins</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>0.6.0-SNAPSHOT</version>
+        <version>0.6.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-iejoin</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.6.1-SNAPSHOT</version>
 
     <properties>
         <java-module-name>org.apache.wayang.extensions.iejoin</java-module-name>
