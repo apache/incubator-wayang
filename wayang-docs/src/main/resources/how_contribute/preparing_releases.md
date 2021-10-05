@@ -101,7 +101,7 @@ mvn release:branch -P scala-12 -DbranchName=rel/0.6
 The plugin will then aks for the version:
 
 ```shell
-What is the new working copy version for "Wayang"? (org.apache.wayang:wayang-parent) 0.6.1-SNAPSHOT: : 0.7.0-SNAPSHOT
+What is the new working copy version for "Wayang"? (org.apache.wayang:wayang-parent) 0.6.0-SNAPSHOT: : 0.7.0-SNAPSHOT
 ```
 
 ## Preparing a release
