@@ -594,15 +594,6 @@
             </properties>
         </profile>
 
-        <profile>
-            <id>scala-13</id>
-            <properties>
-                <scala.version>2.13.3</scala.version>
-                <scala.mayor.version>2.13</scala.mayor.version>
-                <spark.version>3.1.2</spark.version>
-            </properties>
-        </profile>
-
 
         <profile>
             <id>antlr</id>
@@ -758,6 +749,15 @@
             </properties>
         </profile>
 
+        <profile>
+            <id>disable-java8-doclint</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
     </profiles>
 
     <dependencyManagement>
