@@ -26,7 +26,7 @@
         <version>0.6.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>wayang-graphchi</artifactId>
+    <artifactId>wayang-graphchi_2.11</artifactId>
     <version>0.6.0-SNAPSHOT</version>
 
     <name>Wayang Graphchi</name>
@@ -42,7 +42,7 @@
     <dependencies>
         <dependency>
             <groupId>org.graphchi</groupId>
-            <artifactId>graphchi-java_${scala.mayor.version}</artifactId>
+            <artifactId>graphchi-java_2.11</artifactId>
             <version>${graphchi.version}</version>
         </dependency>
 

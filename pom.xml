@@ -28,7 +28,7 @@
 
     <groupId>org.apache.wayang</groupId>
     <artifactId>wayang</artifactId>
-    <version>0.6.1-SNAPSHOT</version>
+    <version>0.6.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Apache Wayang</name>
@@ -181,7 +181,7 @@
                 <dependency>
                     <groupId>org.apache.wayang</groupId>
                     <artifactId>wayang-resources</artifactId>
-                    <version>0.6.1-SNAPSHOT</version>
+                    <version>0.6.0-SNAPSHOT</version>
                     <type>zip</type>
                     <optional>true</optional>
                 </dependency>
@@ -435,6 +435,15 @@
                     <exists>src/main/scala</exists>
                 </file>
             </activation>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.scala-lang</groupId>
+                        <artifactId>scala-library</artifactId>
+                        <version>${scala.version}</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
             <build>
                 <pluginManagement>
                     <plugins>
@@ -473,67 +482,6 @@
                                 </execution-->
                             </executions>
                         </plugin>
-                        <plugin>
-                            <artifactId>maven-jar-plugin</artifactId>
-                            <configuration>
-                                <finalName>${project.artifactId}_${scala.mayor.version}-${project.version}</finalName>
-                            </configuration>
-                        </plugin>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-resources-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <id>copy-pom</id>
-                                    <phase>generate-resources</phase>
-                                    <goals>
-                                        <goal>copy-resources</goal>
-                                    </goals>
-                                    <configuration>
-                                        <outputDirectory>${project.build.directory}/${scala.mayor.version}</outputDirectory>
-                                        <resources>
-                                            <resource>
-                                                <directory>${basedir}</directory>
-                                                <includes>
-                                                    <include>pom.xml</include>
-                                                </includes>
-                                                <filtering>true</filtering>
-                                            </resource>
-                                        </resources>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-
-
-
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-install-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <id>default-install</id>
-                                    <configuration>
-                                        <skip>true</skip>
-                                    </configuration>
-                                </execution>
-                                <execution>
-                                    <id>install-scala-version</id>
-                                    <phase>install</phase>
-                                    <goals>
-                                        <goal>install-file</goal>
-                                    </goals>
-                                    <configuration>
-                                        <groupId>${project.groupId}</groupId>
-                                        <artifactId>${project.artifactId}_${scala.mayor.version}</artifactId>
-                                        <version>${project.version}</version>
-                                        <packaging>${project.packaging}</packaging>
-                                        <file>${project.build.directory}/${project.artifactId}_${scala.mayor.version}-${project.version}.jar</file>
-                                        <pomFile>${project.build.directory}/${scala.mayor.version}/replacer/pom.xml</pomFile>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
                     </plugins>
                 </pluginManagement>
                 <plugins>
@@ -544,40 +492,19 @@
                     <!--                    <plugin>-->
                     <!--                        <artifactId>maven-jar-plugin</artifactId>-->
                     <!--                    </plugin>-->
-                    <plugin>
-                        <groupId>com.google.code.maven-replacer-plugin</groupId>
-                        <artifactId>replacer</artifactId>
-                        <version>1.5.3</version>
-                        <executions>
-                            <execution>
-                                <id>replace-artifactid</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>replace</goal>
-                                </goals>
-                                <configuration>
-                                    <includes>
-                                        <include>${basedir}/target/${scala.mayor.version}/pom.xml</include>
-                                    </includes>
-                                    <replacements>
-                                        <replacement>
-                                            <token>&lt;artifactId&gt;${project.artifactId}&lt;/artifactId&gt;</token>
-                                            <value>&lt;artifactId&gt;${project.artifactId}_${scala.mayor.version}&lt;/artifactId&gt;</value>
-                                        </replacement>
-                                    </replacements>
-
-                                    <!-- Replace to -->
-                                    <outputFile>${basedir}/target/${scala.mayor.version}/replacer/pom.xml</outputFile>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
                 </plugins>
             </build>
         </profile>
 
         <profile>
             <id>scala-11</id>
+            <activation>
+                <file>
+                    <exists>
+                        scala_11
+                    </exists>
+                </file>
+            </activation>
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.mayor.version>2.11</scala.mayor.version>
@@ -587,6 +514,13 @@
 
         <profile>
             <id>scala-12</id>
+            <activation>
+                <file>
+                    <exists>
+                        scala_12
+                    </exists>
+                </file>
+            </activation>
             <properties>
                 <scala.version>2.12.12</scala.version>
                 <scala.mayor.version>2.12</scala.mayor.version>
@@ -783,11 +717,6 @@
                 <version>2.14.0</version>
                 <scope>import</scope>
                 <type>pom</type>
-            </dependency>
-            <dependency>
-                <groupId>org.scala-lang</groupId>
-                <artifactId>scala-library</artifactId>
-                <version>${scala.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -1076,6 +1005,7 @@
                         <exclude>**/Gemfile.lock</exclude>
                         <exclude>**/.jekyll-cache/**</exclude>
                         <exclude>**/README.md</exclude>
+                        <exclude>**/scala_1*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
