@@ -86,8 +86,8 @@ before_script:
 #  - chmod +x ./docs/script/cibuild
 script:
   #- jdk_switcher use openjdk8
-  - mvn clean install -Pdistro,scala-11 "${mvn_opts[@]}" &> result.log
-  - mvn clean install -Pdistro,scala-12 "${mvn_opts[@]}" &>> result.log
+  #- mvn clean install -Pdistro,scala-11 "${mvn_opts[@]}" &> result.log
+  - mvn clean install "${mvn_opts[@]}" &>> result.log
   #- mvn clean install -Pdistro,scala-13 "${mvn_opts[@]}" &>> result.log # This is not working for now because of Spark and Flink not supporting Scala 2.13
   - cat /home/travis/build/apache/incubator-wayang/target/rat.txt || echo "file doesn't exist"
   - tail -n 2000 result.log

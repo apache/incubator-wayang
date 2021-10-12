@@ -60,16 +60,16 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
 1. Adapt the version variables (e.g., `spark.version`) in the main `pom.xml` file.
 2. Build Wayang with the adapted versions.
     ```shell
-    $ mvn clean install -Pscala-{11,12}
+    $ mvn clean install
     ```
-> **NOTE:** In current maven setup the version of scala are tie to the Java version, you can compile the profile `scala-11` with Java 8 and profile `scala-12` with Java 11 
+> **NOTE:** In current maven setup the version of scala are tie to the Java version, you can compile the profile `scala-11` with Java 8 and profile `scala-12` with Java 11
 
-> **NOTE:** For compiling the code and testing the code it required to have installed hadoop in your machine 
+> **NOTE:** For compiling the code and testing the code it required to have installed hadoop in your machine
 
 > **NOTE:**  the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
-> 
+>
 > Also, note the `distro` profile, which assembles a binary Wayang distribution.
-    To activate these profiles, you need to specify them when running maven, i.e.,
+To activate these profiles, you need to specify them when running maven, i.e.,
 
 ```shell
 mvn clean install -P<profile name>

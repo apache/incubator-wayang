@@ -858,6 +858,46 @@
                 <additionalparam>-Xdoclint:none</additionalparam>
             </properties>
         </profile>
+
+        <profile>
+            <id>apache-release</id>
+            <build>
+                <finalName>apache-${project.artifactId}-${project.version}-incubating</finalName>
+                <resources>
+                    <resource>
+                        <directory>${project.basedir}</directory>
+                        <includes>
+                            <include>DISCLAIMER</include>
+                            <include>LICENSE</include>
+                            <include>NOTICE</include>
+                            <include>RELEASE_NOTES</include>
+                            <include>README.md</include>
+                        </includes>
+                    </resource>
+                </resources>
+                <plugins>
+                    <!-- Create a source-release artifact that contains the fully buildable
+                         project directory source structure. This is the artifact which is
+                         the official subject of any release vote. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>source-release-assembly</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <finalName>apache-${project.artifactId}-${project.version}-incubating</finalName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <dependencyManagement>
