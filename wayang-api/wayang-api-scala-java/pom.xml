@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
   <packaging>pom</packaging>
   <modules>
-<!--    <module>wayang-api-scala-java_2.11</module>-->
+    <module>wayang-api-scala-java_2.11</module>
     <module>wayang-api-scala-java_2.12</module>
   </modules>
 
