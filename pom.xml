@@ -523,7 +523,7 @@
                                 <configuration>
                                     <sources>
                                         <source>src/main/java</source>
-                                        <source>src/main/java_${scala.mayor.version}</source>
+                                        <source>src/main/java_2.11</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -542,7 +542,7 @@
                                         </resource>
                                         <resource>
                                             <directory>
-                                                src/main/resources_${scala.mayor.version}
+                                                src/main/resources_2.11
                                             </directory>
                                         </resource>
                                     </resources>
@@ -557,7 +557,7 @@
                                 <configuration>
                                     <sources>
                                         <source>src/test/java</source>
-                                        <source>src/test/java_${scala.mayor.version}</source>
+                                        <source>src/test/java_2.11</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -576,7 +576,7 @@
                                         </resource>
                                         <resource>
                                             <directory>
-                                                src/test/resources_${scala.mayor.version}
+                                                src/test/resources_2.11
                                             </directory>
                                         </resource>
                                     </resources>
@@ -615,7 +615,7 @@
                                 <configuration>
                                     <sources>
                                         <source>src/main/java</source>
-                                        <source>src/main/java_${scala.mayor.version}</source>
+                                        <source>src/main/java_2.12</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -634,7 +634,7 @@
                                         </resource>
                                         <resource>
                                             <directory>
-                                                src/main/resources_${scala.mayor.version}
+                                                src/main/resources_2.12
                                             </directory>
                                         </resource>
                                     </resources>
@@ -649,7 +649,7 @@
                                 <configuration>
                                     <sources>
                                         <source>src/test/java</source>
-                                        <source>src/test/java_${scala.mayor.version}</source>
+                                        <source>src/test/java_2.12</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -668,7 +668,7 @@
                                         </resource>
                                         <resource>
                                             <directory>
-                                                src/test/resources_${scala.mayor.version}
+                                                src/test/resources_2.12
                                             </directory>
                                         </resource>
                                     </resources>
