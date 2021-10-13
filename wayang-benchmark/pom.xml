@@ -27,10 +27,6 @@
 
   <artifactId>wayang-benchmark</artifactId>
   <packaging>pom</packaging>
-  <modules>
-    <module>wayang-benchmark_2.11</module>
-    <module>wayang-benchmark_2.12</module>
-  </modules>
 
   <dependencies>
     <dependency>
@@ -75,6 +71,19 @@
     </dependency>
   </dependencies>
 
+  <modules>
+    <module>wayang-benchmark_2.12</module>
+  </modules>
 
-
+  <profiles>
+    <profile>
+      <id>java8</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <modules>
+        <module>wayang-benchmark_2.11</module>
+      </modules>
+    </profile>
+  </profiles>
 </project>
