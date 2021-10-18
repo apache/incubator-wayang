@@ -160,12 +160,6 @@
             </properties>
         </profile>
         <profile>
-            <id>distro</id>
-            <modules>
-                <module>wayang-distro</module>
-            </modules>
-        </profile>
-        <profile>
             <!-- Profile to be activated when building the docs artifacts.  -->
             <id>build-docs</id>
             <properties>
