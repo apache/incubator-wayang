@@ -447,6 +447,15 @@
                             <version>4.4.0</version>
                             <executions>
                                 <execution>
+                                    <id>add-source-scala</id>
+                                    <goals>
+                                        <goal>add-source</goal>
+                                    </goals>
+                                    <configuration>
+                                        <sourceDir></sourceDir>
+                                    </configuration>
+                                </execution>
+                                <execution>
                                     <id>compile-scala</id>
                                     <goals>
                                         <goal>compile</goal>
@@ -494,7 +503,7 @@
             <id>scala-11</id>
             <activation>
                 <file>
-                    <exists>src/main/scala_2.11</exists>
+                    <exists>scala_2.11</exists>
                 </file>
             </activation>
             <properties>
@@ -516,8 +525,8 @@
                                 </goals>
                                 <configuration>
                                     <sources>
+                                        <source>../code/main/java</source>
                                         <source>src/main/java</source>
-                                        <source>src/main/java_2.11</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -531,12 +540,12 @@
                                     <resources>
                                         <resource>
                                             <directory>
-                                                src/main/resources
+                                                ../code/main/resources
                                             </directory>
                                         </resource>
                                         <resource>
                                             <directory>
-                                                src/main/resources_2.11
+                                                src/main/resources
                                             </directory>
                                         </resource>
                                     </resources>
@@ -550,8 +559,8 @@
                                 </goals>
                                 <configuration>
                                     <sources>
+                                        <source>../code/test/java</source>
                                         <source>src/test/java</source>
-                                        <source>src/test/java_2.11</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -565,15 +574,31 @@
                                     <resources>
                                         <resource>
                                             <directory>
-                                                src/test/resources
+                                                ../code/test/resources
                                             </directory>
                                         </resource>
                                         <resource>
                                             <directory>
-                                                src/test/resources_2.11
+                                                src/test/resources
                                             </directory>
                                         </resource>
                                     </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>add-source-scala</id>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sourceDir>../code/main/scala</sourceDir>
+                                    <testSourceDir>../code/test/scala</testSourceDir>
                                 </configuration>
                             </execution>
                         </executions>
@@ -586,7 +611,7 @@
             <id>scala-12</id>
             <activation>
                 <file>
-                    <exists>src/main/scala_2.12</exists>
+                    <exists>scala_2.12</exists>
                 </file>
             </activation>
             <properties>
@@ -608,8 +633,8 @@
                                 </goals>
                                 <configuration>
                                     <sources>
+                                        <source>../code/main/java</source>
                                         <source>src/main/java</source>
-                                        <source>src/main/java_2.12</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -623,12 +648,12 @@
                                     <resources>
                                         <resource>
                                             <directory>
-                                                src/main/resources
+                                                ../code/main/resources
                                             </directory>
                                         </resource>
                                         <resource>
                                             <directory>
-                                                src/main/resources_2.12
+                                                src/main/resources
                                             </directory>
                                         </resource>
                                     </resources>
@@ -642,8 +667,8 @@
                                 </goals>
                                 <configuration>
                                     <sources>
+                                        <source>../code/test/java</source>
                                         <source>src/test/java</source>
-                                        <source>src/test/java_2.12</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -657,15 +682,31 @@
                                     <resources>
                                         <resource>
                                             <directory>
-                                                src/test/resources
+                                                ../code/test/resources
                                             </directory>
                                         </resource>
                                         <resource>
                                             <directory>
-                                                src/test/resources_2.12
+                                                src/test/resources
                                             </directory>
                                         </resource>
                                     </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>add-source-scala</id>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sourceDir>../code/main/scala</sourceDir>
+                                    <testSourceDir>../code/test/scala</testSourceDir>
                                 </configuration>
                             </execution>
                         </executions>
