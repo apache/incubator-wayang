@@ -81,7 +81,7 @@ public class WayangPlans {
 
     public static final URI FILE_OTHER_LINES_TXT = createUri("/other-lines.input");
 
-    public static final URI ULYSSES_TXT = createUri("/ulysses.input");
+    public static final URI TEXT_TXT = createUri("/text.input");
 
     public static final URI FILE_WITH_KEY_1 = createUri("/lines-with-key1.input");
 
