@@ -24,6 +24,8 @@ This approach aims at freeing data engineers and software developers from the bu
 **Requirements.**
 Apache Wayang is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed and Apache Hadoop (The version that you want). Please also consider that processing platforms employed by Wayang might have further requirements.
 
+> **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instruction in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
+
 > **NOTE:** Currently Apache Wayang is updating Java and Scala, consider that for you be enable to utilize Scala 2.12 you will need to install Java 11 in your enviroment
 
 **Get Wayang.**

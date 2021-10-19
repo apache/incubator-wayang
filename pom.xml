@@ -444,17 +444,8 @@
                         <plugin>
                             <groupId>net.alchim31.maven</groupId>
                             <artifactId>scala-maven-plugin</artifactId>
-                            <version>4.4.0</version>
+                            <version>4.5.4</version>
                             <executions>
-                                <execution>
-                                    <id>add-source-scala</id>
-                                    <goals>
-                                        <goal>add-source</goal>
-                                    </goals>
-                                    <configuration>
-                                        <sourceDir></sourceDir>
-                                    </configuration>
-                                </execution>
                                 <execution>
                                     <id>compile-scala</id>
                                     <goals>
