@@ -574,18 +574,17 @@ public class WayangPlans {
      * Creates a cross-community PageRank Wayang plan, that incorporates the {@link PageRankOperator}.
      */
     public static WayangPlan pageRankWithDictionaryCompression(Collection<Tuple2<Character, Float>> pageRankCollector) {
-        // Get some graph data. Use the example from Wikipedia: https://en.wikipedia.org/wiki/PageRank
         Collection<char[]> adjacencies = Arrays.asList(
-                new char[]{'B', 'C'},
-                new char[]{'C', 'B'},
-                new char[]{'D', 'A', 'B'},
-                new char[]{'E', 'B', 'D', 'F'},
-                new char[]{'F', 'B', 'E'},
-                new char[]{'G', 'B', 'E'},
-                new char[]{'H', 'B', 'E'},
-                new char[]{'I', 'B', 'E'},
-                new char[]{'J', 'E'},
-                new char[]{'K', 'E'}
+                new char[]{'B', 'D'},
+                new char[]{'C', 'I'},
+                new char[]{'D', 'F', 'B'},
+                new char[]{'E', 'H', 'D', 'K'},
+                new char[]{'F', 'A', 'B'},
+                new char[]{'G', 'A', 'B'},
+                new char[]{'H', 'A', 'B'},
+                new char[]{'I', 'A', 'B'},
+                new char[]{'J', 'G'},
+                new char[]{'K', 'H'}
         );
 
         // Create a WayangPlan:
