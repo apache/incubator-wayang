@@ -386,7 +386,7 @@ object kmeans {
 
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 Apache (incubating) Wayang Team
+Copyright 2020 and onwards The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
