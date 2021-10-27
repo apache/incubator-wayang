@@ -35,26 +35,23 @@ import org.apache.wayang.core.api.exception.WayangException;
 
 /**
  * JSONObject is the wrapper for the {@link ObjectNode} to enable the
- * similar functionality as the http://javadox.com/org.json/json/20151123/org/json/JSONObject.html
- *
- * TODO: require implement the rest of the functionalities follow the link below
- * https://github.com/stleary/JSON-java/blob/master/src/main/java/org/json/JSONObject.java
+ * easy access to the json data
  *
  * TODO: the java doc is not done because is missing implementation and it performed some
  *       modification on the code
  */
-public class JSONObject {
+public class WayangJsonObj {
   public static final NullNode NULL = NullNode.getInstance();
 
   private ObjectNode node;
 
-  public JSONObject(){
+  public WayangJsonObj(){
     ObjectMapper mapper = new ObjectMapper();
     // create a JSON object
     this.node = mapper.createObjectNode();
   }
 
-  public JSONObject(String content){
+  public WayangJsonObj(String content){
     ObjectMapper mapper = new ObjectMapper();
     // create a JSON object
     try {
@@ -64,7 +61,7 @@ public class JSONObject {
     }
   }
 
-  public JSONObject(Map<String, Object> map){
+  public WayangJsonObj(Map<String, Object> map){
     ObjectMapper mapper = new ObjectMapper();
     this.node = mapper.createObjectNode();
     // create a JSON object
@@ -78,7 +75,7 @@ public class JSONObject {
 
   }
 
-  JSONObject(ObjectNode node){
+  WayangJsonObj(ObjectNode node){
     this.node = node;
   }
 
@@ -110,7 +107,7 @@ public class JSONObject {
     return this.node.get(key).asInt();
   }
 
-  public JSONObject getJSONObject(String key){
+  public WayangJsonObj getJSONObject(String key){
     JsonNode value = this.getNode().get(key);
     if(value == null){
       return null;
@@ -118,10 +115,10 @@ public class JSONObject {
     if(!value.isObject()) {
       throw new WayangException("the key does not exist on the component");
     }
-    return new JSONObject((ObjectNode) value);
+    return new WayangJsonObj((ObjectNode) value);
   }
 
-  public JSONArray getJSONArray(String key){
+  public WayangJsonArray getJSONArray(String key){
     JsonNode value = this.getNode().get(key);
     if(value == null){
       return null;
@@ -129,29 +126,29 @@ public class JSONObject {
     if(!value.isArray()) {
       throw new WayangException("the key does not exist on the component");
     }
-    return new JSONArray((ArrayNode) value);
+    return new WayangJsonArray((ArrayNode) value);
   }
 
-  public JSONObject put(String key, String value){
+  public WayangJsonObj put(String key, String value){
     this.getNode().put(key, value);
     return this;
   }
-  public JSONObject put(String key, int value){
-    this.getNode().put(key, value);
-    return this;
-  }
-
-  public JSONObject put(String key, double value){
+  public WayangJsonObj put(String key, int value){
     this.getNode().put(key, value);
     return this;
   }
 
-  public JSONObject put(String key, long value){
+  public WayangJsonObj put(String key, double value){
     this.getNode().put(key, value);
     return this;
   }
 
-  public JSONObject put(String key, Object value){
+  public WayangJsonObj put(String key, long value){
+    this.getNode().put(key, value);
+    return this;
+  }
+
+  public WayangJsonObj put(String key, Object value){
     this.insertType(value).accept(key, value);
     return this;
   }
@@ -160,7 +157,7 @@ public class JSONObject {
     writter.write(this.getNode().toString());
   }
 
-  public JSONObject put(String key, JSONObject value){
+  public WayangJsonObj put(String key, WayangJsonObj value){
     if(this.getNode().has(key)){
       this.getNode().replace(key, (value == null)? NULL:value.getNode());
     }else {
@@ -169,7 +166,7 @@ public class JSONObject {
     return this;
   }
 
-  public JSONObject put(String key, JSONArray value){
+  public WayangJsonObj put(String key, WayangJsonArray value){
     if(this.getNode().has(key)){
       this.getNode().replace(key, value.getNode());
     }else {
@@ -178,7 +175,7 @@ public class JSONObject {
     return this;
   }
 
-  public JSONObject putOpt(String key, Object value){
+  public WayangJsonObj putOptional(String key, Object value){
     if(value == null){
       return this;
     }
@@ -186,7 +183,7 @@ public class JSONObject {
     return this;
   }
 
-  public JSONObject optJSONObject(String key){
+  public WayangJsonObj optionalWayangJsonObj(String key){
     try {
       return this.getJSONObject(key);
     }catch (WayangException ex){
@@ -194,7 +191,7 @@ public class JSONObject {
     }
   }
 
-  public JSONArray optJSONArray(String key){
+  public WayangJsonArray optionalWayangJsonArray(String key){
     try {
       return this.getJSONArray(key);
     }catch (WayangException ex){
@@ -202,11 +199,11 @@ public class JSONObject {
     }
   }
 
-  public double optDouble(String key){
-    return this.optDouble(key, Double.NaN);
+  public double optionalDouble(String key){
+    return this.optionalDouble(key, Double.NaN);
   }
 
-  public double optDouble(String key, double value){
+  public double optionalDouble(String key, double value){
     try {
       return this.getDouble(key);
     }catch (WayangException ex){
@@ -258,20 +255,20 @@ public class JSONObject {
           node.set(k, (ArrayNode)v);
         }
       };
-    }else if(value instanceof JSONArray){
+    }else if(value instanceof WayangJsonArray){
       return (k, v) -> {
         if(node.has(k)){
-          node.replace(k, ((JSONArray)v).getNode());
+          node.replace(k, ((WayangJsonArray)v).getNode());
         }else{
-          node.set(k, ((JSONArray)v).getNode());
+          node.set(k, ((WayangJsonArray)v).getNode());
         }
       };
-    }else if(value instanceof JSONObject){
+    }else if(value instanceof WayangJsonObj){
       return (k, v) -> {
         if(node.has(k)){
-          node.replace(k, ((JSONObject)v).getNode());
+          node.replace(k, ((WayangJsonObj)v).getNode());
         }else{
-          node.set(k, ((JSONObject)v).getNode());
+          node.set(k, ((WayangJsonObj)v).getNode());
         }
       };
     }

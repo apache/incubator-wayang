@@ -39,8 +39,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import org.apache.wayang.core.util.json.JSONArray;
-import org.apache.wayang.core.util.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonArray;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * Stores cardinalities that have been collected by the {@link CrossPlatformExecutor}. Current version uses
@@ -122,13 +122,13 @@ public class CardinalityRepository {
                        OutputSlot<?> output,
                        long outputCardinality) {
 
-        JSONArray jsonInputCardinalities = new JSONArray();
+        WayangJsonArray jsonInputCardinalities = new WayangJsonArray();
         final Operator operator = operatorContext.getOperator();
         for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
             final InputSlot<?> input = operator.getInput(inputIndex);
             final CardinalityEstimate inputEstimate = operatorContext.getInputCardinality(inputIndex);
 
-            JSONObject jsonInputCardinality = new JSONObject();
+            WayangJsonObj jsonInputCardinality = new WayangJsonObj();
             jsonInputCardinality.put("name", input.getName());
             jsonInputCardinality.put("index", input.getIndex());
             jsonInputCardinality.put("isBroadcast", input.isBroadcast());
@@ -138,16 +138,16 @@ public class CardinalityRepository {
             jsonInputCardinalities.put(jsonInputCardinality);
         }
 
-        JSONObject jsonOperator = new JSONObject();
+        WayangJsonObj jsonOperator = new WayangJsonObj();
         jsonOperator.put("class", operator.getClass().getCanonicalName());
         // TODO: UDFs? How can we reference them?
 
-        JSONObject jsonOutput = new JSONObject();
+        WayangJsonObj jsonOutput = new WayangJsonObj();
         jsonOutput.put("name", output.getName());
         jsonOutput.put("index", output.getIndex());
         jsonOutput.put("cardinality", outputCardinality);
 
-        JSONObject jsonMeasurement = new JSONObject();
+        WayangJsonObj jsonMeasurement = new WayangJsonObj();
         jsonMeasurement.put("inputs", jsonInputCardinalities);
         jsonMeasurement.put("operator", jsonOperator);
         jsonMeasurement.put("output", jsonOutput);
@@ -158,7 +158,7 @@ public class CardinalityRepository {
     /**
      * Writes the measuremnt to the {@link #repositoryPath}.
      */
-    private void write(JSONObject jsonMeasurement) {
+    private void write(WayangJsonObj jsonMeasurement) {
         try {
             jsonMeasurement.write(this.getWriter());
             writer.write('\n');

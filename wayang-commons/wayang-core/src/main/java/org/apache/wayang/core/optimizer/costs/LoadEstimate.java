@@ -21,7 +21,7 @@ package org.apache.wayang.core.optimizer.costs;
 import org.apache.wayang.core.optimizer.ProbabilisticIntervalEstimate;
 import org.apache.wayang.core.util.JsonSerializable;
 import org.apache.wayang.core.util.JsonSerializables;
-import org.apache.wayang.core.util.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * An estimate of costs of some executable code expressed as a {@link ProbabilisticIntervalEstimate}.
@@ -74,8 +74,8 @@ public class LoadEstimate extends ProbabilisticIntervalEstimate implements JsonS
     }
 
     @Override
-    public JSONObject toJson() {
-        JSONObject json = new JSONObject();
+    public WayangJsonObj toJson() {
+        WayangJsonObj json = new WayangJsonObj();
         json.put("lower", JsonSerializables.serialize(this.getLowerEstimate(), false));
         json.put("upper", JsonSerializables.serialize(this.getUpperEstimate(), false));
         json.put("prob", JsonSerializables.serialize(this.getCorrectnessProbability(), false));
@@ -83,11 +83,11 @@ public class LoadEstimate extends ProbabilisticIntervalEstimate implements JsonS
     }
 
     @SuppressWarnings("unused")
-    public static LoadEstimate fromJson(JSONObject jsonObject) {
+    public static LoadEstimate fromJson(WayangJsonObj wayangJsonObj) {
         return new LoadEstimate(
-                jsonObject.getLong("lower"),
-                jsonObject.getLong("upper"),
-                jsonObject.getDouble("prob")
+                wayangJsonObj.getLong("lower"),
+                wayangJsonObj.getLong("upper"),
+                wayangJsonObj.getDouble("prob")
         );
     }
 }

@@ -25,7 +25,7 @@ import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Collection;
 import java.util.List;
-import org.apache.wayang.core.util.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * This {@link EstimationContext} implementation just stores all required variables without any further logic.
@@ -85,17 +85,17 @@ public class SimpleEstimationContext implements EstimationContext {
             new JsonSerializer<SimpleEstimationContext>() {
 
                 @Override
-                public JSONObject serialize(SimpleEstimationContext ctx) {
+                public WayangJsonObj serialize(SimpleEstimationContext ctx) {
                     return EstimationContext.defaultSerializer.serialize(ctx);
                 }
 
                 @Override
-                public SimpleEstimationContext deserialize(JSONObject json) {
+                public SimpleEstimationContext deserialize(WayangJsonObj json) {
                     return this.deserialize(json, SimpleEstimationContext.class);
                 }
 
                 @Override
-                public SimpleEstimationContext deserialize(JSONObject json, Class<? extends SimpleEstimationContext> cls) {
+                public SimpleEstimationContext deserialize(WayangJsonObj json, Class<? extends SimpleEstimationContext> cls) {
                     final List<CardinalityEstimate> inCards = JsonSerializables.deserializeAllAsList(
                             json.getJSONArray("inCards"),
                             CardinalityEstimate.class
@@ -106,7 +106,7 @@ public class SimpleEstimationContext implements EstimationContext {
                     );
 
                     final HashMap<String, Double> doubleProperties = new HashMap<String, Double>();
-                    final JSONObject doublePropertiesJson = json.optJSONObject("properties");
+                    final WayangJsonObj doublePropertiesJson = json.optionalWayangJsonObj("properties");
                     if (doublePropertiesJson != null) {
                         for (String key : doublePropertiesJson.keySet()) {
                             doubleProperties.put(key, doublePropertiesJson.getDouble(key));

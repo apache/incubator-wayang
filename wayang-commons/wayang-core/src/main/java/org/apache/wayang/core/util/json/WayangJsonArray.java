@@ -36,25 +36,22 @@ import org.apache.wayang.core.api.exception.WayangException;
 
 /**
  * JSONArray is the wrapper for the {@link ArrayNode} to enable the
- * similar functionality as the http://javadox.com/org.json/json/20151123/org/json/JSONArray.html
- *
- * TODO: require implement the rest of the functionalities follow the link below
- * https://github.com/stleary/JSON-java/blob/master/src/main/java/org/json/JSONArray.java
+ * easy access to Json data
  *
  * TODO: the java doc is not done because is missing implementation and it performed some
  *       modification on the code
  */
-public class JSONArray implements Iterable<Object>{
+public class WayangJsonArray implements Iterable<Object>{
 
   private ArrayNode node;
 
-  public JSONArray(){
+  public WayangJsonArray(){
     ObjectMapper mapper = new ObjectMapper();
     // create a JSON object
     this.node = mapper.createArrayNode();
   }
 
-  JSONArray(ArrayNode node){
+  WayangJsonArray(ArrayNode node){
     this.node = node;
   }
 
@@ -66,11 +63,11 @@ public class JSONArray implements Iterable<Object>{
     return this.node.size();
   }
 
-  public JSONObject getJSONObject(int index){
-    return new JSONObject((ObjectNode) this.node.get(index));
+  public WayangJsonObj getJSONObject(int index){
+    return new WayangJsonObj((ObjectNode) this.node.get(index));
   }
 
-  public void put(JSONObject value){
+  public void put(WayangJsonObj value){
     this.node.add(value.getNode());
   }
 
@@ -81,7 +78,7 @@ public class JSONArray implements Iterable<Object>{
   Consumer<Object> insertType(Object value){
     ArrayNode node = this.getNode();
     if(value == null){
-      return (v) ->  node.add(JSONObject.NULL);
+      return (v) ->  node.add(WayangJsonObj.NULL);
     }else if(value instanceof Integer){
       return (v) ->  node.add((Integer) v);
     }else if(value instanceof Long){
@@ -94,10 +91,10 @@ public class JSONArray implements Iterable<Object>{
       return (v) ->  node.add((Double) v);
     }else if(value instanceof JsonNode){
       return (v) -> node.add((JsonNode) v);
-    }else if(value instanceof JSONArray){
-      return (v) -> node.add(((JSONArray)v).getNode());
-    }else if(value instanceof JSONObject){
-      return (v) -> node.add(((JSONObject)v).getNode());
+    }else if(value instanceof WayangJsonArray){
+      return (v) -> node.add(((WayangJsonArray)v).getNode());
+    }else if(value instanceof WayangJsonObj){
+      return (v) -> node.add(((WayangJsonObj)v).getNode());
     }
     throw new WayangException("The type is not recognizable "+ value.getClass());
   }
@@ -114,9 +111,9 @@ public class JSONArray implements Iterable<Object>{
         false)
         .map(v -> {
           if(v instanceof ArrayNode){
-            return new JSONArray((ArrayNode) v);
+            return new WayangJsonArray((ArrayNode) v);
           }else if(v instanceof ObjectNode) {
-            return new JSONObject((ObjectNode) v);
+            return new WayangJsonObj((ObjectNode) v);
           }else if(v instanceof NullNode) {
             return null;
           } else if(v instanceof TextNode){

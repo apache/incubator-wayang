@@ -19,7 +19,7 @@
 package org.apache.wayang.core.util;
 
 import org.apache.commons.lang3.SerializationException;
-import org.apache.wayang.core.util.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 
 /**
@@ -33,7 +33,7 @@ public interface JsonSerializer<T> {
      * @param object that should be serialized
      * @return the serialized object
      */
-    JSONObject serialize(T object);
+    WayangJsonObj serialize(T object);
 
     /**
      * Deserializes an object.
@@ -42,7 +42,7 @@ public interface JsonSerializer<T> {
      * @return the deserialized object
      */
     @SuppressWarnings("unchecked")
-    default T deserialize(JSONObject json) {
+    default T deserialize(WayangJsonObj json) {
         if (JsonSerializables.isJsonNull(json)) return null;
         try {
             final Class<?> classTag = JsonSerializables.getClassTag(json);
@@ -63,6 +63,6 @@ public interface JsonSerializer<T> {
      * @return the deserialized object
      */
 
-    T deserialize(JSONObject json, Class<? extends T> cls);
+    T deserialize(WayangJsonObj json, Class<? extends T> cls);
 
 }

@@ -39,7 +39,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
-import org.apache.wayang.core.util.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * Stores execution data have been collected by the {@link CrossPlatformExecutor}.
@@ -127,7 +127,7 @@ public class ExecutionLog implements AutoCloseable {
     /**
      * Writes the measuremnt to the {@link #repositoryPath}.
      */
-    private void write(JSONObject jsonMeasurement) throws IOException {
+    private void write(WayangJsonObj jsonMeasurement) throws IOException {
         jsonMeasurement.write(this.getWriter());
         writer.write('\n');
     }
@@ -145,7 +145,7 @@ public class ExecutionLog implements AutoCloseable {
         return Files.lines(Paths.get(this.repositoryPath), Charset.forName("UTF-8"))
                 .map(line -> {
                     try {
-                        return JsonSerializables.deserialize(new JSONObject(line), serializer, PartialExecution.class);
+                        return JsonSerializables.deserialize(new WayangJsonObj(line), serializer, PartialExecution.class);
                     } catch (Exception e) {
                         throw new WayangException(String.format("Could not parse \"%s\".", line), e);
                     }
