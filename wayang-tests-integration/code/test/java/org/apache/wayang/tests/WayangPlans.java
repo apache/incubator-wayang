@@ -18,6 +18,11 @@
 
 package org.apache.wayang.tests;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
 import org.apache.wayang.api.DataQuantaBuilder;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Record;
@@ -70,7 +75,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Provides plans that can be used for integration testing.
@@ -86,6 +90,10 @@ public class WayangPlans {
     public static final URI FILE_WITH_KEY_1 = createUri("/lines-with-key1.input");
 
     public static final URI FILE_WITH_KEY_2 = createUri("/lines-with-key2.input");
+
+    public static final URI PAGERANK_INPUT = createUri("/pagerank.input");
+
+    public static final URI PAGERANK_SOLUTION = createUri("/pagerank_solution.input");
 
     public static URI createUri(String resourcePath) {
         try {
@@ -574,19 +582,26 @@ public class WayangPlans {
      * Creates a cross-community PageRank Wayang plan, that incorporates the {@link PageRankOperator}.
      */
     public static WayangPlan pageRankWithDictionaryCompression(Collection<Tuple2<Character, Float>> pageRankCollector) {
-        Collection<char[]> adjacencies = Arrays.asList(
-                new char[]{'B', 'D'},
-                new char[]{'C', 'I'},
-                new char[]{'D', 'F', 'B'},
-                new char[]{'E', 'H', 'D', 'K'},
-                new char[]{'F', 'A', 'B'},
-                new char[]{'G', 'A', 'B'},
-                new char[]{'H', 'A', 'B'},
-                new char[]{'I', 'A', 'B'},
-                new char[]{'J', 'G'},
-                new char[]{'K', 'H'}
-        );
-
+        Collection<char[]> adjacencies;
+        try {
+            adjacencies = Files
+                .lines(Paths.get(PAGERANK_INPUT))
+                .map(
+                    line -> {
+                        String[] parts = line.split(" ");
+                        char[] names = new char[parts.length];
+                        for (int i = 0; i < parts.length; i++) {
+                            names[i] = parts[i].charAt(0);
+                        }
+                        return names;
+                    }
+                )
+                .collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+            //In case of fail it return an empty list
+            adjacencies = Collections.EMPTY_LIST;
+        }
         // Create a WayangPlan:
 
         // Load the adjacency list.
@@ -703,19 +718,29 @@ public class WayangPlans {
     }
 
     public static Map<Character, Float> pageRankWithDictionaryCompressionSolution() {
-        return Stream.of(
-                new Tuple2<>('A', 0.033f),
-                new Tuple2<>('B', 0.384f),
-                new Tuple2<>('C', 0.343f),
-                new Tuple2<>('D', 0.039f),
-                new Tuple2<>('E', 0.081f),
-                new Tuple2<>('F', 0.039f),
-                new Tuple2<>('G', 0.016f),
-                new Tuple2<>('H', 0.016f),
-                new Tuple2<>('I', 0.016f),
-                new Tuple2<>('J', 0.016f),
-                new Tuple2<>('K', 0.016f)
-        ).collect(Collectors.toMap(Tuple2::getField0, Tuple2::getField1));
+        try {
+            return Files
+                .lines(Paths.get(PAGERANK_SOLUTION))
+                .map(
+                    line -> {
+                        String[] parts = line.split(" ");
+                        return new Tuple2<Character, Float>(
+                            parts[0].charAt(0),
+                            Float.parseFloat(parts[1])
+                        );
+                    }
+                )
+                .collect(
+                    Collectors.toMap(
+                        Tuple2::getField0,
+                        Tuple2::getField1
+                    )
+                );
+        } catch (IOException e) {
+            e.printStackTrace();
+            //In case of fail it return and empty map
+            return new HashMap<>();
+        }
     }
 
     /**
