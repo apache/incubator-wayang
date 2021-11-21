@@ -1,6 +1,6 @@
 /*
- Copyright 2016 Sebastian Kruse, Licensed under the Apache License, Version 2.0
-https://github.com/sekruse/profiledb-java.git
+ * Copyright 2016 Sebastian Kruse, Licensed under the Apache License, Version 2.0
+ * https://github.com/sekruse/profiledb-java.git
  */
 
 package org.apache.wayang.commons.util.profiledb.instrumentation;

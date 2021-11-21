@@ -4,8 +4,10 @@ Copyright 2020 - 2021 The Apache Software Foundation.
 This product includes software developed at
 The Apache Software Foundation (http://www.apache.org/).
 
+--
 This product includes software from Sebastian Kruse
 Copyright 2016 Sebastian Kruse, Licensed under the Apache License, Version 2.0
 https://github.com/sekruse/profiledb-java.git
 The adjusted code can be found in wayang-commons/wayang-utils-profile-db/src/
 More details in wayang-commons/wayang-utils-profile-db/NOTICE
+--

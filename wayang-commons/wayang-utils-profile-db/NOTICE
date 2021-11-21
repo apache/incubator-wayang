@@ -1,8 +1,15 @@
+--
+This module includes software from Sebastian Kruse
+Copyright 2016 Sebastian Kruse, Licensed under the Apache License, Version 2.0
+https://github.com/sekruse/profiledb-java.git
+The adjusted code can be found in ./src/
+--
+
 This code is based on the implementation you can find in the following repository:
 
 - https://github.com/sekruse/profiledb-java.git
 
-The code there does not have regular maintenance. Wayang will require new functionalities to deal with serialization of UDFs and storage in other platforms.
+The code there does not have regular maintenance. Apache Wayang will require new functionalities to deal with serialization of UDFs and storage in other platforms.
 
 The classes below has not been modified:
  
