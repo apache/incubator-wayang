@@ -1,6 +1,9 @@
 /*
- * Copyright 2016 Sebastian Kruse, Licensed under the Apache License, Version 2.0
- * https://github.com/sekruse/profiledb-java.git
+ * Copyright 2016 Sebastian Kruse,
+ * code from: https://github.com/sekruse/profiledb-java.git
+ * Original license:
+ * Licensed under the Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package org.apache.wayang.commons.util.profiledb.storage;
