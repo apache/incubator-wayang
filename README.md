@@ -1,4 +1,4 @@
-# Apache Wayang <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
+# Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
 ![Travis branch](https://img.shields.io/travis/com/apache/incubator-wayang/main?style=for-the-badge)
 [![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg)
 [![License](https://img.shields.io/github/license/apache/incubator-wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
@@ -9,9 +9,9 @@
 
 #### The first cross-platform data processing system
 
-In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang is a *cross-platform data processing system*: Users can specify any data processing application using one of Wayang's API and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
+In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) is a *cross-platform data processing system*: Users can specify any data processing application using one of Wayang's API and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
 
-Apache Wayang aims at freeing data engineers and software developers from the burden of learning all different data processing systems, their APIs, strengths and weaknesses; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when trying a fixed set of processing platforms. As of now, Wayang has built-in support for the following processing platforms:
+Apache Wayang (incubating) aims at freeing data engineers and software developers from the burden of learning all different data processing systems, their APIs, strengths and weaknesses; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when trying a fixed set of processing platforms. As of now, Wayang has built-in support for the following processing platforms:
 - [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
 - [Apache Spark](https://spark.apache.org/)
 - [Apache Flink](https://flink.apache.org/)
@@ -23,11 +23,11 @@ Apache Wayang aims at freeing data engineers and software developers from the bu
 ## How to use Wayang
 
 **Requirements.**
-Apache Wayang is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed and Apache Hadoop (the version that you want). Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed and Apache Hadoop (the version that you want). Please also consider that processing platforms employed by Wayang might have further requirements.
 
 > **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
 
-> **NOTE:** Currently Apache Wayang is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
+> **NOTE:** Currently Apache Wayang (incubating) is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
 
 **Get Wayang.**
 Wayang is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:

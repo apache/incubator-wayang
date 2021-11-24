@@ -16,9 +16,9 @@
   limitations under the License.
 
 -->
-# Compiling Apache Wayang
+# Compiling Apache Wayang (incubating)
 
-Apache Wayang has different dependencies, for compiling, it needs to add some profile in the compilation to enable maven works properly.
+Apache Wayang (incubating) has different dependencies, for compiling, it needs to add some profile in the compilation to enable maven works properly.
 
  ```shell
 mvn clean compile 

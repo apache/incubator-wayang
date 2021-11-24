@@ -31,7 +31,7 @@ import org.apache.wayang.spark.Spark;
 import org.apache.wayang.spark.platform.SparkPlatform;
 
 /**
- * Main class for the TPC-H app based on Apache Wayang.
+ * Main class for the TPC-H app based on Apache Wayang (incubating).
  */
 public class Main {
 

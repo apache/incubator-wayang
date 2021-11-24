@@ -31,9 +31,9 @@
     <version>0.6.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Apache Wayang</name>
+    <name>Apache Wayang (incubating)</name>
     <description>
-        Apache Wayang is a tool to build platform-agnostic data processing apps and have them both optimized for and
+        Apache Wayang (incubating) is a tool to build platform-agnostic data processing apps and have them both optimized for and
         executed on multiple different execution platforms, such as Java Streams and Apache Spark.
     </description>
 
@@ -51,7 +51,7 @@
             <url>https://www.apache.org/licenses/LICENSE-2.0</url>
             <distribution>repo</distribution>
             <comments>
-                Apache Wayang is an effort undergoing incubation at The Apache Software
+                Apache Wayang (incubating) is an effort undergoing incubation at The Apache Software
                 Foundation (ASF), sponsored by the Apache Incubator PMC. Incubation is required
                 of all newly accepted projects until a further review indicates that the
                 infrastructure, communications, and decision making process have stabilized in
@@ -76,14 +76,14 @@
 
     <mailingLists>
         <mailingList>
-            <name>Apache Wayang Developer List</name>
+            <name>Apache Wayang (incubating) Developer List</name>
             <subscribe>mailto:dev-subscribe@wayang.apache.org</subscribe>
             <unsubscribe>mailto:dev-unsubscribe@wayang.apache.org</unsubscribe>
             <post>mailto:dev@wayang.apache.org</post>
             <archive>http://mail-archives.apache.org/mod_mbox/wayang-dev/</archive>
         </mailingList>
         <mailingList>
-            <name>Apache Wayang Commits List</name>
+            <name>Apache Wayang (incubating) Commits List</name>
             <subscribe>mailto:commits-subscribe@wayang.apache.org</subscribe>
             <unsubscribe>mailto:commits-unsubscribe@wayang.apache.org</unsubscribe>
             <post>mailto:commits@wayang.apache.org</post>
@@ -215,7 +215,7 @@
         </profile>
 
         <profile>
-            <!-- Perform steps to deploy Wayang. -->
+            <!-- Perform steps to deploy Apache Wayang (incubating). -->
             <id>deployment</id>
             <build>
                 <plugins>
@@ -236,7 +236,7 @@
         </profile>
 
         <profile>
-            <!-- Perform steps to deploy Wayang. -->
+            <!-- Perform steps to deploy Apache Wayang (incubating). -->
             <id>deployment-dryrun</id>
             <build>
                 <plugins>
