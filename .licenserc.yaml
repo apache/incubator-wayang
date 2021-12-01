@@ -38,6 +38,3 @@ header:
     - '**/org/apache/wayang/commons/util/profiledb/**'
 
   comment: on-failure
-dependency:
-  files:
-    - pom.xml
