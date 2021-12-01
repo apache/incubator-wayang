@@ -15,11 +15,14 @@
 # limitations under the License.
 #
 
+
 name: Backend
 
 on:
   push:
   pull_request:
+    branches:
+      - main
 
 concurrency:
   group: backend-${{ github.event.pull_request.number || github.ref }}
