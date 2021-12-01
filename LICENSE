@@ -200,3 +200,23 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+===============================================================
+
+The files:
+wayang-commons/wayang-utils-profile-db/src/test/java/org/apache/wayang/commons/util/profiledb/measurement/TestTimeMeasurement.java
+wayang-commons/wayang-utils-profile-db/src/test/java/org/apache/wayang/commons/util/profiledb/measurement/TestMemoryMeasurement.java
+wayang-commons/wayang-utils-profile-db/src/test/java/org/apache/wayang/commons/util/profiledb/ProfileDBTest.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/ProfileDB.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/storage/JDBCStorage.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/storage/Storage.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/storage/FileStorage.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/instrumentation/StopWatch.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/json/MeasurementSerializer.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/json/MeasurementDeserializer.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/model/Type.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/model/measurement/TimeMeasurement.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/model/Subject.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/model/Experiment.java
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/model/Measurement.java
+Are copyrighted from https://github.com/sekruse/profiledb-java repository which is distributed under the Apache 2.0 license.
