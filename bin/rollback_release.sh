@@ -16,14 +16,15 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-RC=rc8
-RC_NEW=rc9
+RC=rc9
+RC_NEW=rc10
 VERSION=0.6.0
 URL=https://dist.apache.org/repos/dist/dev/incubator/wayang
 NAME=apache-wayang-${VERSION}-incubating
 NAME_SRC_BASE=${NAME}-source-release
 NAME_SRC_EXT=${NAME_SRC_BASE}.zip
-
+# TODO: validate the enviroment before to execute
+# gpg, gem_home, java_home
 git tag wayang-${VERSION}-${RC} wayang-${VERSION}
 git tag -d wayang-${VERSION}
 git push origin wayang-${VERSION}-${RC} :wayang-${VERSION}
@@ -50,9 +51,9 @@ mkdir ${RC_NEW}
 cp target/checkout/target/${NAME_SRC_EXT} ${RC_NEW}/
 cp target/checkout/target/${NAME_SRC_EXT}.asc ${RC_NEW}/
 cp target/checkout/target/${NAME_SRC_EXT}.sha512 ${RC_NEW}/
-cp target/checkout/DISCLAIMER ${RC_NEW}/
-cp target/checkout/LICENSE ${RC_NEW}/
-cp target/checkout/NOTICE ${RC_NEW}/
+#cp target/checkout/DISCLAIMER ${RC_NEW}/
+#cp target/checkout/LICENSE ${RC_NEW}/
+#cp target/checkout/NOTICE ${RC_NEW}/
 cp target/checkout/RELEASE_NOTES ${RC_NEW}/
 cp target/checkout/README.md ${RC_NEW}/
 

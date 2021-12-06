@@ -1192,6 +1192,7 @@
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
+                <version>0.13</version>
                 <executions>
                     <execution>
                         <id>license-check</id>
@@ -1402,6 +1403,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven-version</id>
