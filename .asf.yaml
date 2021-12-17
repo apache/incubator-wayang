@@ -20,7 +20,7 @@ github:
   homepage: https://github.com/apache/incubator-wayang
   labels:
     - cross-platform
-    - data processing
+    - data-processing
   enabled_merge_buttons:
     squash: true
     merge: false
