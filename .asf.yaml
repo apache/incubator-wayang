@@ -17,7 +17,7 @@
 
 github:
   description: Apache Wayang(incubating) is the first cross-platform data processing system.
-  homepage: https://github.com/apache/incubator-wayang
+  homepage: https://wayang.apache.org/
   labels:
     - cross-platform
     - data-processing
