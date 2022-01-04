@@ -9,7 +9,7 @@
 
 #### The first cross-platform data processing system
 
-In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) is a *cross-platform data processing system*: Users can specify any data processing application using one of Wayang's API and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
+In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) is a *cross-platform data processing system*: Users can specify any data processing application using one of Wayang's APIs and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
 
 Apache Wayang (incubating) aims at freeing data engineers and software developers from the burden of learning all different data processing systems, their APIs, strengths and weaknesses; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when trying a fixed set of processing platforms. As of now, Wayang has built-in support for the following processing platforms:
 - [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
@@ -30,7 +30,7 @@ Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to exec
 > **NOTE:** Currently Apache Wayang (incubating) is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
 
 **Get Wayang.**
-Wayang is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:
+Wayang is available via Maven Central. To use it with Maven, for instance, include the following into your POM file:
 ```xml
 <dependency> 
   <groupId>org.apache.wayang</groupId>
@@ -47,7 +47,7 @@ Note the `***`: Wayang ships with multiple modules that can be included in your 
 
 For the sake of version flexibility, you still have to include your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
 
-In addition, you can obtain the most recent snapshot version of Wayang via Sonatype's snapshot repository. Just included
+In addition, you can obtain the most recent snapshot version of Wayang via Sonatype's snapshot repository. Just include
 ```xml
 <repositories>
   <repository>
@@ -55,7 +55,7 @@ In addition, you can obtain the most recent snapshot version of Wayang via Sonat
     <name>Apache Foundation Snapshot Repository</name>
     <url>https://repository.apache.org/content/repositories/snapshots</url>
   </repository>
-<repositories>
+</repositories>
 ```
 
 If you need to rebuild Wayang, e.g., to use a different Scala version, you can simply do so via Maven:
@@ -65,9 +65,11 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
     ```shell
     $ mvn clean install
     ```
-> **NOTE:** In current maven setup the version of scala are tie to the Java version, you can compile the profile `scala-11` with Java 8 and profile `scala-12` with Java 11
+> **NOTE:** If you receive an error about not finding `MathExBaseVisitor`, then the problem might be that you are trying to build from IntelliJ, without Maven. MathExBaseVisitor is generated code, and a Maven build should generate it automatically.
 
-> **NOTE:** For compiling the code and testing the code it required to have installed hadoop in your machine
+> **NOTE:** In the current Maven setup, the version of scala is tied to the Java version, you can compile the profile `scala-11` with Java 8 and profile `scala-12` with Java 11.
+
+> **NOTE:** For compiling and testing the code it is required to have Hadoop installed on your machine.
 
 > **NOTE:**  the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
 >
