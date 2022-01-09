@@ -42,4 +42,4 @@ If you are interested in working with the newest under-development code or contr
 git clone https://github.com/apache/incubator-wayang
 ```
 
-Once you’ve downloaded Wayang, you can find instructions for [installing]({% link getting_start/how_install/index.md %}) and [building]({% link getting_start/how_build/index.md %}) it on the [Wayang documentation](https://wayang.apache.org/docs/latest/).
+Once you’ve downloaded Wayang, you can find instructions for [installing]({% link getting_start/how_install/index.md %}) and [building]({% link getting_start/how_build/index.md %}) it on the [Wayang documentation](https://wayang.apache.org/documentation/).
