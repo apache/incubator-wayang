@@ -90,7 +90,7 @@ org.apache.wayang.apps.kmeans.postgres.Kmeans
 The latter assumes data to reside in a filesystem, while the other assumes data to reside in PostgreSQL. For the latter case, you will have to configure Apache Wayang (incubating), such that it can access the database.
 Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters.
 
-**Datasets.** We provide a [data generator](https://github.com/apache/incubator-wayang/blob/master/wayang-benchmark/src/test/resources/kmeans-datagenerator.py) to generate files that can be clustered. You can further load these files into the database assuming the following schema:
+**Datasets.** We provide a [data generator](https://github.com/apache/incubator-wayang/blob/main/wayang-benchmark/code/test/resources/kmeans-datagenerator.py) to generate files that can be clustered. You can further load these files into the database assuming the following schema:
 ```sql
 CREATE TABLE "<table_name_of_your_choice>" (x float8, y float8);
 ```
