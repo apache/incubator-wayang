@@ -2,6 +2,9 @@
   "ignorePatterns": [
     {
       "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://gitter.im"
     }
   ],
   "timeout": "10s",
