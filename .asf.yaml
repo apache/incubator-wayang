@@ -23,5 +23,5 @@ github:
     - data-processing
   enabled_merge_buttons:
     squash: true
-    merge: false
+    merge: true
     rebase: false
