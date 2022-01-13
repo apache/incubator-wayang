@@ -25,3 +25,7 @@ github:
     squash: true
     merge: true
     rebase: false
+
+notifications:
+  commits:      commits@wayang.apache.org
+  pullrequests: commits@wayang.apache.org
