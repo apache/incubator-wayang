@@ -1187,64 +1187,7 @@
                     </dependency>
                 </dependencies>
             </plugin>
-
-            <!-- Fail the build if files don't have a valid header -->
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <version>0.13</version>
-                <executions>
-                    <execution>
-                        <id>license-check</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <!-- Right now this would fail the build as not all files have Apache headers -->
-                    <!-- TODO: Enable asap -->
-                    <useMavenDefaultExcludes>true</useMavenDefaultExcludes>
-                    <!--
-                       Make rat output the files with missing licensed directly into the
-                       build output (This way we don't have to look into the rat.txt to find
-                       out which ones)
-                   -->
-                    <consoleOutput>true</consoleOutput>
-                    <excludes>
-                        <!-- Git related files -->
-                        <exclude>**/.git/**</exclude>
-                        <exclude>**/.gitignore</exclude>
-
-                        <!-- Maven related files -->
-                        <exclude>**/target/**</exclude>
-                        <exclude>target/**</exclude>
-
-                        <!-- Eclipse related files -->
-                        <exclude>**/.project</exclude>
-                        <exclude>**/.settings/**</exclude>
-                        <exclude>**/.classpath</exclude>
-                        <exclude>**/.factorypath</exclude>
-
-                        <!-- IntelliJ related files -->
-                        <exclude>**/.idea/**</exclude>
-                        <exclude>**/*.iml</exclude>
-
-                        <exclude>**/*.yaml</exclude>
-                        <exclude>**/*.json</exclude>
-
-                        <exclude>**/*.log</exclude>
-                        <exclude>**/*.input</exclude>
-
-                        <exclude>**/*.svg</exclude>
-                        <exclude>**/Gemfile.lock</exclude>
-                        <exclude>**/.jekyll-cache/**</exclude>
-                        <exclude>**/README.md</exclude>
-                        <exclude>**/scala_1*</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
+            
             <!-- Fail the build if some dependency don't have a valid license -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
