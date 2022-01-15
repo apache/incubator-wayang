@@ -17,15 +17,26 @@
 
 github:
   description: Apache Wayang(incubating) is the first cross-platform data processing system.
-  homepage: https://wayang.apache.org/
+  homepage: https://wayang.incubator.apache.org/
   labels:
     - cross-platform
     - data-processing
+  features:
+    # Disable wiki for documentation
+    wiki: false
+    # Disable issue management
+    issues: true
+    # Disable projects for project management boards
+    projects: false
   enabled_merge_buttons:
-    squash: true
-    merge: true
-    rebase: false
-
+    # enable squash button:
+    squash:  true
+    # enable merge button:
+    merge:   true
+    # disable rebase button:
+    rebase:  false
+    
 notifications:
   commits:      commits@wayang.apache.org
   pullrequests: commits@wayang.apache.org
+  
