@@ -52,12 +52,12 @@ jobs:
         env:
           LOG_LEVEL: error
         run: ./mvnw -B clean verify  -Dmaven.test.skip=false \
-          -Dmaven.wagon.http.retryHandler.count=3 \
-          -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
-          -Dorg.slf4j.simpleLogger.defaultLogLevel=$LOG_LEVEL \
-          -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=$LOG_LEVEL \
-          -Dlog4j.rootLogger=$LOG_LEVEL \
-          -Dwayang.configuration=file:$(pwd)/tools/test/config/wayang.properties
+              -Dmaven.wagon.http.retryHandler.count=3 \
+              -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+              -Dorg.slf4j.simpleLogger.defaultLogLevel=$LOG_LEVEL \
+              -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=$LOG_LEVEL \
+              -Dlog4j.rootLogger=$LOG_LEVEL \
+              -Dwayang.configuration=file:$(pwd)/tools/test/config/wayang.properties
       - name: Build And Install
         run: ./mvnw -B clean install -Dmaven.test.skip=true \
              -Dmaven.wagon.http.retryHandler.count=3 \
