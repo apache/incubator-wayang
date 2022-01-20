@@ -27,6 +27,7 @@ concurrency:
   group: backend-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+
 jobs:
   check-license:
     runs-on: ubuntu-latest
@@ -42,13 +43,10 @@ jobs:
       - name: Set up JDK 1.8
         uses: actions/setup-java@v2
         with:
-          java-version: 8
+          java-version:  8
           distribution: 'adopt'
       - uses: actions/cache@v2
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven
-      - name: Build and Install
-        run: ./mvnw -B clean install  -Dmaven.test.skip=true \
-        -Dmaven.wagon.http.retryHandler.count=3 \
-        -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
+
