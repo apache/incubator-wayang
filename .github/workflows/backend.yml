@@ -52,7 +52,7 @@ jobs:
           key: ${{ runner.os }}-maven
 
       - name: Run Unit tests
-        run: ./mvnw clean verify -B
+        run: ./mvnw clean verify -B -Dmaven.test.skip=false
       - name: Build And Install
         run: ./mvnw clean install -B -Dmaven.test.skip=true \
              -Dhttp.keepAlive=false \
