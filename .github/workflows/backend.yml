@@ -27,6 +27,7 @@ concurrency:
   group: backend-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+
 jobs:
   check-license:
     runs-on: ubuntu-latest
@@ -34,3 +35,21 @@ jobs:
       - uses: actions/checkout@v2
       - name: Check License Header
         uses: apache/skywalking-eyes@main
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v2
+        with:
+          java-version:  8
+          distribution: 'adopt'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven
+      - name: Run Unit tests
+        run: ./mvnw clean verify -B -Dmaven.test.skip=false -Dwayang.configuration=file:$(pwd)/tools/test/config/wayang.properties
+      - name: Build And Install
+        run: ./mvnw clean install -B -Dmaven.test.skip=true 
