@@ -1,0 +1,3 @@
+[submodule ".github/actions/todo-to-issue-action"]
+	path = .github/actions/todo-to-issue-action
+	url = https://github.com/alstr/todo-to-issue-action.git
