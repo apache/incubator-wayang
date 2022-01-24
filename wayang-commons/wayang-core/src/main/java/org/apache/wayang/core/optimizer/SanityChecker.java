@@ -128,6 +128,11 @@ public class SanityChecker {
         return testOutcome.get();
     }
 
+    /**
+     * TODO: (Documentation) SanityChecker.getFlatAlternativeCallback
+     *   labels: documentation,todo
+     * @return
+     */
     private PlanTraversal.Callback getFlatAlternativeCallback(AtomicBoolean testOutcome) {
         return (operator, fromInputSlot, fromOutputSlot) -> {
             if (operator.isAlternative()) {
