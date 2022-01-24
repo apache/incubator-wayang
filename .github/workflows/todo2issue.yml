@@ -33,3 +33,5 @@ jobs:
       - name: "TODO to Issue"
         uses: ./.github/actions/todo-to-issue-action
         id: "todo"
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
