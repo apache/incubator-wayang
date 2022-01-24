@@ -21,7 +21,8 @@ on:
   pull_request:
     branches: [ main ]
     types: [closed]
-
+permissions:
+  issues: write
 jobs:
   build:
     runs-on: "ubuntu-latest"
