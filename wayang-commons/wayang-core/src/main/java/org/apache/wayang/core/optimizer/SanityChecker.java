@@ -116,7 +116,7 @@ public class SanityChecker {
     }
 
     /**
-     * TODO: (Documentation) SanityChecker.checkFlatAlternatives
+     * TODO: (Documentation) add SanityChecker.checkFlatAlternatives
      *   labels: documentation,todo
      * @return
      */
@@ -129,7 +129,7 @@ public class SanityChecker {
     }
 
     /**
-     * TODO: (Documentation) SanityChecker.getFlatAlternativeCallback
+     * TODO: (Documentation) add SanityChecker.getFlatAlternativeCallback
      *   labels: documentation,todo
      * @return
      */
