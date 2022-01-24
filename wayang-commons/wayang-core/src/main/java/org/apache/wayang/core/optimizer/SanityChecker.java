@@ -115,6 +115,11 @@ public class SanityChecker {
         }
     }
 
+    /**
+     * TODO: (Documentation) SanityChecker.checkFlatAlternatives
+     *   labels: documentation,todo
+     * @return
+     */
     public boolean checkFlatAlternatives() {
         AtomicBoolean testOutcome = new AtomicBoolean(true);
         new PlanTraversal(true, false)
