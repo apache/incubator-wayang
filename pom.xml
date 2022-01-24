@@ -1216,6 +1216,8 @@
                         <!-- Git related files -->
                         <exclude>**/.git/**</exclude>
                         <exclude>**/.gitignore</exclude>
+                        <exclude>**/.gitmodules</exclude>
+                        <exclude>**/.github/actions/**</exclude>
 
                         <!-- Maven related files -->
                         <exclude>**/target/**</exclude>
