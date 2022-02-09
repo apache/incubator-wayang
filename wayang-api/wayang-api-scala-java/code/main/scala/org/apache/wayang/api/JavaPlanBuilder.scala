@@ -17,7 +17,10 @@
  */
 
 package org.apache.wayang.api
-
+/**
+ * TODO: add unitary test to the elements in the file org.apache.wayang.api.JavaPlanBuilder.scala
+ * labels: unitary-test,todo
+ */
 import java.util.{Collection => JavaCollection}
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api.util.DataQuantaBuilderCache

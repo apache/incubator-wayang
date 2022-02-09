@@ -17,7 +17,10 @@
  */
 
 package org.apache.wayang.api
-
+/**
+ * TODO: add unitary test to the elements in the file org.apache.wayang.api.RecordDataQuantaBuilder.scala
+ * labels: unitary-test,todo
+ */
 import org.apache.wayang.api.util.DataQuantaBuilderDecorator
 import org.apache.wayang.basic.data.Record
 import org.apache.wayang.basic.function.ProjectionDescriptor

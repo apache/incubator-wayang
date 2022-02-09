@@ -27,6 +27,10 @@ import org.apache.wayang.core.types.DataSetType
 /**
   * Utility to extend a [[DataQuantaBuilder]]'s functionality by decoration.
   */
+/**
+ * TODO: add the documentation in the methods of org.apache.wayang.api.util.DataQuantaBuilderDecorator
+ * labels: documentation,todo
+ */
 abstract class DataQuantaBuilderDecorator[This <: DataQuantaBuilder[This, Out], Out]
 (baseBuilder: DataQuantaBuilder[_, Out])
   extends DataQuantaBuilder[This, Out] {

@@ -18,7 +18,10 @@
 
 package org.apache.wayang.api
 
-
+/**
+ * TODO: add unitary test to the elements in the file org.apache.wayang.api.DataQuanta.scala
+ * labels: unitary-test,todo
+ */
 import _root_.java.lang.{Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, IntUnaryOperator, BiFunction => JavaBiFunction, Function => JavaFunction}
 import _root_.java.util.{Collection => JavaCollection}
@@ -925,6 +928,10 @@ class JoinedDataQuanta[Out0: ClassTag, Out1: ClassTag]
 
 }
 
+/**
+ * TODO: add the documentation to the object org.apache.wayang.api.DataQuanta
+ * labels: documentation,todo
+ */
 object DataQuanta {
 
   def create[T](output: OutputSlot[T])(implicit planBuilder: PlanBuilder): DataQuanta[_] =

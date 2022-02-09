@@ -25,6 +25,11 @@ import org.apache.wayang.basic.data.{Tuple2 => T2}
   */
 package object graph {
 
+  /**
+   * TODO: add the description for the implicitis in org.apache.wayang.api.graph
+   * labels: documentation,todo
+   */
+
   type Vertex = java.lang.Long
 
   type Edge = T2[Vertex, Vertex]

@@ -37,6 +37,10 @@ import scala.reflect.ClassTag
 /**
   * Provides implicits for the basic Wayang API.
   */
+/**
+ * TODO: add the documentation in the implicit of org.apache.wayang.api
+ * labels: documentation,todo
+ */
 package object api {
 
   implicit def basicDataUnitType[T](implicit classTag: ClassTag[T]): BasicDataUnitType[T] = {
