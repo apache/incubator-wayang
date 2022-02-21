@@ -37,6 +37,7 @@ github:
     rebase:  false
     
 notifications:
+  issues:       commits@wayang.apache.org
   commits:      commits@wayang.apache.org
   pullrequests: commits@wayang.apache.org
   
