@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "defaultSchema": "TEST",
+  "schemas": [{
+    "name": "TEST",
+    "type": "custom",
+    "factory": "org.apache.wayang.api.sql.executor.CustomSchemaFactory",
+    "operand": {}
+  }
+  ]
+}

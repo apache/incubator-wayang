@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "defaultSchema": "TEST",
+  "schemas": [
+    {
+      "name": "TEST",
+      "type": "custom",
+      "factory": "org.apache.wayang.api.sql.schema.WayangSchemaFactory",
+      "tables": [
+        {
+          "name": "t",
+          "type": "custom",
+          "factory": "org.apache.wayang.api.sql.table.WayangTableFactory",
+          "operand": {
+            "file": "/data.csv",
+            "columns": ["tc0", "tc1"]
+          }
+        }
+      ]
+    }
+  ]
+}
