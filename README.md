@@ -29,6 +29,8 @@ Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to exec
 
 > **NOTE:** Currently Apache Wayang (incubating) is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
 
+> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to either Java 8 or Java 11 as the prerequisite checker script currently supports up to Java 11 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running 'mvn clean install' before opening the project using IntelliJ.
+
 **Get Wayang.**
 Wayang is available via Maven Central. To use it with Maven, for instance, include the following into your POM file:
 ```xml
