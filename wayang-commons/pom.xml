@@ -77,6 +77,10 @@
                         <groupId>tomcat</groupId>
                         <artifactId>jasper-runtime</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>com.thoughtworks.paranamer</groupId>
+                        <artifactId>paranamer</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
@@ -156,6 +160,10 @@
                     <exclusion>
                         <groupId>commons-el</groupId>
                         <artifactId>commons-el</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.thoughtworks.paranamer</groupId>
+                        <artifactId>paranamer</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
