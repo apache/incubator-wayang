@@ -38,20 +38,8 @@ import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.Slot;
 import org.apache.wayang.core.platform.CrossPlatformExecutor;
 import org.apache.wayang.core.platform.ExecutionState;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import org.apache.wayang.core.util.json.WayangJsonArray;
 import org.apache.wayang.core.util.json.WayangJsonObj;
-import org.apache.wayang.core.util.json.JSONArray;
-import org.apache.wayang.core.util.json.JSONObject;
 
 /**
  * Stores cardinalities that have been collected by the {@link CrossPlatformExecutor}. Current version uses
