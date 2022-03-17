@@ -23,17 +23,17 @@
     <parent>
         <groupId>org.apache</groupId>
         <artifactId>apache</artifactId>
-        <version>23</version>
+        <version>25</version>
     </parent>
 
     <groupId>org.apache.wayang</groupId>
     <artifactId>wayang</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.6.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Apache Wayang</name>
+    <name>Apache Wayang (incubating)</name>
     <description>
-        Apache Wayang is a tool to build platform-agnostic data processing apps and have them both optimized for and
+        Apache Wayang (incubating) is a tool to build platform-agnostic data processing apps and have them both optimized for and
         executed on multiple different execution platforms, such as Java Streams and Apache Spark.
     </description>
 
@@ -51,7 +51,7 @@
             <url>https://www.apache.org/licenses/LICENSE-2.0</url>
             <distribution>repo</distribution>
             <comments>
-                Apache Wayang is an effort undergoing incubation at The Apache Software
+                Apache Wayang (incubating) is an effort undergoing incubation at The Apache Software
                 Foundation (ASF), sponsored by the Apache Incubator PMC. Incubation is required
                 of all newly accepted projects until a further review indicates that the
                 infrastructure, communications, and decision making process have stabilized in
@@ -66,6 +66,7 @@
         <connection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</developerConnection>
         <url>https://github.com/apache/incubator-wayang</url>
+        <tag>wayang-0.6.0</tag>
     </scm>
 
     <issueManagement>
@@ -75,14 +76,14 @@
 
     <mailingLists>
         <mailingList>
-            <name>Apache Wayang Developer List</name>
+            <name>Apache Wayang (incubating) Developer List</name>
             <subscribe>mailto:dev-subscribe@wayang.apache.org</subscribe>
             <unsubscribe>mailto:dev-unsubscribe@wayang.apache.org</unsubscribe>
             <post>mailto:dev@wayang.apache.org</post>
             <archive>http://mail-archives.apache.org/mod_mbox/wayang-dev/</archive>
         </mailingList>
         <mailingList>
-            <name>Apache Wayang Commits List</name>
+            <name>Apache Wayang (incubating) Commits List</name>
             <subscribe>mailto:commits-subscribe@wayang.apache.org</subscribe>
             <unsubscribe>mailto:commits-unsubscribe@wayang.apache.org</unsubscribe>
             <post>mailto:commits@wayang.apache.org</post>
@@ -98,11 +99,14 @@
         <jacoco.destfile>${project.build.directory}/jacoco.exec</jacoco.destfile>
         <maven.kotlin.skip>false</maven.kotlin.skip>
 
+        <!-- Timestamp for the reproducible builds -->
+        <project.build.outputTimestamp>2021-12-01T19:31:43Z</project.build.outputTimestamp>
+
         <assertj.version>3.17.2</assertj.version>
         <commons-io.version>2.5</commons-io.version>
         <guava.version>19.0</guava.version>
         <hamcrest.version>1.3</hamcrest.version>
-        <jackson.version>2.11.2</jackson.version>
+        <jackson.version>2.10.2</jackson.version>
         <jacoco.version>0.8.5</jacoco.version>
         <jodatime.version>2.10.6</jodatime.version>
         <jsonpath.version>2.4.0</jsonpath.version>
@@ -156,12 +160,6 @@
             </properties>
         </profile>
         <profile>
-            <id>distro</id>
-            <modules>
-                <module>wayang-distro</module>
-            </modules>
-        </profile>
-        <profile>
             <!-- Profile to be activated when building the docs artifacts.  -->
             <id>build-docs</id>
             <properties>
@@ -177,7 +175,7 @@
                 <dependency>
                     <groupId>org.apache.wayang</groupId>
                     <artifactId>wayang-resources</artifactId>
-                    <version>0.6.0-SNAPSHOT</version>
+                    <version>0.6.1-SNAPSHOT</version>
                     <type>zip</type>
                     <optional>true</optional>
                 </dependency>
@@ -217,7 +215,7 @@
         </profile>
 
         <profile>
-            <!-- Perform steps to deploy Wayang. -->
+            <!-- Perform steps to deploy Apache Wayang (incubating). -->
             <id>deployment</id>
             <build>
                 <plugins>
@@ -238,7 +236,7 @@
         </profile>
 
         <profile>
-            <!-- Perform steps to deploy Wayang. -->
+            <!-- Perform steps to deploy Apache Wayang (incubating). -->
             <id>deployment-dryrun</id>
             <build>
                 <plugins>
@@ -378,7 +376,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <configuration>
-                            <source>8</source>
+                            <source>11</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
                         </configuration>
                     </plugin>
@@ -431,13 +429,22 @@
                     <exists>src/main/scala</exists>
                 </file>
             </activation>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.scala-lang</groupId>
+                        <artifactId>scala-library</artifactId>
+                        <version>${scala.version}</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
             <build>
                 <pluginManagement>
                     <plugins>
                         <plugin>
                             <groupId>net.alchim31.maven</groupId>
                             <artifactId>scala-maven-plugin</artifactId>
-                            <version>4.4.0</version>
+                            <version>4.5.4</version>
                             <executions>
                                 <execution>
                                     <id>compile-scala</id>
@@ -469,67 +476,6 @@
                                 </execution-->
                             </executions>
                         </plugin>
-                        <plugin>
-                            <artifactId>maven-jar-plugin</artifactId>
-                            <configuration>
-                                <finalName>${project.artifactId}_${scala.mayor.version}-${project.version}</finalName>
-                            </configuration>
-                        </plugin>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-resources-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <id>copy-pom</id>
-                                    <phase>generate-resources</phase>
-                                    <goals>
-                                        <goal>copy-resources</goal>
-                                    </goals>
-                                    <configuration>
-                                        <outputDirectory>${project.build.directory}/${scala.mayor.version}</outputDirectory>
-                                        <resources>
-                                            <resource>
-                                                <directory>${basedir}</directory>
-                                                <includes>
-                                                    <include>pom.xml</include>
-                                                </includes>
-                                                <filtering>true</filtering>
-                                            </resource>
-                                        </resources>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-
-
-
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-install-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <id>default-install</id>
-                                    <configuration>
-                                        <skip>true</skip>
-                                    </configuration>
-                                </execution>
-                                <execution>
-                                    <id>install-scala-version</id>
-                                    <phase>install</phase>
-                                    <goals>
-                                        <goal>install-file</goal>
-                                    </goals>
-                                    <configuration>
-                                        <groupId>${project.groupId}</groupId>
-                                        <artifactId>${project.artifactId}_${scala.mayor.version}</artifactId>
-                                        <version>${project.version}</version>
-                                        <packaging>${project.packaging}</packaging>
-                                        <file>${project.build.directory}/${project.artifactId}_${scala.mayor.version}-${project.version}.jar</file>
-                                        <pomFile>${project.build.directory}/${scala.mayor.version}/replacer/pom.xml</pomFile>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
                     </plugins>
                 </pluginManagement>
                 <plugins>
@@ -540,30 +486,110 @@
                     <!--                    <plugin>-->
                     <!--                        <artifactId>maven-jar-plugin</artifactId>-->
                     <!--                    </plugin>-->
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>scala-11</id>
+            <activation>
+                <file>
+                    <exists>scala_2.11</exists>
+                </file>
+            </activation>
+            <properties>
+                <scala.version>2.11.12</scala.version>
+                <scala.mayor.version>2.11</scala.mayor.version>
+                <spark.version>2.4.8</spark.version>
+            </properties>
+            <build>
+                <plugins>
                     <plugin>
-                        <groupId>com.google.code.maven-replacer-plugin</groupId>
-                        <artifactId>replacer</artifactId>
-                        <version>1.5.3</version>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>replace-artifactid</id>
-                                <phase>prepare-package</phase>
+                                <id>adding-source-java-scala-2.11</id>
+                                <phase>generate-sources</phase>
                                 <goals>
-                                    <goal>replace</goal>
+                                    <goal>add-source</goal>
                                 </goals>
                                 <configuration>
-                                    <includes>
-                                        <include>${basedir}/target/${scala.mayor.version}/pom.xml</include>
-                                    </includes>
-                                    <replacements>
-                                        <replacement>
-                                            <token>&lt;artifactId&gt;${project.artifactId}&lt;/artifactId&gt;</token>
-                                            <value>&lt;artifactId&gt;${project.artifactId}_${scala.mayor.version}&lt;/artifactId&gt;</value>
-                                        </replacement>
-                                    </replacements>
-
-                                    <!-- Replace to -->
-                                    <outputFile>${basedir}/target/${scala.mayor.version}/replacer/pom.xml</outputFile>
+                                    <sources>
+                                        <source>../code/main/java</source>
+                                        <source>src/main/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>adding-resources-scala-2.11</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>add-resource</goal>
+                                </goals>
+                                <configuration>
+                                    <resources>
+                                        <resource>
+                                            <directory>
+                                                ../code/main/resources
+                                            </directory>
+                                        </resource>
+                                        <resource>
+                                            <directory>
+                                                src/main/resources
+                                            </directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>adding-test-source-java-scala-2.11</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>../code/test/java</source>
+                                        <source>src/test/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>adding-test-resources-scala-2.11</id>
+                                <phase>generate-test-resources</phase>
+                                <goals>
+                                    <goal>add-test-resource</goal>
+                                </goals>
+                                <configuration>
+                                    <resources>
+                                        <resource>
+                                            <directory>
+                                                ../code/test/resources
+                                            </directory>
+                                        </resource>
+                                        <resource>
+                                            <directory>
+                                                src/test/resources
+                                            </directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>add-source-scala</id>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sourceDir>../code/main/scala</sourceDir>
+                                    <testSourceDir>../code/test/scala</testSourceDir>
                                 </configuration>
                             </execution>
                         </executions>
@@ -573,31 +599,124 @@
         </profile>
 
         <profile>
-            <id>scala-11</id>
-            <properties>
-                <scala.version>2.11.12</scala.version>
-                <scala.mayor.version>2.11</scala.mayor.version>
-                <spark.version>2.4.8</spark.version>
-            </properties>
-        </profile>
-
-        <profile>
             <id>scala-12</id>
             <activation>
                 <jdk>11</jdk>
+                <file>
+                    <exists>scala_2.12</exists>
+                </file>
             </activation>
             <properties>
                 <scala.version>2.12.12</scala.version>
                 <scala.mayor.version>2.12</scala.mayor.version>
                 <spark.version>3.1.2</spark.version>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>adding-source-java-scala-2.12</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>../code/main/java</source>
+                                        <source>src/main/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>adding-resources-scala-2.12</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>add-resource</goal>
+                                </goals>
+                                <configuration>
+                                    <resources>
+                                        <resource>
+                                            <directory>
+                                                ../code/main/resources
+                                            </directory>
+                                        </resource>
+                                        <resource>
+                                            <directory>
+                                                src/main/resources
+                                            </directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>adding-test-source-java-scala-2.12</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>../code/test/java</source>
+                                        <source>src/test/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>adding-test-resources-scala-2.12</id>
+                                <phase>generate-test-resources</phase>
+                                <goals>
+                                    <goal>add-test-resource</goal>
+                                </goals>
+                                <configuration>
+                                    <resources>
+                                        <resource>
+                                            <directory>
+                                                ../code/test/resources
+                                            </directory>
+                                        </resource>
+                                        <resource>
+                                            <directory>
+                                                src/test/resources
+                                            </directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>add-source-scala</id>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sourceDir>../code/main/scala</sourceDir>
+                                    <testSourceDir>../code/test/scala</testSourceDir>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <profile>
-            <id>scala-13</id>
+            <id>scala-parent-default</id>
+            <activation>
+                <file>
+                    <exists>code</exists>
+                </file>
+            </activation>
             <properties>
-                <scala.version>2.13.3</scala.version>
-                <scala.mayor.version>2.13</scala.mayor.version>
+                <scala.version>2.12.12</scala.version>
+                <scala.mayor.version>2.12</scala.mayor.version>
                 <spark.version>3.1.2</spark.version>
             </properties>
         </profile>
@@ -757,6 +876,58 @@
             </properties>
         </profile>
 
+        <profile>
+            <id>disable-java8-doclint</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>apache-release</id>
+            <build>
+                <finalName>apache-${project.artifactId}-${project.version}-incubating</finalName>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                    <resource>
+                        <directory>${project.basedir}</directory>
+                        <includes>
+                            <include>DISCLAIMER</include>
+                            <include>LICENSE</include>
+                            <include>NOTICE</include>
+                            <include>RELEASE_NOTES</include>
+                            <include>README.md</include>
+                        </includes>
+                    </resource>
+                </resources>
+                <plugins>
+                    <!-- Create a source-release artifact that contains the fully buildable
+                         project directory source structure. This is the artifact which is
+                         the official subject of any release vote. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>source-release-assembly</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <finalName>apache-${project.artifactId}-${project.version}-incubating</finalName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <dependencyManagement>
@@ -779,14 +950,9 @@
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-bom</artifactId>
-                <version>2.14.0</version>
+                <version>2.17.0</version>
                 <scope>import</scope>
                 <type>pom</type>
-            </dependency>
-            <dependency>
-                <groupId>org.scala-lang</groupId>
-                <artifactId>scala-library</artifactId>
-                <version>${scala.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -854,7 +1020,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>2.6</version>
+                    <version>3.3.0</version>
                 </plugin>
 
                 <plugin>
@@ -926,7 +1092,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.2.2</version>
                 </plugin>
 
                 <plugin>
@@ -951,7 +1117,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.2.1</version>
                     <executions>
                         <execution>
                             <id>attach-sources</id>
@@ -1027,6 +1193,7 @@
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
+                <version>0.13</version>
                 <executions>
                     <execution>
                         <id>license-check</id>
@@ -1050,6 +1217,8 @@
                         <!-- Git related files -->
                         <exclude>**/.git/**</exclude>
                         <exclude>**/.gitignore</exclude>
+                        <exclude>**/.gitmodules</exclude>
+                        <exclude>**/.github/actions/**</exclude>
 
                         <!-- Maven related files -->
                         <exclude>**/target/**</exclude>
@@ -1060,6 +1229,9 @@
                         <exclude>**/.settings/**</exclude>
                         <exclude>**/.classpath</exclude>
                         <exclude>**/.factorypath</exclude>
+
+                        <!--RAT files-->
+                        <exclude>**/apache-rat-0.13/**</exclude>
 
                         <!-- IntelliJ related files -->
                         <exclude>**/.idea/**</exclude>
@@ -1075,6 +1247,8 @@
                         <exclude>**/Gemfile.lock</exclude>
                         <exclude>**/.jekyll-cache/**</exclude>
                         <exclude>**/README.md</exclude>
+                        <exclude>**/general-todos.md</exclude>
+                        <exclude>**/scala_1*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -1236,6 +1410,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven-version</id>
@@ -1307,6 +1482,26 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.0-M4</version>
+
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <autoResolveSnapshots>all</autoResolveSnapshots>
+                    <releaseProfiles>apache-release</releaseProfiles>
+                    <!--<pushChanges>false</pushChanges>-->
+                    <!--<dryRun>true</dryRun>-->
+                    <releaseVersion>0.6.0</releaseVersion>
+                    <updateWorkingCopyVersions>true</updateWorkingCopyVersions>
+                    <updateDependencies>true</updateDependencies>
+                    <tag>wayang-0.6.0</tag>
+                    <scmReleaseCommitComment>@{prefix} prepare release 0.6.0</scmReleaseCommitComment>
+                    <tagNameFormat>apache-@{project.artifactId}-@{project.version}-incubating</tagNameFormat>
+                    <tagNameFormat>v${project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

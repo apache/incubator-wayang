@@ -19,16 +19,17 @@
 package org.apache.wayang.core.monitor;
 
 
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.util.fs.FileSystem;
-import org.apache.wayang.core.util.fs.FileSystems;
-import org.apache.wayang.core.util.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 public class FileMonitor extends Monitor {
 
@@ -46,7 +47,7 @@ public class FileMonitor extends Monitor {
             HashMap<String, Object> jsonPlanMap = new HashMap<>();
             jsonPlanMap.put("stages", initialExecutionPlan);
             jsonPlanMap.put("run_id", runId);
-            JSONObject jsonPlan = new JSONObject(jsonPlanMap);
+            WayangJsonObj jsonPlan = new WayangJsonObj(jsonPlanMap);
 
             writer.write(jsonPlan.toString());
         } catch (UncheckedIOException e) {
@@ -83,7 +84,7 @@ public class FileMonitor extends Monitor {
             progressBar.put("overall", overall);
             progressBar.put("details", progress);
 
-            JSONObject jsonProgress = new JSONObject(progressBar);
+            WayangJsonObj jsonProgress = new WayangJsonObj(progressBar);
             writer.write(jsonProgress.toString());
         } catch (UncheckedIOException e) {
             throw e.getCause();

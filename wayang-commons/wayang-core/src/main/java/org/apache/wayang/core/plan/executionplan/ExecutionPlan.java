@@ -94,6 +94,12 @@ public class ExecutionPlan {
         return sb.toString();
     }
 
+    /**
+     * TODO: ExecutionPlan.toJsonList add documentation
+     * labels:documentation,todo
+     *
+     * @return
+     */
     public List<Map> toJsonList() {
         Counter<ExecutionStage> stageActivationCounter = new Counter<>();
         Queue<ExecutionStage> activatedStages = new LinkedList<>(this.startingStages);

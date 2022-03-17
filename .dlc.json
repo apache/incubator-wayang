@@ -1,0 +1,21 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://gitter.im"
+    },
+    {
+      "pattern": "^https://github.com/{your-user-id}"
+    }
+  ],
+  "timeout": "10s",
+  "retryOn429": true,
+  "retryCount": 10,
+  "fallbackRetryDelay": "1000s",
+  "aliveStatusCodes": [
+    200,
+    401
+  ]
+}

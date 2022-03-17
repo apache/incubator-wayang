@@ -46,7 +46,7 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.JsonSerializable;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.core.util.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
@@ -224,13 +224,13 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public JSONObject toJson() {
-        return new JSONObject().put("platform", this.jdbcPlatform.getClass().getCanonicalName());
+    public WayangJsonObj toJson() {
+        return new WayangJsonObj().put("platform", this.jdbcPlatform.getClass().getCanonicalName());
     }
 
     @SuppressWarnings("unused")
-    public static SqlToStreamOperator fromJson(JSONObject jsonObject) {
-        final String platformClassName = jsonObject.getString("platform");
+    public static SqlToStreamOperator fromJson(WayangJsonObj wayangJsonObj) {
+        final String platformClassName = wayangJsonObj.getString("platform");
         JdbcPlatformTemplate jdbcPlatform = ReflectionUtils.evaluate(platformClassName + ".getInstance()");
         return new SqlToStreamOperator(jdbcPlatform);
     }

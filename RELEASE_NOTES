@@ -2,27 +2,27 @@
 Apache Wayang (incubating) 0.6.0
 ==============================================================
 
-This is the first official release of Apache Wayang.
+This is the first official release of Apache Wayang (incubating).
 
-On this release is possible to found the the implementation of
-the following platforms:
+This release supports the following frameworks:
+   
 - Apache Flink v1.7.1
 - Apache Giraph v1.2.0-hadoop2
-- GraphChi v0.2.2(This is only available wit scala 11.x)
+- GraphChi v0.2.2 (only available with scala 11.x)
 - Java Streams (version depends on the java version)
 - JDBC-Template
-- Postgres v9.4.1208(It's a implementation of JDBC-Template)
+- Postgres v9.4.1208 (Implementation JDBC-Template)
 - Apache Spark v3.1.2 (scala 12.x) and v2.4.8 (scala 11.x)
-- SQLite3 v3.8.11.2(It's a implementation of JDBC-Template)
+- SQLite3 v3.8.11.2 (implementation JDBC-Template)
 
-NOTE: depending on the scala version the list of platforms available
-could be modified.
+NOTE: depending on the scala version the list of the supported platforms available
+could be different.
 
 
 New Features
 ------------
 
-- NONE -
+support M1 ARM architecture
 
 Incompatible changes
 --------------------
@@ -32,7 +32,7 @@ Incompatible changes
 Miscellaneous changes
 ---------------------
 
-WAYANG-3 Unification of the logs
+WAYANG-3 Unification of logs
 WAYANG-[32, 33, 35, 38] License issues removed
 
 Known Issues

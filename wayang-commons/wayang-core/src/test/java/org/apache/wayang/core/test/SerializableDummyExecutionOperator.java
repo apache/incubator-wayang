@@ -20,7 +20,7 @@ package org.apache.wayang.core.test;
 
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.util.JsonSerializable;
-import org.apache.wayang.core.util.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * Dummy {@link ExecutionOperator} for test purposes.
@@ -33,12 +33,12 @@ public class SerializableDummyExecutionOperator extends DummyExecutionOperator i
     }
 
     @Override
-    public JSONObject toJson() {
-        return new JSONObject().put("someProperty", this.getSomeProperty());
+    public WayangJsonObj toJson() {
+        return new WayangJsonObj().put("someProperty", this.getSomeProperty());
     }
 
     @SuppressWarnings("unused")
-    public static SerializableDummyExecutionOperator fromJson(JSONObject jsonObject) {
-        return new SerializableDummyExecutionOperator(jsonObject.getInt("someProperty"));
+    public static SerializableDummyExecutionOperator fromJson(WayangJsonObj wayangJsonObj) {
+        return new SerializableDummyExecutionOperator(wayangJsonObj.getInt("someProperty"));
     }
 }

@@ -28,7 +28,7 @@ menus:
         weight: 0
 ---
 
-# Apache Wayang <img align="right" style="margin-top: -0.5em;" width="170px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
+# Apache Wayang (incubating) <img align="right" style="margin-top: -0.5em;" width="170px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
 
 [![Build Status (Travis)](https://travis-ci.org/wayang-ecosystem/wayang.svg?branch=master)](https://travis-ci.org/wayang-ecosystem/wayang)
 [![Gitter chat](https://badges.gitter.im/wayang-ecosystem/Lobby.png)](https://gitter.im/wayang-ecosystem/Lobby)
@@ -37,7 +37,7 @@ menus:
 #### Turning a shadows into a show
 
 
-Apache Wayang in contrast to classical data processing systems that provide one dedicated execution engine, Apache Wayang rather is a *meta processing framework*: You can specify your data processing app via one of Wayang's API and then Wayang will pick an optimal configuration of classical processing frameworks, such as Java Streams or Apache Spark, to run your app on. Finally, Wayang will also perform the execution, thereby hiding the different specific platform APIs and coordinate inter-platform communication.
+Apache Wayang (incubating) in contrast to classical data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) rather is a *meta processing framework*: You can specify your data processing app via one of Wayang's API and then Wayang will pick an optimal configuration of classical processing frameworks, such as Java Streams or Apache Spark, to run your app on. Finally, Wayang will also perform the execution, thereby hiding the different specific platform APIs and coordinate inter-platform communication.
 
 This approach aims at freeing data engineers and software developers from the burden of knowing the zoo of different data processing systems, their APIs, strengths and weakness; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when tying to a fix set of processing platforms. As of now, Wayang has built in support for the following processing platforms:
 - Java 8 Streams
@@ -49,7 +49,7 @@ This approach aims at freeing data engineers and software developers from the bu
 ## How to use Wayang
 
 **Requirements.**
-Apache Wayang is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Wayang might have further requirements.
 
 **Get Wayang.**
 Wayang is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:
@@ -386,7 +386,7 @@ object kmeans {
 
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 Apache (incubating) Wayang Team
+Copyright 2020 - 2021 The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

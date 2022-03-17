@@ -16,12 +16,12 @@
   limitations under the License.
 
 -->
-# Compiling Apache Wayang
+# Compiling Apache Wayang (incubating)
 
-Apache Wayang has different dependencies, for compiling, it needs to add some profile in the compilation to enable maven works properly.
+Apache Wayang (incubating) has different dependencies, for compiling, it needs to add some profile in the compilation to enable maven works properly.
 
  ```shell
-mvn clean compile -P scala-11
+mvn clean compile 
 ```
 
 The line before is because the plugin the Antlr is not needed in all the modules, as well it has happened with Scala language.

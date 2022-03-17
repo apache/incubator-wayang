@@ -19,15 +19,16 @@
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+  <packaging>pom</packaging>
 
-    <parent>
+  <parent>
         <artifactId>wayang</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>0.6.0-SNAPSHOT</version>
+        <version>0.6.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-tests-integration</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.6.1-SNAPSHOT</version>
 
     <name>Wayang Integration Test</name>
     <description>Wayang integration Tests</description>
@@ -43,65 +44,25 @@
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-java</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.wayang</groupId>
-            <artifactId>wayang-flink</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.6.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-sqlite3</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.6.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-postgres</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.6.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-giraph</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.wayang</groupId>
-            <artifactId>wayang-spark</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.wayang</groupId>
-            <artifactId>wayang-api-scala-java</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Spark is a provided dependency and thus not transitively injected via wayang-spark. -->
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.mayor.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.xerial.snappy</groupId>
-                    <artifactId>snappy-java</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-graphx_${scala.mayor.version}</artifactId>
-            <version>${spark.version}</version>
+            <version>0.6.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
 
@@ -126,38 +87,30 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-clients_${scala.mayor.version}</artifactId>
-            <version>${flink.version}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-annotations</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
             <version>${hadoop.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.thoughtworks.paranamer</groupId>
+                    <artifactId>paranamer</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
             <version>${hadoop.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.thoughtworks.paranamer</groupId>
+                    <artifactId>paranamer</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -212,6 +165,30 @@
 
     <build>
         <plugins>
+           <plugin>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>3.0.2</version>
+            <executions>
+                <execution>
+                    <id>process-resources</id>
+                    <phase>process-resources</phase>
+                    <goals>
+                        <goal>resources</goal>
+                    </goals>
+                    <configuration>
+                        <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
+                        <resources>
+                            <resource>
+                                <directory>${basedir}/src/test/resources</directory>
+                                <includes>
+                                    <include>*</include>
+                                </includes>
+                            </resource>
+                        </resources>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -241,54 +218,22 @@
                     </excludes>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
+
+    <modules>
+        <module>wayang-tests-integration_2.12</module>
+    </modules>
+
     <profiles>
         <profile>
-            <id>scala-11</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <phase>generate-test-sources</phase>
-                                <goals>
-                                    <goal>add-test-source</goal>
-                                </goals>
-                                <configuration>
-                                    <sources>
-                                        <source>src_2_11/test/java</source>
-                                        <source>src/test/java</source>
-                                    </sources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.wayang</groupId>
-                    <artifactId>wayang-graphchi</artifactId>
-                    <version>0.6.0-SNAPSHOT</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.graphchi</groupId>
-                    <artifactId>graphchi-java_2.11</artifactId>
-                    <version>0.2.2</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.hadoop</groupId>
-                            <artifactId>hadoop-core</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
+            <id>java8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <modules>
+                <module>wayang-tests-integration_2.11</module>
+            </modules>
         </profile>
     </profiles>
 </project>

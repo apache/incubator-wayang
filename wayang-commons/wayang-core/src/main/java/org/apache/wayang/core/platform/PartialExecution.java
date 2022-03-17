@@ -18,10 +18,6 @@
 
 package org.apache.wayang.core.platform;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
@@ -32,7 +28,12 @@ import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
-import org.apache.wayang.core.util.json.JSONObject;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * Captures data of a execution of a set of {@link ExecutionOperator}s.
@@ -209,8 +210,8 @@ public class PartialExecution {
 
 
         @Override
-        public JSONObject serialize(PartialExecution pe) {
-            return new JSONObject()
+        public WayangJsonObj serialize(PartialExecution pe) {
+            return new WayangJsonObj()
                     .put("millis", pe.measuredExecutionTime)
                     .put("lowerCost", pe.lowerCost)
                     .put("upperCost", pe.upperCost)
@@ -219,17 +220,17 @@ public class PartialExecution {
                             false,
                             new AtomicExecutionGroup.Serializer(this.configuration))
                     )
-                    .putOpt(
+                    .putOptional(
                             "initPlatforms",
                             JsonSerializables.serializeAll(pe.initializedPlatforms, true, Platform.jsonSerializer)
                     );
         }
 
         @Override
-        public PartialExecution deserialize(JSONObject json, Class<? extends PartialExecution> cls) {
+        public PartialExecution deserialize(WayangJsonObj json, Class<? extends PartialExecution> cls) {
             final long measuredExecutionTime = json.getLong("millis");
-            final double lowerCost = json.optDouble("lowerCost", -1);
-            final double uppserCost = json.optDouble("upperCost", -1);
+            final double lowerCost = json.optionalDouble("lowerCost", -1);
+            final double uppserCost = json.optionalDouble("upperCost", -1);
             final Collection<AtomicExecutionGroup> atomicExecutionGroups =
                     JsonSerializables.deserializeAllAsList(
                             json.getJSONArray("execGroups"),
@@ -237,7 +238,7 @@ public class PartialExecution {
                             AtomicExecutionGroup.class
                     );
             final Collection<Platform> initializedPlatforms =
-                    JsonSerializables.deserializeAllAsList(json.optJSONArray("initPlatforms"), Platform.jsonSerializer);
+                    JsonSerializables.deserializeAllAsList(json.optionalWayangJsonArray("initPlatforms"), Platform.jsonSerializer);
             final PartialExecution partialExecution = new PartialExecution(
                     atomicExecutionGroups, measuredExecutionTime, lowerCost, uppserCost
             );

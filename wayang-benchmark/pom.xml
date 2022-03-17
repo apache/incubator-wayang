@@ -17,59 +17,47 @@
   specific language governing permissions and limitations
   under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>wayang</artifactId>
     <groupId>org.apache.wayang</groupId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.6.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>wayang-benchmark</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
   <dependencies>
     <dependency>
       <groupId>org.apache.wayang</groupId>
       <artifactId>wayang-core</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
+      <version>0.6.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.wayang</groupId>
       <artifactId>wayang-basic</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
+      <version>0.6.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.wayang</groupId>
       <artifactId>wayang-utils-profile-db</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.wayang</groupId>
-      <artifactId>wayang-api-scala-java</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
+      <version>0.6.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.wayang</groupId>
       <artifactId>wayang-java</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.wayang</groupId>
-      <artifactId>wayang-spark</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
+      <version>0.6.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.wayang</groupId>
       <artifactId>wayang-postgres</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
+      <version>0.6.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.wayang</groupId>
       <artifactId>wayang-sqlite3</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
+      <version>0.6.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -83,6 +71,19 @@
     </dependency>
   </dependencies>
 
+  <modules>
+    <module>wayang-benchmark_2.12</module>
+  </modules>
 
-
+  <profiles>
+    <profile>
+      <id>java8</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <modules>
+        <module>wayang-benchmark_2.11</module>
+      </modules>
+    </profile>
+  </profiles>
 </project>

@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.platform;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
+import org.apache.wayang.core.util.json.WayangJsonObj;
+import org.junit.Assert;
+import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.configuration.KeyValueProvider;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -34,9 +33,11 @@ import org.apache.wayang.core.test.DummyPlatform;
 import org.apache.wayang.core.test.SerializableDummyExecutionOperator;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.WayangCollections;
-import org.apache.wayang.core.util.json.JSONObject;
-import org.junit.Assert;
-import org.junit.Test;
+
+import java.util.Arrays;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Test suites for {@link PartialExecution}s.
@@ -72,8 +73,8 @@ public class PartialExecutionTest {
         original.addInitializedPlatform(DummyPlatform.getInstance());
 
         final PartialExecution.Serializer serializer = new PartialExecution.Serializer(configuration);
-        final JSONObject jsonObject = JsonSerializables.serialize(original, false, serializer);
-        final PartialExecution loaded = JsonSerializables.deserialize(jsonObject, serializer, PartialExecution.class);
+        final WayangJsonObj wayangJsonObj = JsonSerializables.serialize(original, false, serializer);
+        final PartialExecution loaded = JsonSerializables.deserialize(wayangJsonObj, serializer, PartialExecution.class);
 
         Assert.assertEquals(original.getMeasuredExecutionTime(), loaded.getMeasuredExecutionTime());
         Assert.assertEquals(2, loaded.getAtomicExecutionGroups().size());
