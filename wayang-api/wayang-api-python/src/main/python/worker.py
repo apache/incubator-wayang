@@ -86,9 +86,15 @@ def write_with_length(obj, stream):
 
 
 def dump_stream(iterator, stream):
+
     for obj in iterator:
-        write_with_length(obj, stream)
+        if type(obj) is str:
+            write_with_length(obj, stream)
+        ## elif type(obj) is list:
+        ##    write_with_length(obj, stream)
+    print("Termine")
     write_int(SpecialLengths.END_OF_DATA_SECTION, stream)
+    print("Escribi Fin")
 
 
 def process(infile, outfile):
@@ -129,6 +135,8 @@ def process(infile, outfile):
     #print (func)
     #for x in func([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]): print(x)
 
+    """print("example")
+    for x in func("2344|234|efrf|$#|ffrf"): print(x)"""
     # TODO Here we are temporarily assuming that the user is exclusively sending UTF8. User has several types
     iterator = UTF8Deserializer().load_stream(infile)
     # out_iter = sorted(iterator, key=lambda elem: elem.lower())

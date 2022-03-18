@@ -1,117 +1,66 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package org.apache.wayang.api.rest.server.spring.general;
+package org.apache.wayang.api.rest.server.spring.decoder;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.spark.unsafe.types.ByteArray;
 import org.apache.wayang.api.python.function.WrappedPythonFunction;
-import org.apache.wayang.api.rest.server.spring.decoder.WayangPlanBuilder;
-import org.apache.wayang.basic.operators.*;
+import org.apache.wayang.basic.operators.MapPartitionsOperator;
+import org.apache.wayang.basic.operators.TextFileSink;
+import org.apache.wayang.basic.operators.TextFileSource;
+import org.apache.wayang.basic.operators.UnionAllOperator;
 import org.apache.wayang.commons.serializable.OperatorProto;
 import org.apache.wayang.commons.serializable.PlanProto;
+import org.apache.wayang.commons.serializable.WayangPlanProto;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.MapPartitionsDescriptor;
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
 
-import org.apache.wayang.commons.serializable.WayangPlanProto;
-import org.springframework.web.multipart.MultipartFile;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.Base64;
 
+public class WayangPlanBuilder {
 
-@RestController
-public class WayangController {
+    private WayangPlan wayangPlan;
+    private WayangContext wayangContext;
 
-    @GetMapping("/plan/create/fromfile")
-    public String planFromFile(
-            //@RequestParam("file") MultipartFile file
-    ){
-
+    public WayangPlanBuilder(FileInputStream planFile){
         try {
-            FileInputStream inputStream = new FileInputStream(Paths.get(".").toRealPath() + "/protobuf/wayang_message");
-            WayangPlanBuilder wpb = new WayangPlanBuilder(inputStream);
 
-            /*TODO ADD id to executions*/
-            wpb.getWayangContext().execute(wpb.getWayangPlan());
+            WayangPlanProto plan = WayangPlanProto.parseFrom(planFile);
+
+            this.wayangContext = buildContext(plan);
+            this.wayangPlan = buildPlan(plan);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return "Builder works";
     }
 
-    @PostMapping("/plan/create")
-    public String planFromMessage(
-            @RequestParam("message") String message
-    ){
+    public WayangPlanBuilder(String writtenPlan){
 
-        WayangPlanBuilder wpb = new WayangPlanBuilder(message);
-
-        /*TODO ADD id to executions*/
-        wpb.getWayangContext().execute(wpb.getWayangPlan());
-
-        return "";
-    }
-
-    @GetMapping("/")
-    public String all(){
-        System.out.println("detected!");
+        System.out.println(writtenPlan);
+        byte[] message = Base64.getDecoder().decode(writtenPlan);
+        System.out.println(message);
 
         try {
-            FileInputStream inputStream = new FileInputStream(Paths.get(".").toRealPath() + "/protobuf/wayang_message");
-            WayangPlanProto plan = WayangPlanProto.parseFrom(inputStream);
+            WayangPlanProto plan = WayangPlanProto.parseFrom(message);
 
-            WayangContext wc = buildContext(plan);
-            WayangPlan wp = buildPlan(plan);
-
-            System.out.println("Plan!");
-            System.out.println(wp.toString());
-
-            wc.execute(wp);
-            return("Works!");
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+            this.wayangContext = buildContext(plan);
+            this.wayangPlan = buildPlan(plan);
+        } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
         }
 
-        return "Not working";
     }
 
     private WayangContext buildContext(WayangPlanProto plan){
@@ -243,43 +192,16 @@ public class WayangController {
                     e.printStackTrace();
                 }
                 break;
-            case "reduce_by_key":
-                try {
-                    /* Function to be applied in Python workers */
-                    ByteString function = operator.getUdf();
-
-                    /* Has dimension or positions that compose GroupKey */
-                    Map<String, String> parameters = operator.getParametersMap();
-
-                    PyWayangReduceByOperator<String, String> op = new PyWayangReduceByOperator(
-                        operator.getParametersMap(),
-                        operator.getUdf() ,
-                        String.class,
-                        String.class,
-                            false
-                    );
-
-                    String sink_path = operator.getPath();
-                    URL url = new File(sink_path).toURI().toURL();
-                    return new TextFileSink<String>(
-                            url.toString(),
-                            String.class
-                    );
-
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-                break;
             case "map_partition":
                 return new MapPartitionsOperator<>(
-                    new MapPartitionsDescriptor<String, String>(
-                        new WrappedPythonFunction<String, String>(
-                            l -> l,
-                            operator.getUdf()
-                        ),
-                        String.class,
-                        String.class
-                    )
+                        new MapPartitionsDescriptor<String, String>(
+                                new WrappedPythonFunction<String, String>(
+                                        l -> l,
+                                        operator.getUdf()
+                                ),
+                                String.class,
+                                String.class
+                        )
                 );
 
             case "union":
@@ -292,13 +214,11 @@ public class WayangController {
         throw new WayangException("Operator Type not supported");
     }
 
-    public static URI createUri(String resourcePath) {
-        try {
-            return Thread.currentThread().getClass().getResource(resourcePath).toURI();
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Illegal URI.", e);
-        }
-
+    public WayangContext getWayangContext() {
+        return wayangContext;
     }
 
+    public WayangPlan getWayangPlan() {
+        return wayangPlan;
+    }
 }

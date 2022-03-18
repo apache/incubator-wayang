@@ -51,7 +51,10 @@ public class PythonWorkerManager<Input, Output> {
             );
             feed.send();
             ProcessReceiver<Output> r = new ProcessReceiver<>(worker.getSocket());
+
+            //r.print();
             return r.getIterable();
+            //return (Iterable<Output>) this.inputIterator;
 
         } else{
 

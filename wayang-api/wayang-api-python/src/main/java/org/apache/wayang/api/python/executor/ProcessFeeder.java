@@ -26,6 +26,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
@@ -85,8 +86,10 @@ public class ProcessFeeder<Input, Output> {
 
     public void writeIteratorToStream(Iterator<Input> iter, DataOutputStream dataOut){
 
+        System.out.println("iterator being send");
         for (Iterator<Input> it = iter; it.hasNext(); ) {
             Input elem = it.next();
+            //System.out.println(elem.toString());
             write(elem, dataOut);
         }
     }
@@ -163,6 +166,8 @@ public class ProcessFeeder<Input, Output> {
 
             dataOut.writeInt(bytes.length);
             dataOut.write(bytes);
+        } catch (SocketException e){
+
         } catch (IOException e) {
             e.printStackTrace();
         }

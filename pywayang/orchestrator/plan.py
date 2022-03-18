@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 import logging
-
+from enum import Enum
 
 class Descriptor:
 
@@ -24,6 +24,11 @@ class Descriptor:
         self.sources = []
         self.boundary_operators = None
         logging.basicConfig(filename='../config/execution.log', level=logging.DEBUG)
+        self.plugins = []
+
+    class Plugin(Enum):
+        java = 0
+        spark = 1
 
     def get_boundary_operators(self):
         return self.boundary_operators
@@ -39,3 +44,9 @@ class Descriptor:
 
     def get_sinks(self):
         return self.sinks
+
+    def add_plugin(self, plugin):
+        self.plugins.append(plugin)
+
+    def get_plugins(self):
+        return self.plugins
