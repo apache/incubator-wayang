@@ -62,9 +62,9 @@
                     <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}</protocArtifact>
                     <!-- TODO Use an Environmental variable-->
                     <!--This one is for travis-->
-                    <!--<protocExecutable>/usr/bin/protoc</protocExecutable>-->
+                    <protocExecutable>/usr/bin/protoc</protocExecutable>
                     <!--This one is for local executions-->
-                    <protocExecutable>/usr/local/bin/protoc</protocExecutable>
+                    <!--<protocExecutable>/usr/local/bin/protoc</protocExecutable>-->
                 </configuration>
                 <executions>
                     <execution>
