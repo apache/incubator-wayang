@@ -37,9 +37,8 @@
 
     <modules>
         <module>wayang-api-scala-java</module>
-<!--        TODO: validate why some times make error during compilation time in GA-->
-<!--        <module>wayang-api-python</module>-->
-<!--        <module>wayang-api-rest</module>-->
+        <module>wayang-api-python</module>
+        <module>wayang-api-rest</module>
     </modules>
 
 </project>

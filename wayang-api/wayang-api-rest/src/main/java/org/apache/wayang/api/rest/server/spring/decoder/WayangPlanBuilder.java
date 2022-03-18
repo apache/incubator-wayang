@@ -18,9 +18,7 @@
 
 package org.apache.wayang.api.rest.server.spring.decoder;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.spark.unsafe.types.ByteArray;
 import org.apache.wayang.api.python.function.WrappedPythonFunction;
 import org.apache.wayang.basic.operators.MapPartitionsOperator;
 import org.apache.wayang.basic.operators.TextFileSink;
