@@ -18,12 +18,10 @@
 
 package org.apache.wayang.api.rest.server.spring.general;
 
+import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function.WrappedPythonFunction;
 import org.apache.wayang.api.rest.server.spring.decoder.WayangPlanBuilder;
-import org.apache.wayang.basic.operators.MapPartitionsOperator;
-import org.apache.wayang.basic.operators.TextFileSink;
-import org.apache.wayang.basic.operators.TextFileSource;
-import org.apache.wayang.basic.operators.UnionAllOperator;
+import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.commons.serializable.OperatorProto;
 import org.apache.wayang.commons.serializable.PlanProto;
 import org.apache.wayang.core.api.WayangContext;
@@ -100,6 +98,9 @@ public class WayangController {
 
             WayangContext wc = buildContext(plan);
             WayangPlan wp = buildPlan(plan);
+
+            System.out.println("Plan!");
+            System.out.println(wp.toString());
 
             wc.execute(wp);
             return("Works!");
@@ -231,6 +232,33 @@ public class WayangController {
                 break;
             case "sink":
                 try {
+                    String sink_path = operator.getPath();
+                    URL url = new File(sink_path).toURI().toURL();
+                    return new TextFileSink<String>(
+                            url.toString(),
+                            String.class
+                    );
+
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "reduce_by_key":
+                try {
+                    /* Function to be applied in Python workers */
+                    ByteString function = operator.getUdf();
+
+                    /* Has dimension or positions that compose GroupKey */
+                    Map<String, String> parameters = operator.getParametersMap();
+
+                    PyWayangReduceByOperator<String, String> op = new PyWayangReduceByOperator(
+                        operator.getParametersMap(),
+                        operator.getUdf() ,
+                        String.class,
+                        String.class,
+                            false
+                    );
+
                     String sink_path = operator.getPath();
                     URL url = new File(sink_path).toURI().toURL();
                     return new TextFileSink<String>(

@@ -28,10 +28,14 @@ public class ReaderIterator <Output> implements Iterator<Output> {
 
     private Output nextObj = null;
     private boolean eos = false;
+    private boolean fst = false;
     private DataInputStream stream = null;
 
     public ReaderIterator(DataInputStream stream) {
+
         this.stream = stream;
+        this.eos = false;
+        this.nextObj = null;
     }
 
     private Output read() {
@@ -48,24 +52,29 @@ public class ReaderIterator <Output> implements Iterator<Output> {
                 Output it = (Output) s;
                 return it;
             } else if (length == END_OF_DATA_SECTION) {
-                eos = true;
+                this.eos = true;
+                return null;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            throw new RuntimeException(e);
         }
-
         return null;
     }
 
     @Override
     public boolean hasNext() {
-        boolean fst = nextObj != null;
 
-        if(fst) return true;
-
-        if(!eos){
+        if(!this.eos){
             nextObj = read();
-            return !eos;
+            System.out.println(nextObj + " " + !this.eos);
+
+            /*To work with null values it is suppose to use -5
+            if(this.nextObj == null){
+                return false;
+            }*/
+
+            return !this.eos;
         }
 
         return false;
@@ -74,7 +83,7 @@ public class ReaderIterator <Output> implements Iterator<Output> {
     @Override
     public Output next() {
 
-        if(hasNext()){
+        if(!this.eos){
             Output obj = nextObj;
             nextObj = null;
             return obj;

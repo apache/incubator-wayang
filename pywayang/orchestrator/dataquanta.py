@@ -24,7 +24,6 @@ import collections
 import logging
 from functools import reduce
 import operator
-import xrange
 
 
 # Wraps a Source operation to create an iterable
@@ -77,10 +76,10 @@ class DataQuanta:
 
     def flatmap(self, udf):
 
-        def func(iterator):
+        def auxfunc(iterator):
             return itertools.chain.from_iterable(map(udf, iterator))
 
-        def func_wthout_lib(iterator):
+        def func(iterator):
             mapped = map(udf, iterator)
             flattened = flatten_single_dim(mapped)
             yield from flattened
@@ -141,11 +140,15 @@ class DataQuanta:
             python_exec=False
         )
 
-        for i in xrange(1, len(keys)):
-            if keys[i] is int:
+        print(len(keys), keys)
+        for i in range(0, len(keys)):
+            """if keys[i] is int:
                 op.set_parameter("vector_position|"+str(i), keys[i])
             else:
-                op.set_parameter("dimension_key|"+str(i), keys[i])
+                op.set_parameter("dimension_key|"+str(i), keys[i])"""
+
+            # TODO maybe would be better just leave the number as key
+            op.set_parameter("dimension|"+str(i+1), keys[i])
 
         return DataQuanta(
             op,
@@ -321,7 +324,7 @@ class DataQuanta:
         writer.set_dependencies()
 
         # Uses a file to provide the plan
-        #writer.write_message(self.descriptor)
+        # writer.write_message(self.descriptor)
 
         # Send the plan to Wayang REST api directly
         writer.send_message(self.descriptor)
