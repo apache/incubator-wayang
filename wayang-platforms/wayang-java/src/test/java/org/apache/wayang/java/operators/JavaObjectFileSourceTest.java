@@ -43,7 +43,7 @@ public class JavaObjectFileSourceTest extends JavaExecutionOperatorTestBase {
         JavaExecutor javaExecutor = null;
         try {
             // Prepare the source.
-            final URL inputUrl = this.getClass().getResource("/0-to-10000.sequence_file");
+            final URL inputUrl = this.getClass().getResource("/0-to-10000.input");
             JavaObjectFileSource<Integer> source = new JavaObjectFileSource<>(
                     inputUrl.toString(), DataSetType.createDefault(Integer.class));
 

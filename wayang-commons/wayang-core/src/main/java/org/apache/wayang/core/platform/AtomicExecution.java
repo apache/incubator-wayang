@@ -19,8 +19,6 @@
 package org.apache.wayang.core.platform;
 
 import org.apache.commons.lang3.SerializationException;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.ConstantLoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.EstimationContext;
@@ -29,6 +27,8 @@ import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
+import org.apache.wayang.core.util.json.WayangJsonArray;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * An atomic execution describes the smallest work unit considered by Wayang's cost model.
@@ -82,14 +82,14 @@ public class AtomicExecution {
         }
 
         @Override
-        public JSONObject serialize(AtomicExecution atomicExecution) {
-            JSONArray estimators = new JSONArray();
+        public WayangJsonObj serialize(AtomicExecution atomicExecution) {
+            WayangJsonArray estimators = new WayangJsonArray();
             this.serialize(atomicExecution.loadProfileEstimator, estimators);
-            return new JSONObject().put("estimators", JsonSerializables.serialize(estimators, false));
+            return new WayangJsonObj().put("estimators", JsonSerializables.serialize(estimators, false));
         }
 
-        private void serialize(LoadProfileEstimator estimator, JSONArray collector) {
-            JSONObject json = new JSONObject();
+        private void serialize(LoadProfileEstimator estimator, WayangJsonArray collector) {
+            WayangJsonObj json = new WayangJsonObj();
             if (estimator.getConfigurationKey() != null) {
                 json.put("key", estimator.getConfigurationKey());
             } else {
@@ -103,18 +103,18 @@ public class AtomicExecution {
         }
 
         @Override
-        public AtomicExecution deserialize(JSONObject json) {
+        public AtomicExecution deserialize(WayangJsonObj json) {
             return this.deserialize(json, AtomicExecution.class);
         }
 
         @Override
-        public AtomicExecution deserialize(JSONObject json, Class<? extends AtomicExecution> cls) {
-            final JSONArray estimators = json.getJSONArray("estimators");
+        public AtomicExecution deserialize(WayangJsonObj json, Class<? extends AtomicExecution> cls) {
+            final WayangJsonArray estimators = json.getJSONArray("estimators");
             if (estimators.length() < 1) {
                 throw new IllegalStateException("Expected at least one serialized estimator.");
             }
             // De-serialize the main estimator.
-            final JSONObject mainEstimatorJson = estimators.getJSONObject(0);
+            final WayangJsonObj mainEstimatorJson = estimators.getJSONObject(0);
             LoadProfileEstimator mainEstimator = this.deserializeEstimator(mainEstimatorJson);
 
             // De-serialize nested estimators.
@@ -126,24 +126,25 @@ public class AtomicExecution {
         }
 
         /**
-         * Deserialize a {@link LoadProfileEstimator} according to {@link #serialize(LoadProfileEstimator, JSONArray)}.
+         * Deserialize a {@link LoadProfileEstimator} according to {@link #serialize(LoadProfileEstimator, WayangJsonArray)}.
          *
-         * @param jsonObject that should be deserialized
+         * @param wayangJsonObj that should be deserialized
          * @return the {@link LoadProfileEstimator}
          */
-        private LoadProfileEstimator deserializeEstimator(JSONObject jsonObject) {
-            if (jsonObject.has("key")) {
-                final String key = jsonObject.getString("key");
+        private LoadProfileEstimator deserializeEstimator(WayangJsonObj wayangJsonObj) {
+            if (wayangJsonObj.has("key")) {
+                final String key = wayangJsonObj.getString("key");
                 final LoadProfileEstimator estimator = LoadProfileEstimators.createFromSpecification(key, this.configuration);
                 if (estimator == null) {
                     throw new SerializationException("Could not create estimator for key " + key);
                 }
                 return estimator;
-            } else if (jsonObject.has("load")) {
-                final LoadProfile load = JsonSerializables.deserialize(jsonObject.getJSONObject("load"), LoadProfile.class);
+            } else if (wayangJsonObj.has("load")) {
+                final LoadProfile load = JsonSerializables.deserialize(wayangJsonObj.getJSONObject("load"), LoadProfile.class);
                 return new ConstantLoadProfileEstimator(load);
             }
-            throw new SerializationException(String.format("Cannot deserialize load estimator from %s.", jsonObject));
+            throw new SerializationException(String.format("Cannot deserialize load estimator from %s.",
+                wayangJsonObj));
         }
     }
 

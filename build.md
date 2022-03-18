@@ -16,12 +16,12 @@
   limitations under the License.
 
 -->
-# Compiling Apache Wayang
+# Compiling Apache Wayang (incubating)
 
-Apache Wayang has different dependencies, for compiling, it needs to add some profile in the compilation to enable maven works properly.
+Apache Wayang (incubating) has different dependencies, for compiling, it needs to add some profile in the compilation to enable maven works properly.
 
  ```shell
-mvn clean compile -P scala-11
+mvn clean compile 
 ```
 
 The line before is because the plugin the Antlr is not needed in all the modules, as well it has happened with Scala language.
@@ -35,3 +35,12 @@ The modules are:
 - wayang-spark_#Scala_Version#
 - wayang-profiler_#Scala_Version#
 - wayang-tests-integration_#Scala_Version# 
+
+
+# Executing Coverage 
+
+```shell
+mvn clean verify jacoco:report
+```
+
+the final report is placed on `./target/aggregate.exec/aggregate.exec`

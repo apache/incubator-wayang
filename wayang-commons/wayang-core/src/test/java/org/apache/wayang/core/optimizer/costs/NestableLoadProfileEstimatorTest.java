@@ -18,8 +18,7 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import gnu.trove.map.TObjectDoubleMap;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
+import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.Test;
 import org.apache.wayang.core.optimizer.OptimizationUtils;
@@ -56,7 +55,7 @@ public class NestableLoadProfileEstimatorTest {
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
                 },
                 new CardinalityEstimate[]{new CardinalityEstimate(200, 300, 1d)},
-                new TObjectDoubleHashMap<>(),
+                new HashMap<String, Double>(),
                 1
         ));
 
@@ -89,7 +88,7 @@ public class NestableLoadProfileEstimatorTest {
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
                 },
                 new CardinalityEstimate[]{new CardinalityEstimate(200, 300, 1d)},
-                new TObjectDoubleHashMap<>(),
+                new HashMap<String, Double>(),
                 1
         ));
 
@@ -118,7 +117,7 @@ public class NestableLoadProfileEstimatorTest {
         final NestableLoadProfileEstimator estimator =
                 LoadProfileEstimators.createFromSpecification(null, specification);
         SomeExecutionOperator execOp = new SomeExecutionOperator();
-        TObjectDoubleMap<String> properties = new TObjectDoubleHashMap<>();
+        HashMap<String, Double> properties = new HashMap<String, Double>();
         properties.put("numIterations", 2d);
         final LoadProfile estimate = estimator.estimate(new SimpleEstimationContext(
                 new CardinalityEstimate[]{
@@ -155,7 +154,7 @@ public class NestableLoadProfileEstimatorTest {
         final NestableLoadProfileEstimator estimator =
                 LoadProfileEstimators.createFromSpecification(null, specification);
         SomeExecutionOperator execOp = new SomeExecutionOperator();
-        TObjectDoubleMap<String> properties = new TObjectDoubleHashMap<>();
+        HashMap<String, Double> properties = new HashMap<String, Double>();
         properties.put("numIterations", 2d);
         final LoadProfile estimate = estimator.estimate(new SimpleEstimationContext(
                 new CardinalityEstimate[]{

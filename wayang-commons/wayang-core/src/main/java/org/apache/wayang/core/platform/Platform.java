@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.platform;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -31,6 +30,7 @@ import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
 import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.
@@ -155,13 +155,13 @@ public abstract class Platform {
     public static final JsonSerializer<Platform> jsonSerializer = new JsonSerializer<Platform>() {
 
         @Override
-        public JSONObject serialize(Platform platform) {
+        public WayangJsonObj serialize(Platform platform) {
             // Enforce polymorph serialization.
-            return JsonSerializables.addClassTag(platform, new JSONObject());
+            return JsonSerializables.addClassTag(platform, new WayangJsonObj());
         }
 
         @Override
-        public Platform deserialize(JSONObject json, Class<? extends Platform> cls) {
+        public Platform deserialize(WayangJsonObj json, Class<? extends Platform> cls) {
             return ReflectionUtils.evaluate(cls.getCanonicalName() + ".getInstance()");
         }
     };

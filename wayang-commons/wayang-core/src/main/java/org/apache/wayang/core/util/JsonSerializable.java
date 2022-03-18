@@ -18,14 +18,14 @@
 
 package org.apache.wayang.core.util;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.exception.WayangException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
- * This interface prescribes implementing instances to be able to provide itself as a {@link JSONObject}. To allow
+ * This interface prescribes implementing instances to be able to provide itself as a {@link WayangJsonObj}. To allow
  * for deserialization, implementing class should furthermore provide a static {@code fromJson(JSONObject)} method.
  * <i>Note that it is recommended to use the {@link JsonSerializables} utility to class to handle serialization.</i>
  *
@@ -34,11 +34,11 @@ import java.lang.reflect.Method;
 public interface JsonSerializable {
 
     /**
-     * Convert this instance to a {@link JSONObject}.
+     * Convert this instance to a {@link WayangJsonObj}.
      *
-     * @return the {@link JSONObject}
+     * @return the {@link WayangJsonObj}
      */
-    JSONObject toJson();
+    WayangJsonObj toJson();
 
     /**
      * A {@link JsonSerializer} implementation to serialize {@link JsonSerializable}s.
@@ -59,17 +59,17 @@ public interface JsonSerializable {
     class Serializer<T extends JsonSerializable> implements JsonSerializer<T> {
 
         @Override
-        public JSONObject serialize(T serializable) {
+        public WayangJsonObj serialize(T serializable) {
             if (serializable == null) return null;
             return serializable.toJson();
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public T deserialize(JSONObject json, Class<? extends T> cls) {
-            if (json == null || json.equals(JSONObject.NULL)) return null;
+        public T deserialize(WayangJsonObj json, Class<? extends T> cls) {
+            if (json == null || json.equals(WayangJsonObj.NULL)) return null;
             try {
-                final Method fromJsonMethod = cls.getMethod("fromJson", JSONObject.class);
+                final Method fromJsonMethod = cls.getMethod("fromJson", WayangJsonObj.class);
                 return (T) fromJsonMethod.invoke(null, json);
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 throw new WayangException(String.format("Could not execute %s.fromJson(...).", cls.getCanonicalName()), e);

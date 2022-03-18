@@ -18,11 +18,11 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.optimizer.ProbabilisticIntervalEstimate;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.core.util.JsonSerializable;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * An estimate of cardinality within a {@link WayangPlan} expressed as a {@link ProbabilisticIntervalEstimate}.
@@ -72,27 +72,27 @@ public class CardinalityEstimate extends ProbabilisticIntervalEstimate implement
     }
 
     /**
-     * Parses the given {@link JSONObject} to create a new instance.
+     * Parses the given {@link WayangJsonObj} to create a new instance.
      *
      * @param json that should be parsed
      * @return the new instance
      */
-    public static CardinalityEstimate fromJson(JSONObject json) {
+    public static CardinalityEstimate fromJson(WayangJsonObj json) {
         return new CardinalityEstimate(json.getLong("lowerBound"), json.getLong("upperBound"), json.getDouble("confidence"));
     }
 
     @Override
-    public JSONObject toJson() {
-        return this.toJson(new JSONObject());
+    public WayangJsonObj toJson() {
+        return this.toJson(new WayangJsonObj());
     }
 
     /**
-     * Serializes this instance to the given {@link JSONObject}.
+     * Serializes this instance to the given {@link WayangJsonObj}.
      *
      * @param json to which this instance should be serialized
      * @return {@code json}
      */
-    public JSONObject toJson(JSONObject json) {
+    public WayangJsonObj toJson(WayangJsonObj json) {
         json.put("lowerBound", this.getLowerEstimate());
         json.put("upperBound", this.getUpperEstimate());
         json.put("confidence", this.getCorrectnessProbability());

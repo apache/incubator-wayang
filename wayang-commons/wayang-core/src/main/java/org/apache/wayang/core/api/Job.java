@@ -18,9 +18,9 @@
 
 package org.apache.wayang.core.api;
 
-import de.hpi.isg.profiledb.instrumentation.StopWatch;
-import de.hpi.isg.profiledb.store.model.Experiment;
-import de.hpi.isg.profiledb.store.model.TimeMeasurement;
+import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
+import org.apache.wayang.commons.util.profiledb.model.Experiment;
+import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.mapping.PlanTransformation;
 import org.apache.wayang.core.monitor.DisabledMonitor;

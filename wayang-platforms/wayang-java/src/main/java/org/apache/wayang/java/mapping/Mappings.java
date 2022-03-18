@@ -32,6 +32,8 @@ public class Mappings {
     public static Collection<Mapping> BASIC_MAPPINGS = Arrays.asList(
             new TextFileSourceMapping(),
             new TextFileSinkMapping(),
+            new ObjectFileSourceMapping(),
+            new ObjectFileSinkMapping(),
             new MapMapping(),
             new MapPartitionsMapping(),
             new ReduceByMapping(),

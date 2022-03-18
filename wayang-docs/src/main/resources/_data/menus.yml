@@ -1,0 +1,103 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+header:
+#  - url: /what_is_wayang/
+#    title: What is Wayang?
+#    identifier: what_wayang
+#    weight: 1
+
+#  - url: /getting_start/
+#    title: Getting Started with Wayang
+#    identifier: getting_start
+#    weight: 2
+
+#  - url: /using_wayang/
+#    title: Using Wayang
+#    identifier: using
+#    weight: 3
+
+#  - url: /extending_wayang/
+#    title: Extending Wayang
+#    identifier: extending
+#    weight: 4
+
+  - url: /how_contribute/
+    title: How To Contribute
+    identifier: contribute
+    weight: 5
+
+
+#getting_start:
+#  - url: /getting_start/how_build/
+#    title: How To Build Wayang
+#    identifier: build
+#    weight: 0
+#
+#  - url: /getting_start/how_install/
+#    title: How To Install Wayang
+#    identifier: install
+#    weight: 1
+#
+#  - url: /getting_start/how_run/
+#    title: How To Run Wayang
+#    identifier: run
+#    weight: 2
+#
+#  - url: /getting_start/writting_wayang_plan/
+#    title: Writting a Wayang Plan
+#    identifier: writting
+#    weight: 3
+
+#using:
+#  - url: /using_wayang/api_java_scala/
+#    title: API Java/Scala
+#    identifier: api_java
+#    weight: 0
+#
+#  - url: /using_wayang/api_python/
+#    title: API Python
+#    identifier: api_python
+#    weight: 1
+#
+#  - url: /using_wayang/api_rest/
+#    title: API REST
+#    identifier: api_rest
+#    weight: 2
+
+#  - url: /using_wayang/api_sql/
+#    title: API SQL
+#    identifier: api_sql
+#    weight: 3
+
+#extending:
+#  - url: /extending_wayang/adding_platform/
+#    title: Adding Platform
+#    identifier: platform
+#    weight: 0
+
+contribute:
+  - url: /how_contribute/code_changes/
+    title: Code Changes
+    identifier: code_changes
+    weight: 4
+
+
+code_changes:
+  - url: /how_contribute/code_changes/preparing_contribute_code_changes/
+    title: Preparing to Contribute Code Changes
+    identifier: preparing_code_changes
+    weight: 5
+
+

@@ -18,15 +18,14 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import gnu.trove.map.TObjectDoubleMap;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
-import org.json.JSONObject;
+import java.util.HashMap;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Collection;
 import java.util.List;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * This {@link EstimationContext} implementation just stores all required variables without any further logic.
@@ -34,8 +33,8 @@ import java.util.List;
 public class SimpleEstimationContext implements EstimationContext {
 
     private final CardinalityEstimate[] inputCardinalities, outputCardinalities;
-
-    private final TObjectDoubleMap<String> doubleProperties;
+    //TODO: change a for efficient Hashmap
+    private final HashMap<String, Double> doubleProperties;
 
     private final int numExecutions;
 
@@ -44,7 +43,7 @@ public class SimpleEstimationContext implements EstimationContext {
      */
     public SimpleEstimationContext(CardinalityEstimate[] inputCardinalities,
                                    CardinalityEstimate[] outputCardinalities,
-                                   TObjectDoubleMap<String> doubleProperties,
+                                   HashMap<String, Double> doubleProperties,
                                    int numExecutions) {
         this.inputCardinalities = inputCardinalities;
         this.outputCardinalities = outputCardinalities;
@@ -86,17 +85,17 @@ public class SimpleEstimationContext implements EstimationContext {
             new JsonSerializer<SimpleEstimationContext>() {
 
                 @Override
-                public JSONObject serialize(SimpleEstimationContext ctx) {
+                public WayangJsonObj serialize(SimpleEstimationContext ctx) {
                     return EstimationContext.defaultSerializer.serialize(ctx);
                 }
 
                 @Override
-                public SimpleEstimationContext deserialize(JSONObject json) {
+                public SimpleEstimationContext deserialize(WayangJsonObj json) {
                     return this.deserialize(json, SimpleEstimationContext.class);
                 }
 
                 @Override
-                public SimpleEstimationContext deserialize(JSONObject json, Class<? extends SimpleEstimationContext> cls) {
+                public SimpleEstimationContext deserialize(WayangJsonObj json, Class<? extends SimpleEstimationContext> cls) {
                     final List<CardinalityEstimate> inCards = JsonSerializables.deserializeAllAsList(
                             json.getJSONArray("inCards"),
                             CardinalityEstimate.class
@@ -106,8 +105,8 @@ public class SimpleEstimationContext implements EstimationContext {
                             CardinalityEstimate.class
                     );
 
-                    final TObjectDoubleHashMap<String> doubleProperties = new TObjectDoubleHashMap<>();
-                    final JSONObject doublePropertiesJson = json.optJSONObject("properties");
+                    final HashMap<String, Double> doubleProperties = new HashMap<String, Double>();
+                    final WayangJsonObj doublePropertiesJson = json.optionalWayangJsonObj("properties");
                     if (doublePropertiesJson != null) {
                         for (String key : doublePropertiesJson.keySet()) {
                             doubleProperties.put(key, doublePropertiesJson.getDouble(key));

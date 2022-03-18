@@ -1,0 +1,151 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+
+{%- include head.html -%}
+
+<body>
+
+<header class="navbar navbar-expand flex-column flex-md-row bd-navbar p-0 shadow sticky-top" style=" height: 75px !important; background-color: #ffffff">
+
+    <div class="col-md-3 col-xl-2 text-center"style="border-right: #a00e5a 1px solid; height: 100%">
+      <a class="navbar-brand mr-auto" href="{% link index.md %}">
+        <img style="max-height: inherit; height: 2.6em;" src="{{ "assets/img/logo/logo_400x160.png" | absolute_url }}"/>
+      </a>
+    </div>
+    <div class="col-md-9 col-xl-8" role="main">
+        <h3 style="color: #ff8724">Documentation Apache Wayang (incubating)</h3>
+    </div>
+
+</header>
+
+<div class="container-fluid">
+  <div class="row flex-xl-nowrap">
+    <div class="col-md-3 col-xl-2 bd-sidebar pt-3 px-0" style="min-height: 95vh; border-right: solid 1px #a00e5a; background-color: #F5F7F9">
+      <ul id="main-menu" class="nav flex-column nav-pills">
+        {% for item in site.menus.header %}
+          {%- include sub-menu.html -%}
+        {% endfor %}
+
+
+        <!--        <a class="nav-link active" href="#">Read Me</a>-->
+<!--        <a class="nav-link main-link" href="how_contribute" tabindex="-1" aria-disabled="true">How To Contribute</a>-->
+<!--        <a class="nav-link" href="how_contribute">Bugs Report</a>-->
+<!--        <a class="nav-link" href="#">Jira Issue Maintenance</a>-->
+<!--        <a class="nav-link" href="#">Documentation Changes</a>-->
+<!--        <a class="nav-link" href="#">Code Changes</a>-->
+<!--        <a class="nav-link" href="#">Code Changes - Choosing What to Contribute</a>-->
+<!--        <a class="nav-link" href="#">Code Changes - Code Review Criteria</a>-->
+<!--        <a class="nav-link" href="#">Code Changes - Preparing to Contribute Code Changes</a>-->
+<!--        <a class="nav-link" href="#">Review Changes</a>-->
+<!--        <a class="nav-link" href="#">Testing Releases</a>-->
+<!--        <a class="nav-link" href="#">User Libraries to Wayang</a>-->
+<!--        <a class="nav-link" href="#">Helping Other Users</a>-->
+<!--        <a class="nav-link" href="#">Slack Channel and Emails</a>-->
+<!--        <a class="nav-link main-link" href="#" tabindex="-1" aria-disabled="true">How To Build Wayang</a>-->
+<!--        <a class="nav-link" href="#">Building Wayang</a>-->
+<!--        <a class="nav-link main-link" href="#" tabindex="-1" aria-disabled="true">How To Install Wayang</a>-->
+<!--        <a class="nav-link" href="#">Installing Wayang</a>-->
+<!--        <a class="nav-link main-link" href="#" tabindex="-1" aria-disabled="true">How To Run Wayang</a>-->
+<!--        <a class="nav-link" href="#">Running Wayang</a>-->
+      </ul>
+    </div>
+<!--    TODO: validate if is usable-->
+<!--    <nav class="d-none d-xl-block col-xl-2 bd-toc" aria-label="Secondary navigation">-->
+<!--      <ul class="section-nav">-->
+<!--        <li class="toc-entry toc-h2"><a href="#base-nav">Base nav</a></li>-->
+<!--        <li class="toc-entry toc-h2"><a href="#available-styles">Available styles</a>-->
+<!--          <ul>-->
+<!--            <li class="toc-entry toc-h3"><a href="#horizontal-alignment">Horizontal alignment</a></li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#vertical">Vertical</a></li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#tabs">Tabs</a></li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#pills">Pills</a></li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#fill-and-justify">Fill and justify</a></li>-->
+<!--          </ul>-->
+<!--        </li>-->
+<!--        <li class="toc-entry toc-h2"><a href="#working-with-flex-utilities">Working with flex utilities</a></li>-->
+<!--        <li class="toc-entry toc-h2"><a href="#regarding-accessibility">Regarding accessibility</a></li>-->
+<!--        <li class="toc-entry toc-h2"><a href="#using-dropdowns">Using dropdowns</a>-->
+<!--          <ul>-->
+<!--            <li class="toc-entry toc-h3"><a href="#tabs-with-dropdowns">Tabs with dropdowns</a></li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#pills-with-dropdowns">Pills with dropdowns</a></li>-->
+<!--          </ul>-->
+<!--        </li>-->
+<!--        <li class="toc-entry toc-h2"><a href="#javascript-behavior">JavaScript behavior</a>-->
+<!--          <ul>-->
+<!--            <li class="toc-entry toc-h3"><a href="#using-data-attributes">Using data attributes</a></li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#via-javascript">Via JavaScript</a></li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#fade-effect">Fade effect</a></li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#methods">Methods</a>-->
+<!--              <ul>-->
+<!--                <li class="toc-entry toc-h4"><a href="#tab">$().tab</a></li>-->
+<!--                <li class="toc-entry toc-h4"><a href="#tabshow">.tab(‘show’)</a></li>-->
+<!--                <li class="toc-entry toc-h4"><a href="#tabdispose">.tab(‘dispose’)</a></li>-->
+<!--              </ul>-->
+<!--            </li>-->
+<!--            <li class="toc-entry toc-h3"><a href="#events">Events</a></li>-->
+<!--          </ul>-->
+<!--        </li>-->
+<!--      </ul>-->
+<!--    </nav>-->
+    <main class="col-md-9 col-xl-8 py-md-3 pl-md-5 bd-content" role="main">
+      {{content}}
+      <div class="row btn-area-page  justify-content-center" >
+        <div class="col-md-3">
+          {% if page.previous.url %}
+          <a href="{{page.previous.url}}" class="d-flex align-items-center page-btn shadow">
+              <div class="mr-auto">
+                <i class="fas fa-arrow-left fa-4x"></i>
+              </div>
+              <div class="text-right" >
+                <strong>Previous Page</strong>
+                <p class="title-page-btn">
+                  {{page.previous.title | capitalize}}
+                </p>
+              </div>
+          </a>
+          {% endif %}
+        </div>
+        <div class="col-md-3">
+          {% if page.next.url %}
+          <a href="{{page.next.url}}" class="d-flex align-items-center page-btn shadow" >
+            <div class="text-left" >
+              <strong>Next Page</strong>
+              <p class="title-page-btn">
+                {{page.next.title | capitalize}}
+              </p>
+            </div>
+            <div class="ml-auto">
+              <i class="fas fa-arrow-right  fa-4x"></i>
+            </div>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {%- include footer.html -%}
+    </main>
+  </div>
+</div>
+
+{%- include scripts.html -%}
+
+</body>
+
+</html>

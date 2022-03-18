@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.platform;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.costs.EstimationContext;
 import org.apache.wayang.core.optimizer.costs.LoadProfile;
@@ -29,6 +28,7 @@ import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Collection;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * This class groups {@link AtomicExecution}s with a common {@link EstimationContext} and {@link Platform}.
@@ -152,17 +152,17 @@ public class AtomicExecutionGroup {
 
 
         @Override
-        public JSONObject serialize(AtomicExecutionGroup aeg) {
+        public WayangJsonObj serialize(AtomicExecutionGroup aeg) {
             AtomicExecution.KeyOrLoadSerializer atomicExecutionSerializer =
                     new AtomicExecution.KeyOrLoadSerializer(null, aeg.estimationContext);
-            return new JSONObject()
+            return new WayangJsonObj()
                     .put("ctx", JsonSerializables.serialize(aeg.estimationContext, false, EstimationContext.defaultSerializer))
                     .put("platform", JsonSerializables.serialize(aeg.platform, true, Platform.jsonSerializer))
                     .put("executions", JsonSerializables.serializeAll(aeg.atomicExecutions, false, atomicExecutionSerializer));
         }
 
         @Override
-        public AtomicExecutionGroup deserialize(JSONObject json, Class<? extends AtomicExecutionGroup> cls) {
+        public AtomicExecutionGroup deserialize(WayangJsonObj json, Class<? extends AtomicExecutionGroup> cls) {
             return new AtomicExecutionGroup(
                     JsonSerializables.deserialize(
                             json.getJSONObject("ctx"),

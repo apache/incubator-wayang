@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.util.JsonSerializable;
@@ -26,6 +25,7 @@ import org.apache.wayang.core.util.JsonSerializables;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * Reflects the (estimated) required resources of an {@link Operator} or {@link FunctionDescriptor}.
@@ -188,26 +188,26 @@ public class LoadProfile implements JsonSerializable {
     }
 
     @Override
-    public JSONObject toJson() {
-        JSONObject json = new JSONObject();
+    public WayangJsonObj toJson() {
+        WayangJsonObj json = new WayangJsonObj();
         json.put("cpu", JsonSerializables.serialize(this.cpuUsage, false));
         json.put("ram", JsonSerializables.serialize(this.ramUsage, false));
-        json.putOpt("network", JsonSerializables.serialize(this.networkUsage, false));
-        json.putOpt("disk", JsonSerializables.serialize(this.diskUsage, false));
+        json.putOptional("network", JsonSerializables.serialize(this.networkUsage, false));
+        json.putOptional("disk", JsonSerializables.serialize(this.diskUsage, false));
         json.put("utilization", this.resourceUtilization);
         json.put("overhead", this.overheadMillis);
         return json;
     }
 
     @SuppressWarnings("unused")
-    public static LoadProfile fromJson(JSONObject jsonObject) {
+    public static LoadProfile fromJson(WayangJsonObj wayangJsonObj) {
         return new LoadProfile(
-                JsonSerializables.deserialize(jsonObject.getJSONObject("cpu"), LoadEstimate.class),
-                JsonSerializables.deserialize(jsonObject.getJSONObject("ram"), LoadEstimate.class),
-                JsonSerializables.deserialize(jsonObject.optJSONObject("network"), LoadEstimate.class),
-                JsonSerializables.deserialize(jsonObject.optJSONObject("disk"), LoadEstimate.class),
-                jsonObject.getDouble("utilization"),
-                jsonObject.getLong("overhead")
+                JsonSerializables.deserialize(wayangJsonObj.getJSONObject("cpu"), LoadEstimate.class),
+                JsonSerializables.deserialize(wayangJsonObj.getJSONObject("ram"), LoadEstimate.class),
+                JsonSerializables.deserialize(wayangJsonObj.optionalWayangJsonObj("network"), LoadEstimate.class),
+                JsonSerializables.deserialize(wayangJsonObj.optionalWayangJsonObj("disk"), LoadEstimate.class),
+                wayangJsonObj.getDouble("utilization"),
+                wayangJsonObj.getLong("overhead")
         );
     }
 }

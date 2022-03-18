@@ -115,6 +115,11 @@ public class SanityChecker {
         }
     }
 
+    /**
+     * TODO: (Documentation) add SanityChecker.checkFlatAlternatives
+     *   labels: documentation,todo
+     * @return
+     */
     public boolean checkFlatAlternatives() {
         AtomicBoolean testOutcome = new AtomicBoolean(true);
         new PlanTraversal(true, false)
@@ -123,6 +128,11 @@ public class SanityChecker {
         return testOutcome.get();
     }
 
+    /**
+     * TODO: (Documentation) add SanityChecker.getFlatAlternativeCallback
+     *   labels: documentation,todo
+     * @return
+     */
     private PlanTraversal.Callback getFlatAlternativeCallback(AtomicBoolean testOutcome) {
         return (operator, fromInputSlot, fromOutputSlot) -> {
             if (operator.isAlternative()) {

@@ -18,9 +18,10 @@
 
 package org.apache.wayang.basic.operators;
 
-import de.hpi.isg.profiledb.instrumentation.StopWatch;
-import de.hpi.isg.profiledb.store.model.Experiment;
-import de.hpi.isg.profiledb.store.model.Subject;
+
+import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
+import org.apache.wayang.commons.util.profiledb.model.Experiment;
+import org.apache.wayang.commons.util.profiledb.model.Subject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
@@ -59,7 +60,7 @@ public class TextFileSourceTest {
         when(optimizationContext.getJob()).thenReturn(job);
         when(job.getStopWatch()).thenReturn(new StopWatch(new Experiment("mock", new Subject("mock", "mock"))));
         when(optimizationContext.getConfiguration()).thenReturn(new Configuration());
-        final URL testFile = this.getClass().getResource("/ulysses.txt");
+        final URL testFile = this.getClass().getResource("/text.input");
         final TextFileSource textFileSource = new TextFileSource(testFile.toString());
 
         final BufferedReader bufferedReader = new BufferedReader(

@@ -1,17 +1,23 @@
-# Apache Wayang <img align="right" width="128px" src="https://wayang-ecosystem.github.io/img/logo.png" alt="Wayang logo">
+# Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
+![Travis branch](https://img.shields.io/travis/com/apache/incubator-wayang/main?style=for-the-badge)
+[![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg)
+[![License](https://img.shields.io/github/license/apache/incubator-wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Last commit](https://img.shields.io/github/last-commit/apache/incubator-wayang.svg?style=for-the-badge)]()
+![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/m/apache/incubator-wayang?style=for-the-badge)
+![GitHub forks](https://img.shields.io/github/forks/apache/incubator-wayang?style=for-the-badge)
+![GitHub Repo stars](https://img.shields.io/github/stars/apache/incubator-wayang?style=for-the-badge)
 
-[![Build Status (Travis)](https://travis-ci.org/wayang-ecosystem/wayang.svg?branch=master)](https://travis-ci.org/wayang-ecosystem/wayang)
-[![Gitter chat](https://badges.gitter.im/wayang-ecosystem/Lobby.png)](https://gitter.im/wayang-ecosystem/Lobby)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.wayang/wayang/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.wayang/wayang)
+[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Apache%20Wayang%20enables%20cross%20platform%20data%20processing,%20star%20it%20via:%20&url=https://github.com/apache/incubator-wayang&via=apachewayang&hashtags=dataprocessing,bigdata,analytics,hybridcloud,developers)
 
-#### Turning a shadows into a show
+#### The first cross-platform data processing system
 
+In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) is a *cross-platform data processing system*: Users can specify any data processing application using one of Wayang's APIs and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
 
-Apache Wayang in contrast to classical data processing systems that provide one dedicated execution engine, Apache Wayang rather is a *meta processing framework*: You can specify your data processing app via one of Wayang's API and then Wayang will pick an optimal configuration of classical processing frameworks, such as Java Streams or Apache Spark, to run your app on. Finally, Wayang will also perform the execution, thereby hiding the different specific platform APIs and coordinate inter-platform communication.
-
-This approach aims at freeing data engineers and software developers from the burden of knowing the zoo of different data processing systems, their APIs, strengths and weakness; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when tying to a fix set of processing platforms. As of now, Wayang has built in support for the following processing platforms:
-- Java 8 Streams
+Apache Wayang (incubating) aims at freeing data engineers and software developers from the burden of learning all different data processing systems, their APIs, strengths and weaknesses; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when trying a fixed set of processing platforms. As of now, Wayang has built-in support for the following processing platforms:
+- [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
 - [Apache Spark](https://spark.apache.org/)
+- [Apache Flink](https://flink.apache.org/)
+- [Apache Giraph](https://giraph.apache.org/)
 - [GraphChi](https://github.com/GraphChi/graphchi-java)
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
@@ -19,15 +25,21 @@ This approach aims at freeing data engineers and software developers from the bu
 ## How to use Wayang
 
 **Requirements.**
-Apache Wayang is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed and Apache Hadoop (the version that you want). Please also consider that processing platforms employed by Wayang might have further requirements.
+
+> **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
+
+> **NOTE:** Currently Apache Wayang (incubating) is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
+
+> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to either Java 8 or Java 11 as the prerequisite checker script currently supports up to Java 11 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running 'mvn clean install' before opening the project using IntelliJ.
 
 **Get Wayang.**
-Wayang is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:
+Wayang is available via Maven Central. To use it with Maven, for instance, include the following into your POM file:
 ```xml
 <dependency> 
   <groupId>org.apache.wayang</groupId>
   <artifactId>wayang-***</artifactId>
-  <version>0.3.0</version> 
+  <version>0.6.0</version> 
 </dependency>
 ```
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
@@ -39,30 +51,38 @@ Note the `***`: Wayang ships with multiple modules that can be included in your 
 
 For the sake of version flexibility, you still have to include your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
 
-In addition, you can obtain the most recent snapshot version of Wayang via Sonatype's snapshot repository. Just included
+In addition, you can obtain the most recent snapshot version of Wayang via Sonatype's snapshot repository. Just include
 ```xml
 <repositories>
   <repository>
-    <id>sonatype-snapshots</id>
-    <name>Sonatype Snapshot Repository</name>
-    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    <id>apache-snapshots</id>
+    <name>Apache Foundation Snapshot Repository</name>
+    <url>https://repository.apache.org/content/repositories/snapshots</url>
   </repository>
-<repositories>
+</repositories>
 ```
 
 If you need to rebuild Wayang, e.g., to use a different Scala version, you can simply do so via Maven:
 
 1. Adapt the version variables (e.g., `spark.version`) in the main `pom.xml` file.
 2. Build Wayang with the adapted versions.
-	```shell
-	$ mvn clean install
-	```
-	Note the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
-	Also, note the `distro` profile, which assembles a binary Wayang distribution.
-	To activate these profiles, you need to specify them when running maven, i.e.,
-	 ```shell
-	 mvn clean install -P<profile name>
-	 ```
+    ```shell
+    $ mvn clean install
+    ```
+> **NOTE:** If you receive an error about not finding `MathExBaseVisitor`, then the problem might be that you are trying to build from IntelliJ, without Maven. MathExBaseVisitor is generated code, and a Maven build should generate it automatically.
+
+> **NOTE:** In the current Maven setup, the version of scala is tied to the Java version, you can compile the profile `scala-11` with Java 8 and profile `scala-12` with Java 11.
+
+> **NOTE:** For compiling and testing the code it is required to have Hadoop installed on your machine.
+
+> **NOTE:**  the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
+>
+> Also, note the `distro` profile, which assembles a binary Wayang distribution.
+To activate these profiles, you need to specify them when running maven, i.e.,
+
+```shell
+mvn clean install -P<profile name>
+```
 
 **Configure Wayang.** In order for Wayang to work properly, it is necessary to tell Wayang about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Wayang right away, we recommend to create a properties file to adapt the configuration where necessary. To have Wayang use that configuration transparently, just run you app via
 ```shell
@@ -134,10 +154,6 @@ java ... org.apache.wayang.profiler.ga.GeneticOptimizerApp [configuration URL [e
 ```
 This app will try to find appropriate values for the question marks (`?`) in the load profile estimator templates to fit the gathered execution data and ready-made configuration entries for the load profile estimators.
 You can then copy them into your configuration.
-
-## Examples
-
-For some executable examples, have a look at [this repository](https://github.com/sekruse/rheem-examples).
 
 ### WordCount
 
@@ -356,7 +372,7 @@ object kmeans {
 
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 Apache (incubating) Wayang Team
+Copyright 2020 - 2021 The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

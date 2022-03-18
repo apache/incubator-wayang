@@ -17,19 +17,17 @@
   specific language governing permissions and limitations
   under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.apache.wayang</groupId>
         <artifactId>wayang</artifactId>
-        <version>0.6.0-SNAPSHOT</version>
+        <version>0.6.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-commons</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.6.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Wayang Commons</name>
@@ -37,14 +35,6 @@
         Wayang Commons is the module that contains the bases for all the
         other modules
     </description>
-
-    <dependencies>
-        <dependency>
-            <groupId>net.sf.trove4j</groupId>
-            <artifactId>trove4j</artifactId>
-            <version>3.0.3</version>
-        </dependency>
-    </dependencies>
 
     <dependencyManagement>
         <dependencies>
@@ -86,6 +76,10 @@
                     <exclusion>
                         <groupId>tomcat</groupId>
                         <artifactId>jasper-runtime</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.thoughtworks.paranamer</groupId>
+                        <artifactId>paranamer</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -167,29 +161,31 @@
                         <groupId>commons-el</groupId>
                         <artifactId>commons-el</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>com.thoughtworks.paranamer</groupId>
+                        <artifactId>paranamer</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
-
-            <!-- Miscellaneous -->
             <dependency>
-                <groupId>org.json</groupId>
-                <artifactId>json</artifactId>
-                <version>20160212</version>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
             </dependency>
+            <!-- Miscellaneous -->
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>1.17</version>
+                <version>1.26</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.3.2</version>
+                <version>3.12.0</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.4</version>
+                <version>2.7</version>
             </dependency>
             <dependency>
                 <groupId>de.odysseus.juel</groupId>
@@ -202,19 +198,9 @@
                 <version>2.2.7</version>
             </dependency>
             <dependency>
-                <groupId>de.hpi.isg</groupId>
-                <artifactId>profiledb-instrumentation</artifactId>
-                <version>0.1.1</version>
-            </dependency>
-            <dependency>
-                <groupId>de.hpi.isg</groupId>
-                <artifactId>profiledb-store</artifactId>
-                <version>0.1.1</version>
-            </dependency>
-            <dependency>
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
-                <version>2.2.4</version>
+                <version>2.8.8</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -222,6 +208,7 @@
     <modules>
         <module>wayang-core</module>
         <module>wayang-basic</module>
+        <module>wayang-utils-profile-db</module>
         <module>wayang-serializable</module>
     </modules>
 

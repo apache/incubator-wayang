@@ -18,7 +18,7 @@
 
 package org.apache.wayang.core.platform;
 
-import org.json.JSONObject;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 import org.junit.Assert;
 import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
@@ -73,8 +73,8 @@ public class PartialExecutionTest {
         original.addInitializedPlatform(DummyPlatform.getInstance());
 
         final PartialExecution.Serializer serializer = new PartialExecution.Serializer(configuration);
-        final JSONObject jsonObject = JsonSerializables.serialize(original, false, serializer);
-        final PartialExecution loaded = JsonSerializables.deserialize(jsonObject, serializer, PartialExecution.class);
+        final WayangJsonObj wayangJsonObj = JsonSerializables.serialize(original, false, serializer);
+        final PartialExecution loaded = JsonSerializables.deserialize(wayangJsonObj, serializer, PartialExecution.class);
 
         Assert.assertEquals(original.getMeasuredExecutionTime(), loaded.getMeasuredExecutionTime());
         Assert.assertEquals(2, loaded.getAtomicExecutionGroups().size());

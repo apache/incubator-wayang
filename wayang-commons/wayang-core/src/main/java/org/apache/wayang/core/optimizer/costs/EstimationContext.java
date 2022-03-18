@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.util.JsonSerializables;
@@ -26,6 +25,7 @@ import org.apache.wayang.core.util.JsonSerializer;
 
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 
 /**
  * Provides parameters required by {@link LoadProfileEstimator}s.
@@ -143,22 +143,22 @@ public interface EstimationContext {
     JsonSerializer<EstimationContext> defaultSerializer = new JsonSerializer<EstimationContext>() {
 
         @Override
-        public JSONObject serialize(EstimationContext ctx) {
-            JSONObject doubleProperties = new JSONObject();
+        public WayangJsonObj serialize(EstimationContext ctx) {
+            WayangJsonObj doubleProperties = new WayangJsonObj();
             for (String key : ctx.getPropertyKeys()) {
                 double value = ctx.getDoubleProperty(key, 0);
                 doubleProperties.put(key, value);
             }
             if (doubleProperties.length() == 0) doubleProperties = null;
-            return new JSONObject()
+            return new WayangJsonObj()
                     .put("inCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getInputCardinalities()), false))
                     .put("outCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getOutputCardinalities()), false))
                     .put("executions", ctx.getNumExecutions())
-                    .putOpt("properties", doubleProperties);
+                    .putOptional("properties", doubleProperties);
         }
 
         @Override
-        public EstimationContext deserialize(JSONObject json, Class<? extends EstimationContext> cls) {
+        public EstimationContext deserialize(WayangJsonObj json, Class<? extends EstimationContext> cls) {
             throw new UnsupportedOperationException("Deserialization not supported.");
         }
     };

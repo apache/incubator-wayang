@@ -18,7 +18,6 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import org.json.JSONObject;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.FunctionDescriptor;
@@ -28,6 +27,7 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.costs.LoadEstimator.SinglePointEstimationFunction;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.util.JuelUtils;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 import org.apache.wayang.core.util.mathex.Context;
 import org.apache.wayang.core.util.mathex.DefaultContext;
 import org.apache.wayang.core.util.mathex.Expression;
@@ -124,7 +124,7 @@ public class LoadProfileEstimators {
      */
     public static NestableLoadProfileEstimator createFromSpecification(String configKey, String specification) {
         try {
-            final JSONObject spec = new JSONObject(specification);
+            final WayangJsonObj spec = new WayangJsonObj(specification);
             if (!spec.has("type") || "juel".equalsIgnoreCase(spec.getString("type"))) {
                 return createFromJuelSpecification(configKey, spec);
             } else if ("mathex".equalsIgnoreCase(spec.getString("type"))) {
@@ -159,12 +159,12 @@ public class LoadProfileEstimators {
      * @param spec      a specification that adheres to above format
      * @return the new instance
      */
-    public static NestableLoadProfileEstimator createFromJuelSpecification(String configKey, JSONObject spec) {
+    public static NestableLoadProfileEstimator createFromJuelSpecification(String configKey, WayangJsonObj spec) {
         int numInputs = spec.getInt("in");
         int numOutputs = spec.getInt("out");
         double correctnessProb = spec.getDouble("p");
         List<String> operatorProperties = spec.has("import") ?
-                StreamSupport.stream(spec.optJSONArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
+                StreamSupport.stream(spec.optionalWayangJsonArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
                 Collections.emptyList();
 
 
@@ -234,12 +234,12 @@ public class LoadProfileEstimators {
      * @param spec      a specification that adheres to above format
      * @return the new instance
      */
-    public static NestableLoadProfileEstimator createFromMathExSpecification(String configKey, JSONObject spec) {
+    public static NestableLoadProfileEstimator createFromMathExSpecification(String configKey, WayangJsonObj spec) {
         int numInputs = spec.getInt("in");
         int numOutputs = spec.getInt("out");
         double correctnessProb = spec.getDouble("p");
         List<String> operatorProperties = spec.has("import") ?
-                StreamSupport.stream(spec.optJSONArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
+                StreamSupport.stream(spec.optionalWayangJsonArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
                 Collections.emptyList();
 
 
