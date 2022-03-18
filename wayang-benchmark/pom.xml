@@ -59,21 +59,6 @@
       <artifactId>wayang-sqlite3</artifactId>
       <version>0.6.1-SNAPSHOT</version>
     </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>2.7.7</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-hdfs-client</artifactId>
-      <version>2.7.7</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_${scala.mayor.version}</artifactId>
-      <version>${spark.version}</version>
-    </dependency>
   </dependencies>
 
   <modules>
