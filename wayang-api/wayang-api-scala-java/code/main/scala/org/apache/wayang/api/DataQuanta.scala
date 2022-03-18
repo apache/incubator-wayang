@@ -799,6 +799,34 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   /**
+   * Write the data quanta in this instance to a Object file. Triggers execution.
+   *
+   * @param url          URL to the text file
+   */
+  def writeObjectFile(url: String)(implicit classTag: ClassTag[Out]): Unit = {
+    writeObjectFileJava(url, classTag)
+  }
+
+  /**
+   * Write the data quanta in this instance to a Object file. Triggers execution.
+   *
+   * @param url          URL to the text file
+   */
+  def writeObjectFileJava(url: String, classTag: ClassTag[Out]): Unit ={
+    val sink = new ObjectFileSink[Out](
+      url,
+      basicDataUnitType(classTag).getTypeClass
+    )
+    sink.setName(s"Write objects to $url")
+    this.connectTo(sink, 0)
+
+    // Do the execution.
+    this.planBuilder.sinks += sink
+    this.planBuilder.buildAndExecute()
+    this.planBuilder.sinks.clear()
+  }
+
+  /**
     * Restrict the producing [[Operator]] to run on certain [[Platform]]s.
     *
     * @param platforms on that the [[Operator]] may be executed

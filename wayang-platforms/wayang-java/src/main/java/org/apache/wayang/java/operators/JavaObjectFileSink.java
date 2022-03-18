@@ -25,6 +25,8 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSink;
+import org.apache.wayang.basic.operators.TextFileSink;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -57,17 +59,18 @@ import java.util.stream.Stream;
  *
  * @see JavaObjectFileSource
  */
-public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecutionOperator {
+public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExecutionOperator {
 
-    private final String targetPath;
+    public JavaObjectFileSink(ObjectFileSink<T> that) {
+        super(that);
+    }
 
     public JavaObjectFileSink(DataSetType<T> type) {
         this(null, type);
     }
 
     public JavaObjectFileSink(String targetPath, DataSetType<T> type) {
-        super(type);
-        this.targetPath = targetPath;
+        super(targetPath, type);
     }
 
     @Override
@@ -79,9 +82,15 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
-        FileChannel.Instance output = (FileChannel.Instance) outputs[0];
-        final String path = output.addGivenOrTempPath(this.targetPath, javaExecutor.getCompiler().getConfiguration());
-
+        final String path;
+        FileChannel.Instance output;
+        if(outputs.length == 1) {
+            output = (FileChannel.Instance) outputs[0];
+            path = output.addGivenOrTempPath(this.textFileUrl,
+                javaExecutor.getCompiler().getConfiguration());
+        }else{
+            path = this.textFileUrl;
+        }
         final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(path));
         final SequenceFile.Writer.Option keyClassOption = SequenceFile.Writer.keyClass(NullWritable.class);
         final SequenceFile.Writer.Option valueClassOption = SequenceFile.Writer.valueClass(BytesWritable.class);
@@ -90,6 +99,9 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
             // Chunk the stream of data quanta and write the chunks into the sequence file.
             StreamChunker streamChunker = new StreamChunker(10, (chunk, size) -> {
                 if (chunk.length != size) {
+                    System.out.println("heer");
+                    System.out.println(chunk.length);
+                    System.out.println(size);
                     chunk = Arrays.copyOfRange(chunk, 0, size);
                 }
                 try {
@@ -119,7 +131,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaObjectFileSink<>(this.targetPath, this.getType());
+        return new JavaObjectFileSink<>(this.textFileUrl, this.getType());
     }
 
     @Override

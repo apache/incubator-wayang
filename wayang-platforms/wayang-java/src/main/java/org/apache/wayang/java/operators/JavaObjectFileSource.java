@@ -26,6 +26,7 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -60,17 +61,17 @@ import java.util.stream.StreamSupport;
  *
  * @see JavaObjectFileSink
  */
-public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecutionOperator {
+public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements JavaExecutionOperator {
 
-    private final String sourcePath;
-
-    public JavaObjectFileSource(DataSetType<T> type) {
-        this(null, type);
+    public JavaObjectFileSource(ObjectFileSource<T> that) {
+        super(that);
     }
 
+    public JavaObjectFileSource(DataSetType<T> type) {
+        super(null, type);
+    }
     public JavaObjectFileSource(String sourcePath, DataSetType<T> type) {
-        super(type);
-        this.sourcePath = sourcePath;
+        super(sourcePath, type);
     }
 
     @Override
@@ -83,12 +84,12 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
 
         SequenceFileIterator sequenceFileIterator;
         final String path;
-        if (this.sourcePath == null) {
+        if (this.getInputUrl() == null) {
             final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
             path = input.getSinglePath();
         } else {
             assert inputs.length == 0;
-            path = this.sourcePath;
+            path = this.getInputUrl();
         }
         try {
             final String actualInputPath = FileSystems.findActualSingleInputPath(path);
@@ -110,7 +111,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaObjectFileSource<>(this.sourcePath, this.getType());
+        return new JavaObjectFileSource<>(this.getInputUrl(), this.getType());
     }
 
     @Override

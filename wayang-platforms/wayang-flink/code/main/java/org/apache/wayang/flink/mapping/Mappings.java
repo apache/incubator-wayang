@@ -53,7 +53,9 @@ public class Mappings {
             new SampleMapping(),
             new SortMapping(),
             new TextFileSinkMapping(),
+            new ObjectFileSinkMapping(),
             new TextFileSourceMapping(),
+            new ObjectFileSourceMapping(),
             new UnionAllMapping(),
             new ZipWithIdMapping()
     );
