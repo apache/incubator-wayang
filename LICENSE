@@ -221,3 +221,5 @@ wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/u
 wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb/storage/Storage.java
 Are copyright 2016 Sebastian Kruse from https://github.com/sekruse/profiledb-java repository which is distributed under the Apache 2.0 license.
 commit hash c28fe7f8e2034994e1c32e29ac8fdcfe7178d92b(https://github.com/sekruse/profiledb-java/commit/c28fe7f8e2034994e1c32e29ac8fdcfe7178d92b)
+
+mvnw files from https://github.com/apache/maven-wrapper Apache 2.0

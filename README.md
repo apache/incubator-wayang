@@ -25,13 +25,13 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 ## How to use Wayang
 
 **Requirements.**
-Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed and Apache Hadoop (the version that you want). Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have installed Apache Hadoop (the version that you want). Please also consider that processing platforms employed by Wayang might have further requirements.
 
 > **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
 
 > **NOTE:** Currently Apache Wayang (incubating) is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
 
-> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to either Java 8 or Java 11 as the prerequisite checker script currently supports up to Java 11 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running 'mvn clean install' before opening the project using IntelliJ.
+> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to either Java 8 or Java 11 as the prerequisite checker script currently supports up to Java 11 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running './mvnw clean install' before opening the project using IntelliJ.
 
 **Get Wayang.**
 Wayang is available via Maven Central. To use it with Maven, for instance, include the following into your POM file:
@@ -67,7 +67,7 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
 1. Adapt the version variables (e.g., `spark.version`) in the main `pom.xml` file.
 2. Build Wayang with the adapted versions.
     ```shell
-    $ mvn clean install
+    $ ./mvnw clean install
     ```
 > **NOTE:** If you receive an error about not finding `MathExBaseVisitor`, then the problem might be that you are trying to build from IntelliJ, without Maven. MathExBaseVisitor is generated code, and a Maven build should generate it automatically.
 
@@ -81,7 +81,7 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
 To activate these profiles, you need to specify them when running maven, i.e.,
 
 ```shell
-mvn clean install -P<profile name>
+./mvnw clean install -P<profile name>
 ```
 
 **Configure Wayang.** In order for Wayang to work properly, it is necessary to tell Wayang about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Wayang right away, we recommend to create a properties file to adapt the configuration where necessary. To have Wayang use that configuration transparently, just run you app via
