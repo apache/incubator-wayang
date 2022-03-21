@@ -60,11 +60,6 @@
                 <version>0.5.1</version>
                 <configuration>
                     <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}</protocArtifact>
-                    <!-- TODO Use an Environmental variable-->
-                    <!--This one is for travis-->
-                    <protocExecutable>/usr/bin/protoc</protocExecutable>
-                    <!--This one is for local executions-->
-                    <!--<protocExecutable>/usr/local/bin/protoc</protocExecutable>-->
                 </configuration>
                 <executions>
                     <execution>
@@ -90,5 +85,47 @@
         </resources>
     </build>
 
+    <profiles>
+        <profile>
+            <id>protof-unix</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.xolstice.maven.plugins</groupId>
+                        <artifactId>protobuf-maven-plugin</artifactId>
+                        <configuration>
+                            <!--This one is for Linux installation -->
+                            <protocExecutable>/usr/bin/protoc</protocExecutable>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>protof-mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.xolstice.maven.plugins</groupId>
+                        <artifactId>protobuf-maven-plugin</artifactId>
+                        <configuration>
+                            <!--This one is for Mac executions-->
+                            <protocExecutable>/usr/local/bin/protoc</protocExecutable>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
