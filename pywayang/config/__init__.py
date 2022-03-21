@@ -15,5 +15,6 @@
 # limitations under the License.
 #
 
-wayang.api.python.worker = /Users/rodrigopardomeza/wayang/incubator-wayang/wayang-api/wayang-api-python/src/main/python/worker.py
-# wayang.api.python.worker = src/main/python/worker.py
+from config.config_reader import get_source_types
+from config.config_reader import get_sink_types
+from config.config_reader import get_boundary_types

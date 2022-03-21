@@ -15,5 +15,4 @@
 # limitations under the License.
 #
 
-wayang.api.python.worker = /Users/rodrigopardomeza/wayang/incubator-wayang/wayang-api/wayang-api-python/src/main/python/worker.py
-# wayang.api.python.worker = src/main/python/worker.py
+import protobuf.pywayangplan_pb2

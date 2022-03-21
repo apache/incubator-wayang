@@ -14,6 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import unittest
 
-wayang.api.python.worker = /Users/rodrigopardomeza/wayang/incubator-wayang/wayang-api/wayang-api-python/src/main/python/worker.py
-# wayang.api.python.worker = src/main/python/worker.py
+
+class MyTestCase(unittest.TestCase):
+
+    def test_something(self):
+        self.assertEqual(True, False)
+
+    def test_upper(self):
+        self.assertEqual('foo'.upper(), 'FOO')
+
+
+if __name__ == '__main__':
+    unittest.main()

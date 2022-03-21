@@ -48,6 +48,7 @@ before_script:
   - echo '  </server>' >> ~/.m2/settings.xml
   - echo ' </servers>' >> ~/.m2/settings.xml
   - echo '</settings>' >> ~/.m2/settings.xml
+  - sudo apt-get install -y protobuf-compiler
   - mkdir -p travis/tmp
   - echo "#" >> travis/wayang.properties
   - echo "# Licensed to the Apache Software Foundation (ASF) under one or more" >> travis/wayang.properties
