@@ -35,11 +35,11 @@ github:
     merge:   true
     # disable rebase button:
     rebase:  false
-  protected_branches:
-    main:
-      required_pull_request_reviews:
-        dismiss_stale_reviews: true
-        required_approving_review_count: 1
+#  protected_branches:
+#    main:
+#      required_pull_request_reviews:
+#        dismiss_stale_reviews: true
+#        required_approving_review_count: 1
     
 notifications:
   issues:       commits@wayang.apache.org
