@@ -35,6 +35,7 @@ github:
     merge:   true
     # disable rebase button:
     rebase:  false
+  protected_branches: ~
 #  protected_branches:
 #    main:
 #      required_pull_request_reviews:
