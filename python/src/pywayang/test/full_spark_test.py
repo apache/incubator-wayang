@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 import unittest
-from orchestrator.plan import Descriptor
-from orchestrator.dataquanta import DataQuantaBuilder
+from pywayang.orchestrator.plan import Descriptor
+from pywayang.orchestrator.dataquanta import DataQuantaBuilder
 
 
 def test_most_basic(self):

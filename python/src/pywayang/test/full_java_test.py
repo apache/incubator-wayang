@@ -14,11 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import unittest
-from orchestrator.plan import Descriptor
-from orchestrator.dataquanta import DataQuantaBuilder
+from pywayang.orchestrator.plan import Descriptor
+from pywayang.orchestrator.dataquanta import DataQuantaBuilder
 
-
+input_1 = "./../../../resources/text.input"
+input_2 = "./../../../resources/text.input"
+output_1 = "./../../../resources/output"
 class MyTestCase(unittest.TestCase):
 
     def test_most_basic(self):
@@ -27,8 +30,8 @@ class MyTestCase(unittest.TestCase):
 
         plan = DataQuantaBuilder(descriptor)
         sink_dataquanta = \
-            plan.source("../test/lines.txt") \
-                .sink("../test/output.txt", end="")
+            plan.source(input_1) \
+                .sink(output_1, end="")
 
         sink_dataquanta.to_wayang_plan()
 
@@ -38,31 +41,31 @@ class MyTestCase(unittest.TestCase):
         descriptor.add_plugin(Descriptor.Plugin.java)
 
         plan = DataQuantaBuilder(descriptor)
-        dq_source_a = plan.source("../test/lines.txt")
-        dq_source_b = plan.source("../test/morelines.txt")
+        dq_source_a = plan.source(input_1)
+        dq_source_b = plan.source(input_2)
         sink_dataquanta = dq_source_a.union(dq_source_b) \
-            .sink("../test/output.txt", end="")
+            .sink(output_1, end="")
 
         sink_dataquanta.to_wayang_plan()
 
 
-    def test_multiple_juncture(self):
-        descriptor = Descriptor()
-        descriptor.add_plugin(Descriptor.Plugin.java)
-
-        plan = DataQuantaBuilder(descriptor)
-        dq_source_a = plan.source("../test/lines.txt")
-        dq_source_b = plan.source("../test/morelines.txt") \
-            .filter(lambda elem: str(elem).startswith("I"))
-        dq_source_c = plan.source("../test/lastlines.txt") \
-            .filter(lambda elem: str(elem).startswith("W"))
-
-        sink_dataquanta = dq_source_a.union(dq_source_b) \
-            .union(dq_source_c) \
-            .sort(lambda elem: elem.lower()) \
-            .sink("../test/output.txt", end="")
-
-        sink_dataquanta.to_wayang_plan()
+    # def test_multiple_juncture(self):
+    #     descriptor = Descriptor()
+    #     descriptor.add_plugin(Descriptor.Plugin.java)
+    #
+    #     plan = DataQuantaBuilder(descriptor)
+    #     dq_source_a = plan.source(input_1)
+    #     dq_source_b = plan.source(input_2) \
+    #         .filter(lambda elem: str(elem).startswith("I"))
+    #     dq_source_c = plan.source("../test/lastlines.txt") \
+    #         .filter(lambda elem: str(elem).startswith("W"))
+    #
+    #     sink_dataquanta = dq_source_a.union(dq_source_b) \
+    #         .union(dq_source_c) \
+    #         .sort(lambda elem: elem.lower()) \
+    #         .sink(output_1, end="")
+    #
+    #     sink_dataquanta.to_wayang_plan()
 
 
 if __name__ == '__main__':

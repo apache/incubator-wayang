@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from graph.visitant import Visitant
+from pywayang.graph.visitant import Visitant
 import logging
 
 

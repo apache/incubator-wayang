@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -15,6 +16,11 @@
 # limitations under the License.
 #
 
-from config.config_reader import get_source_types
-from config.config_reader import get_sink_types
-from config.config_reader import get_boundary_types
+#This script compile the code of protobuf for python
+dir=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+
+cd ${dir}/..
+
+protoc -I=./wayang-commons/wayang-serializable/src/main/proto \
+--python_out=./python/src/pywayang/protobuf/ \
+pywayangplan.proto

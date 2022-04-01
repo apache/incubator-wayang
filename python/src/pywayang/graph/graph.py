@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from graph.node import Node
+from pywayang.graph.node import Node
 import logging
 
 

@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-from orchestrator.operator import Operator
-from graph.graph import Graph
-from graph.traversal import Traversal
-from protobuf.planwriter import MessageWriter
+from pywayang.orchestrator.operator import Operator
+from pywayang.graph.graph import Graph
+from pywayang.graph.traversal import Traversal
+from pywayang.protobuf.planwriter import MessageWriter
 import itertools
 import collections
 import logging
@@ -140,7 +140,7 @@ class DataQuanta:
             python_exec=False
         )
 
-        print(len(keys), keys)
+        #print(len(keys), keys)
         for i in range(0, len(keys)):
             """if keys[i] is int:
                 op.set_parameter("vector_position|"+str(i), keys[i])
