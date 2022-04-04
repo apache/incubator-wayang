@@ -30,8 +30,12 @@ pickle_protocol = pickle.HIGHEST_PROTOCOL
 class Operator:
 
     def __init__(
-            self, operator_type=None, udf=None, previous=None,
-            iterator=None, python_exec=False
+        self,
+        operator_type=None,
+        udf=None,
+        previous=None,
+        iterator=None,
+        python_exec=False
     ):
 
         # Operator ID
