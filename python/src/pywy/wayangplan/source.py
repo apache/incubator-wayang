@@ -11,6 +11,9 @@ class SourceUnaryOperator(WyOperator):
             output_lenght = 1
         )
 
+    def postfix(self) -> str:
+        return 'Source'
+
     def __str__(self):
         return super().__str__()
 
@@ -24,7 +27,7 @@ class TextFileSource(SourceUnaryOperator):
     path: str
 
     def __init__(self, path: str):
-        super(TextFileSource, self).__init__('TextFileSource')
+        super(TextFileSource, self).__init__('TextFile')
         self.path = path
 
     def __str__(self):

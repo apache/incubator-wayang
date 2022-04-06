@@ -19,7 +19,7 @@ class WyOperator:
                  input_lenght: Optional[int] = 1,
                  output_lenght: Optional[int] = 1
     ):
-        self.name = name
+        self.name = (self.prefix() + name + self.postfix()).strip()
         self.inputSlot = input
         self.inputs = input_lenght
         self.outputSlot = output
@@ -56,6 +56,12 @@ class WyOperator:
 
     def get_output_channeldescriptors(self) -> Set[ChannelDescriptor]:
         pass
+
+    def prefix(self) -> str:
+        return ''
+
+    def postfix(self) -> str:
+        return ''
 
     def __str__(self):
         return "BaseOperator: \n\t- name: {}\n\t- inputs: {} {}\n\t- outputs: {} {} \n".format(

@@ -4,7 +4,9 @@ from pywy.types import GenericTco
 from pywy.wayangplan.base import WyOperator
 
 class SinkOperator(WyOperator):
-    pass
+
+    def postfix(self) -> str:
+        return 'Sink'
 
 class SinkUnaryOperator(SinkOperator):
 
@@ -24,7 +26,7 @@ class TextFileSink(SinkUnaryOperator):
     path: str
 
     def __init__(self, path: str):
-        super().__init__('TextFileSink')
+        super().__init__('TextFile')
         self.path = path
 
     def __str__(self):
