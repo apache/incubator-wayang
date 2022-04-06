@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Set
 
 from pywy.platforms.basic.platform import Platform
 from pywy.platforms.basic.mapping import Mapping

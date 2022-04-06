@@ -1,12 +1,13 @@
+from typing import Set
 from pywy.wayangplan.sink import TextFileSink
 from pywy.platforms.python.operators.PythonExecutionOperator import PythonExecutionOperator
 from pywy.platforms.python.channels import (
-                                                    Channel,
-                                                    ChannelDescriptor,
-                                                    PyIteratorChannel,
-                                                    PyIteratorChannelDescriptor
-                                                )
-from typing import Set
+                                                Channel,
+                                                ChannelDescriptor,
+                                                PyIteratorChannel,
+                                                PyIteratorChannelDescriptor
+                                            )
+
 
 class PyTextFileSinkOperator(TextFileSink, PythonExecutionOperator):
 

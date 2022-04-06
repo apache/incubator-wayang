@@ -3,7 +3,6 @@ from pywy.platforms.basic.plugin import Plugin
 from pywy.platforms.python.mappings import PywyOperatorMappings
 
 
-
 class PythonPlugin(Plugin):
 
     def __init__(self):

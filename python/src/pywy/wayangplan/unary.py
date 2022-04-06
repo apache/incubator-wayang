@@ -1,15 +1,16 @@
+from itertools import chain
 from pywy.wayangplan.base import WyOperator
 from pywy.types import (
-                                GenericTco,
-                                GenericUco,
-                                Predicate,
-                                getTypePredicate,
-                                Function,
-                                getTypeFunction,
-                                FlatmapFunction,
-                                getTypeFlatmapFunction
-                            )
-from itertools import chain
+                            GenericTco,
+                            GenericUco,
+                            Predicate,
+                            getTypePredicate,
+                            Function,
+                            getTypeFunction,
+                            FlatmapFunction,
+                            getTypeFlatmapFunction
+                        )
+
 
 
 class UnaryToUnaryOperator(WyOperator):

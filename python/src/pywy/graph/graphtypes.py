@@ -1,6 +1,6 @@
-from typing import Iterable, List, Tuple
+from typing import ( Iterable, List )
 
-from pywy.graph.graph import GraphNode, WayangGraph
+from pywy.graph.graph import ( GraphNode, WayangGraph )
 from pywy.wayangplan.base import WyOperator
 
 class NodeOperator(GraphNode[WyOperator]):

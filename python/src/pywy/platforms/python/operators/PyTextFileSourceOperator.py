@@ -1,13 +1,13 @@
+from typing import Set
 from pywy.wayangplan.source import TextFileSource
 from pywy.platforms.python.operators.PythonExecutionOperator import PythonExecutionOperator
 from pywy.platforms.python.channels import (
-                                                    Channel,
-                                                    ChannelDescriptor,
-                                                    PyIteratorChannel,
-                                                    PyIteratorChannelDescriptor,
-                                                    PyFileChannelDescriptor
-                                                )
-from typing import Set
+                                                Channel,
+                                                ChannelDescriptor,
+                                                PyIteratorChannel,
+                                                PyIteratorChannelDescriptor
+                                            )
+
 
 class PyTextFileSourceOperator(TextFileSource, PythonExecutionOperator):
 

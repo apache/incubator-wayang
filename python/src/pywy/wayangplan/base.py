@@ -1,4 +1,4 @@
-from typing import (TypeVar, Optional, List, Set)
+from typing import ( TypeVar, Optional, List, Set )
 from pywy.platforms.basic.channel import ChannelDescriptor
 
 class WyOperator:

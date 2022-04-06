@@ -1,4 +1,4 @@
-from typing import ( Generic, TypeVar, Callable, Hashable, Iterable)
+from typing import ( Generic, TypeVar, Callable, Hashable, Iterable )
 from inspect import signature
 
 T = TypeVar("T")   # Type

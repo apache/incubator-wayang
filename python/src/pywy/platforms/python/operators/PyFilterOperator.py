@@ -1,9 +1,15 @@
+from typing import Set
 from pywy.wayangplan.unary import FilterOperator
 from pywy.platforms.python.operators.PythonExecutionOperator import PythonExecutionOperator
-from pywy.platforms.python.channels import (Channel, ChannelDescriptor, PyIteratorChannel,
-                                            PyIteratorChannelDescriptor, PyCallableChannelDescriptor,
-                                            PyCallableChannel)
-from typing import Set
+from pywy.platforms.python.channels import (
+                                                Channel,
+                                                ChannelDescriptor,
+                                                PyIteratorChannel,
+                                                PyIteratorChannelDescriptor,
+                                                PyCallableChannelDescriptor,
+                                                PyCallableChannel
+                                            )
+
 
 class PyFilterOperator(FilterOperator, PythonExecutionOperator):
 

@@ -1,5 +1,5 @@
 from pywy.types import T
-from typing import Iterable, Dict, Callable, List, Any, Generic
+from typing import ( Iterable, Dict, Callable, List, Any, Generic )
 
 
 class GraphNode(Generic[T]):
