@@ -1,5 +1,5 @@
 from typing import Dict
-from pywy.wayangplan.base import WyOperator
+from pywy.wayangplan.base import PywyOperator
 
 class Mapping:
     mappings: Dict[str, type]
@@ -7,10 +7,10 @@ class Mapping:
     def __init__(self):
         self.mappings = {}
 
-    def add_mapping(self, operator: WyOperator):
+    def add_mapping(self, operator: PywyOperator):
         self.mappings[operator.name_basic()] = type(operator)
 
-    def get_instanceof(self, operator: WyOperator):
+    def get_instanceof(self, operator: PywyOperator):
         template = self.mappings[operator.name_basic()]
         if template is None:
             raise Exception(

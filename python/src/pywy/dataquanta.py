@@ -42,10 +42,10 @@ class DataQuanta(GenericTco):
     """
     Represents an intermediate result/data flow edge in a [[WayangPlan]].
     """
-    previous : WyOperator = None
+    previous : PywyOperator = None
     context: WayangContext
 
-    def __init__(self, context:WayangContext,  operator: WyOperator):
+    def __init__(self, context:WayangContext, operator: PywyOperator):
         self.operator = operator
         self.context = context
 
@@ -66,7 +66,7 @@ class DataQuanta(GenericTco):
         trs.translate()
         # TODO add the logic to execute the plan
 
-    def __connect(self, op:WyOperator, port_op: int = 0) -> WyOperator:
+    def __connect(self, op:PywyOperator, port_op: int = 0) -> PywyOperator:
         self.operator.connect(0, op, port_op)
         return op
 

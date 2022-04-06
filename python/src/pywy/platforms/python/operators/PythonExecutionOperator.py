@@ -1,7 +1,7 @@
-from pywy.wayangplan.base import WyOperator
+from pywy.wayangplan.base import PywyOperator
 from pywy.platforms.python.channels import Channel
 
-class PythonExecutionOperator(WyOperator):
+class PythonExecutionOperator(PywyOperator):
 
     def prefix(self) -> str:
         return 'Py'

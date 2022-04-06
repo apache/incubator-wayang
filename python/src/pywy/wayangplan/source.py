@@ -1,6 +1,6 @@
-from pywy.wayangplan.base import WyOperator
+from pywy.wayangplan.base import PywyOperator
 
-class SourceUnaryOperator(WyOperator):
+class SourceUnaryOperator(PywyOperator):
 
     def __init__(self, name:str):
         super(SourceUnaryOperator, self).__init__(

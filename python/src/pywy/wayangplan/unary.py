@@ -1,5 +1,5 @@
 from itertools import chain
-from pywy.wayangplan.base import WyOperator
+from pywy.wayangplan.base import PywyOperator
 from pywy.types import (
                             GenericTco,
                             GenericUco,
@@ -13,7 +13,7 @@ from pywy.types import (
 
 
 
-class UnaryToUnaryOperator(WyOperator):
+class UnaryToUnaryOperator(PywyOperator):
 
     def __init__(self, name:str, input:GenericTco, output:GenericUco):
         super().__init__(name, input, output, 1, 1)

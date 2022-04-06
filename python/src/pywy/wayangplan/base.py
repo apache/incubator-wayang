@@ -1,15 +1,15 @@
 from typing import ( TypeVar, Optional, List, Set )
 from pywy.platforms.basic.channel import ChannelDescriptor
 
-class WyOperator:
+class PywyOperator:
 
     inputSlot : List[TypeVar]
     inputChannel : ChannelDescriptor
-    inputOperator: List['WyOperator']
+    inputOperator: List['PywyOperator']
     inputs : int
     outputSlot : List[TypeVar]
     outputChannel: ChannelDescriptor
-    outputOperator: List['WyOperator']
+    outputOperator: List['PywyOperator']
     outputs: int
 
     def __init__(self,
@@ -47,7 +47,7 @@ class WyOperator:
         self.validate_inputs(input)
         self.validate_outputs(output)
 
-    def connect(self, port:int, that: 'WyOperator', port_that:int):
+    def connect(self, port:int, that: 'PywyOperator', port_that:int):
         self.outputOperator[port] = that
         that.inputOperator[port_that] = self
 

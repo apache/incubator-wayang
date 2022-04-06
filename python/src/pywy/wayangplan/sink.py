@@ -1,9 +1,9 @@
 from typing import Any
 
 from pywy.types import GenericTco
-from pywy.wayangplan.base import WyOperator
+from pywy.wayangplan.base import PywyOperator
 
-class SinkOperator(WyOperator):
+class SinkOperator(PywyOperator):
 
     def postfix(self) -> str:
         return 'Sink'
