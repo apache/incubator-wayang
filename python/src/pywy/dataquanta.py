@@ -55,8 +55,8 @@ class DataQuanta(GenericTco):
     def storeTextFile(self: "DataQuanta[I]", path: str) :
         last = self.__connect(TextFileSink(path))
         plan = PywyPlan(self.context.plugins, [last])
-        plan.print()
-
+        #plan.print()
+        plan.printTuple()
         # TODO add the logic to execute the plan
 
     def __connect(self, op:WyOperator, port_op: int = 0) -> WyOperator:
