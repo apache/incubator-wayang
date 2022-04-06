@@ -1,6 +1,6 @@
 from pywy.graph.graphtypes import ( WGraphOfVec, NodeVec )
 from pywy.platforms.basic.plugin import Plugin
-from pywy.wayangplan.wayang import PywyPlan
+from pywy.platforms.basic.plan import PywyPlan
 from pywy.platforms.basic.mapping import Mapping
 
 class Translator:

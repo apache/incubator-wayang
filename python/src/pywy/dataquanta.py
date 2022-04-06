@@ -1,9 +1,9 @@
 from typing import Set
 
-from pywy.translate.translator import Translator
+from pywy.platforms.basic.translator import Translator
 from pywy.types import ( GenericTco, Predicate, Function, FlatmapFunction, IterableO )
 from pywy.wayangplan import *
-from pywy.wayangplan.wayang import PywyPlan
+from pywy.platforms.basic.plan import PywyPlan
 from pywy.platforms.basic.plugin import Plugin
 
 class WayangContext:
