@@ -1,6 +1,6 @@
 from typing import Set
 from pywy.wayangplan.unary import FilterOperator
-from pywy.platforms.python.operators.PythonExecutionOperator import PythonExecutionOperator
+from pywy.platforms.python.operators.PyExecutionOperator import PyExecutionOperator
 from pywy.platforms.python.channels import (
                                                 Channel,
                                                 ChannelDescriptor,
@@ -11,7 +11,7 @@ from pywy.platforms.python.channels import (
                                             )
 
 
-class PyFilterOperator(FilterOperator, PythonExecutionOperator):
+class PyFilterOperator(FilterOperator, PyExecutionOperator):
 
     def __init__(self, origin: FilterOperator = None):
         predicate = None if origin is None else origin.predicate

@@ -1,6 +1,6 @@
 from typing import Set
 from pywy.wayangplan.sink import TextFileSink
-from pywy.platforms.python.operators.PythonExecutionOperator import PythonExecutionOperator
+from pywy.platforms.python.operators.PyExecutionOperator import PyExecutionOperator
 from pywy.platforms.python.channels import (
                                                 Channel,
                                                 ChannelDescriptor,
@@ -9,7 +9,7 @@ from pywy.platforms.python.channels import (
                                             )
 
 
-class PyTextFileSinkOperator(TextFileSink, PythonExecutionOperator):
+class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
 
     def __init__(self, origin: TextFileSink = None):
         path = None if origin is None else origin.path

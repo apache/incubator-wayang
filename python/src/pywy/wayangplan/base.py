@@ -1,14 +1,16 @@
 from typing import ( TypeVar, Optional, List, Set )
-from pywy.platforms.basic.channel import ChannelDescriptor
+from pywy.platforms.basic.channel import ChannelDescriptor, Channel
 
 class PywyOperator:
 
     inputSlot : List[TypeVar]
-    inputChannel : ChannelDescriptor
+    inputChannel : List[Channel]
+    inputChannelDescriptor : List[ChannelDescriptor]
     inputOperator: List['PywyOperator']
     inputs : int
     outputSlot : List[TypeVar]
-    outputChannel: ChannelDescriptor
+    outputChannel: List[Channel]
+    outputChannelDescriptor: List[ChannelDescriptor]
     outputOperator: List['PywyOperator']
     outputs: int
 
@@ -26,6 +28,8 @@ class PywyOperator:
         self.outputs = output_lenght
         self.inputOperator = [None] * self.inputs
         self.outputOperator = [None] * self.outputs
+        self.inputChannel = [None] * self.inputs
+        self.outputChannel = [None] * self.outputs
 
     def validate_inputs(self, vec):
         if len(vec) != self.inputs:

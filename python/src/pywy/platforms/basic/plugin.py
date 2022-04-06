@@ -1,5 +1,6 @@
 from typing import Set
 
+from pywy.platforms.basic.executor import Executor
 from pywy.platforms.basic.platform import Platform
 from pywy.platforms.basic.mapping import Mapping
 
@@ -21,6 +22,9 @@ class Plugin:
 
     def get_mappings(self) -> Mapping:
         return self.mappings
+
+    def get_executor(self) -> Executor:
+        pass
 
     def __str__(self):
         return "Platforms: {}, Mappings: {}".format(str(self.platforms), str(self.mappings))

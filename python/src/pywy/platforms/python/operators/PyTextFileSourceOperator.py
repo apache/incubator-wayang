@@ -1,6 +1,6 @@
 from typing import Set
 from pywy.wayangplan.source import TextFileSource
-from pywy.platforms.python.operators.PythonExecutionOperator import PythonExecutionOperator
+from pywy.platforms.python.operators.PyExecutionOperator import PyExecutionOperator
 from pywy.platforms.python.channels import (
                                                 Channel,
                                                 ChannelDescriptor,
@@ -9,7 +9,7 @@ from pywy.platforms.python.channels import (
                                             )
 
 
-class PyTextFileSourceOperator(TextFileSource, PythonExecutionOperator):
+class PyTextFileSourceOperator(TextFileSource, PyExecutionOperator):
 
     def __init__(self, origin: TextFileSource = None):
         path = None if origin is None else origin.path

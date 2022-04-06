@@ -62,8 +62,10 @@ class DataQuanta(GenericTco):
         last = self.__connect(TextFileSink(path))
         plan = PywyPlan(self.context.plugins, [last])
 
-        trs: Translator =  Translator(self.context.plugins.pop(), plan)
-        trs.translate()
+        plug = self.context.plugins.pop()
+        trs: Translator =  Translator(plug, plan)
+        new_plan = trs.translate()
+        plug.get_executor().execute(new_plan)
         # TODO add the logic to execute the plan
 
     def __connect(self, op:PywyOperator, port_op: int = 0) -> PywyOperator:
