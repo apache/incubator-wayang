@@ -1,6 +1,6 @@
-from pywayang.operator.base import BaseOperator
+from pywayang.operator.base import WyOperator
 
-class SourceUnaryOperator(BaseOperator):
+class SourceUnaryOperator(WyOperator):
 
     def __init__(self, name:str):
         super().__init__(name, None, str, 0, 1)

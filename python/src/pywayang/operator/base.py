@@ -1,11 +1,13 @@
-from typing import (TypeVar, Optional, List)
+from typing import (TypeVar, Optional, List, Set)
+from pywayang.platforms.python.channels import ChannelDescriptor
 
-
-class BaseOperator:
+class WyOperator:
 
     inputSlot : List[TypeVar]
+    inputChannel : ChannelDescriptor
     inputs : int
     outputSlot : List[TypeVar]
+    OutputChannel: ChannelDescriptor
     outputs: int
 
     def __init__(self,
@@ -20,6 +22,32 @@ class BaseOperator:
         self.inputs = input_lenght
         self.outputSlot = output
         self.outputs = output_lenght
+
+    def validateInputs(self, vec):
+        if len(vec) != self.inputs:
+            raise Exception(
+                "the inputs channel contains {} elements and need to have {}".format(
+                    len(vec),
+                    self.inputs
+                )
+            )
+    def validateOutputs(self, vec):
+        if len(vec) != self.outputs:
+            raise Exception(
+                "the output channel contains {} elements and need to have {}".format(
+                    len(vec),
+                    self.inputs
+                )
+            )
+    def validateChannels(self, input, output):
+        self.validateInputs(input)
+        self.validateOutputs(output)
+
+    def getInputChannelDescriptors(self) -> Set[ChannelDescriptor]:
+        pass
+
+    def getOutputChannelDescriptors(self) -> Set[ChannelDescriptor]:
+        pass
 
     def __str__(self):
         return "BaseOperator: \n\t- name: {}\n\t- inputs: {} {}\n\t- outputs: {} {} \n".format(

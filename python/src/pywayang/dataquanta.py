@@ -1,5 +1,5 @@
 from pywayang.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableO)
-from pywayang.operator.base import (BaseOperator)
+from pywayang.operator.base import (WyOperator)
 from pywayang.operator.unary import (FilterOperator, MapOperator, FlatmapOperator)
 
 
@@ -7,9 +7,9 @@ class DataQuanta(GenericTco):
     """
     Represents an intermediate result/data flow edge in a [[WayangPlan]].
     """
-    previous : BaseOperator = None
+    previous : WyOperator = None
 
-    def __init__(self, operator: BaseOperator):
+    def __init__(self, operator: WyOperator):
         self.operator = operator
 
 

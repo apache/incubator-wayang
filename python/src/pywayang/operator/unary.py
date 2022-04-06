@@ -1,4 +1,4 @@
-from pywayang.operator.base import BaseOperator
+from pywayang.operator.base import WyOperator
 from pywayang.types import (
                                 GenericTco,
                                 GenericUco,
@@ -12,7 +12,7 @@ from pywayang.types import (
 from itertools import chain
 
 
-class UnaryToUnaryOperator(BaseOperator):
+class UnaryToUnaryOperator(WyOperator):
 
     def __init__(self, name:str, input:GenericTco, output:GenericUco):
         super().__init__(name, input, output, 1, 1)
@@ -30,15 +30,9 @@ class FilterOperator(UnaryToUnaryOperator):
     predicate: Predicate
 
     def __init__(self, predicate: Predicate):
-        type = getTypePredicate(predicate)
+        type = getTypePredicate(predicate) if predicate else None
         super().__init__("FilterOperator", type, type)
         self.predicate = predicate
-
-    def getWrapper(self):
-        udf = self.predicate
-        def func(iterator):
-            return filter(udf, iterator)
-        return func
 
     def __str__(self):
         return super().__str__()
@@ -51,7 +45,7 @@ class MapOperator(UnaryToUnaryOperator):
     function: Function
 
     def __init__(self, function: Function):
-        types = getTypeFunction(function)
+        types = getTypeFunction(function) if function else (None, None)
         super().__init__("MapOperator", types[0], types[1])
         self.function = function
 
@@ -73,7 +67,7 @@ class FlatmapOperator(UnaryToUnaryOperator):
     fmfunction: FlatmapFunction
 
     def __init__(self, fmfunction: FlatmapFunction):
-        types = getTypeFlatmapFunction(fmfunction)
+        types = getTypeFlatmapFunction(fmfunction) if fmfunction else (None, None)
         super().__init__("FlatmapOperator", types[0], types[1])
         self.fmfunction = fmfunction
 
