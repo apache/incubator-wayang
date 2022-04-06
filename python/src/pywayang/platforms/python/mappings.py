@@ -32,4 +32,5 @@ class Mapping:
 OperatorMappings = Mapping()
 
 OperatorMappings.add_mapping(PyFilterOperator())
+OperatorMappings.add_mapping(PyTextFileSourceOperator())
 

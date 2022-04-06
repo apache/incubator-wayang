@@ -32,7 +32,7 @@ class PyIteratorChannel(Channel):
     def provide_iterable(self) -> Iterable:
         return self.iterable
 
-    def accept_iterable(self, iterable) -> 'PyIteratorChannel':
+    def accept_iterable(self, iterable: Iterable) -> 'PyIteratorChannel':
         self.iterable = iterable
         return self
 
@@ -56,5 +56,20 @@ class PyCallableChannel(Channel):
             return function_a(function_b(iterable))
         return executable
 
+class PyFileChannel(Channel):
+
+    path : str
+
+    def __init__(self):
+        Channel.__init__(self)
+
+    def provide_path(self) -> str:
+        return self.path
+
+    def accept_path(self, path: str) -> 'PyIteratorChannel':
+        self.path = path
+        return self
+
 PyIteratorChannelDescriptor = ChannelDescriptor(type(PyIteratorChannel()), False, False)
 PyCallableChannelDescriptor = ChannelDescriptor(type(PyCallableChannel()), False, False)
+PyFileChannelDescriptor = ChannelDescriptor(type(PyFileChannel()), False, False)
