@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from pywy.graph.visitant import Visitant
+from pywy.old_graph.visitant import Visitant
 import logging
 
 

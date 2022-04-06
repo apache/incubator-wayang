@@ -16,8 +16,8 @@
 #
 
 from pywy.orchestrator.operator import Operator
-from pywy.graph.graph import Graph
-from pywy.graph.traversal import Traversal
+from pywy.old_graph.graph import Graph
+from pywy.old_graph.traversal import Traversal
 from pywy.translate.protobuf.planwriter import MessageWriter
 import itertools
 import collections

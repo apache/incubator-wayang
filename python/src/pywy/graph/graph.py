@@ -1,71 +1,67 @@
-#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
-from pywy.graph.node import Node
-import logging
+from pywy.types import T
+from typing import Iterable, Dict, Callable, List, Any, Generic
 
 
-# Adjacency Matrix used to analise the plan
-class Graph:
-    def __init__(self):
-        self.graph = {}
-        self.nodes_no = 0
-        self.nodes = []
+class GraphNode(Generic[T]):
 
-    # Fills the Graph
-    def populate(self, sinks):
-        for sink in iter(sinks):
-            self.process_operator(sink)
+    current: T
+    visited: bool
 
-    # Add current operator and set dependencies
-    def process_operator(self, operator):
-        self.add_node(operator.operator_type, operator.id, operator)
+    def __init__(self, op: T):
+        self.current = op
+        self.visited = False
 
-        if len(operator.previous) > 0:
-            for parent in operator.previous:
-                if parent:
-                    self.add_node(parent.operator_type, parent.id, parent)
-                    self.add_link(operator.id, parent.id, 1)
-                    self.process_operator(parent)
+    def getadjacents(self) -> Iterable[T]:
+        pass
 
-    def add_node(self, name, id, operator):
-        if id in self.nodes:
+    def build_node(self, t:T) -> 'GraphNode[T]':
+        pass
+
+    def adjacents(self, created: Dict[T, 'GraphNode[T]']) -> Iterable['GraphNode[T]']:
+        adjacent = self.getadjacents()
+
+        if len(adjacent) == 0:
+            return []
+
+        def wrap(op:T):
+            if op is None:
+                return None
+            if op not in created:
+                created[op] = self.build_node(op)
+            return created[op]
+
+        return map(wrap, adjacent)
+
+    def visit(self, parent: 'GraphNode[T]', udf: Callable[['GraphNode[T]', 'GraphNode[T]'], Any], visit_status: bool = True):
+        if(self.visited == visit_status):
             return
+        self.visited = visit_status
+        return udf(self, parent)
 
-        self.nodes_no += 1
-        self.nodes.append(id)
-        new_node = Node(name, id, operator)
 
-        self.graph[id] = new_node
+class WayangGraph(Generic[T]):
 
-    def add_link(self, id_child, id_parent, e):
-        if id_child in self.nodes:
-            if id_parent in self.nodes:
-                self.graph[id_child].add_predecessor(id_parent, e)
-                self.graph[id_parent].add_successor(id_child, e)
+    starting_nodes : List[GraphNode[T]]
+    created_nodes : Dict[T, GraphNode[T]]
 
-    def print_adjlist(self):
+    def __init__(self, nodes: List[T]):
+        self.created_nodes = {}
+        self.starting_nodes = list()
+        for node in nodes:
+            tmp = self.build_node(node)
+            self.starting_nodes.append(tmp)
+            self.created_nodes[node] = tmp
 
-        for key in self.graph:
-            logging.debug("Node: ", self.graph[key].operator_type, " - ", key)
-            for key2 in self.graph[key].predecessors:
-                logging.debug("- Parent: ", self.graph[key2].operator_type, " - ", self.graph[key].predecessors[key2], " - ", key2)
-            for key2 in self.graph[key].successors:
-                logging.debug("- Child: ", self.graph[key2].operator_type, " - ", self.graph[key].successors[key2], " - ", key2)
+    def build_node(self, t:T) -> GraphNode[T]:
+        pass
 
-    def get_node(self, id):
-        return self.graph[id]
+    def traversal(
+            self,
+            origin: GraphNode[T],
+            nodes: Iterable[GraphNode[T]],
+            udf: Callable[['GraphNode[T]', 'GraphNode[T]'], Any]
+    ):
+        for node in nodes:
+            adjacents = node.adjacents(self.created_nodes)
+            self.traversal(node, adjacents, udf)
+            node.visit(origin, udf)
