@@ -8,10 +8,10 @@ class Mapping:
         self.mappings = {}
 
     def add_mapping(self, operator: WyOperator):
-        self.mappings[operator.name] = type(operator)
+        self.mappings[operator.name_basic()] = type(operator)
 
     def get_instanceof(self, operator: WyOperator):
-        template = self.mappings[operator.name]
+        template = self.mappings[operator.name_basic()]
         if template is None:
             raise Exception(
                 "the operator {} does not have valid mapping".format(

@@ -35,7 +35,7 @@ class GraphNode(Generic[T]):
     def visit(self, parent: 'GraphNode[T]', udf: Callable[['GraphNode[T]', 'GraphNode[T]'], Any], visit_status: bool = True):
         if(self.visited == visit_status):
             return
-        self.visited = visit_status
+        self.visited != visit_status
         return udf(self, parent)
 
 
@@ -59,9 +59,10 @@ class WayangGraph(Generic[T]):
             self,
             origin: GraphNode[T],
             nodes: Iterable[GraphNode[T]],
-            udf: Callable[['GraphNode[T]', 'GraphNode[T]'], Any]
+            udf: Callable[['GraphNode[T]', 'GraphNode[T]'], Any],
+            visit_status: bool = True
     ):
         for node in nodes:
             adjacents = node.adjacents(self.created_nodes)
-            self.traversal(node, adjacents, udf)
+            self.traversal(node, adjacents, udf, visit_status)
             node.visit(origin, udf)

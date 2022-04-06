@@ -1,3 +1,6 @@
+from typing import Set
+
+from pywy.translate.translator import Translator
 from pywy.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableO)
 from pywy.wayangplan import *
 from pywy.wayangplan.wayang import PywyPlan
@@ -7,13 +10,15 @@ class WayangContext:
   """
   This is the entry point for users to work with Wayang.
   """
+  plugins: Set[Plugin]
+
   def __init__(self):
     self.plugins = set()
 
   """
   add a :class:`Plugin` to the :class:`Context`
   """
-  def register(self, *p: Plugin):
+  def register(self, p: Plugin):
     self.plugins.add(p)
     return self
 
@@ -28,7 +33,7 @@ class WayangContext:
     return DataQuanta(self, TextFileSource(file_path))
 
   def __str__(self):
-    return "Plugins: {} \n".format(str(self.plugins))
+    return "Plugins: {}".format(str(self.plugins))
 
   def __repr__(self):
     return self.__str__()
@@ -38,6 +43,7 @@ class DataQuanta(GenericTco):
     Represents an intermediate result/data flow edge in a [[WayangPlan]].
     """
     previous : WyOperator = None
+    context: WayangContext
 
     def __init__(self, context:WayangContext,  operator: WyOperator):
         self.operator = operator
@@ -55,8 +61,9 @@ class DataQuanta(GenericTco):
     def storeTextFile(self: "DataQuanta[I]", path: str) :
         last = self.__connect(TextFileSink(path))
         plan = PywyPlan(self.context.plugins, [last])
-        #plan.print()
-        plan.printTuple()
+
+        trs: Translator =  Translator(self.context.plugins.pop(), plan)
+        trs.translate()
         # TODO add the logic to execute the plan
 
     def __connect(self, op:WyOperator, port_op: int = 0) -> WyOperator:

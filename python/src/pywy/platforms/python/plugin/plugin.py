@@ -7,4 +7,4 @@ from pywy.platforms.python.mappings import PywyOperatorMappings
 class PythonPlugin(Plugin):
 
     def __init__(self):
-        super(PythonPlugin, self).__init__(PythonPlatform(), PywyOperatorMappings)
+        super(PythonPlugin, self).__init__({PythonPlatform()}, PywyOperatorMappings)

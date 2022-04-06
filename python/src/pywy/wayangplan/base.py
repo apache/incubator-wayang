@@ -63,6 +63,11 @@ class WyOperator:
     def postfix(self) -> str:
         return ''
 
+    def name_basic(self, with_prefix: bool = False, with_postfix:bool = True):
+        prefix = len(self.prefix()) if not with_prefix else 0
+        postfix = len(self.postfix()) if not with_postfix else 0
+        return self.name[prefix:len(self.name) - postfix]
+
     def __str__(self):
         return "BaseOperator: \n\t- name: {}\n\t- inputs: {} {}\n\t- outputs: {} {} \n".format(
             str(self.name),

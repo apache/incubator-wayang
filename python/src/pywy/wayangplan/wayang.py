@@ -1,7 +1,7 @@
 from typing import Iterable, Set
 
 from pywy.graph.graph import WayangGraph
-from pywy.graph.graphtypes import WGraphOfOperator, NodeOperator, WGraphOfTuple, NodeTuple
+from pywy.graph.graphtypes import WGraphOfOperator, NodeOperator, WGraphOfVec, NodeVec
 from pywy.wayangplan.sink import SinkOperator
 from pywy.platforms.basic.plugin import Plugin
 
@@ -16,7 +16,7 @@ class PywyPlan:
         self.set_graph()
 
     def set_graph(self):
-        self.graph = WGraphOfTuple(self.sinks)
+        self.graph = WGraphOfVec(self.sinks)
 
     def print(self):
         def print_plan(current: NodeOperator, previous: NodeOperator):
@@ -40,7 +40,7 @@ class PywyPlan:
 
 
     def printTuple(self):
-        def print_plan(current: NodeTuple, previous: NodeTuple):
+        def print_plan(current: NodeVec, previous: NodeVec):
             if current is None:
                 print("this is source")
                 print(previous.current)

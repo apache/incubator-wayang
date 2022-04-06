@@ -1,3 +1,5 @@
+from typing import List, Set
+
 from pywy.platforms.basic.platform import Platform
 from pywy.platforms.basic.mapping import Mapping
 
@@ -10,18 +12,18 @@ class Plugin:
     In turn, it may require several :clas:`Platform`s for its operation.
     """
 
-    platforms = []
+    platforms: Set[Platform]
     mappings: Mapping
 
-    def __init__(self, *platform:Platform, mappings: Mapping = Mapping()):
-        self.platforms = list(platform)
+    def __init__(self, platforms:Set[Platform], mappings: Mapping = Mapping()):
+        self.platforms = platforms
         self.mappings = mappings
 
     def get_mappings(self) -> Mapping:
         return self.mappings
 
     def __str__(self):
-        return "Platforms: {}".format(str(self.platforms))
+        return "Platforms: {}, Mappings: {}".format(str(self.platforms), str(self.mappings))
 
     def __repr__(self):
         return self.__str__()

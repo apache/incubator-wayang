@@ -1,37 +1,37 @@
 from pywy.platforms.basic.platform import Platform
 from pywy.dataquanta import WayangContext
 from pywy.platforms.python.channels import Channel
-from pywy.plugins import java, spark
+from pywy.plugins import java, spark, python
 from pywy.wayangplan.unary import *
 
-p = Platform("nana")
-print("LALA "+str(p))
-pt = type(p)
-print(pt)
-p2 = pt("chao")
-print(p2)
-print(type(p2))
-
-
-print(str(WayangContext().register(java, spark)))
+# p = Platform("nana")
+# print("LALA "+str(p))
+# pt = type(p)
+# print(pt)
+# p2 = pt("chao")
+# print(p2)
+# print(type(p2))
+#
+#
+# print(str(WayangContext().register(java, spark)))
 
 from pywy.types import Predicate, getTypePredicate
-
-predicate : Predicate = lambda x: x % 2 == 0
-getTypePredicate(predicate)
+#
+# predicate : Predicate = lambda x: x % 2 == 0
+# getTypePredicate(predicate)
 
 def pre(a:str):
     return len(a) > 3
-
-def func(s:str) -> int:
-    return len(s)
-
-def fmfunc(i:int) -> str:
-    for x in range(i):
-        yield str(x)
+#
+# def func(s:str) -> int:
+#     return len(s)
+#
+# def fmfunc(i:int) -> str:
+#     for x in range(i):
+#         yield str(x)
 
 fileop = WayangContext()\
-            .register(java)\
+            .register(python)\
             .textFile("/Users/bertty/databloom/blossom/python/resources/test.input")\
             .filter(pre)\
             .storeTextFile("/Users/bertty/databloom/blossom/python/resources/test.output")

@@ -26,24 +26,30 @@ class WGraphOfOperator(WayangGraph[NodeOperator]):
         return NodeOperator(t)
 
 
-class NodeTuple(GraphNode[Tuple[WyOperator, WyOperator]]):
+class NodeVec(GraphNode[List[WyOperator]]):
 
     def __init__(self, op: WyOperator):
-        super(NodeTuple, self).__init__((op, None))
+        super(NodeVec, self).__init__([op, None])
 
-    def getadjacents(self) -> Iterable[Tuple[WyOperator, WyOperator]]:
+    def getadjacents(self) -> Iterable[List[WyOperator]]:
         operator: WyOperator = self.current[0]
         if operator is None or operator.inputs == 0:
             return []
         return operator.inputOperator
 
-    def build_node(self, t:WyOperator) -> 'NodeTuple':
-        return NodeTuple(t)
+    def build_node(self, t:WyOperator) -> 'NodeVec':
+        return NodeVec(t)
 
-class WGraphOfTuple(WayangGraph[NodeTuple]):
+    def __str__(self):
+        return "NodeVec {}".format(self.current)
+
+    def __repr__(self):
+        return self.__str__()
+
+class WGraphOfVec(WayangGraph[NodeVec]):
 
     def __init__(self, nodes: List[WyOperator]):
-        super(WGraphOfTuple, self).__init__(nodes)
+        super(WGraphOfVec, self).__init__(nodes)
 
-    def build_node(self, t:WyOperator) -> NodeTuple:
-        return NodeTuple(t)
+    def build_node(self, t:WyOperator) -> NodeVec:
+        return NodeVec(t)
