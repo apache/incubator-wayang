@@ -1,7 +1,7 @@
 from typing import Iterable, Set
 
 from pywy.graph.graph import WayangGraph
-from pywy.graph.graphtypes import WayangGraphOfWayangNode, WayangNode
+from pywy.graph.graphtypes import WGraphOfOperator, NodeOperator
 from pywy.wayangplan.sink import SinkOperator
 from pywy.platforms.basic.plugin import Plugin
 
@@ -16,10 +16,10 @@ class PywyPlan:
         self.set_graph()
 
     def set_graph(self):
-        self.graph = WayangGraphOfWayangNode(self.sinks)
+        self.graph = WGraphOfOperator(self.sinks)
 
     def print(self):
-        def print_plan(current: WayangNode, previous: WayangNode):
+        def print_plan(current: NodeOperator, previous: NodeOperator):
             if current is None:
                 print("this is source")
                 print(previous.current)
