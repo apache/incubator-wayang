@@ -5,9 +5,11 @@ class WyOperator:
 
     inputSlot : List[TypeVar]
     inputChannel : ChannelDescriptor
+    inputOperator: List['WyOperator']
     inputs : int
     outputSlot : List[TypeVar]
-    OutputChannel: ChannelDescriptor
+    outputChannel: ChannelDescriptor
+    outputOperator: List['WyOperator']
     outputs: int
 
     def __init__(self,
@@ -22,8 +24,10 @@ class WyOperator:
         self.inputs = input_lenght
         self.outputSlot = output
         self.outputs = output_lenght
+        self.inputOperator = [None] * self.inputs
+        self.outputOperator = [None] * self.outputs
 
-    def validateInputs(self, vec):
+    def validate_inputs(self, vec):
         if len(vec) != self.inputs:
             raise Exception(
                 "the inputs channel contains {} elements and need to have {}".format(
@@ -31,7 +35,7 @@ class WyOperator:
                     self.inputs
                 )
             )
-    def validateOutputs(self, vec):
+    def validate_outputs(self, vec):
         if len(vec) != self.outputs:
             raise Exception(
                 "the output channel contains {} elements and need to have {}".format(
@@ -39,14 +43,18 @@ class WyOperator:
                     self.inputs
                 )
             )
-    def validateChannels(self, input, output):
-        self.validateInputs(input)
-        self.validateOutputs(output)
+    def validate_channels(self, input, output):
+        self.validate_inputs(input)
+        self.validate_outputs(output)
 
-    def getInputChannelDescriptors(self) -> Set[ChannelDescriptor]:
+    def connect(self, port:int, that: 'WyOperator', port_that:int):
+        self.outputOperator[port] = that
+        that.inputOperator[port_that] = self
+
+    def get_input_channeldescriptors(self) -> Set[ChannelDescriptor]:
         pass
 
-    def getOutputChannelDescriptors(self) -> Set[ChannelDescriptor]:
+    def get_output_channeldescriptors(self) -> Set[ChannelDescriptor]:
         pass
 
     def __str__(self):

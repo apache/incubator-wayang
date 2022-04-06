@@ -16,7 +16,7 @@ class PyTextFileSinkOperator(TextFileSink, PythonExecutionOperator):
         pass
 
     def execute(self, inputs: Channel, outputs: Channel):
-        self.validateChannels(inputs, outputs)
+        self.validate_channels(inputs, outputs)
         if isinstance(inputs[0], PyIteratorChannel) :
             file = open(self.path,'w')
             py_in_iter_channel: PyIteratorChannel = inputs[0]
@@ -29,8 +29,8 @@ class PyTextFileSinkOperator(TextFileSink, PythonExecutionOperator):
             raise Exception("Channel Type does not supported")
 
 
-    def getInputChannelDescriptors(self) -> Set[ChannelDescriptor]:
+    def get_input_channeldescriptors(self) -> Set[ChannelDescriptor]:
         return {PyIteratorChannelDescriptor}
 
-    def getOutputChannelDescriptors(self) -> Set[ChannelDescriptor]:
+    def get_output_channeldescriptors(self) -> Set[ChannelDescriptor]:
         raise Exception("The PyTextFileSource does not support Output Channels")
