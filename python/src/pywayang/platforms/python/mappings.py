@@ -33,4 +33,5 @@ OperatorMappings = Mapping()
 
 OperatorMappings.add_mapping(PyFilterOperator())
 OperatorMappings.add_mapping(PyTextFileSourceOperator())
+OperatorMappings.add_mapping(PyTextFileSinkOperator())
 

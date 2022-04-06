@@ -1,6 +1,7 @@
 from pywayang.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableO)
 from pywayang.operator.base import (WyOperator)
 from pywayang.operator.unary import (FilterOperator, MapOperator, FlatmapOperator)
+from pywayang.operator.sink import TextFileSink
 
 
 class DataQuanta(GenericTco):
@@ -21,6 +22,10 @@ class DataQuanta(GenericTco):
 
     def flatmap(self: "DataQuanta[I]", f: FlatmapFunction) -> "DataQuanta[IterableO]" :
         return DataQuanta(FlatmapOperator(f))
+
+    def storeTextFile(self: "DataQuanta[I]", path: str) :
+        last = DataQuanta(TextFileSink(path))
+        # TODO add the logic to execute the plan
 
     def getOperator(self):
         return self.operator
