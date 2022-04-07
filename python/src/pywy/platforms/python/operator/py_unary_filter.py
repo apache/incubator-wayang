@@ -5,8 +5,8 @@ from pywy.platforms.python.channels import (
                                                 Channel,
                                                 ChannelDescriptor,
                                                 PyIteratorChannel,
-                                                PyIteratorChannelDescriptor,
-                                                PyCallableChannelDescriptor,
+                                                PY_ITERATOR_CHANNEL_DESCRIPTOR,
+                                                PY_CALLABLE_CHANNEL_DESCRIPTOR,
                                                 PyCallableChannel
                                             )
 
@@ -21,11 +21,11 @@ class PyFilterOperator(FilterOperator, PyExecutionOperator):
     def execute(self, inputs: Channel, outputs: Channel):
         self.validate_channels(inputs, outputs)
         udf = self.predicate
-        if isinstance(inputs[0], PyIteratorChannel) :
+        if isinstance(inputs[0], PyIteratorChannel):
             py_in_iter_channel: PyIteratorChannel = inputs[0]
             py_out_iter_channel: PyIteratorChannel = outputs[0]
             py_out_iter_channel.accept_iterable(filter(udf, py_in_iter_channel.provide_iterable()))
-        elif isinstance(inputs[0], PyCallableChannel) :
+        elif isinstance(inputs[0], PyCallableChannel):
             py_in_call_channel: PyCallableChannel = inputs[0]
             py_out_call_channel: PyCallableChannel = outputs[0]
 
@@ -41,9 +41,8 @@ class PyFilterOperator(FilterOperator, PyExecutionOperator):
         else:
             raise Exception("Channel Type does not supported")
 
-
     def get_input_channeldescriptors(self) -> Set[ChannelDescriptor]:
-        return {PyIteratorChannelDescriptor, PyCallableChannelDescriptor}
+        return {PY_ITERATOR_CHANNEL_DESCRIPTOR, PY_CALLABLE_CHANNEL_DESCRIPTOR}
 
     def get_output_channeldescriptors(self) -> Set[ChannelDescriptor]:
-        return {PyIteratorChannelDescriptor, PyCallableChannelDescriptor}
+        return {PY_ITERATOR_CHANNEL_DESCRIPTOR, PY_CALLABLE_CHANNEL_DESCRIPTOR}

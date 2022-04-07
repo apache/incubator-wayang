@@ -4,6 +4,7 @@ from pywy.core.executor import Executor
 from pywy.core.platform import Platform
 from pywy.core.mapping import Mapping
 
+
 class Plugin:
     """
     A plugin contributes the following components to a :class:`Context`
@@ -16,7 +17,7 @@ class Plugin:
     platforms: Set[Platform]
     mappings: Mapping
 
-    def __init__(self, platforms:Set[Platform], mappings: Mapping = Mapping()):
+    def __init__(self, platforms: Set[Platform], mappings: Mapping = Mapping()):
         self.platforms = platforms
         self.mappings = mappings
 
@@ -31,5 +32,3 @@ class Plugin:
 
     def __repr__(self):
         return self.__str__()
-
-

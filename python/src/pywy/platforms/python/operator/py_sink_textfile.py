@@ -2,11 +2,11 @@ from typing import Set
 from pywy.operators.sink import TextFileSink
 from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 from pywy.platforms.python.channels import (
-                                                Channel,
-                                                ChannelDescriptor,
-                                                PyIteratorChannel,
-                                                PyIteratorChannelDescriptor
-                                            )
+    Channel,
+    ChannelDescriptor,
+    PyIteratorChannel,
+    PY_ITERATOR_CHANNEL_DESCRIPTOR
+)
 
 
 class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
@@ -18,8 +18,8 @@ class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
 
     def execute(self, inputs: Channel, outputs: Channel):
         self.validate_channels(inputs, outputs)
-        if isinstance(inputs[0], PyIteratorChannel) :
-            file = open(self.path,'w')
+        if isinstance(inputs[0], PyIteratorChannel):
+            file = open(self.path, 'w')
             py_in_iter_channel: PyIteratorChannel = inputs[0]
             iterable = py_in_iter_channel.provide_iterable();
             for element in iterable:
@@ -29,9 +29,8 @@ class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
         else:
             raise Exception("Channel Type does not supported")
 
-
     def get_input_channeldescriptors(self) -> Set[ChannelDescriptor]:
-        return {PyIteratorChannelDescriptor}
+        return {PY_ITERATOR_CHANNEL_DESCRIPTOR}
 
     def get_output_channeldescriptors(self) -> Set[ChannelDescriptor]:
         raise Exception("The PyTextFileSource does not support Output Channels")

@@ -10,8 +10,7 @@ class Platform:
       platform name, it uses as identification
     """
 
-    name : str
-    #configuration : dict[str, str]
+    name: str
 
     def __init__(self, name):
         self.name = name
@@ -21,4 +20,3 @@ class Platform:
 
     def __repr__(self):
         return self.__str__()
-

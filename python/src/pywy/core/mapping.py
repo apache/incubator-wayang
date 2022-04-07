@@ -1,6 +1,7 @@
 from typing import Dict
 from pywy.operators.base import PywyOperator
 
+
 class Mapping:
     mappings: Dict[str, type]
 
@@ -19,7 +20,6 @@ class Mapping:
                 )
             )
         return template(operator)
-
 
     def __str__(self):
         return str(self.mappings)

@@ -18,7 +18,7 @@
 
 def test_most_basic(self):
     descriptor = Descriptor()
-    descriptor.add_plugin(Descriptor.Plugin.spark)
+    descriptor.add_plugin(Descriptor.Plugin.SPARK)
 
     plan = DataQuantaBuilder(descriptor)
     sink_dataquanta = \
@@ -30,7 +30,7 @@ def test_most_basic(self):
 
 def test_single_juncture(self):
     descriptor = Descriptor()
-    descriptor.add_plugin(Descriptor.Plugin.spark)
+    descriptor.add_plugin(Descriptor.Plugin.SPARK)
 
     plan = DataQuantaBuilder(descriptor)
     dq_source_a = plan.source("../test/lines.txt")
@@ -43,7 +43,7 @@ def test_single_juncture(self):
 
 def test_multiple_juncture(self):
     descriptor = Descriptor()
-    descriptor.add_plugin(Descriptor.Plugin.spark)
+    descriptor.add_plugin(Descriptor.Plugin.SPARK)
 
     plan = DataQuantaBuilder(descriptor)
     dq_source_a = plan.source("../test/lines.txt")

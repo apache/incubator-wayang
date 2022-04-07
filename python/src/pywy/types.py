@@ -28,7 +28,11 @@ FlatmapFunction = Callable[[T], IterableOut]
 def get_type_predicate(call: Predicate) -> type:
     sig = signature(call)
     if len(sig.parameters) != 1:
-        raise PywyException("the parameters for the Predicate are distinct than one, {}".format(str(sig.parameters)))
+        raise PywyException(
+            "the parameters for the Predicate are distinct than one, {}".format(
+                str(sig.parameters)
+            )
+        )
 
     keys = list(sig.parameters.keys())
     return sig.parameters[keys[0]].annotation
@@ -37,7 +41,11 @@ def get_type_predicate(call: Predicate) -> type:
 def get_type_function(call: Function) -> (type, type):
     sig = signature(call)
     if len(sig.parameters) != 1:
-        raise PywyException("the parameters for the Function are distinct than one, {}".format(str(sig.parameters)))
+        raise PywyException(
+            "the parameters for the Function are distinct than one, {}".format(
+                str(sig.parameters)
+            )
+        )
 
     keys = list(sig.parameters.keys())
     return sig.parameters[keys[0]].annotation, sig.return_annotation
@@ -46,7 +54,11 @@ def get_type_function(call: Function) -> (type, type):
 def get_type_bifunction(call: BiFunction) -> (type, type, type):
     sig = signature(call)
     if len(sig.parameters) != 2:
-        raise PywyException("the parameters for the BiFunction are distinct than two, {}".format(str(sig.parameters)))
+        raise PywyException(
+            "the parameters for the BiFunction are distinct than two, {}".format(
+                str(sig.parameters)
+            )
+        )
 
     keys = list(sig.parameters.keys())
     return sig.parameters[keys[0]].annotation, sig.parameters[keys[1]].annotation, sig.return_annotation
@@ -55,7 +67,11 @@ def get_type_bifunction(call: BiFunction) -> (type, type, type):
 def get_type_flatmap_function(call: FlatmapFunction) -> (type, type):
     sig = signature(call)
     if len(sig.parameters) != 1:
-        raise PywyException("the parameters for the FlatmapFunction are distinct than one, {}".format(str(sig.parameters)))
+        raise PywyException(
+            "the parameters for the FlatmapFunction are distinct than one, {}".format(
+                str(sig.parameters)
+            )
+        )
 
     keys = list(sig.parameters.keys())
     return sig.parameters[keys[0]].annotation, sig.return_annotation

@@ -1,5 +1,5 @@
 from pywy.dataquanta import WayangContext
-from pywy.plugins import python
+from pywy.plugins import PYTHON
 
 # p = Platform("nana")
 # print("LALA "+str(p))
@@ -30,7 +30,7 @@ for index in range(0, 1):
     print(index)
     tic = time.perf_counter()
     fileop = WayangContext()\
-                .register(python)\
+                .register(PYTHON)\
                 .textfile("/Users/bertty/databloom/blossom/python/resources/tmp" + str(index))\
                 .filter(pre)\
                 .store_textfile("/Users/bertty/databloom/blossom/python/resources/out" + str(index))

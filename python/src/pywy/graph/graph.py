@@ -1,9 +1,8 @@
 from pywy.types import T
-from typing import ( Iterable, Dict, Callable, List, Any, Generic )
+from typing import (Iterable, Dict, Callable, Any, Generic, Optional)
 
 
 class GraphNode(Generic[T]):
-
     current: T
     visited: bool
 
@@ -11,19 +10,16 @@ class GraphNode(Generic[T]):
         self.current = op
         self.visited = False
 
-    def getadjacents(self) -> Iterable[T]:
+    def get_adjacents(self) -> Iterable[T]:
         pass
 
-    def build_node(self, t:T) -> 'GraphNode[T]':
+    def build_node(self, t: T) -> 'GraphNode[T]':
         pass
 
-    def adjacents(self, created: Dict[T, 'GraphNode[T]']) -> Iterable['GraphNode[T]']:
-        adjacent = self.getadjacents()
+    def walk(self, created: Dict[T, 'GraphNode[T]']) -> Iterable['GraphNode[T]']:
+        adjacent = self.get_adjacents()
 
-        if len(adjacent) == 0:
-            return []
-
-        def wrap(op:T):
+        def wrap(op: T):
             if op is None:
                 return None
             if op not in created:
@@ -32,37 +28,40 @@ class GraphNode(Generic[T]):
 
         return map(wrap, adjacent)
 
-    def visit(self, parent: 'GraphNode[T]', udf: Callable[['GraphNode[T]', 'GraphNode[T]'], Any], visit_status: bool = True):
-        if(self.visited == visit_status):
+    def visit(self,
+              parent: 'GraphNode[T]',
+              udf: Callable[['GraphNode[T]', 'GraphNode[T]'], Any],
+              visit_status: bool = True):
+        if self.visited == visit_status:
             return
-        self.visited != visit_status
+        self.visited = ~ visit_status
         return udf(self, parent)
 
 
 class WayangGraph(Generic[T]):
+    starting_nodes: Iterable[GraphNode[T]]
+    created_nodes: Dict[T, GraphNode[T]]
 
-    starting_nodes : List[GraphNode[T]]
-    created_nodes : Dict[T, GraphNode[T]]
-
-    def __init__(self, nodes: List[T]):
+    def __init__(self, nodes: Iterable[T]):
         self.created_nodes = {}
-        self.starting_nodes = list()
+        start = list()
         for node in nodes:
             tmp = self.build_node(node)
-            self.starting_nodes.append(tmp)
+            start.append(tmp)
             self.created_nodes[node] = tmp
+        self.starting_nodes = start
 
-    def build_node(self, t:T) -> GraphNode[T]:
+    def build_node(self, t: T) -> GraphNode[T]:
         pass
 
     def traversal(
             self,
             origin: GraphNode[T],
             nodes: Iterable[GraphNode[T]],
-            udf: Callable[['GraphNode[T]', 'GraphNode[T]'], Any],
+            udf: Callable[[GraphNode[T], GraphNode[T]], Any],
             visit_status: bool = True
     ):
         for node in nodes:
-            adjacents = node.adjacents(self.created_nodes)
-            self.traversal(node, adjacents, udf, visit_status)
+            adjacent = node.walk(self.created_nodes)
+            self.traversal(node, adjacent, udf, visit_status)
             node.visit(origin, udf)

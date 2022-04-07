@@ -1,13 +1,12 @@
-from typing import ( Iterable, Set )
+from typing import (Iterable, Set)
 
 from pywy.graph.graph import WayangGraph
-from pywy.graph.types import ( NodeOperator, WGraphOfVec, NodeVec )
+from pywy.graph.types import (NodeOperator, WGraphOfVec, NodeVec)
 from pywy.operators.sink import SinkOperator
 from pywy.core.plugin import Plugin
 
 
 class PywyPlan:
-
     graph: WayangGraph
 
     def __init__(self, plugins: Set[Plugin], sinks: Iterable[SinkOperator]):
@@ -30,14 +29,13 @@ class PywyPlan:
                 return
 
             print(
-                "===========\n{}\n@@@@@ => previous is\n{}\n===========\n"
-                    .format(
-                        current.current,
-                        previous.current
-                     )
+                "===========\n{}\n@@@@@ => previous is\n{}\n===========\n".format(
+                    current.current,
+                    previous.current
+                )
             )
-        self.graph.traversal(None, self.graph.starting_nodes, print_plan)
 
+        self.graph.traversal(None, self.graph.starting_nodes, print_plan)
 
     def printTuple(self):
         def print_plan(current: NodeVec, previous: NodeVec):
@@ -53,9 +51,9 @@ class PywyPlan:
             print(
                 "############\n{}\n@@@@@ => previous is\n{}\n############\n"
                     .format(
-                        current.current,
-                        previous.current
-                     )
+                    current.current,
+                    previous.current
+                )
             )
-        self.graph.traversal(None, self.graph.starting_nodes, print_plan)
 
+        self.graph.traversal(None, self.graph.starting_nodes, print_plan)

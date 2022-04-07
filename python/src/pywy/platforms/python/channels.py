@@ -1,9 +1,10 @@
 from typing import ( Iterable, Callable )
 from pywy.core import (Channel, ChannelDescriptor)
 
+
 class PyIteratorChannel(Channel):
 
-    iterable : Iterable
+    iterable: Iterable
 
     def __init__(self):
         Channel.__init__(self)
@@ -15,9 +16,10 @@ class PyIteratorChannel(Channel):
         self.iterable = iterable
         return self
 
+
 class PyCallableChannel(Channel):
 
-    udf : Callable
+    udf: Callable
 
     def __init__(self):
         Channel.__init__(self)
@@ -35,9 +37,10 @@ class PyCallableChannel(Channel):
             return function_a(function_b(iterable))
         return executable
 
+
 class PyFileChannel(Channel):
 
-    path : str
+    path: str
 
     def __init__(self):
         Channel.__init__(self)
@@ -49,6 +52,7 @@ class PyFileChannel(Channel):
         self.path = path
         return self
 
-PyIteratorChannelDescriptor = ChannelDescriptor(type(PyIteratorChannel()), False, False)
-PyCallableChannelDescriptor = ChannelDescriptor(type(PyCallableChannel()), False, False)
-PyFileChannelDescriptor = ChannelDescriptor(type(PyFileChannel()), False, False)
+
+PY_ITERATOR_CHANNEL_DESCRIPTOR = ChannelDescriptor(type(PyIteratorChannel()), False, False)
+PY_CALLABLE_CHANNEL_DESCRIPTOR = ChannelDescriptor(type(PyCallableChannel()), False, False)
+PY_FILE_CHANNEL_DESCRIPTOR = ChannelDescriptor(type(PyFileChannel()), False, False)

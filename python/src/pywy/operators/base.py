@@ -1,14 +1,15 @@
-from typing import ( TypeVar, Optional, List, Set )
+from typing import (TypeVar, Optional, List, Set)
 from pywy.core import ChannelDescriptor, Channel
+
 
 class PywyOperator:
 
-    inputSlot : List[TypeVar]
-    inputChannel : List[Channel]
-    inputChannelDescriptor : List[ChannelDescriptor]
+    inputSlot: List[TypeVar]
+    inputChannel: List[Channel]
+    inputChannelDescriptor: List[ChannelDescriptor]
     inputOperator: List['PywyOperator']
-    inputs : int
-    outputSlot : List[TypeVar]
+    inputs: int
+    outputSlot: List[TypeVar]
     outputChannel: List[Channel]
     outputChannelDescriptor: List[ChannelDescriptor]
     outputOperator: List['PywyOperator']
@@ -16,16 +17,16 @@ class PywyOperator:
 
     def __init__(self,
                  name: str,
-                 input: Optional[TypeVar] = None,
-                 output: Optional[TypeVar] = None,
-                 input_lenght: Optional[int] = 1,
-                 output_lenght: Optional[int] = 1
-    ):
+                 input_type: TypeVar = None,
+                 output_type: TypeVar = None,
+                 input_length: Optional[int] = 1,
+                 output_length: Optional[int] = 1
+                 ):
         self.name = (self.prefix() + name + self.postfix()).strip()
-        self.inputSlot = input
-        self.inputs = input_lenght
-        self.outputSlot = output
-        self.outputs = output_lenght
+        self.inputSlot = [input_type]
+        self.inputs = input_length
+        self.outputSlot = [output_type]
+        self.outputs = output_length
         self.inputOperator = [None] * self.inputs
         self.outputOperator = [None] * self.outputs
         self.inputChannel = [None] * self.inputs
@@ -39,6 +40,7 @@ class PywyOperator:
                     self.inputs
                 )
             )
+
     def validate_outputs(self, vec):
         if len(vec) != self.outputs:
             raise Exception(
@@ -47,11 +49,12 @@ class PywyOperator:
                     self.inputs
                 )
             )
-    def validate_channels(self, input, output):
-        self.validate_inputs(input)
-        self.validate_outputs(output)
 
-    def connect(self, port:int, that: 'PywyOperator', port_that:int):
+    def validate_channels(self, inputs, outputs):
+        self.validate_inputs(inputs)
+        self.validate_outputs(outputs)
+
+    def connect(self, port: int, that: 'PywyOperator', port_that: int):
         self.outputOperator[port] = that
         that.inputOperator[port_that] = self
 
@@ -67,7 +70,7 @@ class PywyOperator:
     def postfix(self) -> str:
         return ''
 
-    def name_basic(self, with_prefix: bool = False, with_postfix:bool = True):
+    def name_basic(self, with_prefix: bool = False, with_postfix: bool = True):
         prefix = len(self.prefix()) if not with_prefix else 0
         postfix = len(self.postfix()) if not with_postfix else 0
         return self.name[prefix:len(self.name) - postfix]
@@ -83,6 +86,3 @@ class PywyOperator:
 
     def __repr__(self):
         return self.__str__()
-
-
-

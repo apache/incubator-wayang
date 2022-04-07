@@ -16,26 +16,26 @@ class PyExecutor(Executor):
         pywyPlan: PywyPlan = plan
         graph = WGraphOfOperator(pywyPlan.sinks)
 
-        def exec(current: NodeOperator, next: NodeOperator):
-            if current is None:
+        def exec(op_current: NodeOperator, op_next: NodeOperator):
+            if op_current is None:
                 return
 
-            py_current: PyExecutionOperator = current.current
+            py_current: PyExecutionOperator = op_current.current
             if py_current.outputs == 0:
                 py_current.execute(py_current.inputChannel, [])
                 return
 
-            if next is None:
+            if op_next is None:
                 return
-            py_next: PyExecutionOperator = next.current
+            py_next: PyExecutionOperator = op_next.current
             outputs = py_current.get_output_channeldescriptors()
             inputs = py_next.get_input_channeldescriptors()
 
             intersect = outputs.intersection(inputs)
             if len(intersect) == 0:
                 raise Exception(
-                    "The operator(A) {} can't connect with (B) {}, because the output of (A) is {} and the input of (B) is {}"
-                     .format(
+                    "The operator(A) {} can't connect with (B) {}, "
+                    "because the output of (A) is {} and the input of (B) is {} ".format(
                         py_current,
                         py_next,
                         outputs,
@@ -44,8 +44,8 @@ class PyExecutor(Executor):
                 )
             if len(intersect) > 1:
                 raise Exception(
-                    "The interaction between the operator (A) {} and (B) {}, can't be decided because are several channel availables {}"
-                     .format(
+                    "The interaction between the operator (A) {} and (B) {}, "
+                    "can't be decided because are several channel availables {}".format(
                         py_current,
                         py_next,
                         intersect

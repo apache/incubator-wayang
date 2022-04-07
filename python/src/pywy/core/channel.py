@@ -3,18 +3,19 @@ class Channel:
     def __init__(self):
         pass
 
-    def getchannel(self) -> 'Channel':
+    def get_channel(self) -> 'Channel':
         return self
 
-    def gettype(self):
+    def get_type(self):
         return type(self)
+
 
 class ChannelDescriptor:
 
-    def __init__(self, channelType: type, isReusable: bool, isSuitableForBreakpoint: bool):
-        self.channelType = channelType
-        self.isReusable = isReusable
-        self.isSuitableForBreakpoint = isSuitableForBreakpoint
+    def __init__(self, channel_type: type, is_reusable: bool, is_suitable_for_breakpoint: bool):
+        self.channelType = channel_type
+        self.isReusable = is_reusable
+        self.isSuitableForBreakpoint = is_suitable_for_breakpoint
 
     def create_instance(self) -> Channel:
         return self.channelType()

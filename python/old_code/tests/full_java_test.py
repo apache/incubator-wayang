@@ -26,7 +26,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_most_basic(self):
         descriptor = Descriptor()
-        descriptor.add_plugin(Descriptor.Plugin.java)
+        descriptor.add_plugin(Descriptor.Plugin.JAVA)
 
         plan = DataQuantaBuilder(descriptor)
         sink_dataquanta = \
@@ -38,7 +38,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_single_juncture(self):
         descriptor = Descriptor()
-        descriptor.add_plugin(Descriptor.Plugin.java)
+        descriptor.add_plugin(Descriptor.Plugin.JAVA)
 
         plan = DataQuantaBuilder(descriptor)
         dq_source_a = plan.source(input_1)

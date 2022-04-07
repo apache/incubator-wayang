@@ -2,10 +2,10 @@ from typing import Set
 from pywy.operators.source import TextFileSource
 from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 from pywy.platforms.python.channels import (
-                                                Channel,
-                                                ChannelDescriptor,
-                                                PyIteratorChannel,
-                                                PyIteratorChannelDescriptor
+    Channel,
+    ChannelDescriptor,
+    PyIteratorChannel,
+    PY_ITERATOR_CHANNEL_DESCRIPTOR
                                             )
 
 
@@ -18,7 +18,7 @@ class PyTextFileSourceOperator(TextFileSource, PyExecutionOperator):
 
     def execute(self, inputs: Channel, outputs: Channel):
         self.validate_channels(inputs, outputs)
-        if isinstance(outputs[0], PyIteratorChannel) :
+        if isinstance(outputs[0], PyIteratorChannel):
             py_out_iter_channel: PyIteratorChannel = outputs[0]
             py_out_iter_channel.accept_iterable(
                 open(
@@ -26,13 +26,11 @@ class PyTextFileSourceOperator(TextFileSource, PyExecutionOperator):
                     'r'
                 )
             )
-
         else:
             raise Exception("Channel Type does not supported")
-
 
     def get_input_channeldescriptors(self) -> Set[ChannelDescriptor]:
         raise Exception("The PyTextFileSource does not support Input Channels")
 
     def get_output_channeldescriptors(self) -> Set[ChannelDescriptor]:
-        return {PyIteratorChannelDescriptor}
+        return {PY_ITERATOR_CHANNEL_DESCRIPTOR}
