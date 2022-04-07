@@ -7,36 +7,38 @@ from pywy.core import PywyPlan
 from pywy.core import Plugin
 
 class WayangContext:
-  """
-  This is the entry point for users to work with Wayang.
-  """
-  plugins: Set[Plugin]
+    """
+    This is the entry point for users to work with Wayang.
+    """
+    plugins: Set[Plugin]
 
-  def __init__(self):
-    self.plugins = set()
+    def __init__(self):
+        self.plugins = set()
 
-  """
-  add a :class:`Plugin` to the :class:`Context`
-  """
-  def register(self, p: Plugin):
-    self.plugins.add(p)
-    return self
+    """
+    add a :class:`Plugin` to the :class:`Context`
+    """
+    def register(self, *plugins: Plugin):
+        for p in plugins:
+            self.plugins.add(p)
+        return self
 
-  """
-  remove a :class:`Plugin` from the :class:`Context`
-  """
-  def unregister(self, p: Plugin):
-    self.plugins.remove(p)
-    return self
+    """
+    remove a :class:`Plugin` from the :class:`Context`
+    """
+    def unregister(self, *plugins: Plugin):
+        for p in plugins:
+            self.plugins.remove(p)
+        return self
 
-  def textFile(self, file_path: str) -> 'DataQuanta[str]':
-    return DataQuanta(self, TextFileSource(file_path))
+    def textFile(self, file_path: str) -> 'DataQuanta[str]':
+        return DataQuanta(self, TextFileSource(file_path))
 
-  def __str__(self):
-    return "Plugins: {}".format(str(self.plugins))
+    def __str__(self):
+        return "Plugins: {}".format(str(self.plugins))
 
-  def __repr__(self):
-    return self.__str__()
+    def __repr__(self):
+        return self.__str__()
 
 class DataQuanta(GenericTco):
     """
