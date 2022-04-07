@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-from pywy.orchestrator.operator import Operator
-from pywy.old_graph.graph import Graph
-from pywy.old_graph.traversal import Traversal
-from pywy.translate.protobuf.planwriter import MessageWriter
+from old_code.orchestrator.operator import Operator
+from old_code.old_graph.graph import Graph
+from old_code.old_graph.traversal import Traversal
+from old_code.protobuf.planwriter import MessageWriter
 import itertools
 import collections
 import logging

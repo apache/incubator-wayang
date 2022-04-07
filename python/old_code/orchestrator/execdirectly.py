@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-from pywy.orchestrator.plan import Descriptor
-from pywy.orchestrator.dataquanta import DataQuantaBuilder
+from old_code.orchestrator.plan import Descriptor
+from old_code.orchestrator.dataquanta import DataQuantaBuilder
 import datetime
 
 
@@ -111,29 +111,34 @@ def plan_java_junction(descriptor):
 
 def plan_tpch_q1(descriptor):
 
-    # TODO create reduce by
+    #TODO create reduce by
     plan = DataQuantaBuilder(descriptor)
 
     def reducer(obj1, obj2):
-        return obj1[0], obj1[1], obj1[2] + obj2[2], obj1[3] + obj2[3], obj1[4] + obj2[4], obj1[5] + obj2[5], \
-               obj1[6] + obj2[6], obj1[7] + obj2[7], obj1[8] + obj2[8], obj1[9] + obj2[9]
+        return obj1[0]
 
     sink = plan.source("../test/lineitem.txt") \
         .map(lambda elem: elem.split("|")) \
-        .sink("../test/output.txt", end="")
-    """
-        .filter(lambda elem: datetime.datetime.strptime(elem[10], '%Y-%m-%d') <= datetime.datetime.strptime('1998-09-02', '%Y-%m-%d')) \
+        .filter(lambda elem: datetime.datetime.strptime(elem[10], '%Y-%m-%d') <= datetime.datetime.strptime("1998-09-02", '%Y-%m-%d')) \
         .map(lambda elem:
-             [elem[8], elem[9], elem[4], elem[5],
-              float(elem[5]) * (1 - float(elem[6])),
-              float(elem[5]) * (1 - float(elem[6])) * (1 + float(elem[7])),
-              elem[4], elem[5],
-              elem[6], 1]) \
-        .sink("../test/output.txt", end="")"""
-        # .reduce_by_key([0, 1], reducer) \
+           [elem[8], elem[9], elem[4], elem[5],
+            float(elem[5]) * (1 - float(elem[6])),
+            float(elem[5]) * (1 - float(elem[6])) * (1 + float(elem[7])),
+            elem[4], elem[5],
+            elem[6], 1]) \
+        .sink("../test/output.txt", end="")
+        # .group_by(lambda elem: elem) \
+        # .reduce_by(reducer) \
+        # .flatmap(lambda elem: elem.split("|"))
+        # .map(lambda elem: (elem, elem.split("|"))) \
+        # L_RETURNFLAG 8
+        # L_LINESTATUS 9
+        # L_QUANTITY 4
+        # L_EXTENDEDPRICE 5
+        # discount 6
+        # tax 7
 
-
-    return sink
+    return dq_source_b
 
 
 def plan_full_java(descriptor):
@@ -148,26 +153,10 @@ def plan_full_java(descriptor):
     return sink_dataquanta
 
 
-def plan_wordcount(descriptor):
-
-    plan = DataQuantaBuilder(descriptor)
-    sink_wordcount = plan.source("../test/lineitem.txt") \
-        .filter(lambda elem: len(str(elem).split("|")[0]) < 4) \
-        .flatmap(lambda elem: str(elem).split("|")) \
-        .sink("../test/output.txt", end="")
-
-    return sink_wordcount
-
-
 if __name__ == '__main__':
 
     # Plan will contain general info about the Wayang Plan created here
     descriptor = Descriptor()
-    descriptor.add_plugin(Descriptor.Plugin.spark)
-    descriptor.add_plugin(Descriptor.Plugin.java)
 
-    plan_dataquanta_sink = plan_wordcount(descriptor)
-    # plan_dataquanta_sink.execute()
-    # plan_dataquanta_sink.console()
-
-    plan_dataquanta_sink.to_wayang_plan()
+    plan_dataquanta_sink = plan_tpch_q1(descriptor)
+    plan_dataquanta_sink.execute()

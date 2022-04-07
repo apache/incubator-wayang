@@ -17,9 +17,9 @@
 
 import pickle
 import cloudpickle
-from pywy.config.config_reader import get_source_types
-from pywy.config.config_reader import get_sink_types
-from pywy.config.config_reader import get_boundary_types
+from old_code.config.config_reader import get_source_types
+from old_code.config.config_reader import get_sink_types
+from old_code.config.config_reader import get_boundary_types
 import logging
 
 pickle_protocol = pickle.HIGHEST_PROTOCOL

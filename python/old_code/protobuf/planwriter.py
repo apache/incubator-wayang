@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-import pywy.translate.protobuf.pywayangplan_pb2 as pwb
+import old_code.protobuf.pywayangplan_pb2 as pwb
 import os
 import cloudpickle
 import logging
