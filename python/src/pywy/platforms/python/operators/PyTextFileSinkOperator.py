@@ -1,5 +1,5 @@
 from typing import Set
-from pywy.wayangplan.sink import TextFileSink
+from pywy.operators.sink import TextFileSink
 from pywy.platforms.python.operators.PyExecutionOperator import PyExecutionOperator
 from pywy.platforms.python.channels import (
                                                 Channel,

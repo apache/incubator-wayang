@@ -1,4 +1,4 @@
-from pywy.platforms.basic.platform import Platform
+from pywy.core.platform import Platform
 
 class PythonPlatform(Platform):
 

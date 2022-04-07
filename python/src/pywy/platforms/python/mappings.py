@@ -1,4 +1,4 @@
-from pywy.platforms.basic.mapping import Mapping
+from pywy.core import Mapping
 from pywy.platforms.python.operators import *
 
 

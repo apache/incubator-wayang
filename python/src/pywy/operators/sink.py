@@ -1,7 +1,7 @@
 from typing import Any
 
 from pywy.types import GenericTco
-from pywy.wayangplan.base import PywyOperator
+from pywy.operators.base import PywyOperator
 
 class SinkOperator(PywyOperator):
 

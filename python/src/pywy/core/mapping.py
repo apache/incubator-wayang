@@ -1,5 +1,5 @@
 from typing import Dict
-from pywy.wayangplan.base import PywyOperator
+from pywy.operators.base import PywyOperator
 
 class Mapping:
     mappings: Dict[str, type]

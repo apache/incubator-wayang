@@ -1,7 +1,7 @@
-from pywy.platforms.basic.executor import Executor
+from pywy.core import Executor
 from pywy.platforms.python.execution.executor import PyExecutor
 from pywy.platforms.python.platform import PythonPlatform
-from pywy.platforms.basic.plugin import Plugin
+from pywy.core import Plugin
 from pywy.platforms.python.mappings import PywyOperatorMappings
 
 

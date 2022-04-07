@@ -1,9 +1,9 @@
 from typing import List
 
 from pywy.graph.graphtypes import WGraphOfOperator, NodeOperator
-from pywy.platforms.basic.channel import Channel
-from pywy.platforms.basic.executor import Executor
-from pywy.platforms.basic.plan import PywyPlan
+from pywy.core import Channel
+from pywy.core import Executor
+from pywy.core import PywyPlan
 from pywy.platforms.python.operators.PyExecutionOperator import PyExecutionOperator
 
 

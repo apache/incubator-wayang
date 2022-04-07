@@ -1,5 +1,5 @@
 from typing import ( Iterable, Callable )
-from pywy.platforms.basic.channel import ( Channel, ChannelDescriptor )
+from pywy.core import (Channel, ChannelDescriptor)
 
 class PyIteratorChannel(Channel):
 

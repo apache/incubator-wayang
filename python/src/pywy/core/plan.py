@@ -2,8 +2,8 @@ from typing import ( Iterable, Set )
 
 from pywy.graph.graph import WayangGraph
 from pywy.graph.graphtypes import ( NodeOperator, WGraphOfVec, NodeVec )
-from pywy.wayangplan.sink import SinkOperator
-from pywy.platforms.basic.plugin import Plugin
+from pywy.operators.sink import SinkOperator
+from pywy.core.plugin import Plugin
 
 
 class PywyPlan:

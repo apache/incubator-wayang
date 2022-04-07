@@ -1,7 +1,7 @@
 from typing import ( Iterable, List )
 
 from pywy.graph.graph import ( GraphNode, WayangGraph )
-from pywy.wayangplan.base import PywyOperator
+from pywy.operators.base import PywyOperator
 
 class NodeOperator(GraphNode[PywyOperator]):
 

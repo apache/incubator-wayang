@@ -1,5 +1,5 @@
-from pywy.platforms.basic.platform import Platform
-from pywy.platforms.basic.plugin import Plugin
+from pywy.core.platform import Platform
+from pywy.core import Plugin
 from pywy.platforms.python.plugin import PythonPlugin
 
 # define the basic plugins that can be used

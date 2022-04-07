@@ -1,8 +1,8 @@
 from typing import Set
 
-from pywy.platforms.basic.executor import Executor
-from pywy.platforms.basic.platform import Platform
-from pywy.platforms.basic.mapping import Mapping
+from pywy.core.executor import Executor
+from pywy.core.platform import Platform
+from pywy.core.mapping import Mapping
 
 class Plugin:
     """

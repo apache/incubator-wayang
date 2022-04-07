@@ -1,4 +1,4 @@
-from pywy.wayangplan.base import PywyOperator
+from pywy.operators.base import PywyOperator
 
 class SourceUnaryOperator(PywyOperator):
 

@@ -1,8 +1,5 @@
-from pywy.platforms.basic.platform import Platform
 from pywy.dataquanta import WayangContext
-from pywy.platforms.python.channels import Channel
-from pywy.plugins import java, spark, python
-from pywy.wayangplan.unary import *
+from pywy.plugins import python
 
 # p = Platform("nana")
 # print("LALA "+str(p))
@@ -15,13 +12,12 @@ from pywy.wayangplan.unary import *
 #
 # print(str(WayangContext().register(java, spark)))
 
-from pywy.types import Predicate, getTypePredicate
 #
 # predicate : Predicate = lambda x: x % 2 == 0
 # getTypePredicate(predicate)
-
+import time
 def pre(a:str):
-    return len(a) > 3
+    return "six" in a
 #
 # def func(s:str) -> int:
 #     return len(s)
@@ -30,11 +26,16 @@ def pre(a:str):
 #     for x in range(i):
 #         yield str(x)
 
-fileop = WayangContext()\
-            .register(python)\
-            .textFile("/Users/bertty/databloom/blossom/python/resources/test.input")\
-            .filter(pre)\
-            .storeTextFile("/Users/bertty/databloom/blossom/python/resources/test.output")
+for index in range(0, 1):
+    print(index)
+    tic = time.perf_counter()
+    fileop = WayangContext()\
+                .register(python)\
+                .textFile("/Users/bertty/databloom/blossom/python/resources/tmp"+str(index))\
+                .filter(pre)\
+                .storeTextFile("/Users/bertty/databloom/blossom/python/resources/out"+str(index))
+    toc = time.perf_counter()
+    print(f"Downloaded the tutorial in {toc - tic:0.4f} seconds")
 
 # filterop: FilterOperator = fileop.filter(pre).getOperator()
 # #fop_pre = filterop.getWrapper()

@@ -1,5 +1,5 @@
 from typing import ( TypeVar, Optional, List, Set )
-from pywy.platforms.basic.channel import ChannelDescriptor, Channel
+from pywy.core import ChannelDescriptor, Channel
 
 class PywyOperator:
 

@@ -1,10 +1,10 @@
 from typing import Set
 
-from pywy.platforms.basic.translator import Translator
+from pywy.core import Translator
 from pywy.types import ( GenericTco, Predicate, Function, FlatmapFunction, IterableO )
-from pywy.wayangplan import *
-from pywy.platforms.basic.plan import PywyPlan
-from pywy.platforms.basic.plugin import Plugin
+from pywy.operators import *
+from pywy.core import PywyPlan
+from pywy.core import Plugin
 
 class WayangContext:
   """

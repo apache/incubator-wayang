@@ -1,5 +1,5 @@
 from itertools import chain
-from pywy.wayangplan.base import PywyOperator
+from pywy.operators.base import PywyOperator
 from pywy.types import (
                             GenericTco,
                             GenericUco,
