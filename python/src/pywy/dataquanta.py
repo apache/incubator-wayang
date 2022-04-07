@@ -1,7 +1,7 @@
 from typing import Set, List, cast
 
 from pywy.core import Translator
-from pywy.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableO, T, I, O)
+from pywy.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
 from pywy.core import PywyPlan
 from pywy.core import Plugin
@@ -57,13 +57,13 @@ class DataQuanta(GenericTco):
     def filter(self: "DataQuanta[T]", p: Predicate) -> "DataQuanta[T]":
         return DataQuanta(self.context, self._connect(FilterOperator(p)))
 
-    def map(self: "DataQuanta[I]", f: Function) -> "DataQuanta[O]":
+    def map(self: "DataQuanta[In]", f: Function) -> "DataQuanta[Out]":
         return DataQuanta(self.context, self._connect(MapOperator(f)))
 
-    def flatmap(self: "DataQuanta[I]", f: FlatmapFunction) -> "DataQuanta[IterableO]":
+    def flatmap(self: "DataQuanta[In]", f: FlatmapFunction) -> "DataQuanta[IterableOut]":
         return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
 
-    def store_textfile(self: "DataQuanta[I]", path: str):
+    def store_textfile(self: "DataQuanta[In]", path: str):
         last: List[SinkOperator] = [cast(SinkOperator, self._connect(TextFileSink(path)))]
         plan = PywyPlan(self.context.plugins, last)
 

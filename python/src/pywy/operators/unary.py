@@ -1,14 +1,14 @@
 from itertools import chain
 from pywy.operators.base import PywyOperator
 from pywy.types import (
-                            GenericTco,
-                            GenericUco,
-                            Predicate,
-                            getTypePredicate,
-                            Function,
-                            getTypeFunction,
-                            FlatmapFunction,
-                            getTypeFlatmapFunction
+    GenericTco,
+    GenericUco,
+    Predicate,
+    get_type_predicate,
+    Function,
+    get_type_function,
+    FlatmapFunction,
+    get_type_flatmap_function
                         )
 
 
@@ -34,7 +34,7 @@ class FilterOperator(UnaryToUnaryOperator):
     predicate: Predicate
 
     def __init__(self, predicate: Predicate):
-        type = getTypePredicate(predicate) if predicate else None
+        type = get_type_predicate(predicate) if predicate else None
         super().__init__("Filter", type, type)
         self.predicate = predicate
 
@@ -49,7 +49,7 @@ class MapOperator(UnaryToUnaryOperator):
     function: Function
 
     def __init__(self, function: Function):
-        types = getTypeFunction(function) if function else (None, None)
+        types = get_type_function(function) if function else (None, None)
         super().__init__("Map", types[0], types[1])
         self.function = function
 
@@ -71,7 +71,7 @@ class FlatmapOperator(UnaryToUnaryOperator):
     fmfunction: FlatmapFunction
 
     def __init__(self, fmfunction: FlatmapFunction):
-        types = getTypeFlatmapFunction(fmfunction) if fmfunction else (None, None)
+        types = get_type_flatmap_function(fmfunction) if fmfunction else (None, None)
         super().__init__("Flatmap", types[0], types[1])
         self.fmfunction = fmfunction
 

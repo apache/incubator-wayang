@@ -1,0 +1,3 @@
+
+class PywyException(Exception):
+    pass
