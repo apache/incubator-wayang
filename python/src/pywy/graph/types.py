@@ -4,12 +4,12 @@ from pywy.graph.graph import (GraphNode, WayangGraph)
 from pywy.operators.base import PywyOperator
 
 
-class NodeOperator(GraphNode[PywyOperator]):
+class NodeOperator(GraphNode[PywyOperator, PywyOperator]):
 
     def __init__(self, op: PywyOperator):
         super(NodeOperator, self).__init__(op)
 
-    def get_adjacents(self) -> Iterable[PywyOperator]:
+    def get_adjacents(self) -> List[PywyOperator]:
         operator: PywyOperator = self.current
         if operator is None or operator.inputs == 0:
             return []
@@ -19,7 +19,7 @@ class NodeOperator(GraphNode[PywyOperator]):
         return NodeOperator(t)
 
 
-class WGraphOfOperator(WayangGraph[NodeOperator]):
+class WGraphOfOperator(WayangGraph[PywyOperator, NodeOperator]):
 
     def __init__(self, nodes: Iterable[PywyOperator]):
         super(WGraphOfOperator, self).__init__(nodes)
@@ -28,16 +28,16 @@ class WGraphOfOperator(WayangGraph[NodeOperator]):
         return NodeOperator(t)
 
 
-class NodeVec(GraphNode[List[PywyOperator]]):
+class NodeVec(GraphNode[PywyOperator, List[PywyOperator]]):
 
     def __init__(self, op: PywyOperator):
         super(NodeVec, self).__init__([op, None])
 
-    def get_adjacents(self) -> Iterable[List[PywyOperator]]:
+    def get_adjacents(self) -> List[PywyOperator]:
         operator: PywyOperator = self.current[0]
         if operator is None or operator.inputs == 0:
             return []
-        return [operator.inputOperator, None]
+        return operator.inputOperator
 
     def build_node(self, t: PywyOperator) -> 'NodeVec':
         return NodeVec(t)
@@ -49,7 +49,7 @@ class NodeVec(GraphNode[List[PywyOperator]]):
         return self.__str__()
 
 
-class WGraphOfVec(WayangGraph[NodeVec]):
+class WGraphOfVec(WayangGraph[PywyOperator, NodeVec]):
 
     def __init__(self, nodes: Iterable[PywyOperator]):
         super(WGraphOfVec, self).__init__(nodes)
