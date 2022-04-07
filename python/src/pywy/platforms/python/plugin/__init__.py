@@ -1,1 +1,0 @@
-from pywy.platforms.python.plugin.plugin import PythonPlugin

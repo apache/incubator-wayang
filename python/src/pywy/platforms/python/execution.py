@@ -1,10 +1,10 @@
 from typing import List
 
-from pywy.graph.graphtypes import WGraphOfOperator, NodeOperator
+from pywy.graph.types import WGraphOfOperator, NodeOperator
 from pywy.core import Channel
 from pywy.core import Executor
 from pywy.core import PywyPlan
-from pywy.platforms.python.operators.PyExecutionOperator import PyExecutionOperator
+from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 
 
 class PyExecutor(Executor):

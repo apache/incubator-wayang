@@ -1,7 +1,7 @@
 from typing import ( Iterable, Set )
 
 from pywy.graph.graph import WayangGraph
-from pywy.graph.graphtypes import ( NodeOperator, WGraphOfVec, NodeVec )
+from pywy.graph.types import ( NodeOperator, WGraphOfVec, NodeVec )
 from pywy.operators.sink import SinkOperator
 from pywy.core.plugin import Plugin
 

@@ -1,4 +1,4 @@
-from pywy.graph.graphtypes import ( WGraphOfVec, NodeVec )
+from pywy.graph.types import ( WGraphOfVec, NodeVec )
 from pywy.core.plugin import Plugin
 from pywy.core.plan import PywyPlan
 from pywy.core.mapping import Mapping

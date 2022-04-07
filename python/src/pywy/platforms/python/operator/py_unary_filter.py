@@ -1,6 +1,6 @@
 from typing import Set
 from pywy.operators.unary import FilterOperator
-from pywy.platforms.python.operators.PyExecutionOperator import PyExecutionOperator
+from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 from pywy.platforms.python.channels import (
                                                 Channel,
                                                 ChannelDescriptor,

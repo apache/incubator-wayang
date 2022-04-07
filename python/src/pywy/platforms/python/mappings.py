@@ -1,5 +1,5 @@
 from pywy.core import Mapping
-from pywy.platforms.python.operators import *
+from pywy.platforms.python.operator import *
 
 
 PywyOperatorMappings = Mapping()
