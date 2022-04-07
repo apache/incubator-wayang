@@ -31,9 +31,9 @@ for index in range(0, 1):
     tic = time.perf_counter()
     fileop = WayangContext()\
                 .register(python)\
-                .textFile("/Users/bertty/databloom/blossom/python/resources/tmp"+str(index))\
+                .textfile("/Users/bertty/databloom/blossom/python/resources/tmp" + str(index))\
                 .filter(pre)\
-                .storeTextFile("/Users/bertty/databloom/blossom/python/resources/out"+str(index))
+                .store_textfile("/Users/bertty/databloom/blossom/python/resources/out" + str(index))
     toc = time.perf_counter()
     print(f"Downloaded the tutorial in {toc - tic:0.4f} seconds")
 

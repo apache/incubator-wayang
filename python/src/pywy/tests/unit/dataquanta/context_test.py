@@ -79,7 +79,7 @@ class TestUnitDataquantaContext(unittest.TestCase):
         self.assertIsInstance(context, WayangContext)
         self.assertEqual(len(context.plugins), 0)
 
-        dataQuanta = context.textFile(path)
+        dataQuanta = context.textfile(path)
 
         self.assertIsInstance(dataQuanta, DataQuanta)
         self.assertIsInstance(dataQuanta.operator, TextFileSource)
