@@ -13,4 +13,4 @@
 [comment]: # (See the License for the specific language governing permissions and)
 [comment]: # (limitations under the License.)
 
-In this folder it was created to avoid error in the parameters of the variables
+This directory was created to avoid errors with the parameters from variables
