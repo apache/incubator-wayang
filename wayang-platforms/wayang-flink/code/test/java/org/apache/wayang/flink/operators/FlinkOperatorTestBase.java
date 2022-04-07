@@ -66,9 +66,9 @@ public class FlinkOperatorTestBase {
     }
 
 
-    protected void evaluate(FlinkExecutor operator,
+    protected void evaluate(FlinkExecutionOperator operator,
                             ChannelInstance[] inputs,
-                            ChannelInstance[] outputs) {
+                            ChannelInstance[] outputs) throws Exception {
         operator.evaluate(inputs, outputs, this.flinkExecutor, this.createOperatorContext(operator));
     }
 
