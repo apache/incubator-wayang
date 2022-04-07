@@ -1,3 +1,4 @@
+import os
 import unittest
 import tempfile
 from os import fdopen
@@ -34,9 +35,10 @@ class TestIntegrationPythonPlatform(unittest.TestCase):
             selectivity = len(list(lines_filter))
 
         lines_platform: List[str]
-        with fdopen(path_tmp, 'r') as fp:
+        with open(path_tmp, 'r') as fp:
             lines_platform = fp.readlines()
             elements = len(lines_platform)
+        os.remove(path_tmp)
 
         self.assertEqual(selectivity, elements)
         self.assertEqual(lines_filter, lines_platform)

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
-cd "$(dirname "$0")/.."
+BASE=$(cd "$(dirname "$0")/.." | pwd)
+cd ${BASE}
 
 python -m unittest discover -s ./src/ --pattern=*test.py
