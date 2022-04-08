@@ -19,7 +19,10 @@
 ##
 ################################################################################
 
+# TODO download Apache rat if is needed
+
 BASE=$(cd "$(dirname "$0")/.." | pwd)
 cd ${BASE}
+RAT_HOME=/opt/apache-rat-0.13
 
-python -m unittest discover -s ./src/ --pattern=*test.py
+java -jar ${RAT_HOME}/apache-rat-0.13.jar -E .rat-excludes -d . | grep "== File:"
