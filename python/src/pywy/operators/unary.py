@@ -1,4 +1,3 @@
-from itertools import chain
 from pywy.operators.base import PywyOperator
 from pywy.types import (
                             GenericTco,
@@ -67,13 +66,6 @@ class FlatmapOperator(UnaryToUnaryOperator):
         types = get_type_flatmap_function(fm_function) if fm_function else (None, None)
         super().__init__("Flatmap", types[0], types[1])
         self.fm_function = fm_function
-
-    # TODO remove wrapper
-    def getWrapper(self):
-        udf = self.fm_function
-        def func(iterator):
-            return chain.from_iterable(map(udf, iterator))
-        return func
 
     def __str__(self):
         return super().__str__()

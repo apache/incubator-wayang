@@ -23,12 +23,16 @@ class SinkUnaryOperator(SinkOperator):
 
 
 class TextFileSink(SinkUnaryOperator):
-
     path: str
+    end_line: str
 
-    def __init__(self, path: str, input_type: GenericTco):
+    def __init__(self, path: str, input_type: GenericTco, end_line: str = None):
         super().__init__('TextFile', input_type)
         self.path = path
+        if input_type != str and end_line is None:
+            self.end_line = '\n'
+        else:
+            self.end_line = end_line
 
     def __str__(self):
         return super().__str__()

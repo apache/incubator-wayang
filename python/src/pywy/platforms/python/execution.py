@@ -2,6 +2,7 @@ from pywy.graph.types import WGraphOfOperator, NodeOperator
 from pywy.core import ChannelDescriptor
 from pywy.core import Executor
 from pywy.core import PywyPlan
+from pywy.operators import TextFileSource
 from pywy.platforms.python.channels import PY_ITERATOR_CHANNEL_DESCRIPTOR
 from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 
@@ -17,6 +18,7 @@ class PyExecutor(Executor):
 
         # TODO get this information by a configuration and ideally by the context
         descriptor_default: ChannelDescriptor = PY_ITERATOR_CHANNEL_DESCRIPTOR
+        files_pool = []
 
         def execute(op_current: NodeOperator, op_next: NodeOperator):
             if op_current is None:
@@ -66,4 +68,10 @@ class PyExecutor(Executor):
 
             py_next.inputChannel = py_current.outputChannel
 
+            if isinstance(py_current, TextFileSource):
+                files_pool.append(py_current.outputChannel[0].provide_iterable())
+
         graph.traversal(graph.starting_nodes, execute)
+        # close the files used during the execution
+        for f in files_pool:
+            f.close()

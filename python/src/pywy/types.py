@@ -1,4 +1,4 @@
-from typing import (Generic, TypeVar, Callable, Hashable, Iterable)
+from typing import (Generic, TypeVar, Callable, Hashable, Iterable, Type)
 from inspect import signature
 from pywy.exception import PywyException
 
@@ -73,5 +73,12 @@ def get_type_flatmap_function(call: FlatmapFunction) -> (type, type):
             )
         )
 
+    if type(sig.return_annotation) != type(Iterable):
+        raise PywyException(
+            "the return for the FlatmapFunction is not Iterable, {}".format(
+                str(sig.return_annotation)
+            )
+        )
+
     keys = list(sig.parameters.keys())
-    return sig.parameters[keys[0]].annotation, sig.return_annotation
+    return sig.parameters[keys[0]].annotation, sig.return_annotation.__args__[0]

@@ -8,4 +8,5 @@ PYWY_OPERATOR_MAPPINGS.add_mapping(PyFilterOperator())
 PYWY_OPERATOR_MAPPINGS.add_mapping(PyTextFileSourceOperator())
 PYWY_OPERATOR_MAPPINGS.add_mapping(PyTextFileSinkOperator())
 PYWY_OPERATOR_MAPPINGS.add_mapping(PyMapOperator())
+PYWY_OPERATOR_MAPPINGS.add_mapping(PyFlatmapOperator())
 

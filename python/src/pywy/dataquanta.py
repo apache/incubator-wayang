@@ -64,8 +64,19 @@ class DataQuanta(GenericTco):
     def flatmap(self: "DataQuanta[In]", f: FlatmapFunction) -> "DataQuanta[IterableOut]":
         return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
 
-    def store_textfile(self: "DataQuanta[In]", path: str):
-        last: List[SinkOperator] = [cast(SinkOperator, self._connect(TextFileSink(path, self.operator.outputSlot[0])))]
+    def store_textfile(self: "DataQuanta[In]", path: str, end_line: str = None):
+        last: List[SinkOperator] = [
+            cast(
+                SinkOperator,
+                self._connect(
+                    TextFileSink(
+                        path,
+                        self.operator.outputSlot[0],
+                        end_line
+                    )
+                )
+            )
+        ]
         plan = PywyPlan(self.context.plugins, last)
 
         plug = self.context.plugins.pop()

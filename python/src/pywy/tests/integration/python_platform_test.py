@@ -1,11 +1,15 @@
+import logging
 import os
 import unittest
 import tempfile
-from typing import List
+from itertools import chain
+from typing import List, Iterable
 
 from pywy.config import RC_TEST_DIR as ROOT
 from pywy.dataquanta import WayangContext
 from pywy.plugins import PYTHON
+
+logger = logging.getLogger(__name__)
 
 
 class TestIntegrationPythonPlatform(unittest.TestCase):
@@ -14,60 +18,110 @@ class TestIntegrationPythonPlatform(unittest.TestCase):
 
     def setUp(self):
         self.file_10e0 = "{}/10e0MB.input".format(ROOT)
-        pass
 
-    def test_grep(self):
+    @staticmethod
+    def seed_small_grep(validation_file):
         def pre(a: str) -> bool:
             return 'six' in a
 
         fd, path_tmp = tempfile.mkstemp()
 
-        WayangContext() \
+        dq = WayangContext() \
             .register(PYTHON) \
-            .textfile(self.file_10e0) \
-            .filter(pre) \
-            .store_textfile(path_tmp)
+            .textfile(validation_file) \
+            .filter(pre)
 
-        lines_filter: List[str]
-        with open(self.file_10e0, 'r') as f:
-            lines_filter = list(filter(pre, f.readlines()))
-            selectivity = len(list(lines_filter))
+        return dq, path_tmp, pre
 
-        lines_platform: List[str]
-        with open(path_tmp, 'r') as fp:
-            lines_platform = fp.readlines()
+    def validate_files(self,
+                       validation_file,
+                       outputed_file,
+                       read_and_convert_validation,
+                       read_and_convert_outputed,
+                       delete_outputed=True,
+                       print_variable=False):
+        lines_filter: List[int]
+        with open(validation_file, 'r') as f:
+            lines_filter = list(read_and_convert_validation(f))
+            selectivity = len(lines_filter)
+
+        lines_platform: List[int]
+        with open(outputed_file, 'r') as fp:
+            lines_platform = list(read_and_convert_outputed(fp))
             elements = len(lines_platform)
-        os.remove(path_tmp)
+
+        if delete_outputed:
+            os.remove(outputed_file)
+
+        if print_variable:
+            logger.info(f"{lines_platform=}")
+            logger.info(f"{lines_filter=}")
+            logger.info(f"{elements=}")
+            logger.info(f"{selectivity=}")
 
         self.assertEqual(selectivity, elements)
         self.assertEqual(lines_filter, lines_platform)
 
+    def test_grep(self):
+
+        dq, path_tmp, pre = self.seed_small_grep(self.file_10e0)
+
+        dq.store_textfile(path_tmp)
+
+        def convert_validation(file):
+            return filter(pre, file.readlines())
+
+        def convert_outputed(file):
+            return file.readlines()
+
+        self.validate_files(
+            self.file_10e0,
+            path_tmp,
+            convert_validation,
+            convert_outputed
+        )
+
     def test_dummy_map(self):
-        def pre(a: str) -> bool:
-            return 'six' in a
 
         def convert(a: str) -> int:
             return len(a)
 
-        fd, path_tmp = tempfile.mkstemp()
+        dq, path_tmp, pre = self.seed_small_grep(self.file_10e0)
 
-        WayangContext() \
-            .register(PYTHON) \
-            .textfile(self.file_10e0) \
-            .filter(pre) \
-            .map(convert) \
+        dq.map(convert) \
             .store_textfile(path_tmp)
 
-        lines_filter: List[int]
-        with open(self.file_10e0, 'r') as f:
-            lines_filter = list(map(convert, filter(pre, f.readlines())))
-            selectivity = len(list(lines_filter))
+        def convert_validation(file):
+            return map(convert, filter(pre, file.readlines()))
 
-        lines_platform: List[int]
-        with open(path_tmp, 'r') as fp:
-            lines_platform = list(map(lambda x: int(x), fp.readlines()))
-            elements = len(lines_platform)
-        os.remove(path_tmp)
+        def convert_outputed(file):
+            return map(lambda x: int(x), file.read().splitlines())
 
-        self.assertEqual(selectivity, elements)
-        self.assertEqual(lines_filter, lines_platform)
+        self.validate_files(
+            self.file_10e0,
+            path_tmp,
+            convert_validation,
+            convert_outputed
+        )
+
+    def test_dummy_flatmap(self):
+        def fm_func(string: str) -> Iterable[str]:
+            return string.strip().split(" ")
+
+        dq, path_tmp, pre = self.seed_small_grep(self.file_10e0)
+
+        dq.flatmap(fm_func) \
+            .store_textfile(path_tmp, '\n')
+
+        def convert_validation(file):
+            return chain.from_iterable(map(fm_func, filter(pre, file.readlines())))
+
+        def convert_outputed(file):
+            return file.read().splitlines()
+
+        self.validate_files(
+            self.file_10e0,
+            path_tmp,
+            convert_validation,
+            convert_outputed
+        )
