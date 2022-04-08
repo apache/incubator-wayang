@@ -1,8 +1,9 @@
-from typing import Set
+from typing import Set, List, Type
+
+from pywy.core.channel import CH_T
 from pywy.operators.source import TextFileSource
 from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 from pywy.platforms.python.channels import (
-    Channel,
     ChannelDescriptor,
     PyIteratorChannel,
     PY_ITERATOR_CHANNEL_DESCRIPTOR
@@ -16,7 +17,7 @@ class PyTextFileSourceOperator(TextFileSource, PyExecutionOperator):
         super().__init__(path)
         pass
 
-    def execute(self, inputs: Channel, outputs: Channel):
+    def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)
         if isinstance(outputs[0], PyIteratorChannel):
             py_out_iter_channel: PyIteratorChannel = outputs[0]

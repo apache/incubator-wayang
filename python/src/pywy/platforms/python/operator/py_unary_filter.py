@@ -1,8 +1,9 @@
-from typing import Set
+from typing import Set, List, Type
+
+from pywy.core.channel import CH_T
 from pywy.operators.unary import FilterOperator
 from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 from pywy.platforms.python.channels import (
-                                                Channel,
                                                 ChannelDescriptor,
                                                 PyIteratorChannel,
                                                 PY_ITERATOR_CHANNEL_DESCRIPTOR,
@@ -18,7 +19,7 @@ class PyFilterOperator(FilterOperator, PyExecutionOperator):
         super().__init__(predicate)
         pass
 
-    def execute(self, inputs: Channel, outputs: Channel):
+    def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)
         udf = self.predicate
         if isinstance(inputs[0], PyIteratorChannel):

@@ -1,8 +1,9 @@
-from typing import Set
+from typing import Set, List, Type
+
+from pywy.core.channel import CH_T
 from pywy.operators.sink import TextFileSink
 from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 from pywy.platforms.python.channels import (
-    Channel,
     ChannelDescriptor,
     PyIteratorChannel,
     PY_ITERATOR_CHANNEL_DESCRIPTOR
@@ -16,12 +17,12 @@ class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
         super().__init__(path)
         pass
 
-    def execute(self, inputs: Channel, outputs: Channel):
+    def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)
         if isinstance(inputs[0], PyIteratorChannel):
             file = open(self.path, 'w')
             py_in_iter_channel: PyIteratorChannel = inputs[0]
-            iterable = py_in_iter_channel.provide_iterable();
+            iterable = py_in_iter_channel.provide_iterable()
             for element in iterable:
                 file.write(str(element))
             file.close()

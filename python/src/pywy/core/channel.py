@@ -1,3 +1,6 @@
+from typing import TypeVar
+
+
 class Channel:
 
     def __init__(self):
@@ -19,3 +22,6 @@ class ChannelDescriptor:
 
     def create_instance(self) -> Channel:
         return self.channelType()
+
+
+CH_T = TypeVar('CH_T', bound=Channel)
