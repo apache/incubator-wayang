@@ -13,3 +13,6 @@
 # Misc
 hybrid/*
 pom.xml.*
+
+10e*.input
+*_pb2.py
