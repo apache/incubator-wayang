@@ -1,6 +1,7 @@
 from typing import Set, List, cast
 
 from pywy.core import Translator
+from pywy.operators.base import PO_T
 from pywy.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
 from pywy.core import PywyPlan
@@ -64,7 +65,7 @@ class DataQuanta(GenericTco):
         return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
 
     def store_textfile(self: "DataQuanta[In]", path: str):
-        last: List[SinkOperator] = [cast(SinkOperator, self._connect(TextFileSink(path)))]
+        last: List[SinkOperator] = [cast(SinkOperator, self._connect(TextFileSink(path, self.operator.outputSlot[0])))]
         plan = PywyPlan(self.context.plugins, last)
 
         plug = self.context.plugins.pop()
@@ -73,7 +74,7 @@ class DataQuanta(GenericTco):
         plug.get_executor().execute(new_plan)
         # TODO add the logic to execute the plan
 
-    def _connect(self, op: PywyOperator, port_op: int = 0) -> PywyOperator:
+    def _connect(self, op: PO_T, port_op: int = 0) -> PywyOperator:
         self.operator.connect(0, op, port_op)
         return op
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pywy.types import T, K
 from typing import (Iterable, Dict, Callable, Any, Generic, Optional, List)
 
@@ -22,7 +24,7 @@ class GraphNode(Generic[K, T]):
         if len(adjacent) == 0:
             return []
 
-        def wrap(op: T) -> 'GraphNode[K, T]':
+        def wrap(op: T) -> Optional['GraphNode[K, T]'] | None:
             if op is None:
                 return None
             if op not in created:
@@ -59,12 +61,12 @@ class WayangGraph(Generic[K, T]):
 
     def traversal(
             self,
-            origin: GraphNode[K, T],
             nodes: Iterable[GraphNode[K, T]],
             udf: Callable[[GraphNode[K, T], GraphNode[K, T]], Any],
+            origin: Optional[GraphNode[K, T]] = None,
             visit_status: bool = True
     ):
         for node in nodes:
             adjacent = node.walk(self.created_nodes)
-            self.traversal(node, adjacent, udf, visit_status)
+            self.traversal(adjacent, udf, node, visit_status)
             node.visit(origin, udf)

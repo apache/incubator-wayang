@@ -9,5 +9,5 @@ class PyExecutionOperator(PywyOperator):
     def prefix(self) -> str:
         return 'Py'
 
-    def execute(self, inputs: List[Type[CH_T]], output: List[Type[CH_T]]):
+    def execute(self, inputs: List[Type[CH_T]], output: List[CH_T]):
         pass

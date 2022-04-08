@@ -52,13 +52,6 @@ class MapOperator(UnaryToUnaryOperator):
         super().__init__("Map", types[0], types[1])
         self.function = function
 
-    # TODO remove wrapper
-    def getWrapper(self):
-        udf = self.function
-        def func(iterator):
-            return map(udf, iterator)
-        return func
-
     def __str__(self):
         return super().__str__()
 

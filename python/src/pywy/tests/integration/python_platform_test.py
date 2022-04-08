@@ -1,7 +1,6 @@
 import os
 import unittest
 import tempfile
-from os import fdopen
 from typing import List
 
 from pywy.config import RC_TEST_DIR as ROOT
@@ -37,6 +36,36 @@ class TestIntegrationPythonPlatform(unittest.TestCase):
         lines_platform: List[str]
         with open(path_tmp, 'r') as fp:
             lines_platform = fp.readlines()
+            elements = len(lines_platform)
+        os.remove(path_tmp)
+
+        self.assertEqual(selectivity, elements)
+        self.assertEqual(lines_filter, lines_platform)
+
+    def test_dummy_map(self):
+        def pre(a: str) -> bool:
+            return 'six' in a
+
+        def convert(a: str) -> int:
+            return len(a)
+
+        fd, path_tmp = tempfile.mkstemp()
+
+        WayangContext() \
+            .register(PYTHON) \
+            .textfile(self.file_10e0) \
+            .filter(pre) \
+            .map(convert) \
+            .store_textfile(path_tmp)
+
+        lines_filter: List[int]
+        with open(self.file_10e0, 'r') as f:
+            lines_filter = list(map(convert, filter(pre, f.readlines())))
+            selectivity = len(list(lines_filter))
+
+        lines_platform: List[int]
+        with open(path_tmp, 'r') as fp:
+            lines_platform = list(map(lambda x: int(x), fp.readlines()))
             elements = len(lines_platform)
         os.remove(path_tmp)
 

@@ -14,8 +14,8 @@ class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
 
     def __init__(self, origin: TextFileSink = None):
         path = None if origin is None else origin.path
-        super().__init__(path)
-        pass
+        type_class = None if origin is None else origin.inputSlot[0]
+        super().__init__(path, type_class)
 
     def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)
@@ -23,8 +23,12 @@ class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
             file = open(self.path, 'w')
             py_in_iter_channel: PyIteratorChannel = inputs[0]
             iterable = py_in_iter_channel.provide_iterable()
-            for element in iterable:
-                file.write(str(element))
+            if self.inputSlot[0] == str:
+                for element in iterable:
+                    file.write(element)
+            else:
+                for element in iterable:
+                    file.write("{}\n".format(str(element)))
             file.close()
 
         else:

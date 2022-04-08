@@ -1,17 +1,18 @@
 from typing import (TypeVar, Optional, List, Set)
-from pywy.core import ChannelDescriptor, Channel
+from pywy.core import ChannelDescriptor
+from pywy.core.channel import CH_T, CHD_T
 
 
 class PywyOperator:
 
     inputSlot: List[TypeVar]
-    inputChannel: List[Channel]
-    inputChannelDescriptor: List[ChannelDescriptor]
+    inputChannel: List[CH_T]
+    inputChannelDescriptor: List[CHD_T]
     inputOperator: List['PywyOperator']
     inputs: int
     outputSlot: List[TypeVar]
-    outputChannel: List[Channel]
-    outputChannelDescriptor: List[ChannelDescriptor]
+    outputChannel: List[CH_T]
+    outputChannelDescriptor: List[CHD_T]
     outputOperator: List['PywyOperator']
     outputs: int
 
@@ -54,7 +55,7 @@ class PywyOperator:
         self.validate_inputs(inputs)
         self.validate_outputs(outputs)
 
-    def connect(self, port: int, that: 'PywyOperator', port_that: int):
+    def connect(self, port: int, that: 'PO_T', port_that: int):
         self.outputOperator[port] = that
         that.inputOperator[port_that] = self
 
@@ -86,3 +87,6 @@ class PywyOperator:
 
     def __repr__(self):
         return self.__str__()
+
+
+PO_T = TypeVar('PO_T', bound=PywyOperator)

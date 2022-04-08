@@ -35,7 +35,7 @@ class PywyPlan:
                 )
             )
 
-        self.graph.traversal(None, self.graph.starting_nodes, print_plan)
+        self.graph.traversal(self.graph.starting_nodes, print_plan)
 
     def printTuple(self):
         def print_plan(current: NodeVec, previous: NodeVec):
@@ -56,4 +56,4 @@ class PywyPlan:
                 )
             )
 
-        self.graph.traversal(None, self.graph.starting_nodes, print_plan)
+        self.graph.traversal(self.graph.starting_nodes, print_plan)

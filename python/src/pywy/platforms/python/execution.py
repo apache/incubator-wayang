@@ -1,9 +1,8 @@
-from typing import List
-
 from pywy.graph.types import WGraphOfOperator, NodeOperator
-from pywy.core import Channel
+from pywy.core import ChannelDescriptor
 from pywy.core import Executor
 from pywy.core import PywyPlan
+from pywy.platforms.python.channels import PY_ITERATOR_CHANNEL_DESCRIPTOR
 from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 
 
@@ -16,7 +15,10 @@ class PyExecutor(Executor):
         pywyPlan: PywyPlan = plan
         graph = WGraphOfOperator(pywyPlan.sinks)
 
-        def exec(op_current: NodeOperator, op_next: NodeOperator):
+        # TODO get this information by a configuration and ideally by the context
+        descriptor_default: ChannelDescriptor = PY_ITERATOR_CHANNEL_DESCRIPTOR
+
+        def execute(op_current: NodeOperator, op_next: NodeOperator):
             if op_current is None:
                 return
 
@@ -42,21 +44,26 @@ class PyExecutor(Executor):
                         inputs
                     )
                 )
+
             if len(intersect) > 1:
-                raise Exception(
-                    "The interaction between the operator (A) {} and (B) {}, "
-                    "can't be decided because are several channel availables {}".format(
-                        py_current,
-                        py_next,
-                        intersect
+                if descriptor_default is None:
+                    raise Exception(
+                        "The interaction between the operator (A) {} and (B) {}, "
+                        "can't be decided because are several channel availables {}".format(
+                            py_current,
+                            py_next,
+                            intersect
+                        )
                     )
-                )
-            #TODO validate if is valite for several output
-            py_current.outputChannel: List[Channel] = [intersect.pop().create_instance()]
+                descriptor = descriptor_default
+            else:
+                descriptor = intersect.pop()
+
+            # TODO validate if is valite for several output
+            py_current.outputChannel[0] = descriptor.create_instance()
 
             py_current.execute(py_current.inputChannel, py_current.outputChannel)
 
             py_next.inputChannel = py_current.outputChannel
 
-
-        graph.traversal(None, graph.starting_nodes, exec)
+        graph.traversal(graph.starting_nodes, execute)

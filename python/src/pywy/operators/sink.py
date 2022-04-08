@@ -26,8 +26,8 @@ class TextFileSink(SinkUnaryOperator):
 
     path: str
 
-    def __init__(self, path: str):
-        super().__init__('TextFile')
+    def __init__(self, path: str, input_type: GenericTco):
+        super().__init__('TextFile', input_type)
         self.path = path
 
     def __str__(self):

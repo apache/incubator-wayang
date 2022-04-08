@@ -32,7 +32,7 @@ class Translator:
             # TODO not necesary it it 0
             current_op.current[1].connect(0, next_op.current[1], 0)
 
-        graph.traversal(None, graph.starting_nodes, translate2plugin)
+        graph.traversal(graph.starting_nodes, translate2plugin)
 
         node = []
         for elem in graph.starting_nodes:

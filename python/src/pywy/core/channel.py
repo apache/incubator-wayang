@@ -25,3 +25,4 @@ class ChannelDescriptor:
 
 
 CH_T = TypeVar('CH_T', bound=Channel)
+CHD_T = TypeVar('CHD_T', bound=ChannelDescriptor)

@@ -1,45 +1,45 @@
 from typing import (Iterable, List)
 
 from pywy.graph.graph import (GraphNode, WayangGraph)
-from pywy.operators.base import PywyOperator
+from pywy.operators.base import PywyOperator, PO_T
 
 
-class NodeOperator(GraphNode[PywyOperator, PywyOperator]):
+class NodeOperator(GraphNode[PO_T, PO_T]):
 
-    def __init__(self, op: PywyOperator):
+    def __init__(self, op: PO_T):
         super(NodeOperator, self).__init__(op)
 
-    def get_adjacents(self) -> List[PywyOperator]:
-        operator: PywyOperator = self.current
+    def get_adjacents(self) -> List[PO_T]:
+        operator: PO_T = self.current
         if operator is None or operator.inputs == 0:
             return []
         return operator.inputOperator
 
-    def build_node(self, t: PywyOperator) -> 'NodeOperator':
+    def build_node(self, t: PO_T) -> 'NodeOperator':
         return NodeOperator(t)
 
 
-class WGraphOfOperator(WayangGraph[PywyOperator, NodeOperator]):
+class WGraphOfOperator(WayangGraph[PO_T, NodeOperator]):
 
-    def __init__(self, nodes: Iterable[PywyOperator]):
+    def __init__(self, nodes: Iterable[PO_T]):
         super(WGraphOfOperator, self).__init__(nodes)
 
-    def build_node(self, t: PywyOperator) -> NodeOperator:
+    def build_node(self, t: PO_T) -> NodeOperator:
         return NodeOperator(t)
 
 
-class NodeVec(GraphNode[PywyOperator, List[PywyOperator]]):
+class NodeVec(GraphNode[PO_T, List[PO_T]]):
 
-    def __init__(self, op: PywyOperator):
+    def __init__(self, op: PO_T):
         super(NodeVec, self).__init__([op, None])
 
-    def get_adjacents(self) -> List[PywyOperator]:
-        operator: PywyOperator = self.current[0]
+    def get_adjacents(self) -> List[PO_T]:
+        operator: PO_T = self.current[0]
         if operator is None or operator.inputs == 0:
             return []
         return operator.inputOperator
 
-    def build_node(self, t: PywyOperator) -> 'NodeVec':
+    def build_node(self, t: PO_T) -> 'NodeVec':
         return NodeVec(t)
 
     def __str__(self):
@@ -49,10 +49,10 @@ class NodeVec(GraphNode[PywyOperator, List[PywyOperator]]):
         return self.__str__()
 
 
-class WGraphOfVec(WayangGraph[PywyOperator, NodeVec]):
+class WGraphOfVec(WayangGraph[PO_T, NodeVec]):
 
-    def __init__(self, nodes: Iterable[PywyOperator]):
+    def __init__(self, nodes: Iterable[PO_T]):
         super(WGraphOfVec, self).__init__(nodes)
 
-    def build_node(self, t: PywyOperator) -> NodeVec:
+    def build_node(self, t: PO_T) -> NodeVec:
         return NodeVec(t)
