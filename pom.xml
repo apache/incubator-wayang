@@ -1250,6 +1250,8 @@
                         <exclude>**/scala_1*</exclude>
 
                         <exclude>**/*pb2.py</exclude>
+                        <exclude>**/.rat-excludes</exclude>
+                        <exclude>**/*.input</exclude>
                     </excludes>
                 </configuration>
             </plugin>
