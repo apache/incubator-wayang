@@ -15,34 +15,19 @@
 #  limitations under the License.
 #
 
-from typing import List, Type
-
-from pywy.core.channel import CH_T
-from pywy.operators.base import PywyOperator
-from pywy.platforms.jvm.context import JVMTranslateContext
+from pywy.core.core import TranslateContext
+from pywy.platforms.jvm.serializable.plan_writter import PlanWritter
 from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMOperator
 
 
-class JVMExecutionOperator(PywyOperator):
+class JVMTranslateContext(TranslateContext):
+    plan_writer: PlanWritter
 
-    dispatch_operator: WayangJVMOperator
+    def __init__(self):
+        self.plan_writer = PlanWritter()
 
-    translate_context: JVMTranslateContext
+    def add_operator(self, op: WayangJVMOperator):
+        self.plan_writer.add_operator(op)
 
-    def set_context(self, **kwargs):
-        if 'translate_context' not in kwargs:
-            return
-        self.translate_context = kwargs['translate_context']
-
-    def close_operator(self, op: WayangJVMOperator):
-        if self.translate_context is None:
-            return
-
-        self.translate_context.add_operator(op)
-
-
-    def prefix(self) -> str:
-        return 'JVM'
-
-    def execute(self, inputs: List[Type[CH_T]], output: List[CH_T]):
-        pass
+    def generate_request(self):
+        self.plan_writer.send_message_to_wayang()

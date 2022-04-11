@@ -27,11 +27,12 @@ from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMTextFil
 
 class JVMTextFileSinkOperator(TextFileSink, JVMExecutionOperator):
 
-    def __init__(self, origin: TextFileSink = None):
+    def __init__(self, origin: TextFileSink = None, **kwargs):
         path = None if origin is None else origin.path
         type_class = None if origin is None else origin.inputSlot[0]
         end_line = None if origin is None else origin.end_line
         super().__init__(path, type_class, end_line)
+        self.set_context(**kwargs)
 
     def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)
@@ -44,6 +45,9 @@ class JVMTextFileSinkOperator(TextFileSink, JVMExecutionOperator):
             sink: WayangJVMTextFileSink = WayangJVMTextFileSink(self.name, self.path)
 
             operator.connect_to(0, sink, 0)
+
+            self.close_operator(operator)
+            self.close_operator(sink)
 
             self.dispatch_operator = sink
         else:

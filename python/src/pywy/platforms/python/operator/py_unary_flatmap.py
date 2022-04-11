@@ -33,7 +33,7 @@ from pywy.platforms.python.channels import (
 
 class PyFlatmapOperator(FlatmapOperator, PyExecutionOperator):
 
-    def __init__(self, origin: FlatmapOperator = None):
+    def __init__(self, origin: FlatmapOperator = None, **kwargs):
         fm_function = None if origin is None else origin.fm_function
         super().__init__(fm_function)
 

@@ -50,7 +50,7 @@ class Mapping:
         """
         self.mappings[operator.name_basic()] = type(operator)
 
-    def get_instanceof(self, operator: PywyOperator):
+    def get_instanceof(self, operator: PywyOperator, **kwargs):
         """Instance the executable version of :py:class:`pywy.operators.base.PywyOperator`
 
         Parameters
@@ -70,7 +70,7 @@ class Mapping:
                     operator.name
                 )
             )
-        return template(operator)
+        return template(operator, **kwargs)
 
     def __str__(self):
         return str(self.mappings)

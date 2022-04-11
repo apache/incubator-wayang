@@ -28,7 +28,7 @@ from pywy.platforms.python.channels import (
 
 class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
 
-    def __init__(self, origin: TextFileSink = None):
+    def __init__(self, origin: TextFileSink = None, **kwargs):
         path = None if origin is None else origin.path
         type_class = None if origin is None else origin.inputSlot[0]
         end_line = None if origin is None else origin.end_line

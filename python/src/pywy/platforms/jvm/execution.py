@@ -20,6 +20,8 @@ from pywy.core import PywyPlan
 from pywy.platforms.jvm.channels import DISPATCHABLE_CHANNEL_DESCRIPTOR
 from pywy.platforms.jvm.graph import NodeDispatch, WGraphDispatch
 from pywy.platforms.jvm.operator import JVMExecutionOperator
+from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMOperator
+
 
 class JVMExecutor(Executor):
 
@@ -84,16 +86,8 @@ class JVMExecutor(Executor):
 
         graph.traversal(graph.starting_nodes, execute)
 
+        magic: JVMExecutionOperator = graph.starting_nodes[0].current
 
-
-        starting: WayangJVMOperator = graph.starting_nodes[0].current.dispatch_operator
-        while starting.previous[0]:
-            print(starting)
-            #print(starting.nexts[0])
-            starting = starting.previous[0]
-            if len(starting.previous) == 0 :
-                break
-        print(starting)
-
+        magic.translate_context.generate_request()
 
 

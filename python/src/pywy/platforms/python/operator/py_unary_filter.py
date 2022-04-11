@@ -32,7 +32,7 @@ from pywy.platforms.python.channels import (
 
 class PyFilterOperator(FilterOperator, PyExecutionOperator):
 
-    def __init__(self, origin: FilterOperator = None):
+    def __init__(self, origin: FilterOperator = None, **kwargs):
         predicate = None if origin is None else origin.predicate
         super().__init__(predicate)
         pass

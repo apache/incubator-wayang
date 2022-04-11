@@ -32,7 +32,7 @@ from pywy.platforms.python.channels import (
 
 class PyMapOperator(MapOperator, PyExecutionOperator):
 
-    def __init__(self, origin: MapOperator = None):
+    def __init__(self, origin: MapOperator = None, **kwargs):
         function = None if origin is None else origin.function
         super().__init__(function)
         pass

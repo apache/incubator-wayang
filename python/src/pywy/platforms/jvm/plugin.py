@@ -16,7 +16,8 @@
 #
 
 from pywy.core import Executor
-from pywy.core import Plugin
+from pywy.core.core import Plugin
+from pywy.platforms.jvm.context import JVMTranslateContext
 from pywy.platforms.jvm.execution import JVMExecutor
 from pywy.platforms.jvm.mappings import JVM_OPERATOR_MAPPINGS
 from pywy.platforms.jvm.platform import JVMPlatform
@@ -25,7 +26,7 @@ from pywy.platforms.jvm.platform import JVMPlatform
 class JVMPlugin(Plugin):
 
     def __init__(self):
-        super(JVMPlugin, self).__init__({JVMPlatform()}, JVM_OPERATOR_MAPPINGS)
+        super(JVMPlugin, self).__init__({JVMPlatform()}, JVM_OPERATOR_MAPPINGS, JVMTranslateContext())
 
     def get_executor(self) -> Executor:
         return JVMExecutor()

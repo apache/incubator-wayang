@@ -80,7 +80,6 @@ class TestIntegrationJVMPlatform(unittest.TestCase):
         self.assertEqual(lines_filter, lines_platform)
 
     def test_grep(self):
-
         dq, path_tmp, pre = self.seed_small_grep(self.file_10e0)
 
         dq.store_textfile(path_tmp)

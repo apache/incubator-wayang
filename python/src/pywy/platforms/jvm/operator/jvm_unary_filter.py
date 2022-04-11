@@ -29,10 +29,10 @@ from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMMappart
 
 class JVMFilterOperator(FilterOperator, JVMExecutionOperator):
 
-    def __init__(self, origin: FilterOperator = None):
+    def __init__(self, origin: FilterOperator = None, **kwargs):
         predicate = None if origin is None else origin.predicate
         super().__init__(predicate)
-        pass
+        self.set_context(**kwargs)
 
     def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)
@@ -60,6 +60,7 @@ class JVMFilterOperator(FilterOperator, JVMExecutionOperator):
             current: WayangJVMMappartitionOperator = WayangJVMMappartitionOperator(self.name)
             # TODO check for the case where the index matter
             op.connect_to(0, current, 0)
+            self.close_operator(op)
             py_out_dispatch_channel.accept_dispatchable(current)
 
         else:

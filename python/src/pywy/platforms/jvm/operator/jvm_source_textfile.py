@@ -21,15 +21,15 @@ from pywy.core.channel import (CH_T, ChannelDescriptor)
 from pywy.operators.source import TextFileSource
 from pywy.platforms.jvm.channels import DISPATCHABLE_CHANNEL_DESCRIPTOR, DispatchableChannel
 from pywy.platforms.jvm.operator.jvm_execution_operator import JVMExecutionOperator
-from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMTextFileSource
+from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMTextFileSource, WayangJVMOperator
 
 
 class JVMTextFileSourceOperator(TextFileSource, JVMExecutionOperator):
 
-    def __init__(self, origin: TextFileSource = None):
+    def __init__(self, origin: TextFileSource = None, **kwargs):
         path = None if origin is None else origin.path
         super().__init__(path)
-        pass
+        self.set_context(**kwargs)
 
     def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)

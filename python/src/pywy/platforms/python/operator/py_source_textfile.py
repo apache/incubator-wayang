@@ -28,7 +28,7 @@ from pywy.platforms.python.channels import (
 
 class PyTextFileSourceOperator(TextFileSource, PyExecutionOperator):
 
-    def __init__(self, origin: TextFileSource = None):
+    def __init__(self, origin: TextFileSource = None, **kwargs):
         path = None if origin is None else origin.path
         super().__init__(path)
         pass

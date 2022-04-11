@@ -71,6 +71,18 @@ class WayangJVMOperator:
             self.nexts
         )
 
+    def is_source(self):
+        return False
+
+    def is_sink(self):
+        return False
+
+    def is_unary(self):
+        return True
+
+    def is_operator(self):
+        return False
+
 WJO_T = TypeVar('WJO_T', bound=WayangJVMOperator)
 
 
@@ -80,6 +92,8 @@ class WayangJVMMappartitionOperator(WayangJVMOperator):
         super().__init__("MapPartitionOperator", name)
         self.udf = udf
 
+    def is_operator(self):
+        return True
 
 class WayangJVMTextFileSource(WayangJVMOperator):
 
@@ -87,6 +101,8 @@ class WayangJVMTextFileSource(WayangJVMOperator):
         super().__init__("TextFileSource", name)
         self.path = path
 
+    def is_source(self):
+        return True
 
 class WayangJVMTextFileSink(WayangJVMOperator):
 
@@ -94,3 +110,5 @@ class WayangJVMTextFileSink(WayangJVMOperator):
         super().__init__("TextFileSink", name)
         self.path = path
 
+    def is_sink(self):
+        return True
