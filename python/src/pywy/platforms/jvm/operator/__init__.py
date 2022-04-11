@@ -15,15 +15,14 @@
 #  limitations under the License.
 #
 
-from pywy.core.platform import Platform
-from pywy.core import Plugin
-from pywy.platforms.jvm.plugin import JVMPlugin
-from pywy.platforms.python.plugin import PythonPlugin
+from pywy.platforms.jvm.operator.jvm_execution_operator import JVMExecutionOperator
+from pywy.platforms.jvm.operator.jvm_unary_filter import JVMFilterOperator
+from pywy.platforms.jvm.operator.jvm_source_textfile import JVMTextFileSourceOperator
+from pywy.platforms.jvm.operator.jvm_sink_textfile import JVMTextFileSinkOperator
 
-# define the basic plugins that can be used
-JAVA = Plugin({Platform('java')})
-SPARK = Plugin({Platform('spark')})
-FLINK = Plugin({Platform('flink')})
-# plugin for the python platform
-PYTHON = PythonPlugin()
-JVMs = JVMPlugin()
+__ALL__ = [
+    JVMExecutionOperator,
+    JVMFilterOperator,
+    JVMTextFileSourceOperator,
+    JVMTextFileSinkOperator,
+]

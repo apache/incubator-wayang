@@ -17,6 +17,7 @@
 
 from typing import Callable
 from pywy.core import (Channel, ChannelDescriptor)
+from pywy.exception import PywyException
 
 
 class CommonsCallableChannel(Channel):
@@ -35,6 +36,11 @@ class CommonsCallableChannel(Channel):
 
     @staticmethod
     def concatenate(function_a: Callable, function_b: Callable):
+        if function_a is None:
+            raise PywyException("the function_a can't be None")
+        if function_b is None:
+            return function_a
+
         def executable(iterable):
             return function_a(function_b(iterable))
         return executable

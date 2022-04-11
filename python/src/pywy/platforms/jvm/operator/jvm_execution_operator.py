@@ -15,15 +15,19 @@
 #  limitations under the License.
 #
 
-from pywy.core.platform import Platform
-from pywy.core import Plugin
-from pywy.platforms.jvm.plugin import JVMPlugin
-from pywy.platforms.python.plugin import PythonPlugin
+from typing import List, Type
 
-# define the basic plugins that can be used
-JAVA = Plugin({Platform('java')})
-SPARK = Plugin({Platform('spark')})
-FLINK = Plugin({Platform('flink')})
-# plugin for the python platform
-PYTHON = PythonPlugin()
-JVMs = JVMPlugin()
+from pywy.core.channel import CH_T
+from pywy.operators.base import PywyOperator
+from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMOperator
+
+
+class JVMExecutionOperator(PywyOperator):
+
+    dispatch_operator: WayangJVMOperator
+
+    def prefix(self) -> str:
+        return 'JVM'
+
+    def execute(self, inputs: List[Type[CH_T]], output: List[CH_T]):
+        pass

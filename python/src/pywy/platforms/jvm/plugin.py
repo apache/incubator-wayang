@@ -15,15 +15,17 @@
 #  limitations under the License.
 #
 
-from pywy.core.platform import Platform
+from pywy.core import Executor
 from pywy.core import Plugin
-from pywy.platforms.jvm.plugin import JVMPlugin
-from pywy.platforms.python.plugin import PythonPlugin
+from pywy.platforms.jvm.execution import JVMExecutor
+from pywy.platforms.jvm.mappings import JVM_OPERATOR_MAPPINGS
+from pywy.platforms.jvm.platform import JVMPlatform
 
-# define the basic plugins that can be used
-JAVA = Plugin({Platform('java')})
-SPARK = Plugin({Platform('spark')})
-FLINK = Plugin({Platform('flink')})
-# plugin for the python platform
-PYTHON = PythonPlugin()
-JVMs = JVMPlugin()
+
+class JVMPlugin(Plugin):
+
+    def __init__(self):
+        super(JVMPlugin, self).__init__({JVMPlatform()}, JVM_OPERATOR_MAPPINGS)
+
+    def get_executor(self) -> Executor:
+        return JVMExecutor()
