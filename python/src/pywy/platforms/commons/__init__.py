@@ -14,24 +14,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from typing import Iterable
-from pywy.core import (Channel, ChannelDescriptor)
-
-
-class PyIteratorChannel(Channel):
-
-    iterable: Iterable
-
-    def __init__(self):
-        Channel.__init__(self)
-
-    def provide_iterable(self) -> Iterable:
-        return self.iterable
-
-    def accept_iterable(self, iterable: Iterable) -> 'PyIteratorChannel':
-        self.iterable = iterable
-        return self
-
-
-PY_ITERATOR_CHANNEL_DESCRIPTOR = ChannelDescriptor(type(PyIteratorChannel()), False, False)
