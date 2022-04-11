@@ -24,14 +24,45 @@ from pywy.core.plugin import Plugin
 
 
 class PywyPlan:
+    """A PywyPlan consists of a set of :py:class:`pywy.operators.base.PywyOperator`
+
+    the operator inside PywyPlan follow a Directed acyclic graph(DAG), and describe
+    how the execution needs to be performed
+
+    Attributes
+    ----------
+    graph : :py:class:`pywy.graph.graph.WayangGraph`
+       Graph that describe the DAG, and it provides the iterable properties to
+       the PywyPlan
+    plugins : :obj:`set` of :py:class:`pywy.core.plugin.Plugin`
+        plugins is the set of possible platforms that can be uses to execute
+        the PywyPlan
+    sinks : :py:class:`typing.Iterable` of :py:class:`pywy.operators.sink.SinkOperator`
+        The list of sink operators, this describe the end of the pipeline, and
+        they are used to build the `graph`
+    """
     graph: WayangGraph
 
     def __init__(self, plugins: Set[Plugin], sinks: Iterable[SinkOperator]):
+        """basic Constructor of PywyPlan
+
+        this constructor set the plugins and sinks element, and it prepares
+        everything for been executed
+
+        Parameters
+        ----------
+        plugins
+            Description of `plugins`.
+        sinks
+            Description of `sinks`.
+        """
         self.plugins = plugins
         self.sinks = sinks
         self.set_graph()
 
     def set_graph(self):
+        """ it builds the :py:class:`pywy.graph.graph.WayangGraph` of the current PywyPlan
+        """
         self.graph = WGraphOfVec(self.sinks)
 
     def print(self):

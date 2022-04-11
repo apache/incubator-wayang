@@ -16,9 +16,20 @@
 #
 
 class Executor:
+    """ Executor is the responsible for execute the plan
 
+    Because in each platform the execution it will be different the plan
+    need to be executed in the different modes, and the Executor is
+    the responsible for execute in the given platform
+    """
     def __init__(self):
         pass
 
     def execute(self, plan):
+        """ execute is the method called for execute the givin plan
+
+        Returns
+        -------
+        does not return anything, but it will differ in some platforms
+        """
         pass
