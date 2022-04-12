@@ -15,21 +15,19 @@
 #  limitations under the License.
 #
 
-class Executor:
-    """ Executor is the responsible for execute the plan
+from pywy.core.core import TranslateContext
+from pywy.platforms.jvm.serializable.plan_writter import PlanWritter
+from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMOperator
 
-    Because in each platform the execution it will be different the plan
-    need to be executed in the different modes, and the Executor is
-    the responsible for execute in the given platform
-    """
+
+class JVMTranslateContext(TranslateContext):
+    plan_writer: PlanWritter
+
     def __init__(self):
-        pass
+        self.plan_writer = PlanWritter()
 
-    def execute(self, plan):
-        """ execute is the method called for execute the givin plan
+    def add_operator(self, op: WayangJVMOperator):
+        self.plan_writer.add_operator(op)
 
-        Returns
-        -------
-        does not return anything, but it will differ in some platforms
-        """
-        pass
+    def generate_request(self):
+        self.plan_writer.send_message_to_wayang()

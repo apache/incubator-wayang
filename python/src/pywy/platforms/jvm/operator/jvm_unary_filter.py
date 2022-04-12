@@ -19,49 +19,55 @@ from typing import Set, List, Type
 
 from pywy.core.channel import CH_T, ChannelDescriptor
 from pywy.operators.unary import FilterOperator
-from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
+from pywy.platforms.jvm.channels import DISPATCHABLE_CHANNEL_DESCRIPTOR, DispatchableChannel
+from pywy.platforms.jvm.operator.jvm_execution_operator import JVMExecutionOperator
 from pywy.platforms.commons.channels import (
-    COMMONS_CALLABLE_CHANNEL_DESCRIPTOR,
     CommonsCallableChannel
 )
-from pywy.platforms.python.channels import (
-    PyIteratorChannel,
-    PY_ITERATOR_CHANNEL_DESCRIPTOR,
-)
+from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMMappartitionOperator, WayangJVMOperator
 
 
-class PyFilterOperator(FilterOperator, PyExecutionOperator):
+class JVMFilterOperator(FilterOperator, JVMExecutionOperator):
 
     def __init__(self, origin: FilterOperator = None, **kwargs):
         predicate = None if origin is None else origin.predicate
         super().__init__(predicate)
-        pass
+        self.set_context(**kwargs)
 
     def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)
         udf = self.predicate
-        if isinstance(inputs[0], PyIteratorChannel):
-            py_in_iter_channel: PyIteratorChannel = inputs[0]
-            py_out_iter_channel: PyIteratorChannel = outputs[0]
-            py_out_iter_channel.accept_iterable(filter(udf, py_in_iter_channel.provide_iterable()))
-        elif isinstance(inputs[0], CommonsCallableChannel):
-            py_in_call_channel: CommonsCallableChannel = inputs[0]
-            py_out_call_channel: CommonsCallableChannel = outputs[0]
+        if isinstance(inputs[0], DispatchableChannel):
+            py_in_dispatch_channel: DispatchableChannel = inputs[0]
+            py_out_dispatch_channel: DispatchableChannel = outputs[0]
 
             def func(iterator):
                 return filter(udf, iterator)
 
-            py_out_call_channel.accept_callable(
+            py_out_dispatch_channel.accept_callable(
                 CommonsCallableChannel.concatenate(
                     func,
-                    py_in_call_channel.provide_callable()
+                    py_in_dispatch_channel.provide_callable()
                 )
             )
+
+            op: WayangJVMOperator = py_in_dispatch_channel.provide_dispatchable()
+
+            if isinstance(op, WayangJVMMappartitionOperator):
+                py_out_dispatch_channel.accept_dispatchable(op)
+                return
+
+            current: WayangJVMMappartitionOperator = WayangJVMMappartitionOperator(self.name)
+            # TODO check for the case where the index matter
+            op.connect_to(0, current, 0)
+            self.close_operator(op)
+            py_out_dispatch_channel.accept_dispatchable(current)
+
         else:
             raise Exception("Channel Type does not supported")
 
     def get_input_channeldescriptors(self) -> Set[ChannelDescriptor]:
-        return {PY_ITERATOR_CHANNEL_DESCRIPTOR, COMMONS_CALLABLE_CHANNEL_DESCRIPTOR}
+        return {DISPATCHABLE_CHANNEL_DESCRIPTOR}
 
     def get_output_channeldescriptors(self) -> Set[ChannelDescriptor]:
-        return {PY_ITERATOR_CHANNEL_DESCRIPTOR, COMMONS_CALLABLE_CHANNEL_DESCRIPTOR}
+        return {DISPATCHABLE_CHANNEL_DESCRIPTOR}

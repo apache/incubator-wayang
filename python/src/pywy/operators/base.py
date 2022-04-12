@@ -38,7 +38,9 @@ class PywyOperator:
                  input_type: TypeVar = None,
                  output_type: TypeVar = None,
                  input_length: Optional[int] = 1,
-                 output_length: Optional[int] = 1
+                 output_length: Optional[int] = 1,
+                 *args,
+                 **kwargs
                  ):
         self.name = (self.prefix() + name + self.postfix()).strip()
         self.inputSlot = [input_type]

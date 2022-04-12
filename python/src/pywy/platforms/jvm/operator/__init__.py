@@ -15,21 +15,14 @@
 #  limitations under the License.
 #
 
-class Executor:
-    """ Executor is the responsible for execute the plan
+from pywy.platforms.jvm.operator.jvm_execution_operator import JVMExecutionOperator
+from pywy.platforms.jvm.operator.jvm_unary_filter import JVMFilterOperator
+from pywy.platforms.jvm.operator.jvm_source_textfile import JVMTextFileSourceOperator
+from pywy.platforms.jvm.operator.jvm_sink_textfile import JVMTextFileSinkOperator
 
-    Because in each platform the execution it will be different the plan
-    need to be executed in the different modes, and the Executor is
-    the responsible for execute in the given platform
-    """
-    def __init__(self):
-        pass
-
-    def execute(self, plan):
-        """ execute is the method called for execute the givin plan
-
-        Returns
-        -------
-        does not return anything, but it will differ in some platforms
-        """
-        pass
+__ALL__ = [
+    JVMExecutionOperator,
+    JVMFilterOperator,
+    JVMTextFileSourceOperator,
+    JVMTextFileSinkOperator,
+]

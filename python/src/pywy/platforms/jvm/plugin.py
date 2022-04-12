@@ -15,21 +15,18 @@
 #  limitations under the License.
 #
 
-class Executor:
-    """ Executor is the responsible for execute the plan
+from pywy.core import Executor
+from pywy.core.core import Plugin
+from pywy.platforms.jvm.context import JVMTranslateContext
+from pywy.platforms.jvm.execution import JVMExecutor
+from pywy.platforms.jvm.mappings import JVM_OPERATOR_MAPPINGS
+from pywy.platforms.jvm.platform import JVMPlatform
 
-    Because in each platform the execution it will be different the plan
-    need to be executed in the different modes, and the Executor is
-    the responsible for execute in the given platform
-    """
+
+class JVMPlugin(Plugin):
+
     def __init__(self):
-        pass
+        super(JVMPlugin, self).__init__({JVMPlatform()}, JVM_OPERATOR_MAPPINGS, JVMTranslateContext())
 
-    def execute(self, plan):
-        """ execute is the method called for execute the givin plan
-
-        Returns
-        -------
-        does not return anything, but it will differ in some platforms
-        """
-        pass
+    def get_executor(self) -> Executor:
+        return JVMExecutor()

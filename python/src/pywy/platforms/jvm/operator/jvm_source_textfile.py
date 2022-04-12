@@ -18,42 +18,31 @@
 from typing import Set, List, Type
 
 from pywy.core.channel import (CH_T, ChannelDescriptor)
-from pywy.operators.sink import TextFileSink
-from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
-from pywy.platforms.python.channels import (
-    PyIteratorChannel,
-    PY_ITERATOR_CHANNEL_DESCRIPTOR
-)
+from pywy.operators.source import TextFileSource
+from pywy.platforms.jvm.channels import DISPATCHABLE_CHANNEL_DESCRIPTOR, DispatchableChannel
+from pywy.platforms.jvm.operator.jvm_execution_operator import JVMExecutionOperator
+from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMTextFileSource, WayangJVMOperator
 
 
-class PyTextFileSinkOperator(TextFileSink, PyExecutionOperator):
+class JVMTextFileSourceOperator(TextFileSource, JVMExecutionOperator):
 
-    def __init__(self, origin: TextFileSink = None, **kwargs):
+    def __init__(self, origin: TextFileSource = None, **kwargs):
         path = None if origin is None else origin.path
-        type_class = None if origin is None else origin.inputSlot[0]
-        end_line = None if origin is None else origin.end_line
-        super().__init__(path, type_class, end_line)
+        super().__init__(path)
+        self.set_context(**kwargs)
 
     def execute(self, inputs: List[Type[CH_T]], outputs: List[Type[CH_T]]):
         self.validate_channels(inputs, outputs)
-        if isinstance(inputs[0], PyIteratorChannel):
-            file = open(self.path, 'w')
-            py_in_iter_channel: PyIteratorChannel = inputs[0]
-            iterable = py_in_iter_channel.provide_iterable()
-
-            if self.inputSlot[0] == str and self.end_line is None:
-                for element in iterable:
-                    file.write(element)
-            else:
-                for element in iterable:
-                    file.write("{}{}".format(str(element), self.end_line))
-            file.close()
-
+        if isinstance(outputs[0], DispatchableChannel):
+            py_out_dispatch_channel: DispatchableChannel = outputs[0]
+            py_out_dispatch_channel.accept_dispatchable(
+                WayangJVMTextFileSource(self.name, self.path)
+            )
         else:
             raise Exception("Channel Type does not supported")
 
     def get_input_channeldescriptors(self) -> Set[ChannelDescriptor]:
-        return {PY_ITERATOR_CHANNEL_DESCRIPTOR}
+        raise Exception("The JVMTextFileSource does not support Input Channels")
 
     def get_output_channeldescriptors(self) -> Set[ChannelDescriptor]:
-        raise Exception("The PyTextFileSource does not support Output Channels")
+        return {DISPATCHABLE_CHANNEL_DESCRIPTOR}

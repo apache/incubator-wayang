@@ -17,12 +17,10 @@
 
 from typing import Set, List, cast
 
-from pywy.core import Translator
+from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
 from pywy.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
-from pywy.core import PywyPlan
-from pywy.core import Plugin
 
 
 class WayangContext:
@@ -94,13 +92,7 @@ class DataQuanta(GenericTco):
                 )
             )
         ]
-        plan = PywyPlan(self.context.plugins, last)
-
-        plug = self.context.plugins.pop()
-        trs: Translator = Translator(plug, plan)
-        new_plan = trs.translate()
-        plug.get_executor().execute(new_plan)
-        # TODO add the logic to execute the plan
+        PywyPlan(self.context.plugins, last).execute()
 
     def _connect(self, op: PO_T, port_op: int = 0) -> PywyOperator:
         self.operator.connect(0, op, port_op)

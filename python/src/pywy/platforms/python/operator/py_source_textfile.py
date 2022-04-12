@@ -17,19 +17,18 @@
 
 from typing import Set, List, Type
 
-from pywy.core.channel import CH_T
+from pywy.core.channel import (CH_T, ChannelDescriptor)
 from pywy.operators.source import TextFileSource
 from pywy.platforms.python.operator.py_execution_operator import PyExecutionOperator
 from pywy.platforms.python.channels import (
-    ChannelDescriptor,
     PyIteratorChannel,
     PY_ITERATOR_CHANNEL_DESCRIPTOR
-                                            )
+)
 
 
 class PyTextFileSourceOperator(TextFileSource, PyExecutionOperator):
 
-    def __init__(self, origin: TextFileSource = None):
+    def __init__(self, origin: TextFileSource = None, **kwargs):
         path = None if origin is None else origin.path
         super().__init__(path)
         pass

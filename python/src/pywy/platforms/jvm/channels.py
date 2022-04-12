@@ -14,24 +14,34 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from typing import Callable
 
-from typing import Iterable
 from pywy.core import (Channel, ChannelDescriptor)
+from pywy.exception import PywyException
+from pywy.platforms.commons.channels import CommonsCallableChannel
+from pywy.platforms.jvm.serializable.wayang_jvm_operator import WayangJVMOperator, WayangJVMMappartitionOperator
 
 
-class PyIteratorChannel(Channel):
+class DispatchableChannel(CommonsCallableChannel):
 
-    iterable: Iterable
+    operator: WayangJVMOperator
 
     def __init__(self):
         Channel.__init__(self)
+        self.udf = None
+        self.operator = None
 
-    def provide_iterable(self) -> Iterable:
-        return self.iterable
+    def provide_dispatchable(self, do_wrapper: bool = False) -> WayangJVMOperator:
+        if self.operator is None:
+            raise PywyException("The operator was not define")
+        if do_wrapper:
+            self.operator.udf = self.udf
 
-    def accept_iterable(self, iterable: Iterable) -> 'PyIteratorChannel':
-        self.iterable = iterable
+        return self.operator
+
+    def accept_dispatchable(self, operator: WayangJVMOperator) -> 'WayangJVMOperator':
+        self.operator = operator
         return self
 
 
-PY_ITERATOR_CHANNEL_DESCRIPTOR = ChannelDescriptor(type(PyIteratorChannel()), False, False)
+DISPATCHABLE_CHANNEL_DESCRIPTOR = ChannelDescriptor(type(DispatchableChannel()), True, True)
