@@ -38,5 +38,8 @@ header:
     - '**/.gitmodules'
     - '**/.github/actions/todo-to-issue-action'
     - '**/org/apache/wayang/commons/util/profiledb/**'
+    - '**/.rat-excludes'
+    - 'python/**/*.input'
+    - '**/README.md'
 
   comment: on-failure
