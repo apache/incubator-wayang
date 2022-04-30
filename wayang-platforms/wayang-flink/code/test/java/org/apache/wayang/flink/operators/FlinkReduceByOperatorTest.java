@@ -34,6 +34,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Test suite for {@link FlinkReduceByOperator}.
+ */
 public class FlinkReduceByOperatorTest extends FlinkOperatorTestBase{
     @Test
     public void testExecution() throws Exception {

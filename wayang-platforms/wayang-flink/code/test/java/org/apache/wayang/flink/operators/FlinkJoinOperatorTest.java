@@ -31,6 +31,9 @@ import java.util.Arrays;
 import java.util.List;
 
 //problematic
+/**
+ * Test suite for {@link FlinkJoinOperator}.
+ */
 public class FlinkJoinOperatorTest extends FlinkOperatorTestBase{
     @Test
     public void testExecution() throws Exception {

@@ -29,6 +29,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Test suite for {@link FlinkGlobalMaterializedGroupOperator}.
+ */
 public class FlinkGlobalMaterializedGroupOperatorTest extends FlinkOperatorTestBase{
 
     @Test
