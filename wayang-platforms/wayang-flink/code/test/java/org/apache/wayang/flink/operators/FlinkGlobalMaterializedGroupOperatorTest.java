@@ -18,45 +18,44 @@
 
 package org.apache.wayang.flink.operators;
 
-import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
- * Test suite for {@link FlinkCartesianOperator}.
+ * Test suite for {@link FlinkGlobalMaterializedGroupOperator}.
  */
-public class FlinkCartesianOperatorTest extends FlinkOperatorTestBase {
+public class FlinkGlobalMaterializedGroupOperatorTest extends FlinkOperatorTestBase{
 
     @Test
     public void testExecution() throws Exception {
         // Prepare test data.
-        DataSetChannel.Instance input0 = this.createDataSetChannelInstance(Arrays.asList(1, 2));
-        DataSetChannel.Instance input1 = this.createDataSetChannelInstance(Arrays.asList("a", "b", "c"));
-        DataSetChannel.Instance output = this.createDataSetChannelInstance();
+        Collection<Integer> inputCollection = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
-        // Build the Cartesian operator.
-        FlinkCartesianOperator<Integer, String> cartesianOperator =
-                new FlinkCartesianOperator<>(
+        // Build the reduce operator.
+        FlinkGlobalMaterializedGroupOperator<Integer> globalGroup =
+                new FlinkGlobalMaterializedGroupOperator<>(
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        DataSetType.createDefaultUnchecked(String.class));
-
-        // Set up the ChannelInstances.
-        final ChannelInstance[] inputs = new ChannelInstance[]{input0, input1};
-        final ChannelInstance[] outputs = new ChannelInstance[]{output};
+                        DataSetType.createGroupedUnchecked(Iterable.class)
+                );
 
         // Execute.
-        this.evaluate(cartesianOperator, inputs, outputs);
+        ChannelInstance[] inputs = new DataSetChannel.Instance[]{this.createDataSetChannelInstance(inputCollection)};
+        ChannelInstance[] outputs = new DataSetChannel.Instance[]{this.createDataSetChannelInstance()};
+        this.evaluate(globalGroup, inputs, outputs);
 
         // Verify the outcome.
-        final List<Tuple2<Integer, String>> result = output.<Tuple2<Integer, String>>provideDataSet().collect();
-        Assert.assertEquals(6, result.size());
-        Assert.assertEquals(result.get(0), new Tuple2(1, "a"));
+        final Collection<Iterable<Integer>> result = ((DataSetChannel.Instance) outputs[0]).<Iterable<Integer>>provideDataSet().collect();
+        Assert.assertEquals(1, result.size());
+        Assert.assertEquals(inputCollection, result.iterator().next());
 
     }
+
 }

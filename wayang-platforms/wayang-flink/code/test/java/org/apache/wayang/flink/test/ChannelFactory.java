@@ -19,6 +19,7 @@
 package org.apache.wayang.flink.test;
 
 import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.flink.channels.DataSetChannel;
@@ -30,6 +31,9 @@ import java.util.Collection;
 
 import static org.mockito.Mockito.mock;
 
+/**
+ * Utility to create {@link Channel}s in tests.
+ */
 public class ChannelFactory {
 
     private static FlinkExecutor flinkExecutor;

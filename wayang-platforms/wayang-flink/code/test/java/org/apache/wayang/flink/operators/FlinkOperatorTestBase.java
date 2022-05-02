@@ -40,6 +40,9 @@ import java.util.Collection;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Test base for {@link FlinkExecutionOperator} tests.
+ */
 public class FlinkOperatorTestBase {
 
     protected Configuration configuration;
