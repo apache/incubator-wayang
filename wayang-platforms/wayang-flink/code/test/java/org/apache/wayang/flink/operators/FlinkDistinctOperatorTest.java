@@ -54,11 +54,10 @@ public class FlinkDistinctOperatorTest extends FlinkOperatorTestBase{
 
         // Verify the outcome.
         final List<Integer> result = ((DataSetChannel.Instance) outputs[0]).<Integer>provideDataSet().collect();
-        for(Object e : result){
-            System.out.println(e);
-        }
+
         Assert.assertEquals(4, result.size());
-        Assert.assertEquals(Arrays.asList(0, 1, 6, 2), result);
+        result.sort((a, b) -> a - b);
+        Assert.assertEquals(Arrays.asList(0, 1, 2, 6), result);
 
     }
 }

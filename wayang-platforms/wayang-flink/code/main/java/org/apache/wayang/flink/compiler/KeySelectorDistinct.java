@@ -18,6 +18,7 @@
 
 package org.apache.wayang.flink.compiler;
 
+import java.io.IOException;
 import org.apache.flink.api.java.functions.KeySelector;
 
 import java.io.ByteArrayOutputStream;
@@ -36,7 +37,7 @@ public class KeySelectorDistinct<T> implements KeySelector<T, String>, Serializa
             ObjectOutputStream objStream = new ObjectOutputStream(b);
             objStream.writeObject(value);
             return Base64.getEncoder().encodeToString(b.toByteArray());
-        }finally {
+        }catch (IOException e) {
             return "";
         }
     }
