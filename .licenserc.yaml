@@ -30,6 +30,7 @@ header:
     - .gitattributes
     - '**/*.md'
     - '**/*.json'
+    - '**/*.csv'
     - '**/*.iml'
     - '**/*.input'
     - '**/*.lock'
