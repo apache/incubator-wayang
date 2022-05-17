@@ -1252,6 +1252,8 @@
                         <exclude>**/*pb2.py</exclude>
                         <exclude>**/.rat-excludes</exclude>
                         <exclude>**/*.input</exclude>
+                      
+                        <exclude>**/*.csv</exclude>
                     </excludes>
                 </configuration>
             </plugin>
