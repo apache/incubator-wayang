@@ -19,6 +19,7 @@
 package org.apache.wayang.api.graph
 
 import org.apache.wayang.api._
+import org.apache.wayang.api.dataquanta.DataQuanta
 import org.apache.wayang.basic.data.Record
 import org.apache.wayang.basic.operators.{MapOperator, PageRankOperator}
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval

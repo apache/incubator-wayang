@@ -19,7 +19,8 @@
 package org.apache.wayang.apps.benchmark
 
 import org.apache.wayang.commons.util.profiledb.model.Experiment
-import org.apache.wayang.api.{DataQuanta, PlanBuilder}
+import org.apache.wayang.api.dataquanta.DataQuanta
+import org.apache.wayang.api.PlanBuilder
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan.WayangPlan
 

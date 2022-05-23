@@ -18,6 +18,7 @@
 
 package org.apache.wayang.api
 
+import org.apache.wayang.api.dataquanta.DataQuanta
 import org.apache.wayang.basic.data.Record
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators.MapOperator

@@ -20,7 +20,8 @@ package org.apache.wayang.apps.crocopr
 
 import org.apache.wayang.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper, StdOut}
 import org.apache.wayang.api.graph._
-import org.apache.wayang.api.{DataQuanta, PlanBuilder}
+import org.apache.wayang.api.dataquanta.DataQuanta
+import org.apache.wayang.api.PlanBuilder
 import org.apache.wayang.apps.util.ProfileDBHelper
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.exception.WayangException

@@ -23,10 +23,11 @@ package org.apache.wayang.api
  */
 import java.util.{Collection => JavaCollection}
 import org.apache.commons.lang3.Validate
-import org.apache.wayang.api.dataquantabuilder.{CustomOperatorDataQuantaBuilder, LoadCollectionDataQuantaBuilder, UnarySourceDataQuantaBuilder}
+import org.apache.wayang.api.dataquanta.builder.{CustomOperatorDataQuantaBuilder, LoadCollectionDataQuantaBuilder, UnarySourceDataQuantaBuilder}
+import org.apache.wayang.api.dataquanta.{DataQuanta, DataQuantaBuilder}
 import org.apache.wayang.api.util.DataQuantaBuilderCache
 import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.{TableSource, TextFileSource}
+import org.apache.wayang.basic.operators.{TableSource, TextFileSource, ObjectFileSource}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
@@ -62,6 +63,15 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     */
   def readTextFile(url: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
   createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
+
+  /**
+   * Read a object's file and provide it as a dataset of [[Object]]s.
+   *
+   * @param url the URL of the Object's file
+   * @return [[DataQuanta]] representing the file
+   */
+  def readObjectFile[T: ClassTag](url: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, T], T] =
+    createSourceBuilder(new ObjectFileSource(url, dataSetType[T]))
 
   /**
     * Reads a database table and provides them as a dataset of [[Record]]s.

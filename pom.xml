@@ -1228,7 +1228,11 @@
                         <exclude>**/.settings/**</exclude>
                         <exclude>**/.classpath</exclude>
                         <exclude>**/.factorypath</exclude>
-                        
+
+                        <!-- Python related files -->
+                        <exclude>**/venv/**</exclude>
+                        <exclude>**/.pytest_cache/**</exclude>
+
                         <!--RAT files-->
                         <exclude>**/apache-rat-0.13/**</exclude>
 

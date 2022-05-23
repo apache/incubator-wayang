@@ -18,9 +18,10 @@
 
 package org.apache.wayang
 
+import org.apache.wayang.api.dataquanta.{DataQuanta, DataQuantaFactory, JoinedDataQuanta}
+
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
-
 import org.apache.wayang.basic.data.{Record, Tuple2 => WayangTuple2}
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
@@ -35,11 +36,7 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**
-  * Provides implicits for the basic Wayang API.
-  */
-/**
- * TODO: add the documentation in the implicit of org.apache.wayang.api
- * labels: documentation,todo
+ * Provides implicits for the basic Wayang API.
  */
 package object api {
 
@@ -145,10 +142,12 @@ package object api {
 
   implicit def createPlanBuilder(wayangContext: WayangContext): PlanBuilder = new PlanBuilder(wayangContext)
 
-  implicit private[api] def wrap[Out: ClassTag](op: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] =
-    new DataQuanta[Out](op)
+  implicit private[api] def wrap[Out: ClassTag](op: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] = {
+    DataQuantaFactory.build[Out](op)
+  }
 
-  implicit def elevateRecordDataQuanta(dataQuanta: DataQuanta[Record]): RecordDataQuanta =
+  implicit def elevateRecordDataQuanta(dataQuanta: DataQuanta[Record]): RecordDataQuanta = {
     new RecordDataQuanta(dataQuanta)
+  }
 
 }

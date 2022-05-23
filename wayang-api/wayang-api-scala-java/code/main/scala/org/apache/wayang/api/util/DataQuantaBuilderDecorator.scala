@@ -18,7 +18,8 @@
 
 package org.apache.wayang.api.util
 
-import org.apache.wayang.api.{DataQuanta, DataQuantaBuilder, JavaPlanBuilder}
+import org.apache.wayang.api.JavaPlanBuilder
+import org.apache.wayang.api.dataquanta.{DataQuanta, DataQuantaBuilder}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator
 import org.apache.wayang.core.platform.Platform
