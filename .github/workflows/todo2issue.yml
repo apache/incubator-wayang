@@ -18,9 +18,9 @@ name: to-do to issue workflow
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-    types: [closed]
+#   pull_request:
+#     branches: [ main ]
+#     types: [closed]
 permissions:
   issues: write
 jobs:
