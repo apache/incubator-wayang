@@ -1,3 +1,4 @@
+.gitignore
 .rat-excludes
 venv/*
 10e*.input

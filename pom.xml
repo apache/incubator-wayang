@@ -1109,7 +1109,8 @@
                     <configuration>
                         <detectLinks>false</detectLinks>
                         <detectJavaApiLink>true</detectJavaApiLink>
-                        <additionalparam>-Xdoclint:none</additionalparam>
+                        <doclint>none</doclint>
+<!--                    <additionalparam>-Xdoclint:none</additionalparam>-->
                     </configuration>
                 </plugin>
 
