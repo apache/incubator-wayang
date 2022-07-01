@@ -12,7 +12,7 @@
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Apache%20Wayang%20enables%20cross%20platform%20data%20processing,%20star%20it%20via:%20&url=https://github.com/apache/incubator-wayang&via=apachewayang&hashtags=dataprocessing,bigdata,analytics,hybridcloud,developers) [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/ApacheWayang?style=social)](https://www.reddit.com/r/ApacheWayang/)
 
 
-# Description
+## Description
 
 In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) is a *cross-platform data processing system*: Users can specify any data processing application using one of Wayang's APIs and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
 
@@ -38,9 +38,12 @@ Wayang is available via Maven Central. To use it with Maven, include the followi
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
 * `wayang-core`: provides core data structures and the optimizer (required)
 * `wayang-basic`: provides common operators and data types for your apps (recommended)
-* `wayang-api`: provides an easy-to-use Scala and Java API to assemble Wayang plans (recommended)
+* `wayang-api-scala-java_2.12`: provides an easy-to-use Scala and Java API to assemble Wayang plans (recommended)
 * `wayang-java`, `wayang-spark`, `wayang-graphchi`, `wayang-sqlite3`, `wayang-postgres`: adapters for the various supported processing platforms
 * `wayang-profiler`: provides functionality to learn operator and UDF cost functions from historical execution data
+
+> **NOTE:** The module `wayang-api-scala-java_2.12` is intended to be used with Java 11 and Scala 2.12. If you have the Java 8 version, you need to use the `wayang-api-scala-java_2.11` module.
+
 
 For the sake of version flexibility, you still have to include in the POM file your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
 
@@ -56,19 +59,15 @@ In addition, you can obtain the most recent snapshot version of Wayang via Sonat
 ```
 
 ### Prerequisites
-Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to run Wayang it is sufficient to have Java 8 or Java 11 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
-```
-Java 8
-[Scala 2.11]
-```
-or
+Apache Wayang (incubating) is built with Java 1 and Scala 2.12. However, to run Wayang it is sufficient to have just Java 11 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
 ```
 Java 11
 [Scala 2.12]
 ```
-> **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
 
-> **NOTE:** Currently Apache Wayang (incubating) is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
+> **NOTE:** Wayang also works with Java 8 and Scala 2.11. If you want to use these versions, you will have to re-build Wayang (see below).
+
+> **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
 
 > **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to either Java 8 or Java 11 as the prerequisite checker script currently supports up to Java 11 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running './mvnw clean install' before opening the project using IntelliJ.
 
@@ -327,11 +326,8 @@ object kmeans {
 
 ## Contributing
 [Contact](dev@wayang.apache.org) us if you are looking for tasks to contribute.
-<!-- Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.-->
 
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+When contributing code please adhere with the [Apache code of conduct](https://www.apache.org/foundation/policies/conduct.html).
 
 ## Authors
 
