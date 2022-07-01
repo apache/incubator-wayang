@@ -1,4 +1,6 @@
 # Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
+#### The first cross-platform data processing system
+
 ![Travis branch](https://img.shields.io/travis/com/apache/incubator-wayang/main?style=for-the-badge)
 [![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg)
 [![License](https://img.shields.io/github/license/apache/incubator-wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
@@ -9,7 +11,8 @@
 
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Apache%20Wayang%20enables%20cross%20platform%20data%20processing,%20star%20it%20via:%20&url=https://github.com/apache/incubator-wayang&via=apachewayang&hashtags=dataprocessing,bigdata,analytics,hybridcloud,developers) [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/ApacheWayang?style=social)](https://www.reddit.com/r/ApacheWayang/)
 
-#### The API first cross-platform data processing system
+
+# Description
 
 In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) is a *cross-platform data processing system*: Users can specify any data processing application using one of Wayang's APIs and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
 
@@ -22,19 +25,9 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
 
-## How to use Wayang
+## Getting Started
 
-**Requirements.**
-Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have installed Apache Hadoop (the version that you want). Please also consider that processing platforms employed by Wayang might have further requirements.
-
-> **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
-
-> **NOTE:** Currently Apache Wayang (incubating) is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
-
-> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to either Java 8 or Java 11 as the prerequisite checker script currently supports up to Java 11 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running './mvnw clean install' before opening the project using IntelliJ.
-
-**Get Wayang.**
-Wayang is available via Maven Central. To use it with Maven, for instance, include the following into your POM file:
+Wayang is available via Maven Central. To use it with Maven, include the following into your POM file:
 ```xml
 <dependency> 
   <groupId>org.apache.wayang</groupId>
@@ -49,9 +42,9 @@ Note the `***`: Wayang ships with multiple modules that can be included in your 
 * `wayang-java`, `wayang-spark`, `wayang-graphchi`, `wayang-sqlite3`, `wayang-postgres`: adapters for the various supported processing platforms
 * `wayang-profiler`: provides functionality to learn operator and UDF cost functions from historical execution data
 
-For the sake of version flexibility, you still have to include your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
+For the sake of version flexibility, you still have to include in the POM file your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
 
-In addition, you can obtain the most recent snapshot version of Wayang via Sonatype's snapshot repository. Just include
+In addition, you can obtain the most recent snapshot version of Wayang via Sonatype's snapshot repository. Just include:
 ```xml
 <repositories>
   <repository>
@@ -62,12 +55,34 @@ In addition, you can obtain the most recent snapshot version of Wayang via Sonat
 </repositories>
 ```
 
+### Prerequisites
+Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to run Wayang it is sufficient to have Java 8 or Java 11 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+```
+Java 8
+[Scala 2.11]
+```
+or
+```
+Java 11
+[Scala 2.12]
+```
+> **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
+
+> **NOTE:** Currently Apache Wayang (incubating) is updating Java and Scala, consider that to be able to utilize Scala 2.12 you will need to install Java 11 in your enviroment
+
+> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to either Java 8 or Java 11 as the prerequisite checker script currently supports up to Java 11 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running './mvnw clean install' before opening the project using IntelliJ.
+
+
+### Building
+
 If you need to rebuild Wayang, e.g., to use a different Scala version, you can simply do so via Maven:
 
 1. Adapt the version variables (e.g., `spark.version`) in the main `pom.xml` file.
 2. Build Wayang with the adapted versions.
     ```shell
-    $ ./mvnw clean install
+   git clone https://github.com/apache/incubator-wayang.git
+   cd incubator-wayang
+   ./mvnw clean install -DskipTests
     ```
 > **NOTE:** If you receive an error about not finding `MathExBaseVisitor`, then the problem might be that you are trying to build from IntelliJ, without Maven. MathExBaseVisitor is generated code, and a Maven build should generate it automatically.
 
@@ -81,80 +96,16 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
 To activate these profiles, you need to specify them when running maven, i.e.,
 
 ```shell
-./mvnw clean install -P<profile name>
+./mvnw clean install -DskipTests -P<profile name> 
 ```
 
-**Configure Wayang.** In order for Wayang to work properly, it is necessary to tell Wayang about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Wayang right away, we recommend to create a properties file to adapt the configuration where necessary. To have Wayang use that configuration transparently, just run you app via
+## Running the tests
+In the incubator-wayang root folder run:
 ```shell
-$ java -Dwayang.configuration=url://to/my/wayang.properties ...
+./mvnw test
 ```
 
-You can find the most relevant settings in the following:
-* General settings
-  * `wayang.core.log.enabled (= true)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
-  * `wayang.core.log.executions (= ~/.wayang/executions.json)` where to log execution times of operator groups
-  * `wayang.core.log.cardinalities (= ~/.wayang/cardinalities.json)` where to log cardinality measurements
-  * `wayang.core.optimizer.instrumentation (= org.apache.wayang.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Wayang plans; other options are `org.apache.wayang.core.profiling.NoInstrumentationStrategy` and `org.apache.wayang.core.profiling.FullInstrumentationStrategy`
-  * `wayang.core.optimizer.reoptimize (= false)`: whether to progressively optimize Wayang plans
-  * `wayang.basic.tempdir (= file:///tmp)`: where to store temporary files, in particular for inter-platform communication
-* Java Streams
-  * `wayang.java.cpu.mhz (= 2700)`: clock frequency of processor the JVM runs on in MHz
-  * `wayang.java.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to JVM in ms/MB
-* Apache Spark
-  * `spark.master (= local)`: Spark master
-    * various other Spark settings are supported, e.g., `spark.executor.memory`, `spark.serializer`, ...
-  * `wayang.spark.cpu.mhz (= 2700)`: clock frequency of processor the Spark workers run on in MHz
-  * `wayang.spark.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to the Spark workers in ms/MB
-  * `wayang.spark.network.ms-per-mb (= 8.6)`: average network throughput of the Spark workers in ms/MB
-  * `wayang.spark.init.ms (= 4500)`: time it takes Spark to initialize in ms
-* GraphChi
-  * `wayang.graphchi.cpu.mhz (= 2700)`: clock frequency of processor GraphChi runs on in MHz
-  * `wayang.graphchi.cpu.cores (= 2)`: number of cores GraphChi runs on
-  * `wayang.graphchi.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to GraphChi in ms/MB
-* SQLite
-  * `wayang.sqlite3.jdbc.url`: JDBC URL to use SQLite
-  * `wayang.sqlite3.jdbc.user`: optional user name
-  * `wayang.sqlite3.jdbc.password`: optional password
-  * `wayang.sqlite3.cpu.mhz (= 2700)`: clock frequency of processor SQLite runs on in MHz
-  * `wayang.sqlite3.cpu.cores (= 2)`: number of cores SQLite runs on
-* PostgreSQL
-  * `wayang.postgres.jdbc.url`: JDBC URL to use PostgreSQL
-  * `wayang.postgres.jdbc.user`: optional user name
-  * `wayang.postgres.jdbc.password`: optional password
-  * `wayang.postgres.cpu.mhz (= 2700)`: clock frequency of processor PostgreSQL runs on in MHz
-  * `wayang.postgres.cpu.cores (= 2)`: number of cores PostgreSQL runs on
-
-**Code with Wayang.** The recommended way to specify your apps with Wayang is via its Scala or Java API from the `wayang-api` module. You can find examples below.
-
-**Learn cost functions.**
-Wayang provides a utility to learn cost functions from historical execution data.
-Specifically, Wayang can learn configurations for load profile estimators (that estimate CPU load, disk load etc.) for both operators and UDFs, as long as the configuration provides a template for those estimators.
-As an example, the `JavaMapOperator` draws its load profile estimator configuration via the configuration key `wayang.java.map.load`.
-Now, it is possible to specify a load profile estimator template in the configuration under the key `<original key>.template`, e.g.:
-```xml
-wayang.java.map.load.template = {\
-  "in":1, "out":1,\
-  "cpu":"?*in0"\
-}
-```
-This template specifies a load profile estimator that expects (at least) one input cardinality and one output cardinality.
-Further, it models a CPU load that is proportional to the input cardinality.
-However, more complex functions are possible.
-In particular, you can use
-* the variables `in0`, `in1`, ... and `out0`, `out1`, ... to incorporate the input and output cardinalities, respectively;
-* operator properties, such as `numIterations` for the `PageRankOperator` implementations;
-* the operators `+`, `-`, `*`, `/`, `%`, `^`, and parantheses;
-* the functions `min(x0, x1, ...))`, `max(x0, x1, ...)`, `abs(x)`, `log(x, base)`, `ln(x)`, `ld(x)`;
-* and the constants `e` and `pi`.
-
-While Wayang specifies templates for all execution operators, you will need to specify that your UDFs are modelled by some configuration-based cost function (see the k-means example below) and create the according initial specification and template yourself.
-Once, you gathered execution data, you can run
-```shell
-java ... org.apache.wayang.profiler.ga.GeneticOptimizerApp [configuration URL [execution log]]
-```
-This app will try to find appropriate values for the question marks (`?`) in the load profile estimator templates to fit the gathered execution data and ready-made configuration entries for the load profile estimators.
-You can then copy them into your configuration.
-
+## Example Applications
 ### WordCount
 
 The "Hello World!" of data processing systems is the wordcount.
@@ -368,6 +319,24 @@ object kmeans {
 }
 ```
 
+## Built With
+
+* [Java 8](https://www.oracle.com/java/technologies/java8.html) 
+* [Scala 2.11](https://www.scala-lang.org/download/2.11.0.html)
+* [Maven](https://maven.apache.org/)
+
+## Contributing
+[Contact](dev@wayang.apache.org) us if you are looking for tasks to contribute.
+<!-- Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.-->
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+
+## Authors
+
+See the list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors) who participated in this project.
+
 ## License
 
 All files in this repository are licensed under the Apache Software License 2.0
@@ -385,3 +354,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+## Acknowledgements
+The [Logo](http://wayang.apache.org/assets/img/logo/Apache_Wayang/Apache_Wayang.pdf) was donated by [Brian Vera](https://www.linkedin.com/in/brian-vera-hablares-17a663b8/).
