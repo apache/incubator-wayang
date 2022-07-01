@@ -320,8 +320,8 @@ object kmeans {
 
 ## Built With
 
-* [Java 8](https://www.oracle.com/java/technologies/java8.html) 
-* [Scala 2.11](https://www.scala-lang.org/download/2.11.0.html)
+* [Java 11](https://www.oracle.com/de/java/technologies/javase/jdk11-archive-downloads.html) 
+* [Scala 2.12](https://www.scala-lang.org/download/2.12.0.html)
 * [Maven](https://maven.apache.org/)
 
 ## Contributing
