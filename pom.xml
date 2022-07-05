@@ -1517,5 +1517,6 @@
         <module>wayang-plugins</module>
         <module>wayang-resources</module>
         <module>wayang-benchmark</module>
+        <module>wayang-assembly</module>
     </modules>
 </project>
