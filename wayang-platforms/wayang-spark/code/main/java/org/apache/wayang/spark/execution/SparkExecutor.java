@@ -195,6 +195,7 @@ public class SparkExecutor extends PushExecutorTemplate {
     @Override
     public void dispose() {
         super.dispose();
+	this.sparkContextReference.get().stop();
         this.sparkContextReference.noteDiscardedReference(true);
     }
 

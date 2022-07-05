@@ -119,15 +119,16 @@ class Transform implements FunctionDescriptor.SerializableFunction<String, doubl
 
     @Override
     public double[] apply(String line) {
-        String[] pointStr = line.split(" ");
+        String[] pointStr = line.split(",");
         double[] point = new double[features + 1];
         point[0] = Double.parseDouble(pointStr[0]);
         for (int i = 1; i < pointStr.length; i++) {
-            if (pointStr[i].equals("")) {
+/*            if (pointStr[i].equals("")) {
                 continue;
             }
             String kv[] = pointStr[i].split(":", 2);
-            point[Integer.parseInt(kv[0]) - 1] = Double.parseDouble(kv[1]);
+            point[Integer.parseInt(kv[0]) - 1] = Double.parseDouble(kv[1]);*/
+            point[i] = Double.parseDouble(pointStr[i]);
         }
         return point;
     }
