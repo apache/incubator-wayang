@@ -83,7 +83,12 @@ public class SparkPlatform extends Platform {
             "spark.io.compression.codec",
             "spark.driver.memory",
             "spark.executor.heartbeatInterval",
-            "spark.network.timeout"
+            "spark.network.timeout",
+    };
+
+    private static final String[] OPTIONAL_HADOOP_PROPERTIES = {
+        "fs.s3.awsAccessKeyId",
+        "fs.s3.awsSecretAccessKey"
     };
 
     /**
@@ -121,6 +126,7 @@ public class SparkPlatform extends Platform {
                     "There is already a SparkContext (master: {}): , which will be reused. " +
                             "Not all settings might be effective.", sparkContext.getConf().get("spark.master"));
             sparkConf = sparkContext.getConf();
+
         } else {
             sparkConf = new SparkConf(true);
         }
@@ -133,6 +139,7 @@ public class SparkPlatform extends Platform {
                     value -> sparkConf.set(property, value)
             );
         }
+
         if (job.getName() != null) {
             sparkConf.set("spark.app.name", job.getName());
         }
@@ -141,6 +148,14 @@ public class SparkPlatform extends Platform {
             this.sparkContextReference = new SparkContextReference(job.getCrossPlatformExecutor(), new JavaSparkContext(sparkConf));
         }
         final JavaSparkContext sparkContext = this.sparkContextReference.get();
+
+        org.apache.hadoop.conf.Configuration hadoopconf = sparkContext.hadoopConfiguration();
+        for (String property: OPTIONAL_HADOOP_PROPERTIES){
+            System.out.println(property);
+            configuration.getOptionalStringProperty(property).ifPresent(
+                value -> hadoopconf.set(property, value)
+            );
+        }
 
         // Set up the JAR files.
         //sparkContext.clearJars();
