@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Obtain the realpath of file, even if called using a symlink
+get_realpath() {
+    CANDIDATE_SRC="$1"
+    while [ -L "${CANDIDATE_SRC}" ]; do # resolve ${CANDIDATE_SRC} until is not a symlink
+      DIR=$( cd -P "$( dirname "${CANDIDATE_SRC}" )" >/dev/null 2>&1 && pwd )
+      CANDIDATE_SRC=$(readlink "${CANDIDATE_SRC}")
+      # if $CANDIDATE_SRC was a relative symlink, it resolve the link
+      [[ ${CANDIDATE_SRC} != /* ]] && CANDIDATE_SRC=$DIR/${CANDIDATE_SRC}
+    done
+    cd -P "$( dirname "${CANDIDATE_SRC}" )/.." >/dev/null 2>&1 && pwd
+}
+
+# Short circuit if the user already has this set.
+if [ -z "${WAYANG_HOME}" ]; then
+  export WAYANG_HOME=$( get_realpath ${BASH_SOURCE[0]} )
+fi
+
+if [ -z "${SPARK_HOME}" ]; then
+  echo "The variable SPARK_HOME it needs to be setup" >&2
+  exit 1
+fi
+
+if [ -z "${FLINK_HOME}" ]; then
+  echo "The variable FLINK_HOME it needs to be setup" >&2
+  exit 1
+fi
+
+if [ -z "${HADOOP_HOME}" ]; then
+  echo "The variable HADOOP_HOME it needs to be setup" >&2
+  exit 1
+fi
+
+# Find the java binary
+if [ -n "${JAVA_HOME}" ]; then
+  RUNNER="${JAVA_HOME}/bin/java"
+else
+  if [ "$(command -v java)" ]; then
+    RUNNER="java"
+  else
+    echo "JAVA_HOME is not set" >&2
+    exit 1
+  fi
+fi
+
+# Find Spark jars.
+if [ -d "${SPARK_HOME}/jars" ]; then
+  SPARK_JARS_DIR="${SPARK_HOME}/jars"
+fi
+
+# Find Hadoop jars.
+if [ -d "${HADOOP_HOME}/jars" ]; then
+  HADOOP_HOME="${HADOOP_HOME}/jars"
+fi
+
+
