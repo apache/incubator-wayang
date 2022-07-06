@@ -41,9 +41,18 @@
     </fileSet>
     <fileSet>
       <directory>
+        ${project.parent.basedir}/conf/
+      </directory>
+      <outputDirectory>conf</outputDirectory>
+      <includes>
+        <include>**/*</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>
         ${project.parent.basedir}/assembly/target/
       </directory>
-      <outputDirectory>wayangs</outputDirectory>
+      <outputDirectory>jars</outputDirectory>
       <includes>
         <include>*</include>
       </includes>
