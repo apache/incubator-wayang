@@ -16,6 +16,11 @@
 # limitations under the License.
 #
 
+if [ -z "${CLASS}" ]; then
+    echo "Target Class for execution was not provided"
+    exit 1
+fi
+
 # Obtain the realpath of file, even if called using a symlink
 get_realpath() {
     CANDIDATE_SRC="$1"
@@ -67,7 +72,30 @@ fi
 
 # Find Hadoop jars.
 if [ -d "${HADOOP_HOME}/jars" ]; then
-  HADOOP_HOME="${HADOOP_HOME}/jars"
+  HADOOP_JARS_DIR="${HADOOP_HOME}/share/hadoop/common/*:${HADOOP_HOME}/share/hadoop/common/lib/*"
 fi
 
+
+WAYANG_CODE = "${WAYANG_HOME}/lib"
+WAYANG_CONF = "${WAYANG_HOME}/conf"
+
+# Bootstrap the classpath.
+WAYANG_CLASSPATH="${WAYANG_CONF}:${WAYANG_CODE}/*"
+
+WAYANG_CLASSPATH="${WAYANG_CLASSPATH}:${SPARK_JARS_DIR}/*:${HADOOP_JARS_DIR}"
+
+FLAGS=""
+if [ "${FLAG_LOG}" = "true" ]; then
+	FLAGS="${FLAGS} -Dlog4j.configuration=file://${WAYANG_CONF}/log4j.properties"
+fi
+
+if [ "${FLAG_WAYANG}" = "true" ]; then
+	FLAGS="${FLAGS} -Dwayang.configuration=file://${WAYANG_CONF}/wayang.properties"
+fi
+
+if [ -n "${OTHER_FLAGS}" ]; then
+	FLAGS="${FLAGS} ${OTHER_FLAGS}"
+fi
+
+RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS $*
 
