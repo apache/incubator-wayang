@@ -22,6 +22,10 @@ import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.wayang.spark.plugin.SparkBasicPlugin;
 import org.apache.wayang.spark.plugin.SparkConversionPlugin;
 import org.apache.wayang.spark.plugin.SparkGraphPlugin;
+import org.apache.wayang.spark.plugin.SparkMultiPlugin;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Register for relevant components of this module.
@@ -29,6 +33,8 @@ import org.apache.wayang.spark.plugin.SparkGraphPlugin;
 public class Spark {
 
     private final static SparkBasicPlugin PLUGIN = new SparkBasicPlugin();
+
+    private final static Map<String, SparkMultiPlugin> MULTI_PLUGINS = new HashMap<>();
 
     private final static SparkGraphPlugin GRAPH_PLUGIN = new SparkGraphPlugin();
 
@@ -41,6 +47,18 @@ public class Spark {
      */
     public static SparkBasicPlugin basicPlugin() {
         return PLUGIN;
+    }
+
+    /**
+     * Retrieve the {@link SparkMultiPlugin}.
+     *
+     * @return the {@link SparkMultiPlugin}
+     */
+    public static SparkMultiPlugin multiPlugin(String name, String conf_path) {
+
+        SparkMultiPlugin MULTI_PLUGIN = new SparkMultiPlugin(name, conf_path);
+        MULTI_PLUGINS.put(name, MULTI_PLUGIN);
+        return MULTI_PLUGIN;
     }
 
     /**
@@ -70,4 +88,12 @@ public class Spark {
         return SparkPlatform.getInstance();
     }
 
+    /**
+     * Retrieve the {@link SparkPlatform}.
+     *
+     * @return the {@link SparkPlatform}
+     */
+    public static SparkPlatform platform(String name, String config) {
+        return SparkPlatform.getInstance(name, config);
+    }
 }

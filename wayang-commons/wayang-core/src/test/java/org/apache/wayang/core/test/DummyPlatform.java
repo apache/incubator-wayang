@@ -49,6 +49,10 @@ public class DummyPlatform extends Platform {
     }
 
     @Override
+    public void configureCustom(Configuration configuration, String lala) {
+    }
+
+    @Override
     public Executor.Factory getExecutorFactory() {
         throw new UnsupportedOperationException();
     }

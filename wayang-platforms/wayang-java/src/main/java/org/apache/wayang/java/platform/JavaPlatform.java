@@ -57,6 +57,10 @@ public class JavaPlatform extends Platform {
     }
 
     @Override
+    public void configureCustom(Configuration configuration, String lala) {
+    }
+
+    @Override
     public Executor.Factory getExecutorFactory() {
         return job -> new JavaExecutor(this, job);
     }

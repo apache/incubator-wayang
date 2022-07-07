@@ -18,6 +18,7 @@
 
 package org.apache.wayang.jdbc.test;
 
+import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 /**
@@ -33,6 +34,10 @@ public class HsqldbPlatform extends JdbcPlatformTemplate {
 
     public static HsqldbPlatform getInstance() {
         return instance;
+    }
+
+    @Override
+    public void configureCustom(Configuration configuration, String lala) {
     }
 
     @Override

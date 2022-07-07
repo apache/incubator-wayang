@@ -36,89 +36,114 @@ import org.apache.wayang.spark.operators.SparkTsvFileSource;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * {@link ChannelConversion}s used by the {@link JavaPlatform}.
  */
 public class ChannelConversions {
 
-    public static final ChannelConversion UNCACHED_RDD_TO_CACHED_RDD = new DefaultChannelConversion(
-            RddChannel.UNCACHED_DESCRIPTOR,
-            RddChannel.CACHED_DESCRIPTOR,
-            () -> new SparkCacheOperator<>(DataSetType.createDefault(Void.class))
+    private static Supplier<ChannelConversion> UNCACHED_RDD_TO_CACHED_RDD (){
+        return () -> new DefaultChannelConversion(
+                RddChannel.UNCACHED_DESCRIPTOR,
+                RddChannel.CACHED_DESCRIPTOR,
+                () -> new SparkCacheOperator<>(DataSetType.createDefault(Void.class))
+        );
+    }
+
+    private static Supplier<ChannelConversion> COLLECTION_TO_BROADCAST (){
+        return () -> new DefaultChannelConversion(
+                CollectionChannel.DESCRIPTOR,
+                BroadcastChannel.DESCRIPTOR,
+                () -> new SparkBroadcastOperator<>(DataSetType.createDefault(Void.class))
+        );}
+
+    private static Supplier<ChannelConversion> COLLECTION_TO_UNCACHED_RDD (){
+        return () -> new DefaultChannelConversion(
+                CollectionChannel.DESCRIPTOR,
+                RddChannel.UNCACHED_DESCRIPTOR,
+                () -> new SparkCollectionSource<>(DataSetType.createDefault(Void.class))
+        );}
+
+    private static Supplier<ChannelConversion>  UNCACHED_RDD_TO_COLLECTION (){
+        return () -> new DefaultChannelConversion(
+                RddChannel.UNCACHED_DESCRIPTOR,
+                CollectionChannel.DESCRIPTOR,
+                () -> new SparkCollectOperator<>(DataSetType.createDefault(Void.class))
+        );}
+
+    private static Supplier<ChannelConversion> CACHED_RDD_TO_COLLECTION  (){
+        return () -> new DefaultChannelConversion(
+                RddChannel.CACHED_DESCRIPTOR,
+                CollectionChannel.DESCRIPTOR,
+                () -> new SparkCollectOperator<>(DataSetType.createDefault(Void.class))
+        );}
+
+    private static Supplier<ChannelConversion>  CACHED_RDD_TO_HDFS_TSV (){
+        return () ->  new DefaultChannelConversion(
+                RddChannel.CACHED_DESCRIPTOR,
+                FileChannel.HDFS_TSV_DESCRIPTOR,
+                () -> new SparkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
+        );}
+
+    private static Supplier<ChannelConversion> UNCACHED_RDD_TO_HDFS_TSV (){
+        return () -> new DefaultChannelConversion(
+                RddChannel.UNCACHED_DESCRIPTOR,
+                FileChannel.HDFS_TSV_DESCRIPTOR,
+                () -> new SparkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
+        );}
+
+    private static Supplier<ChannelConversion> HDFS_TSV_TO_UNCACHED_RDD (){
+        return () -> new DefaultChannelConversion(
+                FileChannel.HDFS_TSV_DESCRIPTOR,
+                RddChannel.UNCACHED_DESCRIPTOR,
+                () -> new SparkTsvFileSource(DataSetType.createDefault(Tuple2.class))
+        );}
+
+    private static Supplier<ChannelConversion> CACHED_RDD_TO_HDFS_OBJECT_FILE  () {
+        return () -> new DefaultChannelConversion(
+                RddChannel.CACHED_DESCRIPTOR,
+                FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
+                () -> new SparkObjectFileSink<>(DataSetType.createDefault(Void.class))
+        );
+    }
+
+    private static Supplier<ChannelConversion> UNCACHED_RDD_TO_HDFS_OBJECT_FILE () {
+        return () -> new DefaultChannelConversion(
+                RddChannel.UNCACHED_DESCRIPTOR,
+                FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
+                () -> new SparkObjectFileSink<>(DataSetType.createDefault(Void.class))
+        );
+    }
+
+    private static Supplier<ChannelConversion> HDFS_OBJECT_FILE_TO_UNCACHED_RDD () {
+        return () -> new DefaultChannelConversion(
+                FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
+                RddChannel.UNCACHED_DESCRIPTOR,
+                () -> new SparkObjectFileSource<>(DataSetType.createDefault(Void.class))
+        );
+    }
+
+    public static Collection<Supplier<ChannelConversion>> SUPPLIERS = Arrays.asList(
+            UNCACHED_RDD_TO_CACHED_RDD(),
+            COLLECTION_TO_BROADCAST(),
+            COLLECTION_TO_UNCACHED_RDD(),
+            UNCACHED_RDD_TO_COLLECTION(),
+            CACHED_RDD_TO_COLLECTION(),
+            CACHED_RDD_TO_HDFS_OBJECT_FILE(),
+            UNCACHED_RDD_TO_HDFS_OBJECT_FILE(),
+            HDFS_OBJECT_FILE_TO_UNCACHED_RDD(),
+//            HDFS_TSV_TO_UNCACHED_RDD(),
+            CACHED_RDD_TO_HDFS_TSV(),
+            UNCACHED_RDD_TO_HDFS_TSV()
     );
 
-    public static final ChannelConversion COLLECTION_TO_BROADCAST = new DefaultChannelConversion(
-            CollectionChannel.DESCRIPTOR,
-            BroadcastChannel.DESCRIPTOR,
-            () -> new SparkBroadcastOperator<>(DataSetType.createDefault(Void.class))
-    );
+    public static  Collection<ChannelConversion> ALL = getALL();
 
-    public static final ChannelConversion COLLECTION_TO_UNCACHED_RDD = new DefaultChannelConversion(
-            CollectionChannel.DESCRIPTOR,
-            RddChannel.UNCACHED_DESCRIPTOR,
-            () -> new SparkCollectionSource<>(DataSetType.createDefault(Void.class))
-    );
+    public static Collection<ChannelConversion> getALL(){
+        return SUPPLIERS.stream().map(Supplier::get).collect(Collectors.toList());
+    }
 
-    public static final ChannelConversion UNCACHED_RDD_TO_COLLECTION = new DefaultChannelConversion(
-            RddChannel.UNCACHED_DESCRIPTOR,
-            CollectionChannel.DESCRIPTOR,
-            () -> new SparkCollectOperator<>(DataSetType.createDefault(Void.class))
-    );
 
-    public static final ChannelConversion CACHED_RDD_TO_COLLECTION = new DefaultChannelConversion(
-            RddChannel.CACHED_DESCRIPTOR,
-            CollectionChannel.DESCRIPTOR,
-            () -> new SparkCollectOperator<>(DataSetType.createDefault(Void.class))
-    );
-
-    public static final ChannelConversion CACHED_RDD_TO_HDFS_TSV = new DefaultChannelConversion(
-            RddChannel.CACHED_DESCRIPTOR,
-            FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new SparkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
-    );
-
-    public static final ChannelConversion UNCACHED_RDD_TO_HDFS_TSV = new DefaultChannelConversion(
-            RddChannel.UNCACHED_DESCRIPTOR,
-            FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new SparkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
-    );
-
-    public static final ChannelConversion HDFS_TSV_TO_UNCACHED_RDD = new DefaultChannelConversion(
-            FileChannel.HDFS_TSV_DESCRIPTOR,
-            RddChannel.UNCACHED_DESCRIPTOR,
-            () -> new SparkTsvFileSource(DataSetType.createDefault(Tuple2.class))
-    );
-
-    public static final ChannelConversion CACHED_RDD_TO_HDFS_OBJECT_FILE = new DefaultChannelConversion(
-            RddChannel.CACHED_DESCRIPTOR,
-            FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
-            () -> new SparkObjectFileSink<>(DataSetType.createDefault(Void.class))
-    );
-
-    public static final ChannelConversion UNCACHED_RDD_TO_HDFS_OBJECT_FILE = new DefaultChannelConversion(
-            RddChannel.UNCACHED_DESCRIPTOR,
-            FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
-            () -> new SparkObjectFileSink<>(DataSetType.createDefault(Void.class))
-    );
-
-    public static final ChannelConversion HDFS_OBJECT_FILE_TO_UNCACHED_RDD = new DefaultChannelConversion(
-            FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
-            RddChannel.UNCACHED_DESCRIPTOR,
-            () -> new SparkObjectFileSource<>(DataSetType.createDefault(Void.class))
-    );
-
-    public static Collection<ChannelConversion> ALL = Arrays.asList(
-            UNCACHED_RDD_TO_CACHED_RDD,
-            COLLECTION_TO_BROADCAST,
-            COLLECTION_TO_UNCACHED_RDD,
-            UNCACHED_RDD_TO_COLLECTION,
-            CACHED_RDD_TO_COLLECTION,
-            CACHED_RDD_TO_HDFS_OBJECT_FILE,
-            UNCACHED_RDD_TO_HDFS_OBJECT_FILE,
-            HDFS_OBJECT_FILE_TO_UNCACHED_RDD,
-//            HDFS_TSV_TO_UNCACHED_RDD,
-            CACHED_RDD_TO_HDFS_TSV,
-            UNCACHED_RDD_TO_HDFS_TSV
-    );
 }

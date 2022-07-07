@@ -60,12 +60,20 @@ public abstract class Platform {
         this.configureDefaults(Configuration.getDefaultConfiguration());
     }
 
+    protected Platform(String name, String configName, String config) {
+        this.name = name;
+        this.configName = configName;
+        this.configureCustom(Configuration.getDefaultConfiguration(), config);
+    }
+
     /**
      * Configure default settings for this instance, e.g., to be able to create {@link LoadProfileToTimeConverter}s.
      *
      * @param configuration that should be configured
      */
     protected abstract void configureDefaults(Configuration configuration);
+
+    protected abstract void configureCustom(Configuration configuration, String config);
 
     /**
      * <i>Shortcut.</i> Creates an {@link Executor} using the {@link #getExecutorFactory()}.

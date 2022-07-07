@@ -21,8 +21,10 @@ package org.apache.wayang.spark.mapping;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.spark.mapping.graph.PageRankMapping;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * Register for {@link Mapping}s for this platform.
@@ -62,5 +64,27 @@ public class Mappings {
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
             new PageRankMapping()
     );
+
+    public static Collection<Mapping> getBasicMappings(){
+        return BASIC_MAPPINGS.stream()
+                .map(mapping -> {
+                            try {
+                                return mapping.getClass().getConstructor().newInstance();
+                            } catch (InstantiationException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InvocationTargetException e) {
+                                e.printStackTrace();
+                            } catch (NoSuchMethodException e) {
+                                e.printStackTrace();
+                            }
+                            return null;
+                        }
+                )
+                .collect(Collectors.toList());
+    }
+
+
 
 }

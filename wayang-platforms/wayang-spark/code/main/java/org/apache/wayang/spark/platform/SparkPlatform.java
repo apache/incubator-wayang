@@ -41,6 +41,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,11 +54,13 @@ public class SparkPlatform extends Platform {
 
     private static final String CONFIG_NAME = "spark";
 
-    private static final String DEFAULT_CONFIG_FILE = "wayang-spark-defaults.properties";
+    private String DEFAULT_CONFIG_FILE = "wayang-spark-defaults.properties";
 
     public static final String INITIALIZATION_MS_CONFIG_KEY = "wayang.spark.init.ms";
 
     private static SparkPlatform instance = null;
+
+    private static Map<String, SparkPlatform> instances = new HashMap<>();
 
     private static final String[] REQUIRED_SPARK_PROPERTIES = {
             "spark.master"
@@ -95,14 +99,39 @@ public class SparkPlatform extends Platform {
     private Logger logger = LogManager.getLogger(this.getClass());
 
     public static SparkPlatform getInstance() {
-        if (instance == null) {
-            instance = new SparkPlatform();
+        if(instances.isEmpty()) {
+            instances.put("default", new SparkPlatform());
+//        if (instance == null) {
+//            instance = new SparkPlatform();
+//        }
+            return instances.get("default");
+        } else {
+            String first = instances.keySet().stream().findFirst().get();
+            System.out.println("first");
+            System.out.println(first);
+            return instances.get(first);
         }
-        return instance;
+
+//        return instance;
+    }
+
+    public static SparkPlatform getInstance(String name, String config) {
+        if (!instances.containsKey(name)) {
+            instances.put(name, new SparkPlatform(name, config));
+//        if (instance == null) {
+//            instance = new SparkPlatform(name, config);
+//        }
+        }
+        return instances.get(name);
+//        return instance;
     }
 
     private SparkPlatform() {
         super(PLATFORM_NAME, CONFIG_NAME);
+    }
+
+    private SparkPlatform(String name, String config) {
+        super(PLATFORM_NAME + " " + name, name, config);
     }
 
     /**
@@ -167,6 +196,11 @@ public class SparkPlatform extends Platform {
     @Override
     public void configureDefaults(Configuration configuration) {
         configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
+    }
+
+    @Override
+    public void configureCustom(Configuration configuration, String config) {
+        configuration.load(ReflectionUtils.loadResource(config));
     }
 
     @Override
