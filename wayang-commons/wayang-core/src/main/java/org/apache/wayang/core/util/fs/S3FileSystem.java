@@ -38,27 +38,11 @@ import org.apache.wayang.core.api.exception.WayangException;
 
 public class S3FileSystem implements FileSystem {
 
-  final AmazonS3 s3;
+  private AmazonS3 s3;
 
   final Map<String, S3Pair> pairs = new HashMap<>();
 
-  public S3FileSystem(){
-
-    if(
-        System.getProperties().contains("fs.s3.awsAccessKeyId") &&
-        System.getProperties().contains("fs.s3.awsSecretAccessKey")
-    ){
-      BasicAWSCredentials awsCreds = new BasicAWSCredentials(
-                                              System.getProperty("fs.s3.awsAccessKeyId"),
-                                              System.getProperty("fs.s3.awsSecretAccessKey")
-      );
-      this.s3 = AmazonS3ClientBuilder.standard()
-          .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-          .build();
-    }else{
-      this.s3 = AmazonS3ClientBuilder.defaultClient();
-    }
-  }
+  public S3FileSystem(){}
 
   public static void main(String... args) throws IOException {
     S3FileSystem s3 = new S3FileSystem();
@@ -80,6 +64,26 @@ public class S3FileSystem implements FileSystem {
     output.write(bytes);
     output.flush();
     output.close();
+  }
+
+  private AmazonS3 getS3Client(){
+    if(this.s3 == null){
+      if(
+          System.getProperties().contains("fs.s3.awsAccessKeyId") &&
+          System.getProperties().contains("fs.s3.awsSecretAccessKey")
+      ){
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(
+            System.getProperty("fs.s3.awsAccessKeyId"),
+            System.getProperty("fs.s3.awsSecretAccessKey")
+        );
+        this.s3 = AmazonS3ClientBuilder.standard()
+            .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+            .build();
+      }else{
+        this.s3 = AmazonS3ClientBuilder.defaultClient();
+      }
+    }
+    return this.s3;
   }
 
   class S3Pair{
@@ -129,7 +133,7 @@ public class S3FileSystem implements FileSystem {
   }
 
   private long getFileSize(S3Pair pair) throws FileNotFoundException {
-    return this.s3.getObjectMetadata(pair.getBucket(), pair.getKey()).getContentLength();
+    return this.getS3Client().getObjectMetadata(pair.getBucket(), pair.getKey()).getContentLength();
   }
 
   @Override
@@ -144,7 +148,7 @@ public class S3FileSystem implements FileSystem {
   }
 
   private InputStream open(S3Pair pair) throws IOException {
-    return this.s3.getObject(pair.getBucket(), pair.getKey()).getObjectContent();
+    return this.getS3Client().getObject(pair.getBucket(), pair.getKey()).getObjectContent();
   }
 
   @Override
@@ -178,7 +182,7 @@ public class S3FileSystem implements FileSystem {
 
     ObjectMetadata metadata = new ObjectMetadata();
     metadata.setContentType("text/plain");
-    AmazonS3 s3Client = this.s3;
+    AmazonS3 s3Client = this.getS3Client();
     new Thread(new Runnable() {
       public void run() {
         PutObjectResult result = s3Client.putObject(pair.getBucket(), pair.getKey(), in, metadata);
@@ -188,11 +192,11 @@ public class S3FileSystem implements FileSystem {
   }
 
   public boolean bucketExits(S3Pair pair){
-    return this.s3.doesBucketExistV2(pair.getBucket());
+    return this.getS3Client().doesBucketExistV2(pair.getBucket());
   }
 
   public boolean preFoldersExits(S3Pair pair){
-    if( ! this.s3.doesBucketExistV2(pair.getBucket()) ) return false;
+    if( ! this.getS3Client().doesBucketExistV2(pair.getBucket()) ) return false;
     String[] keys = pair.getKey().split("/");
     String aggregated = "";
     for(int i = 0; i < keys.length; i++){
@@ -226,7 +230,7 @@ public class S3FileSystem implements FileSystem {
   }
 
   private Collection<String> listChildren(S3Pair pair) {
-    ObjectListing listing = this.s3.listObjects(pair.getBucket(), pair.getKey());
+    ObjectListing listing = this.getS3Client().listObjects(pair.getBucket(), pair.getKey());
     return listing.getObjectSummaries().stream()
         .map(obj -> obj.getKey())
         .collect(Collectors.toList());
@@ -243,7 +247,7 @@ public class S3FileSystem implements FileSystem {
         throw new IOException("the path correspond to a directory");
       }
     }
-    this.s3.deleteObject(pair.getBucket(), pair.getKey());
+    this.getS3Client().deleteObject(pair.getBucket(), pair.getKey());
     return true;
   }
 }
