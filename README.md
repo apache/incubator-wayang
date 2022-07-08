@@ -27,7 +27,7 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 
 ## Installing Wayang
 
-You can download wayang from here, and to install you need to follow the next steps:
+You can download wayang from [here](https://github.com/apache/incubator-wayang/releases/download/wayang-0.6.1-alpha-rc/wayang-0.6.1-alpha-rc.tar.gz), and to install you need to follow the next steps:
 
 ```shell
 tar -xvf wayang-0.6.1-snapshot.tar.gz
