@@ -27,7 +27,7 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 
 ## Installing Wayang
 
-You can download wayang from [here](https://github.com/apache/incubator-wayang/releases/download/wayang-0.6.1-alpha-rc/wayang-0.6.1-alpha-rc.tar.gz), and to install you need to follow the next steps:
+You can download wayang from [here](https://github.com/apache/incubator-wayang/releases/download/wayang-0.6.1-alpha-rc/wayang-0.6.1-alpha-rc.tar.gz), and to install it you need to follow the next steps:
 
 ```shell
 tar -xvf wayang-0.6.1-snapshot.tar.gz
@@ -49,8 +49,8 @@ source ~/.zshrc
 
 ### Requirements at Runtime
 
-Apache Wayang(incubating) is not at execution engine, but it administrate the execution engines for 
-you. Because of it is important to have installed the following requirements
+Apache Wayang(incubating) is not at execution engine, but it administrates the execution engines for 
+you. Therefore, it is important to have installed the following requirements:
 
 - Java version support from 8, the wayang team recommend Java version 11, does not forget to declare
    the variable `JAVA_HOME`
