@@ -65,11 +65,22 @@ public class Mappings {
             new PageRankMapping()
     );
 
-    public static Collection<Mapping> getBasicMappings(){
+    public static Collection<Mapping> getBasicMappings(String name, String conf){
         return BASIC_MAPPINGS.stream()
                 .map(mapping -> {
                             try {
-                                return mapping.getClass().getConstructor().newInstance();
+                              Class<Mapping> clazz = (Class<Mapping>) mapping.getClass();
+                              if(
+                                  clazz.getSimpleName().contains("Filter") ||
+                                  clazz.getSimpleName().contains("LocalCallbackSink") ||
+                                  clazz.getSimpleName().contains("TextFileSource")
+                              ){
+                                return clazz.getConstructor(String.class, String.class).newInstance(
+                                    name, conf
+                                );
+                              }
+
+                              return clazz.getConstructor().newInstance();
                             } catch (InstantiationException e) {
                                 e.printStackTrace();
                             } catch (IllegalAccessException e) {

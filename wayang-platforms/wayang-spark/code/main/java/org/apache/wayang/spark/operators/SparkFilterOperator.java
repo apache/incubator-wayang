@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 /**
  * Spark implementation of the {@link FilterOperator}.
@@ -48,6 +49,8 @@ import java.util.Optional;
 public class SparkFilterOperator<Type>
         extends FilterOperator<Type>
         implements SparkExecutionOperator {
+
+    SparkPlatform platform;
 
     /**
      * Creates a new instance.
@@ -120,4 +123,17 @@ public class SparkFilterOperator<Type>
         return false;
     }
 
+    @Override
+    public SparkPlatform getPlatform() {
+        if(this.platform == null) {
+            return SparkExecutionOperator.super.getPlatform();
+        }
+        return this.platform;
+    }
+
+    @Override
+    public SparkFilterOperator<Type> setPlatform(SparkPlatform sparkPlatform) {
+        this.platform = sparkPlatform;
+        return this;
+    }
 }

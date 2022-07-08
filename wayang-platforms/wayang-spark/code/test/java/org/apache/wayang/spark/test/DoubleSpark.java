@@ -7,6 +7,7 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
 
@@ -16,12 +17,14 @@ import java.util.List;
 public class DoubleSpark {
     public static void main(String[] args) {
         List<String> collector = new LinkedList<>();
-        TextFileSource textFileSource = new TextFileSource("file:///Users/rodrigopardomeza/files/demo.txt");
+        TextFileSource textFileSource = new TextFileSource("file:///Users/bertty/databloom/incubator-wayang/pom.xml");
         textFileSource.setName("Load file");
+        textFileSource.addTargetPlatform(Spark.platform("sparky", "wayang-sparky-default.properties"));
 
         FilterOperator<String> filterOperator = new FilterOperator<>(str -> !str.isEmpty(), String.class);
         filterOperator.setName("Filter empty words");
-        filterOperator.addTargetPlatform(Spark.platform("sparky", "wayang-sparky-default.properties"));
+       // filterOperator.addTargetPlatform(Spark.platform("sparky", "wayang-sparky-default.properties"));
+        filterOperator.addTargetPlatform(Java.platform());
 
         // write results to a sink
         LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(
@@ -29,15 +32,16 @@ public class DoubleSpark {
                 DataSetType.createDefaultUnchecked(String.class)
         );
         sink.setName("Collect result");
+        sink.addTargetPlatform(Spark.platform("other", "wayang-spark-defaults.properties"));
 
         // Build Rheem plan by connecting operators
         textFileSource.connectTo(0, filterOperator, 0);
         filterOperator.connectTo(0, sink, 0);
 
         WayangContext wayangContext = new WayangContext();
-        //wayangContext.register(Java.basicPlugin());
+        wayangContext.register(Java.basicPlugin());
         wayangContext.register(Spark.multiPlugin("sparky", "wayang-sparky-default.properties"));
-//        wayangContext.register(Spark.multiPlugin("other", "wayang-spark-defaults.properties"));
+        wayangContext.register(Spark.multiPlugin("other", "wayang-spark-defaults.properties"));
 //        wayangContext.register(Spark.basicPlugin());
 
         System.out.println("here");
@@ -45,6 +49,6 @@ public class DoubleSpark {
 
 //        collector.sort((t1 , t2) -> Integer.compare(t2.field1, t1.field1));
         System.out.printf("Found %d words:\n", collector.size());
-        collector.forEach(wc -> System.out.printf("%s\n", wc));
+       // collector.forEach(wc -> System.out.printf("%s\n", wc));
     }
 }

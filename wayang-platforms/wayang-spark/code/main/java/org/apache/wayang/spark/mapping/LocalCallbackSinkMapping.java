@@ -36,12 +36,31 @@ import java.util.Collections;
  */
 public class LocalCallbackSinkMapping implements Mapping {
 
+    private String name;
+    private String conf;
+
+    public LocalCallbackSinkMapping(){
+        this.conf = null;
+        this.name = null;
+    }
+
+    public LocalCallbackSinkMapping(String name, String conf){
+        this.conf = conf;
+        this.name = name;
+    }
+
+    public SparkPlatform getPlatformInstance(){
+        return (this.name == null)?
+            SparkPlatform.getInstance():
+            SparkPlatform.getInstance(this.name, this.conf);
+    }
+
     @Override
     public Collection<PlanTransformation> getTransformations() {
         return Collections.singleton(new PlanTransformation(
                 this.createSubplanPattern(),
                 this.createReplacementSubplanFactory(),
-                SparkPlatform.getInstance()
+                this.getPlatformInstance()
         ));
     }
 
@@ -54,7 +73,7 @@ public class LocalCallbackSinkMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<LocalCallbackSink>(
-                (matchedOperator, epoch) -> new SparkLocalCallbackSink<>(matchedOperator).at(epoch)
+                (matchedOperator, epoch) -> new SparkLocalCallbackSink<>(matchedOperator).setPlatform(this.getPlatformInstance()).at(epoch)
         );
     }
 }

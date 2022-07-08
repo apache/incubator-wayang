@@ -126,7 +126,7 @@ public class ChannelConversions {
     }
 
     public static Collection<Supplier<ChannelConversion>> SUPPLIERS = Arrays.asList(
-            UNCACHED_RDD_TO_CACHED_RDD(),
+            //UNCACHED_RDD_TO_CACHED_RDD(),
             COLLECTION_TO_BROADCAST(),
             COLLECTION_TO_UNCACHED_RDD(),
             UNCACHED_RDD_TO_COLLECTION(),

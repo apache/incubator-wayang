@@ -35,11 +35,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 /**
  * Implementation of the {@link LocalCallbackSink} operator for the Spark platform.
  */
 public class SparkLocalCallbackSink<T extends Serializable> extends LocalCallbackSink<T> implements SparkExecutionOperator {
+
+    SparkPlatform platform;
     /**
      * Creates a new instance.
      *
@@ -101,4 +104,17 @@ public class SparkLocalCallbackSink<T extends Serializable> extends LocalCallbac
         return true;
     }
 
+    @Override
+    public SparkPlatform getPlatform() {
+        if(this.platform == null) {
+            return SparkExecutionOperator.super.getPlatform();
+        }
+        return this.platform;
+    }
+
+    @Override
+    public SparkLocalCallbackSink<T> setPlatform(SparkPlatform sparkPlatform) {
+        this.platform = sparkPlatform;
+        return this;
+    }
 }

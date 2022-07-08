@@ -25,6 +25,7 @@ import org.apache.wayang.core.mapping.OperatorPattern;
 import org.apache.wayang.core.mapping.PlanTransformation;
 import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
 import org.apache.wayang.core.mapping.SubplanPattern;
+import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.operators.SparkFilterOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
@@ -38,12 +39,30 @@ import java.util.Collections;
 @SuppressWarnings("unchecked")
 public class FilterMapping implements Mapping {
 
+    private String name;
+    private String conf;
+
+    public FilterMapping(){
+        this.conf = null;
+        this.name = null;
+    }
+
+    public FilterMapping(String name, String conf){
+        this.conf = conf;
+        this.name = name;
+    }
+
+    public SparkPlatform getPlatformInstance(){
+        return (this.name == null)?
+            SparkPlatform.getInstance():
+            SparkPlatform.getInstance(this.name, this.conf);
+    }
     @Override
     public Collection<PlanTransformation> getTransformations() {
         return Collections.singleton(new PlanTransformation(
                 this.createSubplanPattern(),
                 this.createReplacementSubplanFactory(),
-                SparkPlatform.getInstance()
+                this.getPlatformInstance()
         ));
     }
 
@@ -55,7 +74,7 @@ public class FilterMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<FilterOperator>(
-                (matchedOperator, epoch) -> new SparkFilterOperator<>(matchedOperator).at(epoch)
+                (matchedOperator, epoch) -> new SparkFilterOperator<>(matchedOperator).setPlatform(this.getPlatformInstance()).at(epoch)
         );
     }
 }

@@ -22,7 +22,9 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.platform.ChannelInstance;
+import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.execution.SparkExecutor;
@@ -39,6 +41,7 @@ public interface SparkExecutionOperator extends ExecutionOperator {
     default SparkPlatform getPlatform() {
         return SparkPlatform.getInstance();
     }
+    default Operator setPlatform(SparkPlatform sparkPlatform){return null;}
 
     /**
      * Evaluates this operator. Takes a set of {@link ChannelInstance}s according to the operator inputs and manipulates

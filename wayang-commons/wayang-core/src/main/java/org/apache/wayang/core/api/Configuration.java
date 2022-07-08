@@ -682,6 +682,11 @@ public class Configuration {
     }
 
     public CollectionProvider<Class<PlanEnumerationPruningStrategy>> getPruningStrategyClassProvider() {
+        this.pruningStrategyClassProvider
+            .provideAll()
+            .stream()
+            .map(obj -> obj.getSimpleName())
+            .forEach(System.out::println);
         return this.pruningStrategyClassProvider;
     }
 

@@ -25,14 +25,14 @@ public class SparkMultiPlugin  implements Plugin {
 
     @Override
     public Collection<Mapping> getMappings() {
-        return Mappings.getBasicMappings();
+        return Mappings.getBasicMappings(this.name, this.config);
 //        return Mappings.BASIC_MAPPINGS;
     }
 
     @Override
     public Collection<ChannelConversion> getChannelConversions() {
-
-        return ChannelConversions.ALL;
+        System.out.println("here in getChannelConversiona");
+        return ChannelConversions.getALL();
     }
 
     @Override

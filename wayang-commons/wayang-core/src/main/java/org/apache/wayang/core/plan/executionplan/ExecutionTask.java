@@ -182,7 +182,7 @@ public class ExecutionTask {
 
     @Override
     public String toString() {
-        return "T[" + this.operator + ']';
+        return "T[" + this.operator+ " Platform: {"+this.stage.getPlatformExecution()+ "}]";
 //        return this.getClass().getSimpleName() + "[" + this.operator + ']';
     }
 

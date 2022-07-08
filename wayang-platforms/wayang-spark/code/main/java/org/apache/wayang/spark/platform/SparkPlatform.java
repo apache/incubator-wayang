@@ -107,8 +107,6 @@ public class SparkPlatform extends Platform {
             return instances.get("default");
         } else {
             String first = instances.keySet().stream().findFirst().get();
-            System.out.println("first");
-            System.out.println(first);
             return instances.get(first);
         }
 
@@ -200,6 +198,7 @@ public class SparkPlatform extends Platform {
 
     @Override
     public void configureCustom(Configuration configuration, String config) {
+        System.out.println(config);
         configuration.load(ReflectionUtils.loadResource(config));
     }
 

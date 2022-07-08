@@ -37,12 +37,30 @@ import java.util.Collections;
  */
 public class TextFileSourceMapping implements Mapping {
 
+    private String name;
+    private String conf;
+
+    public TextFileSourceMapping(){
+        this.conf = null;
+        this.name = null;
+    }
+
+    public TextFileSourceMapping(String name, String conf){
+        this.conf = conf;
+        this.name = name;
+    }
+
+    public SparkPlatform getPlatformInstance(){
+        return (this.name == null)?
+            SparkPlatform.getInstance():
+            SparkPlatform.getInstance(this.name, this.conf);
+    }
     @Override
     public Collection<PlanTransformation> getTransformations() {
         return Collections.singleton(new PlanTransformation(
                 this.createSubplanPattern(),
                 this.createReplacementSubplanFactory(),
-                SparkPlatform.getInstance()
+                this.getPlatformInstance()
         ));
     }
 
@@ -55,7 +73,7 @@ public class TextFileSourceMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<TextFileSource>(
-                (matchedOperator, epoch) -> new SparkTextFileSource(matchedOperator).at(epoch)
+                (matchedOperator, epoch) -> new SparkTextFileSource(matchedOperator).setPlatform(this.getPlatformInstance()).at(epoch)
         );
     }
 }

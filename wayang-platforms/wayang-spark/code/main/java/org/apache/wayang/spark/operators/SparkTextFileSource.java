@@ -34,12 +34,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 /**
  * Provides a {@link Collection} to a Spark job.
  */
 public class SparkTextFileSource extends TextFileSource implements SparkExecutionOperator {
-
+    SparkPlatform platform;
     public SparkTextFileSource(String inputUrl, String encoding) {
         super(inputUrl, encoding);
     }
@@ -109,4 +110,18 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
         return false;
     }
 
+
+    @Override
+    public SparkPlatform getPlatform() {
+        if(this.platform == null) {
+            return SparkExecutionOperator.super.getPlatform();
+        }
+        return this.platform;
+    }
+
+    @Override
+    public SparkTextFileSource setPlatform(SparkPlatform sparkPlatform) {
+        this.platform = sparkPlatform;
+        return this;
+    }
 }

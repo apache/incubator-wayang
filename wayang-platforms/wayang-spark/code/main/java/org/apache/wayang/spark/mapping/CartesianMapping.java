@@ -36,6 +36,8 @@ import java.util.Collections;
  */
 public class CartesianMapping implements Mapping {
 
+
+
     @Override
     public Collection<PlanTransformation> getTransformations() {
         return Collections.singleton(new PlanTransformation(
