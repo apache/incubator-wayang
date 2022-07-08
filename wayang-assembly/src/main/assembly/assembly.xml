@@ -29,12 +29,13 @@
       <includes>
         <include>README.md</include>
       </includes>
+      <outputDirectory>${wayang.name}/</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>
         ${project.parent.basedir}/bin/
       </directory>
-      <outputDirectory>bin</outputDirectory>
+      <outputDirectory>${wayang.name}/bin</outputDirectory>
       <includes>
         <include>**/*</include>
       </includes>
@@ -43,7 +44,7 @@
       <directory>
         ${project.parent.basedir}/conf/
       </directory>
-      <outputDirectory>conf</outputDirectory>
+      <outputDirectory>${wayang.name}/conf</outputDirectory>
       <includes>
         <include>**/*</include>
       </includes>
@@ -52,7 +53,7 @@
       <directory>
         ${project.parent.basedir}/assembly/target/
       </directory>
-      <outputDirectory>jars</outputDirectory>
+      <outputDirectory>${wayang.name}/jars</outputDirectory>
       <includes>
         <include>*</include>
       </includes>
@@ -69,7 +70,7 @@
       </excludes>
     </dependencySet>
     <dependencySet>
-      <outputDirectory>lib</outputDirectory>
+      <outputDirectory>${wayang.name}/lib</outputDirectory>
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <unpack>false</unpack>
       <useProjectArtifact>false</useProjectArtifact>

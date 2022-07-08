@@ -1253,6 +1253,7 @@
                         <exclude>**/*pb2.py</exclude>
                         <exclude>**/.rat-excludes</exclude>                      
                         <exclude>**/*.csv</exclude>
+                        <exclude>**/*.properties</exclude>
                     </excludes>
                 </configuration>
             </plugin>

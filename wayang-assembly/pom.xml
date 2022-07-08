@@ -36,6 +36,7 @@
     <sbt.project.name>assembly</sbt.project.name>
     <build.testJarPhase>none</build.testJarPhase>
     <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
+    <wayang.name>wayang-${project.version}</wayang.name>
   </properties>
 
 
