@@ -49,8 +49,8 @@ source ~/.zshrc
 
 ### Requirements at Runtime
 
-Apache Wayang(incubating) is not at execution engine, but it administrates the execution engines for 
-you. Therefore, it is important to have installed the following requirements:
+As Apache Wayang(incubating) is not at execution engine (it simply administrates the execution engines for 
+you), it is important to have installed the following requirements:
 
 - Java version support from 8. The Wayang team recommends Java version 11: do not forget to declare
    the variable `JAVA_HOME`
