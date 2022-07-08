@@ -25,6 +25,48 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
 
+## Installing Wayang
+
+You can download wayang from here, and to install you need to follow the next steps:
+
+```shell
+tar -xvf wayang-0.6.1-snapshot.tar.gz
+cd wayang-0.6.1-snapshot
+```
+
+In linux
+```shell 
+echo "export WAYANG_HOME=$(pwd)" >> ~/.bashrc
+echo "export PATH=${PATH}:${WAYANG_HOME}/bin" >> ~/.bashrc
+source ~/.bashrc
+```
+In MacOS
+```shell 
+echo "export WAYANG_HOME=$(pwd)" >> ~/.zshrc
+echo "export PATH=${PATH}:${WAYANG_HOME}/bin" >> ~/.zshrc
+source ~/.zshrc
+```
+
+### Requirements at Runtime
+
+Apache Wayang(incubating) is not at execution engine, but it administrate the execution engines for 
+you. Because of it is important to have installed the following requirements
+
+- Java version support from 8, the wayang team recommend Java version 11, does not forget to declare
+   the variable `JAVA_HOME`
+- Apache Spark, you need to installed Apache Spark from version 3, does not forget to have declare
+   the variable `SPARK_HOME`
+- Apache Hadoop, you need to installed Apache Hadoop from version 3, does not forget to have declare
+  the variable `HADOOP_HOME`
+
+### Validating the installation
+
+To execute your first code in wayang you need to execute the following command
+
+```shell
+wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
+```
+
 ## Getting Started
 
 Wayang is available via Maven Central. To use it with Maven, include the following into your POM file:
