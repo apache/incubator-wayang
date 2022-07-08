@@ -13,6 +13,9 @@
       "pattern": "^https://www.linkedin.com/"
     },
     {
+      "pattern": "^https://www.tpc.org/"
+    },
+    {
       "pattern": "[a-z0-9]+@[a-z0-9]+"
     }
   ],
