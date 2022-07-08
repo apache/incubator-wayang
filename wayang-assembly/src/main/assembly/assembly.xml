@@ -62,6 +62,7 @@
 
   <dependencySets>
     <dependencySet>
+      <outputDirectory>${wayang.name}/jars</outputDirectory>
       <includes>
         <include>org.apache.wayang:*:jar</include>
       </includes>
@@ -70,11 +71,12 @@
       </excludes>
     </dependencySet>
     <dependencySet>
-      <outputDirectory>${wayang.name}/lib</outputDirectory>
+      <outputDirectory>${wayang.name}/libs</outputDirectory>
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <unpack>false</unpack>
       <useProjectArtifact>false</useProjectArtifact>
       <excludes>
+        <exclude>org.apache.wayang:*:jar</exclude>
         <exclude>org.apache.hadoop:*:jar</exclude>
         <exclude>org.apache.spark:*:jar</exclude>
         <exclude>org.apache.flink:*:jar</exclude>
