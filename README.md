@@ -31,7 +31,7 @@ You can download wayang from [here](https://github.com/apache/incubator-wayang/r
 
 ```shell
 tar -xvf wayang-0.6.1-snapshot.tar.gz
-cd wayang-0.6.1-snapshot
+cd wayang-0.6.1-SNAPSHOT
 ```
 
 In linux

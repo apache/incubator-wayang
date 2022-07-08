@@ -19,5 +19,6 @@ except for the jars in the list
 To execute the Wayang Assembly you need to execute the following command in the project root
 
 ```shell
+./mvnw clean install -DskipTests 
 ./mvnw clean package -pl :wayang-assembly -Pdistribution
 ```

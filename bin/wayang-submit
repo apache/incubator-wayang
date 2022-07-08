@@ -71,22 +71,37 @@ fi
 # Find Spark jars.
 if [ -d "${SPARK_HOME}" ]; then
   SPARK_JARS_DIR="${SPARK_HOME}/jars"
+  ls ${SPARK_JARS_DIR}/
 fi
 
 # Find Hadoop jars.
 if [ -d "${HADOOP_HOME}" ]; then
   HADOOP_JARS_DIR="${HADOOP_HOME}/share/hadoop/common/*:${HADOOP_HOME}/share/hadoop/common/lib/*"
+  ls ${HADOOP_HOME}/share/hadoop/common/
+  ls ${HADOOP_HOME}/share/hadoop/common/lib/
+fi
+
+if [ "$(ls ${SPARK_JARS_DIR} | grep ^hadoop | wc -l)" == "0" ]; then
+
+  HADOOP_JARS_DIR="${HADOOP_JARS_DIR}:${HADOOP_HOME}/share/hadoop/mapreduce/$(ls ${HADOOP_HOME}/share/hadoop/mapreduce | grep ^hadoop-mapreduce-client-common | grep -v tests | head -n 1)"
+  HADOOP_JARS_DIR="${HADOOP_JARS_DIR}:${HADOOP_HOME}/share/hadoop/mapreduce/$(ls ${HADOOP_HOME}/share/hadoop/mapreduce | grep ^hadoop-mapreduce-client-core | grep -v tests | head -n 1)"
+  HADOOP_JARS_DIR="${HADOOP_JARS_DIR}:${HADOOP_HOME}/share/hadoop/mapreduce/$(ls ${HADOOP_HOME}/share/hadoop/mapreduce | grep ^hadoop-mapreduce-client-jobclient | grep -v tests | head -n 1)"
+  HADOOP_JARS_DIR="${HADOOP_JARS_DIR}:${HADOOP_HOME}/share/hadoop/hdfs/$(ls ${HADOOP_HOME}/share/hadoop/hdfs | grep ^hadoop-hdfs-client | grep -v tests | head -n 1)"
+  HADOOP_JARS_DIR="${HADOOP_JARS_DIR}:${HADOOP_HOME}/share/hadoop/hdfs/lib/$(ls ${HADOOP_HOME}/share/hadoop/hdfs/lib | grep ^hadoop-annotations | grep -v tests | head -n 1)"
+  HADOOP_JARS_DIR="${HADOOP_JARS_DIR}:${HADOOP_HOME}/share/hadoop/hdfs/lib/$(ls ${HADOOP_HOME}/share/hadoop/hdfs/lib | grep ^hadoop-auth | grep -v tests | head -n 1)"
+
 fi
 
 
 WAYANG_CODE="${WAYANG_HOME}/jars"
+ls ${WAYANG_CODE}
 WAYANG_LIBS="${WAYANG_HOME}/libs"
+ls ${WAYANG_LIBS}
 WAYANG_CONF="${WAYANG_HOME}/conf"
-
+ls ${WAYANG_CONF}
 # Bootstrap the classpath.
 WAYANG_CLASSPATH="${WAYANG_CONF}/*:${WAYANG_CODE}/*:${WAYANG_LIBS}/*"
-
-WAYANG_CLASSPATH="${WAYANG_CLASSPATH}:${SPARK_JARS_DIR}/*:${HADOOP_JARS_DIR}"
+WAYANG_CLASSPATH="${SPARK_JARS_DIR}/*:${WAYANG_CLASSPATH}:${HADOOP_JARS_DIR}"
 
 FLAGS=""
 if [ "${FLAG_LOG}" = "true" ]; then
@@ -101,6 +116,7 @@ if [ -n "${OTHER_FLAGS}" ]; then
 	FLAGS="${FLAGS} ${OTHER_FLAGS}"
 fi
 
+echo "lala"
 echo "$RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS ${@:2}"
 eval "$RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS ${@:2}"
 
