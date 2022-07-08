@@ -45,7 +45,8 @@ public class FileSystems {
 
     private static Collection<FileSystem> registeredFileSystems = Arrays.asList(
             new LocalFileSystem(),
-            new HadoopFileSystem()
+            new HadoopFileSystem(),
+            new S3FileSystem()
     );
 
     private FileSystems() {

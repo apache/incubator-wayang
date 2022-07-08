@@ -114,7 +114,7 @@
         <mockito.version>3.5.10</mockito.version>
         <mockk.version>1.10.0</mockk.version>
         <external.platforms.scope>provided</external.platforms.scope>
-        <hadoop.version>2.7.7</hadoop.version>
+        <hadoop.version>3.1.2</hadoop.version>
         <!-- To be overridden by individual modules -->
         <java-module-name>org.apache.wayang.default</java-module-name>
         <code.coverage.project.folder>${basedir}/</code.coverage.project.folder>
@@ -1253,6 +1253,7 @@
                         <exclude>**/*pb2.py</exclude>
                         <exclude>**/.rat-excludes</exclude>                      
                         <exclude>**/*.csv</exclude>
+                        <exclude>**/*.properties</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -1517,5 +1518,6 @@
         <module>wayang-plugins</module>
         <module>wayang-resources</module>
         <module>wayang-benchmark</module>
+        <module>wayang-assembly</module>
     </modules>
 </project>

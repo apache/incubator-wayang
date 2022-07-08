@@ -3,6 +3,7 @@
 .idea
 .idea/
 **/*.iml
+**/maven-wrapper.jar
 
 # Maven
 **/target/

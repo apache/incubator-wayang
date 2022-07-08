@@ -81,6 +81,10 @@
                         <groupId>com.thoughtworks.paranamer</groupId>
                         <artifactId>paranamer</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>commons-httpclient</groupId>
+                        <artifactId>commons-httpclient</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
@@ -164,6 +168,10 @@
                     <exclusion>
                         <groupId>com.thoughtworks.paranamer</groupId>
                         <artifactId>paranamer</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-httpclient</groupId>
+                        <artifactId>commons-httpclient</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

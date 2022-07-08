@@ -45,7 +45,7 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 * `wayang.apps.tpch.csv.orders`: URL to the `ORDERS` file
 * `wayang.apps.tpch.csv.lineitem`: URL to the `LINEITEM` file
 
-**Datasets.** The datasets for this app can be generated with the [TPC-H tools](http://www.tpc.org/tpch/). The generated datasets can then be either put into a database and/or a filesystem.
+**Datasets.** The datasets for this app can be generated with the [TPC-H tools](https://www.tpc.org/tpch/). The generated datasets can then be either put into a database and/or a filesystem.
 
 ### SINDY
 
@@ -58,7 +58,7 @@ org.apache.wayang.apps.sindy.Sindy
 Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters.
 
 **Datasets.** Find below a list of datasets that can be used to benchmark Apache Wayang (incubating) in combination with this app:
-* CSV files generated with the [TPC-H tools](http://www.tpc.org/tpch/)
+* CSV files generated with the [TPC-H tools](https://www.tpc.org/tpch/)
 * [other CSV files](https://hpi.de/naumann/projects/repeatability/data-profiling/metanome-ind-algorithms.html)
 
 ### SGD

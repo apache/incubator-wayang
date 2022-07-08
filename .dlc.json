@@ -8,6 +8,12 @@
     },
     {
       "pattern": "^https://github.com/"
+    },
+    {
+      "pattern": "^https://www.linkedin.com/"
+    },
+    {
+      "pattern": "[a-z0-9]+@[a-z0-9]+"
     }
   ],
   "timeout": "10s",
