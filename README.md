@@ -27,7 +27,7 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 
 ## Installing Wayang
 
-You can download wayang from [here](https://github.com/apache/incubator-wayang/releases/download/wayang-0.6.1-alpha-rc/wayang-0.6.1-alpha-rc.tar.gz), and to install you need to follow the next steps:
+You can download wayang from [here](https://github.com/apache/incubator-wayang/releases/download/wayang-0.6.1-alpha-rc/wayang-0.6.1-alpha-rc.tar.gz), and to install it you need to follow the next steps:
 
 ```shell
 tar -xvf wayang-0.6.1-snapshot.tar.gz
@@ -49,19 +49,19 @@ source ~/.zshrc
 
 ### Requirements at Runtime
 
-Apache Wayang(incubating) is not at execution engine, but it administrate the execution engines for 
-you. Because of it is important to have installed the following requirements
+As Apache Wayang(incubating) is not at execution engine (it simply administrates the execution engines for 
+you), it is important to have installed the following requirements:
 
-- Java version support from 8, the wayang team recommend Java version 11, does not forget to declare
+- Java version support from 8. The Wayang team recommends Java version 11: do not forget to declare
    the variable `JAVA_HOME`
-- Apache Spark, you need to installed Apache Spark from version 3, does not forget to have declare
+- Apache Spark. You need to install Apache Spark from version 3: do not forget to declare
    the variable `SPARK_HOME`
-- Apache Hadoop, you need to installed Apache Hadoop from version 3, does not forget to have declare
+- Apache Hadoop. You need to install Apache Hadoop from version 3: do not forget to have declare
   the variable `HADOOP_HOME`
 
 ### Validating the installation
 
-To execute your first code in wayang you need to execute the following command
+To execute your first program in Wayang, you need to execute your program with the 'wayang-submit' command as follows:
 
 ```shell
 wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
