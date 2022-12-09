@@ -9,7 +9,7 @@ import org.apache.wayang.java.platform.JavaPlatform;
 import java.util.Collection;
 import java.util.Collections;
 
-public class JavaSentinelSourceMapping  implements Mapping {
+public class SentinelSourceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
