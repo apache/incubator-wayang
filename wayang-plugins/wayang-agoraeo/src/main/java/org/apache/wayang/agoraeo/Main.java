@@ -1,18 +1,17 @@
 package org.apache.wayang.agoraeo;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.wayang.agoraeo.iterators.FileIteratorSentinelDownload;
 import org.apache.wayang.agoraeo.iterators.IteratorSentinelDownload;
 import org.apache.wayang.agoraeo.iterators.StringIteratorSentinelDownload;
 import org.apache.wayang.agoraeo.operators.basic.SentinelSource;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.*;
+import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.FlatMapDescriptor;
@@ -23,50 +22,74 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.wayang.core.util.fs.FileSystem;
-import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.java.Java;
-import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.platform.JavaPlatform;
-import org.apache.wayang.spark.Spark;
 
 public class Main {
     public static void main(String[] args) {
 
-        String downloader_location = "/Users/rodrigopardomeza/PycharmProjects/MinimalDownload/";
-        String images_folder = "images/";
-        String download_program = "single_mirror_manager.py";
-
-        String input = "file:///Users/rodrigopardomeza/files/file.txt";
-        String output = "file:///Users/rodrigopardomeza/files/sen2cor-output-agoraeo.txt";
-        System.out.println("Hello AgoraEO!");
-
-//        String cmd = "echo \"file:///Users/rodrigopardomeza/files/file.txt\"";
-//        String cmd = "echo \"~/tu-berlin/agoraeo/images/33UVT/S2B_MSIL1C_20221119T101229_N0400_R022_T33UVT_20221119T104925.SAFE\"";
-//        String cmd = "/Users/rodrigopardomeza/tu-berlin/agoraeo/agoraeo/wayang-plugins/wayang-agoraeo/src/main/java/org/apache/wayang/agoraeo/workers/name.sh";
-        String cmd =
-                "/Users/rodrigopardomeza/PycharmProjects/MinimalDownload/venv/bin/python /Users/rodrigopardomeza/PycharmProjects/MinimalDownload/single_mirror_manager.py --user rpardomeza --password 12c124ccb2 --url https://scihub.copernicus.eu/dhus --from NOW-30DAY --to NOW --order 33UVT";
-
-        WayangPlan w = alternative2WayangPlan(cmd, output);
-
         WayangContext wayangContext = new WayangContext();
         wayangContext.register(Java.basicPlugin());
         wayangContext.register(WayangAgoraEO.javaPlugin());
-//        wayangContext.register(Spark.basicPlugin());
-//        for (String platform : args[0].split(",")) {
-//            switch (platform) {
-//                case "java":
-//                    wayangContext.register(Java.basicPlugin());
-//                    break;
-//                case "spark":
-//                    wayangContext.register(Spark.basicPlugin());
-//                    break;
-//                default:
-//                    System.err.format("Unknown platform: \"%s\"\n", platform);
-//                    System.exit(3);
-//                    return;
-//            }
-//        }
+
+        Configuration config = wayangContext.getConfiguration();//.fork(this.name);
+
+        config.load(ReflectionUtils.loadResource(WayangAgoraEO.DEFAULT_CONFIG_FILE));
+
+        String path_python = "";
+        if (config.getOptionalStringProperty("org.apache.wayang.agoraeo.python.location").isPresent()) {
+            path_python = config.getOptionalStringProperty("org.apache.wayang.agoraeo.python.location").get();
+        } else {
+            throw new WayangException("No Python Interpreter to run Minimal Download");
+        }
+
+        String downloader_location = "";
+        if (config.getOptionalStringProperty("org.apache.wayang.agoraeo.minimaldownload.location").isPresent()) {
+            downloader_location = config.getOptionalStringProperty("org.apache.wayang.agoraeo.minimaldownload.location").get();
+        } else {
+            throw new WayangException("No defined Minimal Download path");
+        }
+
+        String sen2cor = "";
+        if (config.getOptionalStringProperty("org.apache.wayang.agoraeo.sen2cor.location").isPresent()) {
+            sen2cor = config.getOptionalStringProperty("org.apache.wayang.agoraeo.sen2cor.location").get();
+        } else {
+            throw new WayangException("No defined Minimal Download path");
+        }
+
+        String l2a_images_folder = "";
+        if (config.getOptionalStringProperty("org.apache.wayang.agoraeo.images.l2a").isPresent()) {
+            l2a_images_folder = config.getOptionalStringProperty("org.apache.wayang.agoraeo.images.l2a").get();
+        } else {
+            throw new WayangException("No Python Interpreter to run Minimal Download");
+        }
+
+        String user = "";
+        if (config.getOptionalStringProperty("org.apache.wayang.agoraeo.user").isPresent()) {
+            user = config.getOptionalStringProperty("org.apache.wayang.agoraeo.user").get();
+        } else {
+            throw new WayangException("No Python Interpreter to run Minimal Download");
+        }
+
+        String pass = "";
+        if (config.getOptionalStringProperty("org.apache.wayang.agoraeo.pass").isPresent()) {
+            pass = config.getOptionalStringProperty("org.apache.wayang.agoraeo.pass").get();
+        } else {
+            throw new WayangException("No Python Interpreter to run Minimal Download");
+        }
+
+        System.out.println("Hello AgoraEO!");
+
+        String order = " --url https://scihub.copernicus.eu/dhus --from NOW-30DAY --to NOW --order 32VNM";
+        String cmd =
+                path_python + " " + downloader_location + " --user " + user + " --password " + pass + order;
+
+
+        System.out.println(path_python);
+        System.out.println(downloader_location);
+        System.out.println(l2a_images_folder);
+        System.out.println(cmd);
+        WayangPlan w = alternative2WayangPlan(cmd, sen2cor, l2a_images_folder, "");
 
         wayangContext.execute(w, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
 
@@ -120,6 +143,8 @@ public class Main {
 
     public static WayangPlan alternative2WayangPlan(
             String cmd,
+            String sen2cor,
+            String l2a_location,
             String outputFileUrl
     ) {
         IteratorSentinelDownload<String> iter = new StringIteratorSentinelDownload("Sentinel 2 - API", cmd);
@@ -129,9 +154,9 @@ public class Main {
         FlatMapOperator<String, String> files_names = new FlatMapOperator<>(
                 t -> {
                     try {
-                        String command = "/Users/rodrigopardomeza/Downloads/Sen2Cor-02.10.01-Darwin64/bin/L2A_Process\n" +
-                                t + "\n" +
-                                "--output_dir /Users/rodrigopardomeza/tu-berlin/agoraeo/images/pipeline-result/";
+                        String command = sen2cor + " " +
+                                t + " " +
+                                " --output_dir " + l2a_location;
                         Process process = Runtime.getRuntime().exec(command);
                         Iterator<String> input = new BufferedReader(
                                 new InputStreamReader(

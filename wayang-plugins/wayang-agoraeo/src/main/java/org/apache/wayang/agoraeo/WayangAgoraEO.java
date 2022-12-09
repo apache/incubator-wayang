@@ -18,6 +18,7 @@ import org.apache.wayang.agoraeo.mappings.Mappings;
 
 public class WayangAgoraEO {
 
+    public static final String DEFAULT_CONFIG_FILE = "wayang-agoraeo.properties";
     private static final Plugin PLUGIN = new Plugin() {
 
         @Override
