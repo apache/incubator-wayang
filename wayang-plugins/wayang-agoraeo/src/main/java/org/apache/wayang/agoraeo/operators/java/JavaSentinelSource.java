@@ -33,15 +33,15 @@ import java.util.*;
 import java.util.stream.StreamSupport;
 
 //TODO add the documentation and add the Profile Estimator
-public class JavaSentinelSource<Type>
-    extends SentinelSource<Type>
+public class JavaSentinelSource
+    extends SentinelSource
     implements JavaExecutionOperator {
 
-  public JavaSentinelSource(Iterator<Type> iterator, Class<Type> _class) {
-    super(iterator, _class);
+  public JavaSentinelSource(String iterator) {
+    super(iterator);
   }
 
-  public JavaSentinelSource(SentinelSource<Type> that) {
+  public JavaSentinelSource(SentinelSource that) {
     super(that);
   }
 
