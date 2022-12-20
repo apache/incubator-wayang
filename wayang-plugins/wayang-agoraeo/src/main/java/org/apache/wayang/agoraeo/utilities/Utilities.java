@@ -1,6 +1,10 @@
 package org.apache.wayang.agoraeo.utilities;
 
+import org.apache.wayang.agoraeo.sentinel.Mirror;
+
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Utilities {
 
@@ -48,6 +52,30 @@ public class Utilities {
         return res;
     }
 
+    // assign url, user and password from mirror
+    public static List<Map<String, String>> distribute(List<Map<String, String>> origin, String key, List<Mirror> distribute){
+        return origin.stream()
+                .map(
+                        new Function<Map<String, String>, Map<String, String>>() {
+
+                            int position = 0;
+                            @Override
+                            public Map<String, String> apply(Map<String, String> stringStringMap) {
+                                if(position > distribute.size()){
+                                    position = 0;
+                                }
+                                stringStringMap.put(key, distribute.get(position).getUrl());
+                                stringStringMap.put("user", distribute.get(position).getUser());
+                                stringStringMap.put("password", distribute.get(position).getPassword());
+                                position++;
+                                return stringStringMap;
+                            }
+                        }
+                )
+                .collect(Collectors.toList());
+    }
+
+
     public static void main(String[] args) {
         //from -> NOW-30DAY; to -> NOW; order -> {33UU, 32VNM}
         Map<String, String> fecha = new HashMap<>();
@@ -57,7 +85,7 @@ public class Utilities {
         Map<String, List<String>> pp = new HashMap<>();
 
         pp.put("order", Arrays.asList("33UUU", "32VNM"));
-        pp.put("mirrors", Arrays.asList("lalala", "kdkkd"));
+        pp.put("mirrors", Arrays.asList("https://sentinels.space.noa.gr/dhus", "https://scihub.copernicus.eu/dhus"));
 
         System.out.println(flattenParameters(pp, fecha));
     }

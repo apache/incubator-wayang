@@ -1,8 +1,11 @@
 package org.apache.wayang.agoraeo;
 
 import java.util.Arrays;
+import java.util.List;
+
 import org.apache.wayang.agoraeo.operators.basic.Sen2CorWrapper;
 import org.apache.wayang.agoraeo.operators.basic.SentinelSource;
+import org.apache.wayang.agoraeo.sentinel.Mirror;
 import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
@@ -30,10 +33,15 @@ public class Main {
 
         System.out.println("Running AgoraEO!");
 
-        // deberia ser un hashmap, con valores lista de orders con flatmap
-        String order = "--from NOW-30DAY --to NOW --order 33UUU,32VNM";
+        Mirror m1 = new Mirror("https://scihub.copernicus.eu/dhus", "rpardomeza", "12c124ccb2");
+        Mirror m2 = new Mirror("https://sentinels.space.noa.gr/dhus", "greecerpardomeza", "12c124ccb2");
 
-        WayangPlan w = alternative2WayangPlan(order, sen2cor, l2a_images_folder, "file:///Users/rodrigopardomeza/files/sen2cor-output-agoraeo.txt");
+        List<Mirror> mirrors = Arrays.asList(m1,m2);
+
+        // deberia ser un hashmap, con valores lista de orders con flatmap
+//        String order = "--from NOW-30DAY --to NOW --order 33UUU,33UWP";
+//
+        WayangPlan w = alternative2WayangPlan(mirrors, sen2cor, l2a_images_folder, "file:///Users/rodrigopardomeza/files/sen2cor-output-agoraeo.txt");
 
 //        wayangContext.execute(w, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
         wayangContext.execute(w, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class), ReflectionUtils.getDeclaringJar(SparkPlatform.class));
@@ -41,16 +49,17 @@ public class Main {
     }
 
     public static WayangPlan alternative2WayangPlan(
-            String order,
+            List<Mirror> mirrors,
             String sen2cor,
             String l2a_location,
             String outputFileUrl
     ) {
 
         SentinelSource source = new SentinelSource()
-            .setFrom("NOW-30DAY")
+            .setFrom("NOW-90DAY")
             .setTo("NOW")
-            .setOrder(Arrays.asList("33UUU", "32VNM"))
+            .setOrder(Arrays.asList("33UUU", "33UWP"))
+            .setMirrors(mirrors)
         ;
 
         Sen2CorWrapper toL2A = new Sen2CorWrapper(sen2cor, l2a_location);
@@ -59,8 +68,8 @@ public class Main {
 
         TextFileSink<String> sink = new TextFileSink<>(outputFileUrl, String.class);
 
-        source.connectTo(0,sink,0);
-       //toL2A.connectTo(0,sink,0);
+        source.connectTo(0,toL2A,0);
+        toL2A.connectTo(0,sink,0);
 
 
         return new WayangPlan(sink);

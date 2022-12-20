@@ -14,19 +14,26 @@ public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>
     private Process process = null;
     private Iterator<Input> iteratorProcess = null;
 
-    public IteratorSentinelDownload(String[] command) {
-        this.command = command;
-    }
-
     public IteratorSentinelDownload(String python_location, String module_name, Map<String, String> params) {
-        this(python_location, module_name, "--{}", params);
+        this(python_location, module_name, "--%s", params);
     }
 
     public IteratorSentinelDownload(String python_location, String module_name, String format, Map<String, String> params) {
-        String[] parameters = new String[(params.size()*2) + 2];
-        parameters[0] = python_location;
-        parameters[1] = module_name;
+
+        System.out.println("python_location: " + python_location);
+        System.out.println("module_name: " + module_name);
+        System.out.println("format: " + format);
+        System.out.println("params: " + params);
+        this.command = new String[(params.size()*2) + 2];
+        this.command[0] = python_location;
+        this.command[1] = module_name;
         int position = 2;
+        System.out.println(
+                String.format(
+                        "first command: %s",
+                        Arrays.toString(this.command)
+                )
+        );
         for (Map.Entry<String, String> param : params.entrySet()) {
             this.command[position] = String.format(format, param.getKey());
             this.command[position + 1] = param.getValue();
@@ -34,7 +41,7 @@ public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>
         }
         System.out.println(
             String.format(
-                "command: {}",
+                "command: %s",
                 Arrays.toString(this.command)
             )
         );

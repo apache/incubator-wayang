@@ -1,10 +1,11 @@
 package org.apache.wayang.agoraeo.operators.basic;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.wayang.agoraeo.WayangAgoraEO;
 import org.apache.wayang.agoraeo.iterators.StringIteratorSentinelDownload;
+import org.apache.wayang.agoraeo.sentinel.Mirror;
 import org.apache.wayang.agoraeo.utilities.Utilities;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -13,10 +14,6 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.ReflectionUtils;
 
 import java.io.*;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
 
 public class SentinelSource extends UnarySource<String> implements Serializable{
 
@@ -25,13 +22,9 @@ public class SentinelSource extends UnarySource<String> implements Serializable{
     protected String module_location;
     protected Map<String, String> constant_variables;
     protected Map<String, List<String>> iterable_variables;
+//    protected List<String> mirrors;
+    protected List<Mirror> mirrors;
 
-    /**
-     *
-     * @param from
-     * @param to
-     * @param orders
-     */
     public SentinelSource(){
         this(new HashMap<>(), new HashMap<>());
     }
@@ -55,18 +48,16 @@ public class SentinelSource extends UnarySource<String> implements Serializable{
 
             this.module_location = properties.getProperty("org.apache.wayang.agoraeo.minimaldownload.location");
 
-            this.constant_variables.put(
-                "url",
-                properties.getProperty("org.apache.wayang.agoraeo.mirror")
-            );
-            this.constant_variables.put(
-                "user",
-                properties.getProperty("org.apache.wayang.agoraeo.user")
-            );
-            this.constant_variables.put(
-                "password",
-                properties.getProperty("org.apache.wayang.agoraeo.pass")
-            );
+//            this.mirrors = Arrays.asList(properties.getProperty("org.apache.wayang.agoraeo.mirror").split(","));
+
+//            this.constant_variables.put(
+//                "user",
+//                properties.getProperty("org.apache.wayang.agoraeo.user")
+//            );
+//            this.constant_variables.put(
+//                "password",
+//                properties.getProperty("org.apache.wayang.agoraeo.pass")
+//            );
 
         } catch (IOException e) {
             throw new WayangException("Could not load configuration.", e);
@@ -82,6 +73,7 @@ public class SentinelSource extends UnarySource<String> implements Serializable{
         this.iterable_variables = that.iterable_variables;
         this.python_location = that.python_location;
         this.module_location = that.module_location;
+        this.mirrors = that.mirrors;
     }
 
     public Map<String, String> getConstants(){
@@ -134,7 +126,11 @@ public class SentinelSource extends UnarySource<String> implements Serializable{
     }
 
     protected List<Map<String, String>> getCollection(){
-        return Utilities.flattenParameters(this.iterable_variables, this.constant_variables);
+        return Utilities.distribute(
+                Utilities.flattenParameters(this.iterable_variables, this.constant_variables),
+                "url",
+                this.mirrors
+        );
     }
 
     protected String getPython_location(){
@@ -143,5 +139,14 @@ public class SentinelSource extends UnarySource<String> implements Serializable{
 
     protected String getModule_location(){
         return this.module_location;
+    }
+
+    public List<Mirror> getMirrors() {
+        return mirrors;
+    }
+
+    public SentinelSource setMirrors(List<Mirror> mirrors) {
+        this.mirrors = mirrors;
+        return this;
     }
 }

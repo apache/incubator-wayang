@@ -47,7 +47,7 @@ import java.util.stream.StreamSupport;
 //TODO add the documentation and add the Profile Estimator
 public class SparkSen2CorWrapper
     extends Sen2CorWrapper
-    implements SparkExecutionOperator, Serializable {
+    implements SparkExecutionOperator {
 
 
   public SparkSen2CorWrapper(String sen2cor, String l2a_location) {
@@ -72,33 +72,10 @@ public class SparkSen2CorWrapper
       assert inputs.length == this.getNumInputs();
       assert outputs.length == this.getNumOutputs();
 
-      final FlatMapFunction<String, String> flatmapFunction =
-              new FlatMapFunction<String, String>() {
-                  @Override
-                  public Iterator<String> call(String s) throws Exception {
-                      System.out.println("sen2cor");
-                      System.out.println(sen2cor);
-                      System.out.println("l2a_location");
-                      System.out.println(l2a_location);
-                      try {
-                          String command = sen2cor + " " +
-                                  s + " " +
-                                  " --output_dir " + l2a_location;
-                          Process process = Runtime.getRuntime().exec(command);
-                          Iterator<String> input = new BufferedReader(
-                                  new InputStreamReader(
-                                          process.getInputStream()
-                                  )
-                          ).lines().iterator();
-                          return input;
-                      } catch (IOException e) {
-                          throw new RuntimeException(e);
-                      }
-                  }
-              };
+      Pepito pepe = new Pepito(sen2cor, l2a_location);
 
       ((RddChannel.Instance) outputs[0]).accept(
-              ((RddChannel.Instance) inputs[0]).<String>provideRdd().flatMap(flatmapFunction), sparkExecutor
+              ((RddChannel.Instance) inputs[0]).<String>provideRdd().flatMap(pepe), sparkExecutor
       );
 
       return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);

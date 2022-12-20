@@ -23,7 +23,7 @@ public class SentinelSourceSparkMapping implements Mapping {
         final OperatorPattern operatorPattern = new OperatorPattern(
                 "source",
                 new SentinelSource(
-                        ""
+
                 ),
                 false
         );
