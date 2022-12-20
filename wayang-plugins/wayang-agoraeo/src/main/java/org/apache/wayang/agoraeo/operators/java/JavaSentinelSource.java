@@ -18,6 +18,8 @@
 
 package org.apache.wayang.agoraeo.operators.java;
 
+import java.util.stream.Stream;
+import org.apache.wayang.agoraeo.iterators.IteratorSentinel;
 import org.apache.wayang.agoraeo.operators.basic.SentinelSource;
 import org.apache.wayang.core.optimizer.OptimizationContext.OperatorContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -36,10 +38,6 @@ import java.util.stream.StreamSupport;
 public class JavaSentinelSource
     extends SentinelSource
     implements JavaExecutionOperator {
-
-  public JavaSentinelSource(String iterator) {
-    super(iterator);
-  }
 
   public JavaSentinelSource(SentinelSource that) {
     super(that);
@@ -68,15 +66,29 @@ public class JavaSentinelSource
     assert inputs.length == this.getNumInputs();
     assert outputs.length == this.getNumOutputs();
 
-    ((StreamChannel.Instance) outputs[0]).accept(
-      StreamSupport.stream(
-          Spliterators.spliteratorUnknownSize(
-              this.getIterator(),
-              Spliterator.ORDERED
-          ),
-          false
-      )
-    );
+
+    final String python_location = this.getPython_location();
+    final String module_location = this.getModule_location();
+
+    final Stream<String> sentinel = this.getCollection().stream()
+        .flatMap(
+            dict -> {
+                return StreamSupport.stream(
+                    Spliterators.spliteratorUnknownSize(
+                        new IteratorSentinel(
+                            python_location,
+                            module_location,
+                            dict
+                        ),
+                        Spliterator.ORDERED
+                    ),
+                    false
+                );
+            }
+        );
+
+
+    ((StreamChannel.Instance) outputs[0]).accept(sentinel);
 
     return ExecutionOperator.modelLazyExecution(
         inputs,

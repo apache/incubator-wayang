@@ -22,9 +22,7 @@ public class SentinelSourceJavaMapping implements Mapping {
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
                 "source",
-                new SentinelSource(
-                        ""
-                ),
+                new SentinelSource(),
                 false
         );
         return SubplanPattern.createSingleton(operatorPattern);

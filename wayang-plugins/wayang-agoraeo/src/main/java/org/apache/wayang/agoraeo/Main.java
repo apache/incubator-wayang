@@ -1,5 +1,6 @@
 package org.apache.wayang.agoraeo;
 
+import java.util.Arrays;
 import org.apache.wayang.agoraeo.operators.basic.Sen2CorWrapper;
 import org.apache.wayang.agoraeo.operators.basic.SentinelSource;
 import org.apache.wayang.basic.operators.*;
@@ -46,7 +47,11 @@ public class Main {
             String outputFileUrl
     ) {
 
-        SentinelSource source = new SentinelSource(order);
+        SentinelSource source = new SentinelSource()
+            .setFrom("NOW-30DAY")
+            .setTo("NOW")
+            .setOrder(Arrays.asList("33UUU", "32VNM"))
+        ;
 
         Sen2CorWrapper toL2A = new Sen2CorWrapper(sen2cor, l2a_location);
 
@@ -54,8 +59,8 @@ public class Main {
 
         TextFileSink<String> sink = new TextFileSink<>(outputFileUrl, String.class);
 
-        source.connectTo(0,toL2A,0);
-        toL2A.connectTo(0,sink,0);
+        source.connectTo(0,sink,0);
+       //toL2A.connectTo(0,sink,0);
 
 
         return new WayangPlan(sink);

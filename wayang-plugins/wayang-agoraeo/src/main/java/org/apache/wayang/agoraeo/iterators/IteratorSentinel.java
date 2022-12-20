@@ -7,9 +7,13 @@ import java.util.stream.Stream;
 public class IteratorSentinel extends IteratorSentinelDownload<String> {
 
     // Iterator receives a unique map
-    public IteratorSentinel(Map<String, String> params) {
+    public IteratorSentinel(String python_location, String downloader_location, Map<String, String> params) {
         // from params create command?, or prepare IteratorSentinelDownload to receive Map
-        super("", params);
+        super(
+            python_location,
+            downloader_location,
+            params
+        );
     }
 
     @Override

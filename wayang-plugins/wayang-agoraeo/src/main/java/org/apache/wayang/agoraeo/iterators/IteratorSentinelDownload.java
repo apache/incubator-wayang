@@ -4,31 +4,40 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
 
 public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>, Serializable {
-
-    private String _name = "";
-    private String command = "";
+    private String[] command;
     private Process process = null;
     private Iterator<Input> iteratorProcess = null;
 
-    public IteratorSentinelDownload(String name, String command) {
+    public IteratorSentinelDownload(String[] command) {
         this.command = command;
-        this._name = name;
     }
 
-    public IteratorSentinelDownload(String name, Map<String, String> params)
-    {
-        for (Map.Entry<String, String> param : params.entrySet()) {
-            this.command = this.command + " --" + param.getKey() + " " + param.getValue();
-        }
-        System.out.println("Command:");
-        System.out.println(this.command);
+    public IteratorSentinelDownload(String python_location, String module_name, Map<String, String> params) {
+        this(python_location, module_name, "--{}", params);
+    }
 
-        this._name = name;
+    public IteratorSentinelDownload(String python_location, String module_name, String format, Map<String, String> params) {
+        String[] parameters = new String[(params.size()*2) + 2];
+        parameters[0] = python_location;
+        parameters[1] = module_name;
+        int position = 2;
+        for (Map.Entry<String, String> param : params.entrySet()) {
+            this.command[position] = String.format(format, param.getKey());
+            this.command[position + 1] = param.getValue();
+            position += 2;
+        }
+        System.out.println(
+            String.format(
+                "command: {}",
+                Arrays.toString(this.command)
+            )
+        );
     }
 
     @Override
@@ -52,7 +61,6 @@ public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>
 
     private boolean startProcess(){
         try {
-            final String name = this._name;
             this.process = Runtime.getRuntime().exec(this.command);
             this.iteratorProcess = getLogic(
                     new BufferedReader(
@@ -70,7 +78,4 @@ public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>
 
     protected abstract Input getDefaultValue();
 
-    protected String getName(){
-        return this._name;
-    }
 }

@@ -1,8 +1,11 @@
 package org.apache.wayang.agoraeo.operators.basic;
 
+import java.util.HashMap;
+import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.wayang.agoraeo.WayangAgoraEO;
 import org.apache.wayang.agoraeo.iterators.StringIteratorSentinelDownload;
+import org.apache.wayang.agoraeo.utilities.Utilities;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
@@ -17,77 +20,128 @@ import java.util.Properties;
 
 public class SentinelSource extends UnarySource<String> implements Serializable{
 
-    private Iterator<String> iterator;
+    protected String python_location;
+
+    protected String module_location;
+    protected Map<String, String> constant_variables;
+    protected Map<String, List<String>> iterable_variables;
 
     /**
-     * Default construct
      *
-     * @param order {@link String} what to do inside the command
+     * @param from
+     * @param to
+     * @param orders
      */
-    public SentinelSource(String order){
+    public SentinelSource(){
+        this(new HashMap<>(), new HashMap<>());
+    }
+
+    public SentinelSource (Map<String, String> constants, Map<String, List<String>> iterables){
         super(DataSetType.createDefault(String.class));
+        this.constant_variables = constants;
+        this.iterable_variables = iterables;
+
 
 //        Configuration conf = new Configuration(WayangAgoraEO.DEFAULT_CONFIG_FILE);
 //        conf.
         InputStream str = ReflectionUtils.loadResource(WayangAgoraEO.DEFAULT_CONFIG_FILE);
 
-        String path_python = null;
-        String downloader_location = null;
-        String mirror = null;
-        String user = null;
-        String pass = null;
 
         try {
             final Properties properties = new Properties();
             properties.load(str);
-            for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
 
-                final String key = propertyEntry.getKey().toString();
-                final String value = propertyEntry.getValue().toString();
+            this.python_location = properties.getProperty("org.apache.wayang.agoraeo.python.location");
 
-                if(Objects.equals(key, "org.apache.wayang.agoraeo.python.location")){
-                    path_python = value;
-                }
-                if(Objects.equals(key, "org.apache.wayang.agoraeo.minimaldownload.location")){
-                    downloader_location = value;
-                }
-                if(Objects.equals(key, "org.apache.wayang.agoraeo.mirror")){
-                    mirror = value;
-                }
-                if(Objects.equals(key, "org.apache.wayang.agoraeo.user")){
-                    user = value;
-                }
-                if(Objects.equals(key, "org.apache.wayang.agoraeo.pass")){
-                    pass = value;
-                }
+            this.module_location = properties.getProperty("org.apache.wayang.agoraeo.minimaldownload.location");
 
-            }
+            this.constant_variables.put(
+                "url",
+                properties.getProperty("org.apache.wayang.agoraeo.mirror")
+            );
+            this.constant_variables.put(
+                "user",
+                properties.getProperty("org.apache.wayang.agoraeo.user")
+            );
+            this.constant_variables.put(
+                "password",
+                properties.getProperty("org.apache.wayang.agoraeo.pass")
+            );
+
         } catch (IOException e) {
             throw new WayangException("Could not load configuration.", e);
         } finally {
             IOUtils.closeQuietly(str);
         }
-
-        if(path_python == null || downloader_location == null || mirror == null || user == null || pass == null){
-            throw new WayangException("Missing inputs for Python Minimal Download");
-        }
-
-        String cmd = path_python + " " + downloader_location + " --url " + mirror + " --user " + user + " --password " + pass + " " + order;
-
-        //Iterator debe ser construido en runtime, no en la generacion del objeto
-        this.iterator = new StringIteratorSentinelDownload("Sentinel 2 - API", cmd);
-
-//        throw new WayangException("ABORT ON PURPOSE");
-
     }
 
     public SentinelSource(SentinelSource that) {
         super(that);
-        this.iterator = that.getIterator();
+        //TODO this need to be cloned not assigned :D
+        this.constant_variables = that.constant_variables;
+        this.iterable_variables = that.iterable_variables;
+        this.python_location = that.python_location;
+        this.module_location = that.module_location;
     }
 
-    public Iterator<String> getIterator() {
-        return this.iterator;
+    public Map<String, String> getConstants(){
+        return this.constant_variables;
     }
 
+    public Map<String, List<String>> getIterables(){
+        return this.iterable_variables;
+    }
+
+    public String getConstant(String key){
+        return this.constant_variables.get(key);
+    }
+
+    public SentinelSource setConstant(String key, String value){
+        this.constant_variables.put(key, value);
+        return this;
+    }
+
+    public List<String> getIterable(String key){
+        return this.iterable_variables.get(key);
+    }
+
+    public SentinelSource setIterable(String key, List<String> value){
+        this.iterable_variables.put(key, value);
+        return this;
+    }
+
+    public String getFrom(){
+        return this.getConstant("from");
+    }
+
+    public SentinelSource setFrom(String from ){
+        return this.setConstant("from", from);
+    }
+
+    public String getTo(){
+        return this.getConstant("to");
+    }
+
+    public SentinelSource setTo(String to){
+        return this.setConstant("to", to);
+    }
+    public List<String> getOrder(){
+        return this.getIterable("order");
+    }
+
+    public SentinelSource setOrder(List<String> orders){
+        return this.setIterable("order", orders);
+    }
+
+    protected List<Map<String, String>> getCollection(){
+        return Utilities.flattenParameters(this.iterable_variables, this.constant_variables);
+    }
+
+    protected String getPython_location(){
+        return this.python_location;
+    }
+
+    protected String getModule_location(){
+        return this.module_location;
+    }
 }

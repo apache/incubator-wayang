@@ -18,6 +18,9 @@
 
 package org.apache.wayang.agoraeo.operators.spark;
 
+import java.util.stream.Stream;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.wayang.agoraeo.iterators.IteratorSentinel;
 import org.apache.wayang.agoraeo.operators.basic.SentinelSource;
 import org.apache.wayang.core.optimizer.OptimizationContext.OperatorContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -39,10 +42,6 @@ import java.util.stream.StreamSupport;
 public class SparkSentinelSource
     extends SentinelSource
     implements SparkExecutionOperator {
-
-  public SparkSentinelSource(String iterator) {
-    super(iterator);
-  }
 
   public SparkSentinelSource(SentinelSource that) {
     super(that);
@@ -69,13 +68,26 @@ public class SparkSentinelSource
     assert inputs.length == this.getNumInputs();
     assert outputs.length == this.getNumOutputs();
 
-    final Iterator<String> iterator = this.getIterator();
 
-    ((RddChannel.Instance) outputs[0]).accept(
-            sparkExecutor.sc.parallelize(Arrays.asList("")).flatMap(f -> {
-              return iterator;
-            }).repartition(2), sparkExecutor
-    );
+    final String python_location = this.getPython_location();
+    final String module_location = this.getModule_location();
+
+    final JavaRDD<String> rdd = sparkExecutor.sc.parallelize(this.getCollection())
+        .repartition(4)
+        .flatMap( dict -> {
+          return new IteratorSentinel(
+              python_location,
+              module_location,
+              dict
+          );
+        });
+
+    ((RddChannel.Instance) outputs[0])
+        .accept(
+            rdd,
+            sparkExecutor
+        )
+    ;
 
     return ExecutionOperator.modelLazyExecution(
         inputs,
