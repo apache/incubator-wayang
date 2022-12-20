@@ -3,10 +3,11 @@ package org.apache.wayang.agoraeo.iterators;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-public abstract class IteratorSentinelDownload<Input> implements Iterator<Input> {
+public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>, Serializable {
 
     private String _name = "";
     private String command = "";

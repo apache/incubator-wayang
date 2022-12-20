@@ -3,6 +3,7 @@ package org.apache.wayang.agoraeo.operators.basic;
 import org.apache.commons.io.IOUtils;
 import org.apache.wayang.agoraeo.WayangAgoraEO;
 import org.apache.wayang.agoraeo.iterators.StringIteratorSentinelDownload;
+import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
 import org.apache.wayang.core.types.DataSetType;
@@ -14,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
-public class SentinelSource extends UnarySource<String> {
+public class SentinelSource extends UnarySource<String> implements Serializable{
 
     private Iterator<String> iterator;
 
@@ -26,6 +27,8 @@ public class SentinelSource extends UnarySource<String> {
     public SentinelSource(String order){
         super(DataSetType.createDefault(String.class));
 
+//        Configuration conf = new Configuration(WayangAgoraEO.DEFAULT_CONFIG_FILE);
+//        conf.
         InputStream str = ReflectionUtils.loadResource(WayangAgoraEO.DEFAULT_CONFIG_FILE);
 
         String path_python = null;

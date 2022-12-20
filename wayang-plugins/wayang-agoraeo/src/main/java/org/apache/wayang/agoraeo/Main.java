@@ -9,13 +9,17 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.spark.Spark;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 public class Main {
     public static void main(String[] args) {
 
         WayangContext wayangContext = new WayangContext();
         wayangContext.register(Java.basicPlugin());
-        wayangContext.register(WayangAgoraEO.javaPlugin());
+//        wayangContext.register(WayangAgoraEO.javaPlugin());
+        wayangContext.register(WayangAgoraEO.plugin());
+        wayangContext.register(Spark.basicPlugin());
 
         Configuration config = wayangContext.getConfiguration();
         config.load(ReflectionUtils.loadResource(WayangAgoraEO.DEFAULT_CONFIG_FILE));
@@ -25,11 +29,13 @@ public class Main {
 
         System.out.println("Running AgoraEO!");
 
-        String order = "--from NOW-30DAY --to NOW --order 33UUU";
+        // deberia ser un hashmap, con valores lista de orders con flatmap
+        String order = "--from NOW-30DAY --to NOW --order 33UUU,32VNM";
 
         WayangPlan w = alternative2WayangPlan(order, sen2cor, l2a_images_folder, "file:///Users/rodrigopardomeza/files/sen2cor-output-agoraeo.txt");
 
-        wayangContext.execute(w, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
+//        wayangContext.execute(w, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
+        wayangContext.execute(w, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class), ReflectionUtils.getDeclaringJar(SparkPlatform.class));
 
     }
 
