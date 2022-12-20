@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>, Serializable {
@@ -16,6 +17,17 @@ public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>
 
     public IteratorSentinelDownload(String name, String command) {
         this.command = command;
+        this._name = name;
+    }
+
+    public IteratorSentinelDownload(String name, Map<String, String> params)
+    {
+        for (Map.Entry<String, String> param : params.entrySet()) {
+            this.command = this.command + " --" + param.getKey() + " " + param.getValue();
+        }
+        System.out.println("Command:");
+        System.out.println(this.command);
+
         this._name = name;
     }
 

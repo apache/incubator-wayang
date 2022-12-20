@@ -74,6 +74,7 @@ public class SentinelSource extends UnarySource<String> implements Serializable{
 
         String cmd = path_python + " " + downloader_location + " --url " + mirror + " --user " + user + " --password " + pass + " " + order;
 
+        //Iterator debe ser construido en runtime, no en la generacion del objeto
         this.iterator = new StringIteratorSentinelDownload("Sentinel 2 - API", cmd);
 
 //        throw new WayangException("ABORT ON PURPOSE");
