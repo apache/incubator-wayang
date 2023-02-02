@@ -1,5 +1,7 @@
 package org.apache.wayang.agoraeo;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,9 +23,8 @@ public class Main {
 
         WayangContext wayangContext = new WayangContext();
         wayangContext.register(Java.basicPlugin());
-//        wayangContext.register(WayangAgoraEO.javaPlugin());
-        wayangContext.register(WayangAgoraEO.plugin());
         wayangContext.register(Spark.basicPlugin());
+        wayangContext.register(WayangAgoraEO.plugin());
 
         Configuration config = wayangContext.getConfiguration();
         config.load(ReflectionUtils.loadResource(WayangAgoraEO.DEFAULT_CONFIG_FILE));
@@ -33,17 +34,23 @@ public class Main {
 
         System.out.println("Running AgoraEO!");
 
+        // TODO: Read all from config file
         Mirror m1 = new Mirror("https://scihub.copernicus.eu/dhus", "rpardomeza", "12c124ccb2");
-        Mirror m2 = new Mirror("https://sentinels.space.noa.gr/dhus", "greecerpardomeza", "12c124ccb2");
+        Mirror m2 = new Mirror("https://colhub.met.no", "rpardomeza", "12c124ccb2");
 
         List<Mirror> mirrors = Arrays.asList(m1,m2);
 
-        // deberia ser un hashmap, con valores lista de orders con flatmap
-//        String order = "--from NOW-30DAY --to NOW --order 33UUU,33UWP";
-//
-        WayangPlan w = alternative2WayangPlan(mirrors, sen2cor, l2a_images_folder, "file:///Users/rodrigopardomeza/files/sen2cor-output-agoraeo.txt");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd-HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+        String sen2corlog = now.format(dtf);
 
-//        wayangContext.execute(w, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
+        WayangPlan w = alternative2WayangPlan(
+                mirrors,
+                sen2cor,
+                l2a_images_folder,
+                "file:///Users/rodrigopardomeza/tu-berlin/agoraeo/agoraeo/sen2cor_logs/"+sen2corlog
+        );
+
         wayangContext.execute(w, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class), ReflectionUtils.getDeclaringJar(SparkPlatform.class));
 
     }
@@ -56,9 +63,9 @@ public class Main {
     ) {
 
         SentinelSource source = new SentinelSource()
-            .setFrom("NOW-90DAY")
+            .setFrom("NOW-30DAY")
             .setTo("NOW")
-            .setOrder(Arrays.asList("33UUU", "33UWP"))
+            .setOrder(Arrays.asList("33UWP", "32VNM"))
             .setMirrors(mirrors)
         ;
 
@@ -75,76 +82,4 @@ public class Main {
         return new WayangPlan(sink);
     }
 
-
-
-
-//    public static WayangPlan createWayangPlan(
-//            String cmd,
-//            String outputFileUrl
-//    ) {
-//
-//        IteratorSentinelDownload<File> iter = new FileIteratorSentinelDownload("Sentinel 2 - API", cmd);
-//
-//        /* Might replay the name of the downloaded file */
-//        SentinelSource<File> source = new SentinelSource<>(iter, File.class);
-//
-//        FlatMapOperator<File, String> files_lines = new FlatMapOperator<>(
-//                t -> {
-//                    try {
-//                        final InputStream inputStream = Files.newInputStream(t.toPath());
-//                        Stream<String> rough_lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
-//                        return rough_lines::iterator;
-//                    } catch (IOException e) {
-//                        throw new WayangException(String.format("Reading %s failed.", t), e);
-//                    }
-//                },
-//                File.class,
-//                String.class
-//        );
-//        files_lines.setName("files giving lines");
-//
-//        FlatMapOperator<String, String> words = new FlatMapOperator<>(
-//                line -> Arrays.asList(line.split("\\W+")),
-//                String.class,
-//                String.class
-//        );
-//        words.setName("words");
-//
-//        // for each word transform it to lowercase and output a key-value pair (word, 1)
-//        MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-//                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
-//                        DataUnitType.createBasic(String.class),
-//                        DataUnitType.createBasicUnchecked(Tuple2.class)
-//                ), DataSetType.createDefault(String.class),
-//                DataSetType.createDefaultUnchecked(Tuple2.class)
-//        );
-//        mapOperator.setName("To lower case, add counter");
-//
-//
-//        // groupby the key (word) and add up the values (frequency)
-//        ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new ReduceByOperator<>(
-//                new TransformationDescriptor<>(pair -> pair.field0,
-//                        DataUnitType.createBasicUnchecked(Tuple2.class),
-//                        DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
-//                ((a, b) -> {
-//                    a.field1 += b.field1;
-//                    return a;
-//                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
-//                DataUnitType.createBasicUnchecked(Tuple2.class)
-//        ), DataSetType.createDefaultUnchecked(Tuple2.class)
-//        );
-//        reduceByOperator.setName("Add counters");
-//
-//        TextFileSink<Tuple2> sink = new TextFileSink<>(outputFileUrl, Tuple2.class);
-//        sink.setName("Collect result");
-//
-//
-//        source.connectTo(0, files_lines, 0);
-//        files_lines.connectTo(0, words,0);
-//        words.connectTo(0, mapOperator, 0);
-//        mapOperator.connectTo(0, reduceByOperator, 0);
-//        reduceByOperator.connectTo(0, sink, 0);
-//
-//        return new WayangPlan(sink);
-//    }
 }

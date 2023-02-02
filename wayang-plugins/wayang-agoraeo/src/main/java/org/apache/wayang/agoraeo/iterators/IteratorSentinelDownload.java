@@ -28,12 +28,12 @@ public abstract class IteratorSentinelDownload<Input> implements Iterator<Input>
         this.command[0] = python_location;
         this.command[1] = module_name;
         int position = 2;
-        System.out.println(
-                String.format(
-                        "first command: %s",
-                        Arrays.toString(this.command)
-                )
-        );
+//        System.out.println(
+//                String.format(
+//                        "first command: %s",
+//                        Arrays.toString(this.command)
+//                )
+//        );
         for (Map.Entry<String, String> param : params.entrySet()) {
             this.command[position] = String.format(format, param.getKey());
             this.command[position + 1] = param.getValue();

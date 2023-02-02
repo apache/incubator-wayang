@@ -18,31 +18,18 @@
 
 package org.apache.wayang.agoraeo.operators.spark;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.wayang.agoraeo.operators.basic.Sen2CorWrapper;
-import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext.OperatorContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.java.channels.CollectionChannel;
-import org.apache.wayang.java.channels.JavaChannelInstance;
-import org.apache.wayang.java.channels.StreamChannel;
-import org.apache.wayang.java.execution.JavaExecutor;
-import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.StreamSupport;
 
 //TODO add the documentation and add the Profile Estimator
 public class SparkSen2CorWrapper
@@ -72,10 +59,11 @@ public class SparkSen2CorWrapper
       assert inputs.length == this.getNumInputs();
       assert outputs.length == this.getNumOutputs();
 
-      Pepito pepe = new Pepito(sen2cor, l2a_location);
+      RunSen2Cor s2c = new RunSen2Cor(sen2cor, l2a_location);
+
 
       ((RddChannel.Instance) outputs[0]).accept(
-              ((RddChannel.Instance) inputs[0]).<String>provideRdd().flatMap(pepe), sparkExecutor
+              ((RddChannel.Instance) inputs[0]).<String>provideRdd().flatMap(s2c), sparkExecutor
       );
 
       return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
