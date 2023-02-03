@@ -12,6 +12,18 @@
     <artifactId>wayang-agoraeo</artifactId>
     <version>0.6.1-SNAPSHOT</version>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.gdal</groupId>
+                <artifactId>gdal</artifactId>
+                <version>3.6.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.wayang</groupId>
@@ -55,7 +67,6 @@
             <groupId>org.gdal</groupId>
             <artifactId>gdal</artifactId>
             <version>3.6.0</version>
-            <type>pom</type>
         </dependency>
 
     </dependencies>
