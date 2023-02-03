@@ -26,31 +26,29 @@ import java.io.Serializable;
 
 public class BandMetadata implements Serializable {
 
+
+    private final String utm;
+    private final String resolution;
+    private final String band_name;
+
     /*TODO: Band raster is just the first of the bands of the raster, I don't know how representative it is*/
-    private org.gdal.gdal.Band band_raster;
-    private org.gdal.gdal.Dataset band_source;
-    private String local_path;
-    private Tuple2<Double, Double> ul;
-    private Tuple2<Double, Double> lr;
-    private Tuple2<Double, Double> pixel_resolution;
-    private Tuple2<Integer, Integer> size;
-
-    private Integer espg;
-    /*
-    * from osgeo.osr import SpatialReference
-
-                epsg = SpatialReference(wkt=src.GetProjection()).GetAttrValue(
-                    "AUTHORITY", 1
-                )
-                if isinstance(epsg, str):
-                    return int(epsg)
-                return -1
-    * */
-
-    private String projection;
+    private final org.gdal.gdal.Band band_raster;
+    private final org.gdal.gdal.Dataset band_source;
+    private final String local_path;
+    private final Tuple2<Double, Double> ul;
+    private final Tuple2<Double, Double> lr;
+    private final Tuple2<Double, Double> pixel_resolution;
+    private final Tuple2<Integer, Integer> size;
+    private final Integer espg;
+    private final String projection;
 
     public BandMetadata(Band b) {
-        this.band_source = gdal.Open(b.band_path);
+        gdal.AllRegister();
+        this.utm = b.getUtm();
+        this.band_name = b.getBand_name();
+        this.resolution = b.getResolution();
+        this.local_path = b.getBand_path();
+        this.band_source = gdal.Open(b.getBand_path());
         this.size = new Tuple2<>(this.band_source.GetRasterXSize(), this.band_source.getRasterYSize());
         double[] geo_transf = this.band_source.GetGeoTransform();
         this.pixel_resolution = new Tuple2<>(geo_transf[1], geo_transf[5]);
@@ -70,7 +68,6 @@ public class BandMetadata implements Serializable {
         int intValue;
 
         if(code_espg == null || code_espg.equals("")) {
-//            System.out.println("String cannot be parsed, it is null or empty.");
             return -1;
         }
 
@@ -78,7 +75,7 @@ public class BandMetadata implements Serializable {
             intValue = Integer.parseInt(code_espg);
             return intValue;
         } catch (NumberFormatException e) {
-//            System.out.println("Input String cannot be parsed to Integer.");
+            System.err.println("Not possible to transform " + code_espg + " to Integer");
         }
         return -1;
     }
@@ -111,8 +108,27 @@ public class BandMetadata implements Serializable {
         return size;
     }
 
+    public Integer getEspg() {
+        return espg;
+    }
+
+    public String getProjection() {
+        return projection;
+    }
+
     @Override
     public String toString() {
-        return this.band_source.GetProjection();
+        return
+            "utm: " + this.utm + " | " +
+            "resolution: " + this.resolution + " | " +
+            "band_name: " + this.band_name + " | " +
+            "band_path: " + this.local_path.substring(this.local_path.lastIndexOf("/")+1) + " :  " +
+            "espg: " + this.espg + " | " +
+            "pixel_resolution: " + this.pixel_resolution + " | " +
+            "ul: " + this.ul + " | " +
+            "lr: " + this.lr + " | " +
+            "size: " + this.size
+//            this.projection + "\n"
+                ;
     }
 }
