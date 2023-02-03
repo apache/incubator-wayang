@@ -79,7 +79,7 @@ public class MakePatches {
 
         System.out.println("Running Patch Making Process!");
 
-        List<Band> result = new ArrayList<>();
+        List<BandMetadata> result = new ArrayList<>();
         WayangPlan w = createWayangPlan(args[0], result);
 
 
@@ -155,14 +155,14 @@ public class MakePatches {
 
         wayangContext.execute(w, ReflectionUtils.getDeclaringJar(MakePatches.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class), ReflectionUtils.getDeclaringJar(SparkPlatform.class));
 
-        for (Band res : result) {
+        for (BandMetadata res : result) {
             System.out.println(res);
         }
     }
 
     public static WayangPlan createWayangPlan(
             String inputFileUrl,
-            List<Band> result) {
+            List<BandMetadata> result) {
 
         System.out.println(inputFileUrl);
 
@@ -206,7 +206,7 @@ public class MakePatches {
         MapOperator<Band, BandMetadata> metadata = new MapOperator<>(t-> new BandMetadata(t), Band.class,BandMetadata.class);
 
 
-        LocalCallbackSink<Band> sink = LocalCallbackSink.createCollectingSink(result, Band.class);
+        LocalCallbackSink<BandMetadata> sink = LocalCallbackSink.createCollectingSink(result, BandMetadata.class);
 
 
 //        String outputFileUrl = "file:///Users/rodrigopardomeza/tu-berlin/agoraeo/agoraeo/outputs/patches.log";
@@ -214,7 +214,8 @@ public class MakePatches {
 
         source.connectTo(0, l2a_catalog,0);
         l2a_catalog.connectTo(0, bands,0);
-        bands.connectTo(0, sink,0);
+        bands.connectTo(0, metadata,0);
+        metadata.connectTo(0, sink,0);
 //        source.connectTo(0,toL2A,0);
 //        toL2A.connectTo(0,sink,0);
 

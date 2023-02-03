@@ -18,16 +18,101 @@
 
 package org.apache.wayang.agoraeo.patches;
 
-public class BandMetadata {
+import org.apache.wayang.basic.data.Tuple2;
+import org.gdal.gdal.*;
+import org.gdal.osr.SpatialReference;
+
+import java.io.Serializable;
+
+public class BandMetadata implements Serializable {
+
+    /*TODO: Band raster is just the first of the bands of the raster, I don't know how representative it is*/
+    private org.gdal.gdal.Band band_raster;
+    private org.gdal.gdal.Dataset band_source;
+    private String local_path;
+    private Tuple2<Double, Double> ul;
+    private Tuple2<Double, Double> lr;
+    private Tuple2<Double, Double> pixel_resolution;
+    private Tuple2<Integer, Integer> size;
+
+    private Integer espg;
+    /*
+    * from osgeo.osr import SpatialReference
+
+                epsg = SpatialReference(wkt=src.GetProjection()).GetAttrValue(
+                    "AUTHORITY", 1
+                )
+                if isinstance(epsg, str):
+                    return int(epsg)
+                return -1
+    * */
+
+    private String projection;
 
     public BandMetadata(Band b) {
+        this.band_source = gdal.Open(b.band_path);
+        this.size = new Tuple2<>(this.band_source.GetRasterXSize(), this.band_source.getRasterYSize());
+        double[] geo_transf = this.band_source.GetGeoTransform();
+        this.pixel_resolution = new Tuple2<>(geo_transf[1], geo_transf[5]);
+        this.ul = new Tuple2<>(geo_transf[0], geo_transf[3]);
+        this.lr = new Tuple2<>(
+                this.ul.field0 + (this.pixel_resolution.field0 * this.size.field0),
+                this.ul.field1 + (this.pixel_resolution.field1 * this.size.field1)
+        );
+        this.projection = this.band_source.GetProjection();
+        this.band_raster = this.band_source.GetRasterBand(1);
+        String code_espg = new SpatialReference(this.projection).GetAttrValue("AUTHORITY", 1);
+        this.espg = checkCode(code_espg);
+    }
 
-//         band_raster
-//                band_source=source,
-//                local_path=local_path,
-//                ul=(ulx, uly),
-//        lr=(lrx, lry),
-//        resolution=resolution,
-//                size=size,
+    private Integer checkCode(String code_espg) {
+
+        int intValue;
+
+        if(code_espg == null || code_espg.equals("")) {
+//            System.out.println("String cannot be parsed, it is null or empty.");
+            return -1;
+        }
+
+        try {
+            intValue = Integer.parseInt(code_espg);
+            return intValue;
+        } catch (NumberFormatException e) {
+//            System.out.println("Input String cannot be parsed to Integer.");
+        }
+        return -1;
+    }
+
+    public org.gdal.gdal.Band getBand_raster() {
+        return band_raster;
+    }
+
+    public Dataset getBand_source() {
+        return band_source;
+    }
+
+    public String getLocal_path() {
+        return local_path;
+    }
+
+    public Tuple2<Double, Double> getUl() {
+        return ul;
+    }
+
+    public Tuple2<Double, Double> getLr() {
+        return lr;
+    }
+
+    public Tuple2<Double, Double> getPixel_resolution() {
+        return pixel_resolution;
+    }
+
+    public Tuple2<Integer, Integer> getSize() {
+        return size;
+    }
+
+    @Override
+    public String toString() {
+        return this.band_source.GetProjection();
     }
 }
