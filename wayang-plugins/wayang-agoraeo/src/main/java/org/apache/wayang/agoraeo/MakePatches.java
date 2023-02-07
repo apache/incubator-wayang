@@ -21,6 +21,7 @@ package org.apache.wayang.agoraeo;
 import org.apache.wayang.agoraeo.patches.Band;
 import org.apache.wayang.agoraeo.patches.BandMetadata;
 import org.apache.wayang.agoraeo.patches.L2a_file;
+import org.apache.wayang.agoraeo.patches.Patch;
 import org.apache.wayang.basic.operators.CollectionSource;
 import org.apache.wayang.basic.operators.FlatMapOperator;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
@@ -203,11 +204,20 @@ public class MakePatches {
                 Band.class
         );
 
-        MapOperator<Band, BandMetadata> metadata = new MapOperator<>(t-> new BandMetadata(t), Band.class,BandMetadata.class);
+        MapOperator<Band, BandMetadata> metadata = new MapOperator<>(BandMetadata::new, Band.class,BandMetadata.class);
+
+        FlatMapOperator<BandMetadata, Patch> patches_data = new FlatMapOperator<BandMetadata, Patch>(
+                t -> {
+                    List<Patch> band_patches = createPatchesPerBand(t);
+                    return band_patches;
+                },
+                BandMetadata.class,
+                Patch.class
+        );
 
 
         LocalCallbackSink<BandMetadata> sink = LocalCallbackSink.createCollectingSink(result, BandMetadata.class);
-
+        // his band.resolution = our pixel_resolution
 
 //        String outputFileUrl = "file:///Users/rodrigopardomeza/tu-berlin/agoraeo/agoraeo/outputs/patches.log";
 //        TextFileSink<String> sink = new TextFileSink<>(outputFileUrl, String.class);
@@ -221,6 +231,11 @@ public class MakePatches {
 
 
         return new WayangPlan(sink);
+    }
+
+    private static List<Patch> createPatchesPerBand(BandMetadata t) {
+        /* TODO: Pipeline to get the data for patches from each Band */
+        return new ArrayList<>();
     }
 
     private static List<Band> processResolution(String img_folder, String resolution, L2a_file l2a_file) {

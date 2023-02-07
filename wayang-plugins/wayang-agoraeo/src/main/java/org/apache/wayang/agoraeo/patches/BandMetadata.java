@@ -23,12 +23,14 @@ import org.gdal.gdal.*;
 import org.gdal.osr.SpatialReference;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BandMetadata implements Serializable {
 
 
     private final String utm;
-    private final String resolution;
+    private final String band_resolution;
     private final String band_name;
 
     /*TODO: Band raster is just the first of the bands of the raster, I don't know how representative it is*/
@@ -42,11 +44,13 @@ public class BandMetadata implements Serializable {
     private final Integer espg;
     private final String projection;
 
+    private final Tuple2<Integer, Integer> patch_size;
+
     public BandMetadata(Band b) {
         gdal.AllRegister();
         this.utm = b.getUtm();
         this.band_name = b.getBand_name();
-        this.resolution = b.getResolution();
+        this.band_resolution = b.getResolution();
         this.local_path = b.getBand_path();
         this.band_source = gdal.Open(b.getBand_path());
         this.size = new Tuple2<>(this.band_source.GetRasterXSize(), this.band_source.getRasterYSize());
@@ -61,6 +65,18 @@ public class BandMetadata implements Serializable {
         this.band_raster = this.band_source.GetRasterBand(1);
         String code_espg = new SpatialReference(this.projection).GetAttrValue("AUTHORITY", 1);
         this.espg = checkCode(code_espg);
+
+        Map<Double, Tuple2<Integer, Integer>> pxl_mapping_to_patch = new HashMap<>();
+        pxl_mapping_to_patch.put(10d, new Tuple2<>(120,120));
+        pxl_mapping_to_patch.put(20d, new Tuple2<>(60,60));
+        pxl_mapping_to_patch.put(60d, new Tuple2<>(20,20));
+        Double pxl = Math.abs(this.pixel_resolution.field0);
+        this.patch_size = new Tuple2<>(pxl_mapping_to_patch.get(pxl).field0, pxl_mapping_to_patch.get(pxl).field1);
+        /* TODO Take into account these differences respect to Viktor's pipeline:
+        * 1. V's Projection is taken from any of the bands
+        * 2. V's and ours band_raster is the band_raster(1). But theoretically we should work with a Dataset of them
+        * NOTE: V is assuming *_steps are the same for every resolution
+        * */
     }
 
     private Integer checkCode(String code_espg) {
@@ -86,6 +102,22 @@ public class BandMetadata implements Serializable {
 
     public Dataset getBand_source() {
         return band_source;
+    }
+
+    public String getUtm() {
+        return utm;
+    }
+
+    public String getBand_resolution() {
+        return band_resolution;
+    }
+
+    public String getBand_name() {
+        return band_name;
+    }
+
+    public Tuple2<Integer, Integer> getPatch_size() {
+        return patch_size;
     }
 
     public String getLocal_path() {
@@ -120,15 +152,32 @@ public class BandMetadata implements Serializable {
     public String toString() {
         return
             "utm: " + this.utm + " | " +
-            "resolution: " + this.resolution + " | " +
-            "band_name: " + this.band_name + " | " +
-            "band_path: " + this.local_path.substring(this.local_path.lastIndexOf("/")+1) + " :  " +
-            "espg: " + this.espg + " | " +
-            "pixel_resolution: " + this.pixel_resolution + " | " +
+            "resol: " + this.band_resolution + " | " +
+            "bandname: " + this.band_name + " | " +
+            //"band_path: " + this.local_path.substring(this.local_path.lastIndexOf("/")+1) + " :  " +
+            //"espg: " + this.espg + " | " +
+            "pixelResol: " + this.pixel_resolution + " | " +
             "ul: " + this.ul + " | " +
             "lr: " + this.lr + " | " +
-            "size: " + this.size
+            "size: " + this.size + " | " +
+            "patchSize: " + this.patch_size + " | " +
+            "RasterBandCt: " + this.band_source.getRasterCount() + " | " +
+            "steps: " + getSteps()
 //            this.projection + "\n"
                 ;
+    }
+
+    public String getSteps(){
+
+        /* TODO: Big difference, we are delivering different sizes per resolution of the same UTM or l1c image
+         * V delivered only regarding to one
+         *
+         * For UTM products until now generates always 91x91 patches
+        * */
+        Tuple2<Integer, Integer> steps = new Tuple2<>(
+            size.field0 / this.patch_size.field0,
+            size.field1 / this.patch_size.field1
+        ) ;
+        return steps.toString();
     }
 }
