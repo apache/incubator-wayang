@@ -20,13 +20,13 @@ package org.apache.wayang.agoraeo.patches;
 
 import java.io.Serializable;
 
-public class L2a_file implements Serializable {
+public class L2aFile implements Serializable {
 
     String l2a_uuid;
     String l2a_path;
     String l1c_uuid;
 
-    public L2a_file(String l2a_uuid, String l2a_path, String l1c_uuid) {
+    public L2aFile(String l2a_uuid, String l2a_path, String l1c_uuid) {
         this.l2a_uuid = l2a_uuid;
         this.l2a_path = l2a_path;
         this.l1c_uuid = l1c_uuid;
