@@ -167,17 +167,16 @@ public class BandMetadata implements Serializable {
                 ;
     }
 
-    public String getSteps(){
+    public Tuple2<Integer, Integer> getSteps(){
 
         /* TODO: Big difference, we are delivering different sizes per resolution of the same UTM or l1c image
          * V delivered only regarding to one
          *
          * For UTM products until now generates always 91x91 patches
         * */
-        Tuple2<Integer, Integer> steps = new Tuple2<>(
+        return new Tuple2<>(
             size.field0 / this.patch_size.field0,
             size.field1 / this.patch_size.field1
-        ) ;
-        return steps.toString();
+        );
     }
 }
