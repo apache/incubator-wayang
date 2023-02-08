@@ -14,10 +14,13 @@ public class Patch implements Serializable {
     private final Double uly;
     private final Double lrx;
     private final Double lry;
-    private final ByteBuffer data;
+    private final Tuple2<Integer, Integer> ordinalPositionOnImage;
+    private final Integer espg;
+    private final String projection;
+    private final byte[] data;
     private final Tuple2<Double, Double> pixel_resolution;
 
-    public Patch(String utm, String band_resolution, String band_name, Double ulx, Double uly, Double lrx, Double lry, ByteBuffer data, Tuple2<Double, Double> pixel_resolution) {
+    public Patch(String utm, String band_resolution, String band_name, Double ulx, Double uly, Double lrx, Double lry, Tuple2<Integer, Integer> ordinalPositionOnImage, Integer espg, String projection, byte[] data, Tuple2<Double, Double> pixel_resolution) {
         this.utm = utm;
         this.band_resolution = band_resolution;
         this.band_name = band_name;
@@ -25,20 +28,11 @@ public class Patch implements Serializable {
         this.uly = uly;
         this.lrx = lrx;
         this.lry = lry;
+        this.ordinalPositionOnImage = ordinalPositionOnImage;
+        this.espg = espg;
+        this.projection = projection;
         this.data = data;
         this.pixel_resolution = pixel_resolution;
-    }
-
-    public Patch(BandMetadata band){
-        this.utm = null;
-        this.band_resolution = null;
-        this.band_name = null;
-        this.ulx = null;
-        this.uly = null;
-        this.lrx = null;
-        this.lry = null;
-        this.data = null;
-        this.pixel_resolution = null;
     }
 
     public String getUtm() {
@@ -69,11 +63,38 @@ public class Patch implements Serializable {
         return lry;
     }
 
-    public ByteBuffer getData() {
+    public byte[] getData() {
         return data;
     }
 
     public Tuple2<Double, Double> getPixel_resolution() {
         return pixel_resolution;
+    }
+
+    public Tuple2<Integer, Integer> getOrdinalPositionOnImage() {
+        return ordinalPositionOnImage;
+    }
+
+    public Integer getEspg() {
+        return espg;
+    }
+
+    public String getProjection() {
+        return projection;
+    }
+
+    public String oldToString() {
+        return "8281 Patchs to be generated for{" +
+                "utm='" + utm + '\'' +
+                ", band_resolution='" + band_resolution + '\'' +
+                ", band_name='" + band_name + '\'' +
+                ", pixel_resolution=" + pixel_resolution +
+                '}';
+    }
+
+    @Override
+    public String toString() {
+        return utm + '|' + band_resolution + '|' + band_name + '|' +
+        ulx + "," + uly + "," + lrx + "," + lry + "|" + data.length;
     }
 }
