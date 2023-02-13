@@ -36,7 +36,7 @@
 
     <properties>
         <java-module-name>org.apache.wayang.platform.jdbctemplate</java-module-name>
-        <hsqldb.version>2.3.4</hsqldb.version>
+        <hsqldb.version>2.7.1</hsqldb.version>
     </properties>
 
     <dependencyManagement>
