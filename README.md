@@ -27,7 +27,7 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 
 ## Installing Wayang
 
-You can download wayang from [here](https://github.com/apache/incubator-wayang/releases/download/wayang-0.6.1-alpha-rc/wayang-0.6.1-alpha-rc.tar.gz), and to install it you need to follow the next steps:
+Apache Wayang (incubating) is available from the Apache download[page](https://www.apache.org/dyn/closer.lua/incubator/wayang/0.6.0/apache-wayang-0.6.0-incubating-source-release.zip). Follow these steps to install Wayang:
 
 ```shell
 tar -xvf wayang-0.6.1-snapshot.tar.gz
@@ -49,19 +49,15 @@ source ~/.zshrc
 
 ### Requirements at Runtime
 
-As Apache Wayang(incubating) is not at execution engine (it simply administrates the execution engines for 
-you), it is important to have installed the following requirements:
+Since Apache Wayang (incubating) is not an execution engine itself but rather manages the execution engines for you, it is important to have the necessary requirements installed.
 
-- Java version support from 8. The Wayang team recommends Java version 11: do not forget to declare
-   the variable `JAVA_HOME`
-- Apache Spark. You need to install Apache Spark from version 3: do not forget to declare
-   the variable `SPARK_HOME`
-- Apache Hadoop. You need to install Apache Hadoop from version 3: do not forget to have declare
-  the variable `HADOOP_HOME`
+- Apache Wayang supports Java versions 8 and above. However, the Wayang team recommends using Java version 11. Don’t forget to set the `JAVA_HOME` environment variable.
+- You need to install Apache Spark version 3 or higher. Don’t forget to set the `SPARK_HOME` environment variable.
+- You need to install Apache Hadoop version 3 or higher. Don’t forget to set the `HADOOP_HOME` environment variable.
 
 ### Validating the installation
 
-To execute your first program in Wayang, you need to execute your program with the 'wayang-submit' command as follows:
+To execute your first application with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
 
 ```shell
 wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
@@ -69,7 +65,7 @@ wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
 
 ## Getting Started
 
-Wayang is available via Maven Central. To use it with Maven, include the following into your POM file:
+Wayang is available via Maven Central. To use it with Maven, include the following code snippet into your POM file:
 ```xml
 <dependency> 
   <groupId>org.apache.wayang</groupId>
@@ -101,7 +97,7 @@ In addition, you can obtain the most recent snapshot version of Wayang via Sonat
 ```
 
 ### Prerequisites
-Apache Wayang (incubating) is built with Java 1 and Scala 2.12. However, to run Wayang it is sufficient to have just Java 11 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang (incubating) is built with Java 11 and Scala 2.12. However, to run Apache Wayang it is sufficient to have just Java 11 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
 ```
 Java 11
 [Scala 2.12]
@@ -367,19 +363,19 @@ object kmeans {
 * [Maven](https://maven.apache.org/)
 
 ## Contributing
-[Contact](dev@wayang.apache.org) us if you are looking for tasks to contribute.
+As a contributor, you can help shape the future of the project by providing feedback, joining our mailing lists, reporting bugs, requesting features, and participating in discussions. As you become more involved, you can also help with development by providing patches for bug fixes or features and helping to improve our documentation.
 
-When contributing code please adhere with the [Apache code of conduct](https://www.apache.org/foundation/policies/conduct.html).
+If you show sustained commitment to the project, you may be invited to become a committer. This brings with it the privilege of write access to the project repository and resources.
+
+To learn more about how to get involved with the Apache Wayang project, please visit our “Get Involved” [page](https://wayang.apache.org/community/) and read the [Apache code of conduct](https://www.apache.org/foundation/policies/conduct.html). We look forward to your contributions! 
 
 ## Authors
-
-See the list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors) who participated in this project.
+The list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors).
 
 ## License
-
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 - 2021 The Apache Software Foundation.
+Copyright 2020 - 2023 The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -394,4 +390,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ## Acknowledgements
-The [Logo](http://wayang.apache.org/assets/img/logo/Apache_Wayang/Apache_Wayang.pdf) was donated by [Brian Vera](https://www.linkedin.com/in/brian-vera-hablares-17a663b8/).
+The [Logo](http://wayang.apache.org/assets/img/logo/Apache_Wayang/Apache_Wayang.pdf) was donated by Brian Vera.
