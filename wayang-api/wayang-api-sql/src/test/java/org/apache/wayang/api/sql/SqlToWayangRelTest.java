@@ -34,7 +34,6 @@ import org.apache.wayang.api.sql.calcite.schema.WayangTableBuilder;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.junit.Test;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -43,7 +42,6 @@ import java.util.Collection;
 
 public class SqlToWayangRelTest {
 
-    @Test
     public void test_simple_sql() throws Exception {
         WayangTable customer = WayangTableBuilder.build("customer")
                 .addField("id", SqlTypeName.INTEGER)

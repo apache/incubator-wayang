@@ -17,23 +17,17 @@
 
 package org.apache.wayang.api.sql.calcite.rules;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
-import org.apache.calcite.adapter.file.CsvTableScan;
 import org.apache.calcite.plan.Convention;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.convert.ConverterRule;
-import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableScan;
-import org.apache.calcite.tools.RuleSet;
-import org.apache.calcite.tools.RuleSets;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
 import org.apache.wayang.api.sql.calcite.rel.WayangFilter;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
@@ -41,10 +35,8 @@ import org.apache.wayang.api.sql.calcite.rel.WayangProject;
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 //TODO: split into multiple classes
 public class WayangRules {

@@ -17,10 +17,7 @@
 
 package org.apache.wayang.api.sql.sources.fs;
 
-import org.apache.calcite.adapter.file.CsvEnumerator;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.runtime.CalciteException;
-import org.apache.calcite.util.ImmutableIntList;
 import org.apache.commons.io.IOUtils;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Record;

@@ -18,7 +18,6 @@
 package org.apache.wayang.api.sql.calcite.optimizer;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.calcite.adapter.file.FileRules;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
@@ -52,9 +51,11 @@ import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.core.util.WayangCollections;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Properties;
 
 public class Optimizer {
 
