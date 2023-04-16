@@ -1,7 +1,6 @@
 # Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
 #### The first cross-platform data processing system
 
-![Travis branch](https://img.shields.io/travis/com/apache/incubator-wayang/main?style=for-the-badge)
 [![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg)
 [![License](https://img.shields.io/github/license/apache/incubator-wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Last commit](https://img.shields.io/github/last-commit/apache/incubator-wayang.svg?style=for-the-badge)]()
@@ -20,6 +19,7 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
 - [Apache Spark](https://spark.apache.org/)
 - [Apache Flink](https://flink.apache.org/)
+- [Apache Calcite] (https://calcite.apache.org/)
 - [Apache Giraph](https://giraph.apache.org/)
 - [GraphChi](https://github.com/GraphChi/graphchi-java)
 - [Postgres](http://www.postgresql.org)
