@@ -41,4 +41,5 @@ cd wayang-0.6.1-SNAPSHOT
 wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
 ```
 Then you should be able to see outputs like this:
+
 ![img.png](images/wordcount.png)
