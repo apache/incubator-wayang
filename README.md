@@ -19,7 +19,6 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
 - [Apache Spark](https://spark.apache.org/)
 - [Apache Flink](https://flink.apache.org/)
-- [Apache Calcite] (https://calcite.apache.org/)
 - [Apache Giraph](https://giraph.apache.org/)
 - [GraphChi](https://github.com/GraphChi/graphchi-java)
 - [Postgres](http://www.postgresql.org)
