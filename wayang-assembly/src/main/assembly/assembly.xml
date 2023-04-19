@@ -26,6 +26,9 @@
 
   <fileSets>
     <fileSet>
+      <directory>
+        ${project.parent.basedir}/
+      </directory>
       <includes>
         <include>README.md</include>
       </includes>
