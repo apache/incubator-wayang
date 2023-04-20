@@ -16,10 +16,15 @@
   limitations under the License.
 
 -->
-This tutorial will show users how to run WordCount example locally with Wayang.
+This tutorial will show users how to run the WordCount example locally with Wayang.
 
-# Get the binary
-Running following command to build Wayang and generate the tar.gz  
+# Clone repository
+```shell
+git clone https://github.com/apache/incubator-wayang.git 
+```
+
+# Create binaries
+Running following commands to build Wayang and generate the tar.gz  
 ```shell
 cd incubator-wayang
 ./mvnw clean package -pl :wayang-assembly -Pdistribution 
@@ -56,8 +61,8 @@ To execute the WordCount example with Apache Wayang, you need to execute your pr
 
 ```shell
 cd wayang-0.6.1-SNAPSHOT
-wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
+./bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
 ```
 Then you should be able to see outputs like this:
 
-![img.png](images/wordcount.png)
+![img.png](images/wordcount_result.png)
