@@ -24,9 +24,13 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
 
+## Quick guide
+
+For a quick guide on how to run WordCount see [here](tutorial.md).
+
 ## Installing Wayang
 
-Apache Wayang (incubating) is available from the Apache download[page](https://www.apache.org/dyn/closer.lua/incubator/wayang/0.6.0/apache-wayang-0.6.0-incubating-source-release.zip). Follow these steps to install Wayang:
+Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
 tar -xvf wayang-0.6.1-snapshot.tar.gz
