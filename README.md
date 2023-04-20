@@ -24,7 +24,13 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
 
-## Quick guide
+Apache Wayang (incubating) can be used via the following APIs:
+- Java native
+- Java scala-like
+- Scala
+- SQL (limited support of simple select-project queries for now)
+
+## Quick Guide
 
 For a quick guide on how to run WordCount see [here](tutorial.md).
 
@@ -150,7 +156,7 @@ In the incubator-wayang root folder run:
 
 The "Hello World!" of data processing systems is the wordcount.
 
-#### Java API
+#### Java scala-like API
 ```java
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Tuple2;
