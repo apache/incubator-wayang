@@ -24,9 +24,19 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
 
+Apache Wayang (incubating) can be used via the following APIs:
+- Java native
+- Java scala-like
+- Scala
+- SQL (limited support of simple select-project queries for now)
+
+## Quick Guide
+
+For a quick guide on how to run WordCount see [here](tutorial.md).
+
 ## Installing Wayang
 
-Apache Wayang (incubating) is available from the Apache download[page](https://www.apache.org/dyn/closer.lua/incubator/wayang/0.6.0/apache-wayang-0.6.0-incubating-source-release.zip). Follow these steps to install Wayang:
+Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
 tar -xvf wayang-0.6.1-snapshot.tar.gz
@@ -146,7 +156,7 @@ In the incubator-wayang root folder run:
 
 The "Hello World!" of data processing systems is the wordcount.
 
-#### Java API
+#### Java scala-like API
 ```java
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Tuple2;
