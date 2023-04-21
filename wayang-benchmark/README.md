@@ -4,7 +4,25 @@ This repository provides example applications and further benchmarking tools to 
 
 Below we provide detailed information on our various benchmark components, including running instructions. For the configuration of Apache Wayang (incubating) itself, please consult the [Apache Wayang (incubating) repository](https://github.com/apache/incubator-wayang) or feel free to reach out on [dev@wayang.apache.org](mailto:dev@wayang.apache.org).
 
+
 ## Apache Wayang (incubating) Example Applications
+
+### Launching the main class
+
+To run any of the following example applications, use this format:
+
+```shell
+<main class> exp(<ID>[,tags=<tag>,...][,conf=<key>:<value>,...]) <plugin>(,<plugin>)* <arg1> <arg2> ...
+```
+
+Replace `<arg1> <arg2>, ...` with the application-specific parameters that you want to use.
+
+For example, to run the `org.apache.wayang.apps.wordcount.WordCountScala` class with the `exp(123)` experiment descriptor and the `java` plugin, use:
+```bash
+./bin/wayang-submit org.apache.wayang.apps.wordcount.WordCountScala exp\(123\) java file://$(pwd)/README.md
+```
+
+**Note** that the `file://$(pwd)/example_file.txt` format should be used for dealing with files.
 
 ### WordCount
 
