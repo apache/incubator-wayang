@@ -86,14 +86,15 @@ public class SqlContext {
         SqlNode validatedSqlNode = optimizer.validate(sqlNode);
         RelNode relNode = optimizer.convert(validatedSqlNode);
 
-        PrintUtils.print("After pasrsing sql query", relNode);
+        PrintUtils.print("After parsing sql query", relNode);
 
 
         RuleSet rules = RuleSets.ofList(
                 WayangRules.WAYANG_TABLESCAN_RULE,
                 WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
                 WayangRules.WAYANG_PROJECT_RULE,
-                WayangRules.WAYANG_FILTER_RULE
+                WayangRules.WAYANG_FILTER_RULE,
+                WayangRules.WAYANG_JOIN_RULE
         );
         RelNode wayangRel = optimizer.optimize(
                 relNode,

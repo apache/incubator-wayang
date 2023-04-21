@@ -26,6 +26,7 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.wayang.api.sql.calcite.rel.WayangProject;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
@@ -54,7 +55,7 @@ public class WayangProjectVisitor extends WayangRelNodeVisitor<WayangProject> {
         //TODO: create a map with specific dataset type
         MapOperator<Record, Record> projection = new MapOperator(
                 new MapFunctionImpl(projects),
-                Record.class,
+                Tuple2.class,
                 Record.class);
 
         childOp.connectTo(0, projection, 0);
