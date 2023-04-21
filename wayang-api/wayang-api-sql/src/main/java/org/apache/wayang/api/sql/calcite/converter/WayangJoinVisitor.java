@@ -65,4 +65,34 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
             RexCall call = (RexCall) rexNode;
             RexNode operand = call.getOperands().get(0);
             RexInputRef rexInputRef = (RexInputRef) operand;
+            this.index = rexInputRef.getIndex();
+        }
+        @Override
+        public Object apply(final Record record) {
+            //System.out.println(record.getField(0).toString());
+            return record.getField(index);
+            //return 0;
+        }
+    }
+
+    // extract the right key
+    private class KeyExtractor1 implements FunctionDescriptor.SerializableFunction<Record, Object> {
+
+        private final RexNode rexNode;
+        private final Integer index;
+        private KeyExtractor1(RexNode rexNode) {
+            this.rexNode = rexNode;
+            RexCall call = (RexCall) rexNode;
+            RexNode operand = call.getOperands().get(1);
+            RexInputRef rexInputRef = (RexInputRef) operand;
+            this.index = rexInputRef.getIndex();
+        }
+        // TODO: index for right table returns index + number of columns in left table
+        @Override
+        public Object apply(Record record) {
+            //System.out.println(record.getField(0).toString());
+            return record.getField(index);
+            //return 1;
+        }
+    }
 }
