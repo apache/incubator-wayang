@@ -28,32 +28,32 @@ import java.util.Iterator;
 public class SqlAPI {
 
 
-    public static void exampleFs() throws Exception {
-        Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
-
-        SqlContext sqlContext = new SqlContext(configuration);
-
-        /*Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
-                "o_totalprice > 100");*/
-
-//        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders");
-
-        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
-                "o_totalprice > 100000");
-
-
-        printResults(10, result);
-
-    }
+//    public static void exampleFs() throws Exception {
+//        Configuration configuration = new Configuration();
+//        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
+//
+//        SqlContext sqlContext = new SqlContext(configuration);
+//
+//        /*Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
+//                "o_totalprice > 100");*/
+//
+////        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders");
+//
+//        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
+//                "o_totalprice > 100000");
+//
+//
+//        printResults(10, result);
+//
+//    }
 
 
     public static void examplePostgres() throws Exception {
 
         Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/tpch");
-        configuration.setProperty("wayang.postgres.jdbc.user", "kbeedkar");
-        configuration.setProperty("wayang.postgres.jdbc.password", "password");
+        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/imdb");
+        configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
+        configuration.setProperty("wayang.postgres.jdbc.password", "postgres");
 
         SqlContext sqlContext = new SqlContext(configuration);
 
@@ -63,9 +63,12 @@ public class SqlAPI {
         );*/
 
         Collection<Record> result = sqlContext.executeSql(
-                "select c_custkey, c_name, c_acctbal \n"
-                +"from  postgres.customer \n"
-                +"where c_acctbal > 1000 and c_custkey < 20"
+                "select title, id \n"
+                        //"select title, \"year\" \n"
+                        +"from postgres.movie m \n"
+                        //+"where \"year\" > 2000"
+                        + "join postgres.movie_genre g \n"
+                        + "on m.id = g.movieid"
         );
 
         /*Collection<Record> result = sqlContext.executeSql(
@@ -90,8 +93,8 @@ public class SqlAPI {
 
     public static void main(String... args) throws Exception {
         BasicConfigurator.configure();
-//        new SqlAPI().examplePostgres();
-        new SqlAPI().exampleFs();
+        new SqlAPI().examplePostgres();
+//        new SqlAPI().exampleFs();
     }
 
 
