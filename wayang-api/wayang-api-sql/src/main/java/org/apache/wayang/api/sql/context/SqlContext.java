@@ -69,8 +69,8 @@ public class SqlContext {
                 .withPlugin(Postgres.plugin());
 
         /** hard coded for now **/
-//        calciteSchema = SchemaUtils.getPostgresSchema(configuration);
-        calciteSchema = SchemaUtils.getFileSchema(configuration);
+        calciteSchema = SchemaUtils.getPostgresSchema(configuration);
+//        calciteSchema = SchemaUtils.getFileSchema(configuration);
 
     }
 
