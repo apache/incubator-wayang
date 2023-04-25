@@ -62,13 +62,19 @@ public class SqlAPI {
                 +" from postgres.customer"s
         );*/
 
+//        Collection<Record> result = sqlContext.executeSql(
+//                "select title, id \n"
+//                        //"select title, \"year\" \n"
+//                        +"from postgres.movie m \n"
+//                        //+"where \"year\" > 2000"
+//                        + "join postgres.movie_genre g \n"
+//                        + "on m.id = g.movieid"
+//        );
         Collection<Record> result = sqlContext.executeSql(
-                "select title, id \n"
-                        //"select title, \"year\" \n"
-                        +"from postgres.movie m \n"
-                        //+"where \"year\" > 2000"
-                        + "join postgres.movie_genre g \n"
-                        + "on m.id = g.movieid"
+                "select title \n"
+                + "from postgres.movie m \n"
+                + "join postgres.movie_genre g \n"
+                + "on m.id = g.movieid"
         );
 
         /*Collection<Record> result = sqlContext.executeSql(
@@ -88,9 +94,6 @@ public class SqlAPI {
     }
 
 
-
-
-
     public static void main(String... args) throws Exception {
         BasicConfigurator.configure();
         new SqlAPI().examplePostgres();
@@ -102,10 +105,10 @@ public class SqlAPI {
         // print up to n records
         int count = 0;
         Iterator<Record> iterator = result.iterator();
-        while(iterator.hasNext() && count++ < n) {
+        while (iterator.hasNext() && count++ < n) {
             Record record = iterator.next();
-            System.out.print( " | ");
-            for(int i = 0; i < record.size(); i ++) {
+            System.out.print(" | ");
+            for (int i = 0; i < record.size(); i++) {
                 System.out.print(record.getField(i).toString() + " | ");
             }
             System.out.println("");

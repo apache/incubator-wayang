@@ -58,11 +58,11 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
             fieldTypes.add(field.getType());
         }
 
-        return new JavaCSVTableSource("file:/data/Projects/databloom/test-data/orders.csv",
-                DataSetType.createDefault(Record.class),
-                fieldTypes);
+//        return new JavaCSVTableSource("file:/data/Projects/databloom/test-data/orders.csv",
+//                DataSetType.createDefault(Record.class),
+//                fieldTypes);
 
-//        return new PostgresTableSource(tableName);
+        return new PostgresTableSource(tableName);
 
     }
 }
