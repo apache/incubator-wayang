@@ -86,7 +86,7 @@ public class SqlContext {
         SqlNode validatedSqlNode = optimizer.validate(sqlNode);
         RelNode relNode = optimizer.convert(validatedSqlNode);
 
-        PrintUtils.print("After pasrsing sql query", relNode);
+        PrintUtils.print("After parsing sql query", relNode);
 
 
         RuleSet rules = RuleSets.ofList(
