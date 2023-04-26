@@ -17,11 +17,13 @@
 
 package org.apache.wayang.api.sql;
 
+import com.google.common.io.Resources;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -52,7 +54,7 @@ public class SqlAPI {
 
         Configuration configuration = new Configuration();
         configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/tpch");
-        configuration.setProperty("wayang.postgres.jdbc.user", "kbeedkar");
+        configuration.setProperty("wayang.postgres.jdbc.user", "user");
         configuration.setProperty("wayang.postgres.jdbc.password", "password");
 
         SqlContext sqlContext = new SqlContext(configuration);
@@ -84,6 +86,27 @@ public class SqlAPI {
         printResults(10, result);
     }
 
+    public static void exampleWithPostgres() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/dvdrental");
+        configuration.setProperty("wayang.postgres.jdbc.user", "user");
+        configuration.setProperty("wayang.postgres.jdbc.password", "password");
+
+        String calciteModel = Resources.toString(
+                SqlAPI.class.getResource("/model.json"),
+                Charset.defaultCharset());
+        configuration.setProperty("wayang.calcite.model",calciteModel);
+
+        SqlContext sqlContext = new SqlContext(configuration);
+
+
+        Collection<Record> result = sqlContext.executeSql(
+                "select actor_id, first_name, last_name from postgres.actor"
+        );
+
+        printResults(10, result);
+    }
+
 
 
 
@@ -91,7 +114,8 @@ public class SqlAPI {
     public static void main(String... args) throws Exception {
         BasicConfigurator.configure();
 //        new SqlAPI().examplePostgres();
-        new SqlAPI().exampleFs();
+//        new SqlAPI().exampleFs();
+        new SqlAPI().exampleWithPostgres();
     }
 
 
