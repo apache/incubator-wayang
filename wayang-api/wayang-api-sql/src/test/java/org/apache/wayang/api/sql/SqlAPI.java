@@ -108,6 +108,28 @@ public class SqlAPI {
     }
 
 
+    public static void exampleJoinWithPostgres() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/dvdrental");
+        configuration.setProperty("wayang.postgres.jdbc.user", "user");
+        configuration.setProperty("wayang.postgres.jdbc.password", "password");
+
+        String calciteModel = Resources.toString(
+                SqlAPI.class.getResource("/model.json"),
+                Charset.defaultCharset());
+        configuration.setProperty("wayang.calcite.model",calciteModel);
+
+        SqlContext sqlContext = new SqlContext(configuration);
+
+
+        Collection<Record> result = sqlContext.executeSql(
+                "select actor_id, category_id from postgres.film_actor a inner join postgres.film_category c on a.film_id = c.film_id"
+        );
+
+        printResults(10, result);
+    }
+
+
 
 
 
@@ -115,7 +137,8 @@ public class SqlAPI {
         BasicConfigurator.configure();
 //        new SqlAPI().examplePostgres();
 //        new SqlAPI().exampleFs();
-        new SqlAPI().exampleWithPostgres();
+//        new SqlAPI().exampleWithPostgres();
+        new SqlAPI().exampleJoinWithPostgres();
     }
 
 
