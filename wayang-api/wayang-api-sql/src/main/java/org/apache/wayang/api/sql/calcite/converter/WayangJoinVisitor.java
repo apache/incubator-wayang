@@ -24,9 +24,16 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.JoinOperator;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.types.DataUnitType;
+import org.apache.wayang.core.util.Tuple;
+
+import java.security.Key;
 
 public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
@@ -41,6 +48,18 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
         RexNode condition = ((Join) wayangRelNode).getCondition();
 
+//        JoinOperator<Tuple2, Tuple2, Integer> join = new JoinOperator(
+//                new ProjectionDescriptor<>(
+//                        DataUnitType.createBasicUnchecked(Tuple2.class),
+//                        DataUnitType.createBasic(Integer.class),
+//                        "field0"),
+//                new ProjectionDescriptor<>(
+//                        DataUnitType.createBasicUnchecked(Tuple2.class),
+//                        DataUnitType.createBasic(Integer.class),
+//                        "field1"),
+//                DataSetType.createDefaultUnchecked(Tuple2.class),
+//                DataSetType.createDefaultUnchecked(Tuple2.class));
+
         JoinOperator<Record, Record, Object> join = new JoinOperator(
                 new KeyExtractor0(condition), // pass the index of key for table1
                 new KeyExtractor1(condition), // pass the index of key for table2
@@ -48,8 +67,8 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
                 Record.class,
                 Object.class);
 
-        childOpLeft.connectTo(0,join,0); //call connectTo on both operators (left and right)
-        childOpRight.connectTo(0,join,1);
+        childOpLeft.connectTo(0, join, 0); //call connectTo on both operators (left and right)
+        childOpRight.connectTo(0, join, 1);
 
         return join;
     }
@@ -60,6 +79,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
         private final RexNode rexNode;
         private final Integer index;
+
         private KeyExtractor0(RexNode rexNode) {
             this.rexNode = rexNode;
             RexCall call = (RexCall) rexNode;
@@ -67,11 +87,13 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
             RexInputRef rexInputRef = (RexInputRef) operand;
             this.index = rexInputRef.getIndex();
         }
+
         @Override
         public Object apply(final Record record) {
-            //System.out.println(record.getField(0).toString());
-            return record.getField(index);
-            //return 0;
+            System.out.println(record.getField(0).toString());
+//            return record.getField(index);
+//            return 0;
+            return record.getField(0);
         }
     }
 
@@ -80,6 +102,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
         private final RexNode rexNode;
         private final Integer index;
+
         private KeyExtractor1(RexNode rexNode) {
             this.rexNode = rexNode;
             RexCall call = (RexCall) rexNode;
@@ -87,12 +110,14 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
             RexInputRef rexInputRef = (RexInputRef) operand;
             this.index = rexInputRef.getIndex();
         }
+
         // TODO: index for right table returns index + number of columns in left table
         @Override
         public Object apply(Record record) {
-            //System.out.println(record.getField(0).toString());
-            return record.getField(index);
-            //return 1;
+            System.out.println(record.getField(0).toString());
+//            return record.getField(index);
+//            return 1;
+            return record.getField(0);
         }
     }
 }
