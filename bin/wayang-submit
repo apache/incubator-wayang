@@ -113,5 +113,12 @@ if [ -n "${OTHER_FLAGS}" ]; then
 	FLAGS="${FLAGS} ${OTHER_FLAGS}"
 fi
 
-eval "$RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS ${@:2}"
+# Wrap args in quotes to be able to execute args with parenthesis, spaces, etc
+ARGS=""
+for arg in $(echo ${@:2})
+do
+  ARGS="$ARGS \"${arg}\""
+done
+
+eval "$RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS ${ARGS}"
 

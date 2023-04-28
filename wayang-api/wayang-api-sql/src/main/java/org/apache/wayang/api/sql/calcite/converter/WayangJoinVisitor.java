@@ -136,6 +136,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
                 fields[j] = tuple2.getField1().getField(j - length1);
             }
             return new Record(fields);
+
         }
     }
 
