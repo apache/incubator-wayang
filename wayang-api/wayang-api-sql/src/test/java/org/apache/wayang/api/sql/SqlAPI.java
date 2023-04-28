@@ -30,24 +30,24 @@ import java.util.Iterator;
 public class SqlAPI {
 
 
-    public static void exampleFs() throws Exception {
-        Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
-
-        SqlContext sqlContext = new SqlContext(configuration);
-
-        /*Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
-                "o_totalprice > 100");*/
-
-//        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders");
-
-        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
-                "o_totalprice > 100000");
-
-
-        printResults(10, result);
-
-    }
+//    public static void exampleFs() throws Exception {
+//        Configuration configuration = new Configuration();
+//        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
+//
+//        SqlContext sqlContext = new SqlContext(configuration);
+//
+//        /*Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
+//                "o_totalprice > 100");*/
+//
+////        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders");
+//
+//        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
+//                "o_totalprice > 100000");
+//
+//
+//        printResults(10, result);
+//
+//    }
 
 
     public static void examplePostgres() throws Exception {
@@ -64,10 +64,19 @@ public class SqlAPI {
                 +" from postgres.customer"s
         );*/
 
+//        Collection<Record> result = sqlContext.executeSql(
+//                "select title, id \n"
+//                        //"select title, \"year\" \n"
+//                        +"from postgres.movie m \n"
+//                        //+"where \"year\" > 2000"
+//                        + "join postgres.movie_genre g \n"
+//                        + "on m.id = g.movieid"
+//        );
         Collection<Record> result = sqlContext.executeSql(
-                "select c_custkey, c_name, c_acctbal \n"
-                +"from  postgres.customer \n"
-                +"where c_acctbal > 1000 and c_custkey < 20"
+                "select id, title, genre \n"
+                + "from postgres.movie m \n"
+                + "join postgres.movie_genre g \n"
+                + "on m.id < g.movieid"
         );
 
         /*Collection<Record> result = sqlContext.executeSql(
@@ -130,9 +139,6 @@ public class SqlAPI {
     }
 
 
-
-
-
     public static void main(String... args) throws Exception {
         BasicConfigurator.configure();
 //        new SqlAPI().examplePostgres();
@@ -146,10 +152,10 @@ public class SqlAPI {
         // print up to n records
         int count = 0;
         Iterator<Record> iterator = result.iterator();
-        while(iterator.hasNext() && count++ < n) {
+        while (iterator.hasNext() && count++ < n) {
             Record record = iterator.next();
-            System.out.print( " | ");
-            for(int i = 0; i < record.size(); i ++) {
+            System.out.print(" | ");
+            for (int i = 0; i < record.size(); i++) {
                 System.out.print(record.getField(i).toString() + " | ");
             }
             System.out.println("");
