@@ -56,76 +56,13 @@ public class WayangProjectVisitor extends WayangRelNodeVisitor<WayangProject> {
 
         //TODO: create a map with specific dataset type
         MapOperator<Tuple2<Record, Record>, Record> projection = new MapOperator(
-                new JoinToProject(projects),
-//                Tuple.class,
-                Tuple2.class,
+                new MapFunctionImpl(projects),
+                Record.class,
                 Record.class);
-
 
         childOp.connectTo(0, projection, 0);
 
         return projection;
-    }
-
-    private class JoinToProject implements FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
-        private final int[] fields;
-
-        public JoinToProject(int[] fields) {
-            this.fields = fields;
-        }
-
-        private JoinToProject(List<RexNode> projects) {
-            this(getProjectFields(projects));
-        }
-
-        public static Record concatenateRecords(Record record1, Record record2) {
-            int totalLength1 = record1.size();
-            int totalLength2 = record2.size();
-
-            Object[] concatenatedValues = new Object[totalLength1+totalLength2];
-
-            for (int i = 0; i < totalLength1; i++) {
-                concatenatedValues[i] = record1.getField(i);
-            }
-
-            for (int i = totalLength1; i < totalLength2; i++) {
-                concatenatedValues[i] = record2.getField(i);
-            }
-
-            return new Record(concatenatedValues);
-        }
-
-
-        @Override
-        public Record apply(Tuple2 tuple) {
-            List<Object> projectedRecord = new ArrayList<>();
-//            Record rec = new Record(((Record) tuple.field0), ((Record) tuple.field1));
-            Record rec = new Record(concatenateRecords(((Record) tuple.field0), ((Record) tuple.field1)));
-
-
-
-            ArrayList<Integer> fields = new ArrayList<>();
-            fields.add(0);
-            fields.add(1);
-            fields.add(12);
-
-
-            for (int field : fields) {
-//                System.out.println(((Record) tuple.field0).size());
-//                System.out.println(((Record) tuple.field1).size());
-
-                projectedRecord.add(rec.getField(field));
-            }
-
-//            for (int field : fields) {
-////                System.out.println(((Record) tuple.field0).size());
-////                System.out.println(((Record) tuple.field1).size());
-//
-//                projectedRecord.add(rec.getField(field));
-//            }
-
-            return new Record(projectedRecord.toArray(new Object[0]));
-        }
     }
 
     private class MapFunctionImpl implements
