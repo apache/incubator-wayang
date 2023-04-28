@@ -29,7 +29,24 @@ import java.util.Iterator;
 
 public class SqlAPI {
 
+    public static void exampleCrossPlatform() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.fs.table.url", "../resources/data1.csv");
 
+        String calciteModel = Resources.toString(
+            SqlAPI.class.getResource("/model.json"),
+            Charset.defaultCharset());
+        configuration.setProperty("wayang.calcite.model",calciteModel);
+
+        SqlContext sqlContext = new SqlContext(configuration);
+
+        Collection<Record> result = sqlContext.executeSql(
+                "select * \n"
+                + "from fs.data1"
+        );
+
+        printResults(10, result);
+    }
 //    public static void exampleFs() throws Exception {
 //        Configuration configuration = new Configuration();
 //        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
@@ -144,7 +161,8 @@ public class SqlAPI {
 //        new SqlAPI().examplePostgres();
 //        new SqlAPI().exampleFs();
 //        new SqlAPI().exampleWithPostgres();
-        new SqlAPI().exampleJoinWithPostgres();
+//        new SqlAPI().exampleJoinWithPostgres();
+        new SqlAPI().exampleCrossPlatform();
     }
 
 
