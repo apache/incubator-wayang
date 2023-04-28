@@ -47,7 +47,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         RexNode condition = ((Join) wayangRelNode).getCondition();
 
         if (!condition.isA(SqlKind.EQUALS)) {
-            new UnsupportedOperationException("Only equality joins supported");
+            throw new UnsupportedOperationException("Only equality joins supported");
         }
 
         //offset of the index in the right child
@@ -67,11 +67,11 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
         // Join returns Tuple2 - map to a Record
         MapOperator<Tuple2, Record> mapOperator = new MapOperator(
-            new MapFunctionImpl(),
-            Tuple2.class,
-            Record.class
+                new MapFunctionImpl(),
+                Tuple2.class,
+                Record.class
         );
-        join.connectTo(0,mapOperator,0);
+        join.connectTo(0, mapOperator, 0);
 
         return mapOperator;
     }
@@ -111,6 +111,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
             return record.getField(index);
         }
     }
+
     /**
      * Flattens Tuple2<Record, Record> to Record
      */
@@ -119,7 +120,8 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
             super();
         }
 
-        @Override public Record apply(final Tuple2<Record, Record> tuple2) {
+        @Override
+        public Record apply(final Tuple2<Record, Record> tuple2) {
             int length1 = tuple2.getField0().size();
             int length2 = tuple2.getField1().size();
 
@@ -131,12 +133,12 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
                 fields[i] = tuple2.getField0().getField(i);
             }
             for (int j = length1; j < totalLength; j++) {
-                fields[j] = tuple2.getField1().getField(j-length1);
+                fields[j] = tuple2.getField1().getField(j - length1);
             }
             return new Record(fields);
         }
     }
-    
+
     // Helpers
     private enum Child {
         LEFT, RIGHT

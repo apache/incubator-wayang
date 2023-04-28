@@ -74,7 +74,7 @@ public class SqlAPI {
                 "select id, title, genre \n"
                 + "from postgres.movie m \n"
                 + "join postgres.movie_genre g \n"
-                + "on m.id = g.movieid"
+                + "on m.id < g.movieid"
         );
 
         /*Collection<Record> result = sqlContext.executeSql(
