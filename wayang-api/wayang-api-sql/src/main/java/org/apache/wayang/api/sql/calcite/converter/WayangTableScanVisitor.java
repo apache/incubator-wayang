@@ -51,6 +51,7 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
         for(RelDataTypeField field : rowType.getFieldList()) {
             fieldTypes.add(field.getType());
         }
+
         return new JavaCSVTableSource(wayangRelNode.getSourceFilePath()", " +
                 "DataSetType.createDefault(Record.class),
                 fieldTypes);*/

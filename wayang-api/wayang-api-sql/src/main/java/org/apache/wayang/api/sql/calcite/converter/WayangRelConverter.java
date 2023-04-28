@@ -40,6 +40,4 @@ public class WayangRelConverter {
         }
         throw new IllegalStateException("Operator translation not supported yet");
     }
-
-
 }
