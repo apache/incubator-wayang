@@ -38,7 +38,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
     WayangJoinVisitor(WayangRelConverter wayangRelConverter) {
         super(wayangRelConverter);
     }
-e
+
     @Override
     Operator visit(WayangJoin wayangRelNode) {
         Operator childOpLeft = wayangRelConverter.convert(wayangRelNode.getInput(0));
