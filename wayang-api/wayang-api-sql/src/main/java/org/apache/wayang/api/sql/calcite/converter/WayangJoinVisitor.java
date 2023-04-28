@@ -38,14 +38,15 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
     WayangJoinVisitor(WayangRelConverter wayangRelConverter) {
         super(wayangRelConverter);
     }
-
+e
     @Override
     Operator visit(WayangJoin wayangRelNode) {
         Operator childOpLeft = wayangRelConverter.convert(wayangRelNode.getInput(0));
         Operator childOpRight = wayangRelConverter.convert(wayangRelNode.getInput(1));
 
         RexNode condition = ((Join) wayangRelNode).getCondition();
-        if(!condition.isA(SqlKind.EQUALS)) {
+
+        if (!condition.isA(SqlKind.EQUALS)) {
             new UnsupportedOperationException("Only equality joins supported");
         }
 
@@ -55,11 +56,12 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         int leftKeyIndex = condition.accept(new KeyIndex(false, Child.LEFT));
         int rightKeyIndex = condition.accept(new KeyIndex(false, Child.RIGHT)) - offset;
 
-        JoinOperator<Record, Record, Object> join = new JoinOperator(
-            new TransformationDescriptor<>(new KeyExtractor(leftKeyIndex), Record.class, Object.class),
-            new TransformationDescriptor<>(new KeyExtractor(rightKeyIndex), Record.class, Object.class)
-            );
+        JoinOperator<Record, Record, Object> join = new JoinOperator<>(
+                new TransformationDescriptor<>(new KeyExtractor(leftKeyIndex), Record.class, Object.class),
+                new TransformationDescriptor<>(new KeyExtractor(rightKeyIndex), Record.class, Object.class)
+        );
 
+        //call connectTo on both operators (left and right)
         childOpLeft.connectTo(0, join, 0);
         childOpRight.connectTo(0, join, 1);
 
@@ -74,8 +76,10 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         return mapOperator;
     }
 
+    /**
+     * Extracts key index from the call
+     */
     private class KeyIndex extends RexVisitorImpl<Integer> {
-
         final Child child;
 
         protected KeyIndex(boolean deep, Child child) {
@@ -86,29 +90,30 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         @Override
         public Integer visitCall(RexCall call) {
             RexNode operand = call.getOperands().get(child.ordinal());
-            if (!(operand instanceof RexInputRef)) {
-                new UnsupportedOperationException("unsupported operation");
+            if (!(operand instanceof RexInputRef rexInputRef)) {
+                throw new UnsupportedOperationException("Unsupported operation");
             }
-
-            RexInputRef rexInputRef = (RexInputRef) operand;
             return rexInputRef.getIndex();
         }
     }
 
+    /**
+     * Extracts the key
+     */
     private class KeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
+        private final int index;
 
-        private final Integer index;
-
-        private KeyExtractor(Integer index) {
+        public KeyExtractor(int index) {
             this.index = index;
         }
 
-        @Override
         public Object apply(final Record record) {
             return record.getField(index);
         }
     }
-
+    /**
+     * Flattens Tuple2<Record, Record> to Record
+     */
     private class MapFunctionImpl implements FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
         public MapFunctionImpl() {
             super();
@@ -120,18 +125,19 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
             int totalLength = length1 + length2;
 
-            Object[] objects = new Object[totalLength];
+            Object[] fields = new Object[totalLength];
 
             for (int i = 0; i < length1; i++) {
-                objects[i] = tuple2.getField0().getField(i);
+                fields[i] = tuple2.getField0().getField(i);
             }
             for (int j = length1; j < totalLength; j++) {
-                objects[j] = tuple2.getField1().getField(j-length1);
+                fields[j] = tuple2.getField1().getField(j-length1);
             }
-            return new Record(objects);
+            return new Record(fields);
         }
     }
-
+    
+    // Helpers
     private enum Child {
         LEFT, RIGHT
     }

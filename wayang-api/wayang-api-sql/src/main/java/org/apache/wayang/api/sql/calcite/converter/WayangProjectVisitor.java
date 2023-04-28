@@ -65,6 +65,7 @@ public class WayangProjectVisitor extends WayangRelNodeVisitor<WayangProject> {
         return projection;
     }
 
+
     private class MapFunctionImpl implements
             FunctionDescriptor.SerializableFunction<Record, Record> {
 
@@ -88,7 +89,6 @@ public class WayangProjectVisitor extends WayangRelNodeVisitor<WayangProject> {
 
             return new Record(projectedRecord.toArray(new Object[0]));
         }
-
     }
 
     private static int[] getProjectFields(List<RexNode> projects) {
