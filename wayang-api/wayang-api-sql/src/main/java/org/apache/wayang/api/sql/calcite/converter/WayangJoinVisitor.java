@@ -90,9 +90,10 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         @Override
         public Integer visitCall(RexCall call) {
             RexNode operand = call.getOperands().get(child.ordinal());
-            if (!(operand instanceof RexInputRef rexInputRef)) {
+            if (!(operand instanceof RexInputRef)) {
                 throw new UnsupportedOperationException("Unsupported operation");
             }
+            RexInputRef rexInputRef = (RexInputRef) operand;
             return rexInputRef.getIndex();
         }
     }
