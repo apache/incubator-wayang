@@ -22,18 +22,16 @@ import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexVisitorImpl;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.JoinOperator;
+import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.types.DataUnitType;
-import org.apache.wayang.core.util.Tuple;
-
-import java.security.Key;
 
 public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
@@ -48,76 +46,110 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
         RexNode condition = ((Join) wayangRelNode).getCondition();
 
-//        JoinOperator<Tuple2, Tuple2, Integer> join = new JoinOperator(
-//                new ProjectionDescriptor<>(
-//                        DataUnitType.createBasicUnchecked(Tuple2.class),
-//                        DataUnitType.createBasic(Integer.class),
-//                        "field0"),
-//                new ProjectionDescriptor<>(
-//                        DataUnitType.createBasicUnchecked(Tuple2.class),
-//                        DataUnitType.createBasic(Integer.class),
-//                        "field1"),
-//                DataSetType.createDefaultUnchecked(Tuple2.class),
-//                DataSetType.createDefaultUnchecked(Tuple2.class));
+        if (!condition.isA(SqlKind.EQUALS)) {
+            new UnsupportedOperationException("Only equality joins supported");
+        }
 
-        JoinOperator<Record, Record, Object> join = new JoinOperator(
-                new KeyExtractor0(condition), // pass the index of key for table1
-                new KeyExtractor1(condition), // pass the index of key for table2
-                Record.class,
-                Record.class,
-                Object.class);
+        int offset = wayangRelNode.getInput(0).getRowType().getFieldCount();
 
-        childOpLeft.connectTo(0, join, 0); //call connectTo on both operators (left and right)
+        int leftKeyIndex = condition.accept(new KeyIndex(false, Child.LEFT));
+        int rightKeyIndex = condition.accept(new KeyIndex(false, Child.RIGHT)) - offset;
+
+        JoinOperator<Record, Record, Object> join = new JoinOperator<>(
+                new TransformationDescriptor<>(new KeyExtractor(leftKeyIndex), Record.class, Object.class),
+                new TransformationDescriptor<>(new KeyExtractor(rightKeyIndex), Record.class, Object.class)
+        );
+
+        //call connectTo on both operators (left and right)
+        childOpLeft.connectTo(0, join, 0);
         childOpRight.connectTo(0, join, 1);
 
-        return join;
+        MapOperator<Tuple2, Record> mapOperator = new MapOperator(
+                new MapFunction(),
+                Tuple2.class,
+                Record.class
+        );
+        join.connectTo(0, mapOperator, 0);
+        return mapOperator;
     }
 
-    // TODO fix serializable function method
-    // extract the left key
-    private class KeyExtractor0 implements FunctionDescriptor.SerializableFunction<Record, Object> {
+    /**
+     * Extracts key index from the call
+     */
+    private class KeyIndex extends RexVisitorImpl<Integer> {
+        Child child;
 
-        private final RexNode rexNode;
-        private final Integer index;
-
-        private KeyExtractor0(RexNode rexNode) {
-            this.rexNode = rexNode;
-            RexCall call = (RexCall) rexNode;
-            RexNode operand = call.getOperands().get(0);
-            RexInputRef rexInputRef = (RexInputRef) operand;
-            this.index = rexInputRef.getIndex();
+        protected KeyIndex(boolean deep, Child child) {
+            super(deep);
+            this.child = child;
         }
 
         @Override
-        public Object apply(final Record record) {
-            System.out.println(record.getField(0).toString());
-//            return record.getField(index);
-//            return 0;
-            return record.getField(0);
+        public Integer visitCall(RexCall call) {
+            RexNode operand = call.getOperands().get(child.ordinal());
+            if (!(operand instanceof RexInputRef rexInputRef)) {
+                throw new UnsupportedOperationException("Unsupported operation");
+            }
+            return rexInputRef.getIndex();
         }
     }
 
-    // extract the right key
-    private class KeyExtractor1 implements FunctionDescriptor.SerializableFunction<Record, Object> {
+    /**
+     * Extracts the key
+     */
+    private class KeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
+        int index;
 
-        private final RexNode rexNode;
-        private final Integer index;
-
-        private KeyExtractor1(RexNode rexNode) {
-            this.rexNode = rexNode;
-            RexCall call = (RexCall) rexNode;
-            RexNode operand = call.getOperands().get(1);
-            RexInputRef rexInputRef = (RexInputRef) operand;
-            this.index = rexInputRef.getIndex();
+        public KeyExtractor(int index) {
+            this.index = index;
         }
 
-        // TODO: index for right table returns index + number of columns in left table
         @Override
         public Object apply(Record record) {
-            System.out.println(record.getField(0).toString());
-//            return record.getField(index);
-//            return 1;
-            return record.getField(0);
+            return record.getField(index);
         }
+    }
+
+    /**
+     * Flattens the two Records from the Tuple2 into one Record
+     * This is necessary for join to connect to project
+     */
+    private class MapFunction implements FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
+        public MapFunction() {
+            super();
+        }
+
+        @Override
+        public Record apply(Tuple2<Record, Record> tuple2) {
+            Record r1 = tuple2.field0;
+            Record r2 = tuple2.field1;
+
+            return concatenatedValues(r1, r2);
+        }
+
+        /**
+         * Concatenates the values from the two records
+         * @param rec1
+         * @param rec2
+         * @return concatenated values
+         */
+        private Record concatenatedValues(Record rec1, Record rec2) {
+            Object[] concatValues = new Object[rec1.size() + rec2.size()];
+
+            for (int i = 0; i < rec1.size(); i++) {
+                concatValues[i] = rec1.getField(i);
+            }
+
+            for (int i = rec1.size(); i < rec1.size() + rec2.size(); i++) {
+                concatValues[i] = rec2.getField(i-rec1.size());
+            }
+            return new Record(concatValues);
+
+        }
+    }
+
+    // Helpers
+    private enum Child {
+        LEFT, RIGHT
     }
 }
