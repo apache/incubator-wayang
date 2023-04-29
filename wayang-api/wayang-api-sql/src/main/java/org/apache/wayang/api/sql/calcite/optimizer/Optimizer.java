@@ -18,6 +18,7 @@
 package org.apache.wayang.api.sql.calcite.optimizer;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.calcite.adapter.file.FileSchemaFactory;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
@@ -32,6 +33,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -52,10 +54,7 @@ import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Properties;
+import java.util.*;
 
 public class Optimizer {
 
@@ -73,6 +72,11 @@ public class Optimizer {
         this.sqlValidator = sqlValidator;
         this.sqlToRelConverter = sqlToRelConverter;
         this.volcanoPlanner = volcanoPlanner;
+
+    }
+
+    public void test1() {
+        String url = config.url();
     }
 
     public static Optimizer create(
@@ -117,6 +121,14 @@ public class Optimizer {
                 converterConfig
         );
 
+        //TODO: Import `FileSchema` so we can do a cast to it and then retrieve the `baseDirectory` field with the URL
+        Map<String, CalciteSchema> set = calciteSchema.getSubSchemaMap();
+        CalciteSchema schem = set.get("fs");
+        Schema schem2 = schem.schema;
+
+//        ((FileSchema) schem2)
+
+        System.out.println("test");
         return new Optimizer(config, validator, converter, planner);
     }
 
@@ -217,6 +229,7 @@ public class Optimizer {
 
         LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
+        //TODO: change the constructor of the WayangRelConverter to take the filesource URL and then pass it here if it is a file source
         Operator op = new WayangRelConverter().convert(relNode);
 
         op.connectTo(0, sink, 0);
