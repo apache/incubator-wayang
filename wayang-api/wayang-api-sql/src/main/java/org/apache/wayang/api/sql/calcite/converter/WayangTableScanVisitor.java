@@ -18,10 +18,16 @@
 
 package org.apache.wayang.api.sql.calcite.converter;
 
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
+import org.apache.wayang.api.sql.sources.fs.JavaCSVTableSource;
 import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.postgres.operators.PostgresTableSource;
+import org.apache.wayang.basic.data.Record;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -43,17 +49,17 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
         if (tableSource.equals("postgres")) {
             return new PostgresTableSource(tableName, columnNames.toArray(new String[]{}));
         }
-        throw new RuntimeException("Source not supported");
+        if (tableSource.equals("fs")) {
+            RelDataType rowType = wayangRelNode.getRowType();
+            List<RelDataType> fieldTypes = new ArrayList<>();
+            for(RelDataTypeField field : rowType.getFieldList()) {
+                fieldTypes.add(field.getType());
+            }
 
-        /*
-        RelDataType rowType = wayangRelNode.getRowType();
-        List<RelDataType> fieldTypes = new ArrayList<>();
-        for(RelDataTypeField field : rowType.getFieldList()) {
-            fieldTypes.add(field.getType());
+            return new JavaCSVTableSource(wayangRelNode.getSourcePath(),
+                DataSetType.createDefault(Record.class), fieldTypes);
         }
 
-        return new JavaCSVTableSource(wayangRelNode.getSourceFilePath()", " +
-                "DataSetType.createDefault(Record.class),
-                fieldTypes);*/
+        else throw new RuntimeException("Source not supported");
     }
 }

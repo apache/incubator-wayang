@@ -29,68 +29,69 @@ import java.util.Iterator;
 
 public class SqlAPI {
 
+    public static void exampleCrossPlatform() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.fs.table.url", "../resources/data1.csv");
+        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/imdb");
+        configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
+        configuration.setProperty("wayang.postgres.jdbc.password", "postgres");
 
-//    public static void exampleFs() throws Exception {
-//        Configuration configuration = new Configuration();
-//        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
-//
-//        SqlContext sqlContext = new SqlContext(configuration);
-//
-//        /*Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
-//                "o_totalprice > 100");*/
-//
-////        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders");
-//
-//        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
-//                "o_totalprice > 100000");
-//
-//
-//        printResults(10, result);
-//
-//    }
+        String calciteModel = Resources.toString(
+            SqlAPI.class.getResource("/model.json"),
+            Charset.defaultCharset());
+        configuration.setProperty("wayang.calcite.model",calciteModel);
+
+        SqlContext sqlContext = new SqlContext(configuration);
+
+        Collection<Record> result = sqlContext.executeSql(
+                "select f.name, f.age, f.zip, p.id, p.name, p.height \n"
+                + "from fs.data1 as f \n"
+                    + "join postgres.person as p \n"
+                    + "on f.id = p.id"
+        );
+
+        printResults(10, result);
+    }
+    public static void exampleFs() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
+
+        SqlContext sqlContext = new SqlContext(configuration);
+
+        /*Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
+                "o_totalprice > 100");*/
+
+//        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders");
+
+        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
+                "o_totalprice > 100000");
+
+
+        printResults(10, result);
+
+    }
 
 
     public static void examplePostgres() throws Exception {
 
         Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/tpch");
-        configuration.setProperty("wayang.postgres.jdbc.user", "user");
-        configuration.setProperty("wayang.postgres.jdbc.password", "password");
+        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/imdb");
+        configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
+        configuration.setProperty("wayang.postgres.jdbc.password", "postgres");
+
+        String calciteModel = Resources.toString(
+            SqlAPI.class.getResource("/model.json"),
+            Charset.defaultCharset());
+        configuration.setProperty("wayang.calcite.model",calciteModel);
 
         SqlContext sqlContext = new SqlContext(configuration);
 
-        /*Collection<Record> result = sqlContext.executeSql(
-                "select c_name, c_acctbal \n"
-                +" from postgres.customer"s
-        );*/
-
-//        Collection<Record> result = sqlContext.executeSql(
-//                "select title, id \n"
-//                        //"select title, \"year\" \n"
-//                        +"from postgres.movie m \n"
-//                        //+"where \"year\" > 2000"
-//                        + "join postgres.movie_genre g \n"
-//                        + "on m.id = g.movieid"
-//        );
         Collection<Record> result = sqlContext.executeSql(
                 "select id, title, genre \n"
                 + "from postgres.movie m \n"
                 + "join postgres.movie_genre g \n"
-                + "on m.id < g.movieid"
+                + "on m.id = g.movieid"
         );
-
-        /*Collection<Record> result = sqlContext.executeSql(
-                "select c_name, c_acctbal \n"
-                +"from  postgres.customer \n"
-                +"where c_name = 'Customer#000000001'"
-        );*/
-
-        /*Collection<Record> result = sqlContext.executeSql(
-                "select c_name, c_phone, c_acctbal, c_nationkey \n"
-                +"from  postgres.customer \n"
-                +"where c_nationkey = 15"
-        );*/
-
 
         printResults(10, result);
     }
@@ -144,7 +145,8 @@ public class SqlAPI {
 //        new SqlAPI().examplePostgres();
 //        new SqlAPI().exampleFs();
 //        new SqlAPI().exampleWithPostgres();
-        new SqlAPI().exampleJoinWithPostgres();
+//        new SqlAPI().exampleJoinWithPostgres();
+        new SqlAPI().exampleCrossPlatform();
     }
 
 
@@ -156,7 +158,9 @@ public class SqlAPI {
             Record record = iterator.next();
             System.out.print(" | ");
             for (int i = 0; i < record.size(); i++) {
-                System.out.print(record.getField(i).toString() + " | ");
+                Object val = record.getField(i);
+                if (val == null) { System.out.print(" " + " | "); }
+                else System.out.print(val.toString() + " | ");
             }
             System.out.println("");
         }
