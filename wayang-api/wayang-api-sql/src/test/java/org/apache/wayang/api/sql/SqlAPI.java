@@ -44,7 +44,7 @@ public class SqlAPI {
         SqlContext sqlContext = new SqlContext(configuration);
 
         Collection<Record> result = sqlContext.executeSql(
-                "select f.name, f.age, f.zip, p.id, p.name \n"
+                "select f.name, f.age, f.zip, p.id, p.name, p.height \n"
                 + "from fs.data1 as f \n"
                     + "join postgres.person as p \n"
                     + "on f.id = p.id"
@@ -158,7 +158,9 @@ public class SqlAPI {
             Record record = iterator.next();
             System.out.print(" | ");
             for (int i = 0; i < record.size(); i++) {
-                System.out.print(record.getField(i).toString() + " | ");
+                Object val = record.getField(i);
+                if (val == null) { System.out.print(" " + " | "); }
+                else System.out.print(val.toString() + " | ");
             }
             System.out.println("");
         }
