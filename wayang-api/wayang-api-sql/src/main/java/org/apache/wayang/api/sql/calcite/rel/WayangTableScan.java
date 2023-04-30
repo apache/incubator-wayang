@@ -18,6 +18,7 @@
 package org.apache.wayang.api.sql.calcite.rel;
 
 import com.google.common.collect.ImmutableList;
+
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelTraitSet;
@@ -91,5 +92,11 @@ public class WayangTableScan extends TableScan implements WayangRel {
     public List<String> getColumnNames() {
         return table.getRowType().getFieldNames();
     }
+
+    // TODO: hard-coded for now - retrieve URL from CsvTranslatableTable under source
+    public String getSourcePath() {
+        //System.out.println(table.unwrap(CsvTranslatableTable.class).source());
+        //System.out.println(table.unwrap(CsvTable.class));
+        return "file:/C:/incubator-Wayang-CrossPlatform/incubator-wayang-SQL/wayang-api/wayang-api-sql/src/test/resources/data1.csv"; }
 
 }

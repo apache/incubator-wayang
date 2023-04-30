@@ -56,7 +56,7 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
                 fieldTypes.add(field.getType());
             }
 
-            return new JavaCSVTableSource("file:///C:/incubator-wayang-SQL/wayang-api/wayang-api-sql/src/test/resources/data1.csv",
+            return new JavaCSVTableSource(wayangRelNode.getSourcePath(),
                 DataSetType.createDefault(Record.class), fieldTypes);
         }
 
