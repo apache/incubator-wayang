@@ -61,16 +61,5 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
         }
 
         else throw new RuntimeException("Source not supported");
-
-        /*
-        RelDataType rowType = wayangRelNode.getRowType();
-        List<RelDataType> fieldTypes = new ArrayList<>();
-        for(RelDataTypeField field : rowType.getFieldList()) {
-            fieldTypes.add(field.getType());
-        }
-
-        return new JavaCSVTableSource(wayangRelNode.getSourceFilePath()", " +
-                "DataSetType.createDefault(Record.class),
-                fieldTypes);*/
     }
 }

@@ -52,24 +52,24 @@ public class SqlAPI {
 
         printResults(10, result);
     }
-//    public static void exampleFs() throws Exception {
-//        Configuration configuration = new Configuration();
-//        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
-//
-//        SqlContext sqlContext = new SqlContext(configuration);
-//
-//        /*Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
-//                "o_totalprice > 100");*/
-//
-////        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders");
-//
-//        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
-//                "o_totalprice > 100000");
-//
-//
-//        printResults(10, result);
-//
-//    }
+    public static void exampleFs() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
+
+        SqlContext sqlContext = new SqlContext(configuration);
+
+        /*Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
+                "o_totalprice > 100");*/
+
+//        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders");
+
+        Collection<Record> result = sqlContext.executeSql("Select o_orderkey, o_totalprice from fs.orders where " +
+                "o_totalprice > 100000");
+
+
+        printResults(10, result);
+
+    }
 
 
     public static void examplePostgres() throws Exception {
