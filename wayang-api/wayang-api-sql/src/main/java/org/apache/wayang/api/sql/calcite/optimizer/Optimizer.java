@@ -73,7 +73,6 @@ public class Optimizer {
         this.sqlValidator = sqlValidator;
         this.sqlToRelConverter = sqlToRelConverter;
         this.volcanoPlanner = volcanoPlanner;
-
     }
 
     public static Optimizer create(

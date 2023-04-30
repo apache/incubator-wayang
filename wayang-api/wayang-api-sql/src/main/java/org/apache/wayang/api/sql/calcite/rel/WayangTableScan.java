@@ -95,8 +95,7 @@ public class WayangTableScan extends TableScan implements WayangRel {
 
     // TODO: hard-coded for now - retrieve URL from CsvTranslatableTable under source
     public String getSourcePath() {
-        //System.out.println(table.unwrap(CsvTranslatableTable.class).source());
-        //System.out.println(table.unwrap(CsvTable.class));
+//        System.out.println(table.unwrap(CsvTranslatableTable.class).source());
         return "file:/C:/incubator-Wayang-CrossPlatform/incubator-wayang-SQL/wayang-api/wayang-api-sql/src/test/resources/data1.csv"; }
 
 }
