@@ -16,12 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.spark_monitoring;
+package org.apache.wayang.spark.monitoring.metrics;
 
-import org.apache.wayang.spark.monitoring.Intefaces.SerializableObject;
-import org.apache.wayang.spark.monitoring.Intefaces.Task;
+import org.apache.wayang.spark.monitoring.interfaces.SerializableObject;
+import org.apache.wayang.spark.monitoring.interfaces.Task;
 /**
- * Represents the getting results of a task execution.
+ * Represents the end status of a task execution.
  *
  * <p>Implementing the {@link Task} interface, this class provides methods to set and get the
  * attributes of a task, such as its ID, host IP, launch and finish times, and status. It also
@@ -33,7 +33,7 @@ import org.apache.wayang.spark.monitoring.Intefaces.Task;
  *
  * @author [Adeel Aslam]
  */
-public class TaskGettingResult implements Task, SerializableObject {
+public class TaskEnd implements Task, SerializableObject {
     private String id;
     private String hostIP;
     private long taskId;
@@ -49,6 +49,7 @@ public class TaskGettingResult implements Task, SerializableObject {
     private int stageID;
 
     private String eventName;
+    TaskMetric taskMetric;
 
     TaskStatusForRunning taskStatusForRunning=null;
 
@@ -206,11 +207,12 @@ public class TaskGettingResult implements Task, SerializableObject {
 
     @Override
     public TaskMetric getTaskMetric() {
-        return null;
+        return taskMetric;
     }
 
     @Override
     public void setTaskMetric(TaskMetric taskMetric) {
+        this.taskMetric=taskMetric;
 
     }
 

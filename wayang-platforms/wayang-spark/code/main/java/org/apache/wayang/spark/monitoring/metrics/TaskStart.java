@@ -16,9 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.spark_monitoring;
-import org.apache.wayang.spark.monitoring.Intefaces.SerializableObject;
-import org.apache.wayang.spark.monitoring.Intefaces.Task;
+package org.apache.wayang.spark.monitoring.metrics;
+import org.apache.wayang.spark.monitoring.interfaces.SerializableObject;
+import org.apache.wayang.spark.monitoring.interfaces.Task;
 /**
  * Represents the start status of a task execution.
  *

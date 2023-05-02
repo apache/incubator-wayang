@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.spark_monitoring;
+package org.apache.wayang.spark.monitoring.metrics;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -25,9 +25,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.spark.executor.TaskMetrics;
 import org.apache.spark.scheduler.*;
 import org.apache.spark.scheduler.cluster.ExecutorInfo;
-import org.apache.wayang.spark.monitoring.Intefaces.Stage;
-import org.apache.wayang.spark.monitoring.Intefaces.Task;
-import org.apache.wayang.spark.monitoring.Intefaces.*;
+import org.apache.wayang.spark.monitoring.interfaces.Stage;
+import org.apache.wayang.spark.monitoring.interfaces.Task;
+import org.apache.wayang.spark.monitoring.interfaces.*;
 import scala.collection.Seq;
 
 import java.io.*;

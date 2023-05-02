@@ -16,34 +16,19 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.spark_monitoring;
+package org.apache.wayang.spark.monitoring.metrics;
 
-import org.apache.wayang.spark.monitoring.Intefaces.SerializableObject;
-import org.apache.wayang.spark.monitoring.Intefaces.Stage;
-import org.apache.wayang.spark.monitoring.Intefaces.Task;
+import org.apache.wayang.spark.monitoring.interfaces.SerializableObject;
+import org.apache.wayang.spark.monitoring.interfaces.Stage;
+import org.apache.wayang.spark.monitoring.interfaces.Task;
 
 import java.util.List;
 /**
- * Represents a completed stage in a distributed computing system.
- *
- * This class implements the Stage interface and SerializableObject interface.
- *
- * The completed stage contains the following information:
- * - The ID of the stage
- * - The number of tasks in the stage
- * - The name of the stage
- * - The status of the stage
- * - The details of the stage
- * - The ID of the executor that executed the stage
- * - The stage attempt ID
- * - The task metric for the stage
- * - The list of tasks for the stage
- * - The event name for the stage
- * - The stage completion time
- *
- * This class provides methods to get and set the above information.
+ * The StageExecutorMetrics class implements the Stage and SerializableObject interfaces and represents
+ * the metrics associated with a stage executed by an executor.
  */
-public class StageCompleted implements Stage, SerializableObject {
+
+public class StageExecutorMetrics implements Stage, SerializableObject {
     private int id;
     private int tasks;
     private String stageName;
@@ -51,14 +36,15 @@ public class StageCompleted implements Stage, SerializableObject {
     private String details;
     private String executorID;
     private int stateAttempt;
-    private TaskMetric taskMetric;
     private List<Task> listOfTasks;
-    private String eventName;
-    private long stageCompletionTime;
+
+    public TaskMetric getTaskMetric() {
+        return taskMetric;
+    }
 
     @Override
     public void setTaskMetric(TaskMetric taskMetric) {
-        this.taskMetric=taskMetric;
+        this.taskMetric =  taskMetric;
     }
 
 
@@ -92,6 +78,9 @@ public class StageCompleted implements Stage, SerializableObject {
         return listOfTasks;
     }
 
+    private TaskMetric taskMetric;
+
+    private String eventName;
 
     @Override
     public void setEventame(String name) {
@@ -157,7 +146,6 @@ public class StageCompleted implements Stage, SerializableObject {
     @Override
     public void setSubmissionTime(long time) {
 
-
     }
 
     @Override
@@ -167,16 +155,11 @@ public class StageCompleted implements Stage, SerializableObject {
 
     @Override
     public void setCompletionTime(long time) {
-            this.stageCompletionTime=time;
+
     }
 
     @Override
     public long getCompletionTime() {
-        return stageCompletionTime;
-    }
-
-    @Override
-    public TaskMetric getTaskMetric() {
-        return taskMetric;
+        return 0;
     }
 }

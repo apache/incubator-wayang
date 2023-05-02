@@ -16,9 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.Intefaces;
+package org.apache.wayang.spark.monitoring.interfaces;
 
-import org.apache.wayang.spark.monitoring.spark_monitoring.TaskMetric;
+import org.apache.wayang.spark.monitoring.metrics.TaskMetric;
 
 import java.io.Serializable;
 import java.util.List;

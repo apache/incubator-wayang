@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.Intefaces;
+package org.apache.wayang.spark.monitoring.interfaces;
 
 import java.io.Serializable;
 /**

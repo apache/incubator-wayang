@@ -16,16 +16,16 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.spark_monitoring;
+package org.apache.wayang.spark.monitoring.metrics;
 
-import org.apache.wayang.spark.monitoring.Intefaces.SerializableObject;
+import org.apache.wayang.spark.monitoring.interfaces.SerializableObject;
 /**
 
  This class represents the metrics for a task in the Apache Wayang monitoring system.
 
  It implements the TaskMetric interface and SerializableObject interface to allow for serialization.
  */
-public class TaskMetric  implements org.apache.wayang.spark.monitoring.Intefaces.TaskMetric, SerializableObject {
+public class TaskMetric  implements org.apache.wayang.spark.monitoring.interfaces.TaskMetric, SerializableObject {
     public long getExecutorCPUTime() {
         return executorCPUTime;
     }

@@ -16,25 +16,26 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.spark_monitoring;
-
-import org.apache.wayang.spark.monitoring.Intefaces.Job;
-import org.apache.wayang.spark.monitoring.Intefaces.SerializableObject;
-import org.apache.wayang.spark.monitoring.Intefaces.Stage;
+package org.apache.wayang.spark.monitoring.metrics;
+import org.apache.wayang.spark.monitoring.interfaces.Job;
+import org.apache.wayang.spark.monitoring.interfaces.SerializableObject;
+import org.apache.wayang.spark.monitoring.interfaces.Stage;
 import scala.collection.Seq;
 
 import java.util.List;
 /**
- * JobStart class represents a job's start in a system.
+
+ * JobEnd class represents a job's end in a system.
+
  * It implements the Job and SerializableObject interfaces.
  */
-public class JobStart implements Job, SerializableObject {
+public class JobEnd implements Job, SerializableObject {
     private int id;
     private int productArity;
     private Seq<Object> seqStageId;
+
     private String eventName;
     private List<Stage> listOfStages;
-
     @Override
     public void setEventame(String name) {
         this.eventName=name;

@@ -16,23 +16,33 @@
  * limitations under the License.
  */
 
-
-package org.apache.wayang.spark.monitoring.spark_monitoring;
-import org.apache.wayang.spark.monitoring.Intefaces.Executor;
-import org.apache.wayang.spark.monitoring.Intefaces.SerializableObject;
+package org.apache.wayang.spark.monitoring.metrics;
+import org.apache.wayang.spark.monitoring.interfaces.Executor;
+import org.apache.wayang.spark.monitoring.interfaces.SerializableObject;
 
 /**
- * An event class representing the removal of an executor.
- * Implements the Executor interface and SerializableObject interface.
+
+ An implementation of the Executor interface that represents an updated executor.
+
+ This class contains information about an executor that has been updated, including its
+
+ stage ID, executor ID, stage attempt, execution time, host, total cores, reason of removal,
+
+ and event name.
+
+ @author [Adeel Aslam]
+
+ @version 1.0
+
+ @since [3-24-2023]
  */
-public class ExecutorRemoved implements Executor, SerializableObject {
+public class ExecutorUpdated implements Executor, SerializableObject {
     private int stageId;
     private String executorID;
     private int stageAttempt;
     private long time;
     private String executorHost;
     private int totalCores;
-
     public String getReasonOfRemoval() {
         return reasonOfRemoval;
     }

@@ -33,7 +33,7 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.wayang.spark.monitoring.spark_monitoring.SparkListener;
+import org.apache.wayang.spark.monitoring.metrics.SparkListener;
 import org.apache.wayang.spark.execution.SparkContextReference;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkCollectionSource;

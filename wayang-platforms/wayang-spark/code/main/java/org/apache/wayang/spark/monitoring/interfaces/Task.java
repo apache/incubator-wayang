@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.Intefaces;
+package org.apache.wayang.spark.monitoring.interfaces;
 /**
  * The Task interface represents a task in a distributed computing or data processing system.
  *
@@ -239,14 +239,14 @@ public interface Task extends SerializableObject{
      Returns the {@link TaskMetric} associated with this task.
      @return the {@link TaskMetric} of the task
      */
-    org.apache.wayang.spark.monitoring.spark_monitoring.TaskMetric getTaskMetric();
+    org.apache.wayang.spark.monitoring.metrics.TaskMetric getTaskMetric();
 
     /**
 
      Sets the {@link TaskMetric} associated with this task.
      @param taskMetric the {@link TaskMetric} to be set for the task
      */
-    void setTaskMetric(org.apache.wayang.spark.monitoring.spark_monitoring.TaskMetric taskMetric);
+    void setTaskMetric(org.apache.wayang.spark.monitoring.metrics.TaskMetric taskMetric);
     // void setTaskRunningStatus(boolean status)
 
 

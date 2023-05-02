@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.spark_monitoring;
+package org.apache.wayang.spark.monitoring.metrics;
 
-import org.apache.wayang.spark.monitoring.Intefaces.SerializableObject;
-import org.apache.wayang.spark.monitoring.Intefaces.Stage;
-import org.apache.wayang.spark.monitoring.Intefaces.Task;
+import org.apache.wayang.spark.monitoring.interfaces.SerializableObject;
+import org.apache.wayang.spark.monitoring.interfaces.Stage;
+import org.apache.wayang.spark.monitoring.interfaces.Task;
 
 import java.util.List;
 /**

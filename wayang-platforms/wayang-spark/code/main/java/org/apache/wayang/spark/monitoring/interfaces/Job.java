@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.Intefaces;
+package org.apache.wayang.spark.monitoring.interfaces;
 
 import scala.collection.Seq;
 

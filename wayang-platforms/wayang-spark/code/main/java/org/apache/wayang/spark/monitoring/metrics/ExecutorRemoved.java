@@ -16,28 +16,31 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.monitoring.spark_monitoring;
-import org.apache.wayang.spark.monitoring.Intefaces.Executor;
-import org.apache.wayang.spark.monitoring.Intefaces.SerializableObject;
+
+package org.apache.wayang.spark.monitoring.metrics;
+import org.apache.wayang.spark.monitoring.interfaces.Executor;
+import org.apache.wayang.spark.monitoring.interfaces.SerializableObject;
 
 /**
- * The ExecutorAdded class represents an executor added event in a distributed computing system.
- * It implements the Executor interface and the SerializableObject interface.
- *
- * This class contains information about the executor that was added, such as its stage ID, executor ID,
- * stage attempt, time, executor host, total cores, and reason of removal.
- *
- * This class provides getters and setters for all of the above properties, and implements the methods
- * defined in the Executor interface.
+ * An event class representing the removal of an executor.
+ * Implements the Executor interface and SerializableObject interface.
  */
-
-public class ExecutorAdded implements Executor, SerializableObject {
+public class ExecutorRemoved implements Executor, SerializableObject {
     private int stageId;
     private String executorID;
     private int stageAttempt;
     private long time;
     private String executorHost;
     private int totalCores;
+
+    public String getReasonOfRemoval() {
+        return reasonOfRemoval;
+    }
+
+    public void setReasonOfRemoval(String reasonOfRemoval) {
+        this.reasonOfRemoval = reasonOfRemoval;
+    }
+
     private String reasonOfRemoval;
 
     private String eventName;
@@ -117,13 +120,7 @@ public class ExecutorAdded implements Executor, SerializableObject {
     public void setResourceInfo(int resourceInfoId) {
 
     }
-    public String getReasonOfRemoval() {
-        return reasonOfRemoval;
-    }
 
-    public void setReasonOfRemoval(String reasonOfRemoval) {
-        this.reasonOfRemoval = reasonOfRemoval;
-    }
     @Override
     public int getResourceInfo() {
         return 0;
