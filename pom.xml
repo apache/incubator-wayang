@@ -1280,7 +1280,7 @@
                         <licenseMerge>HSQLDB | HSQLDB License, a BSD open source license</licenseMerge>
                     </licenseMerges>
                     <includedLicenses>
-                        ASF 2.0 | BSD 2-claus | BSD 3-claus | MIT | CC0 | HSQLDB | PostgreSQL
+                        ASF 2.0 | BSD 2-claus | BSD 3-claus | MIT | CC0 | HSQLDB | PostgreSQL | EPL 2.0 | EPL 1.0 | Public Domain | iCal4j
                     </includedLicenses>
                     <failOnBlacklist>true</failOnBlacklist>
                     <excludedGroups>
