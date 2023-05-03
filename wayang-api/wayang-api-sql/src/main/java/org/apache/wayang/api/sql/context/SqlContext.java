@@ -30,11 +30,8 @@ import org.apache.wayang.api.sql.calcite.rules.WayangRules;
 import org.apache.wayang.api.sql.calcite.schema.SchemaUtils;
 import org.apache.wayang.api.sql.calcite.utils.PrintUtils;
 import org.apache.wayang.basic.data.Record;
-import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
-import org.apache.wayang.core.api.configuration.KeyValueProvider;
-import org.apache.wayang.core.api.configuration.MapBasedKeyValueProvider;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
@@ -50,8 +47,6 @@ public class SqlContext {
 
     private static final AtomicInteger jobId = new AtomicInteger(0);
 
-    private final Configuration configuration;
-
     private final WayangContext wayangContext;
 
     private final CalciteSchema calciteSchema;
@@ -61,17 +56,14 @@ public class SqlContext {
     }
 
     public SqlContext(Configuration configuration) throws SQLException {
-        this.configuration = configuration.fork(String.format("SqlContext(%s)", configuration.getName()));
+        Configuration configuration1 = configuration.fork(String.format("SqlContext(%s)", configuration.getName()));
 
-        wayangContext = new WayangContext(configuration)
+        wayangContext = new WayangContext(configuration1)
                 .withPlugin(Java.basicPlugin())
                 .withPlugin(Spark.basicPlugin())
                 .withPlugin(Postgres.plugin());
 
-        /** hard coded for now **/
-//        calciteSchema = SchemaUtils.getPostgresSchema(configuration);
-        calciteSchema = SchemaUtils.getFileSchema(configuration);
-
+        calciteSchema = SchemaUtils.getSchema(configuration);
     }
 
     public Collection<Record> executeSql(String sql) throws Exception {
@@ -86,14 +78,15 @@ public class SqlContext {
         SqlNode validatedSqlNode = optimizer.validate(sqlNode);
         RelNode relNode = optimizer.convert(validatedSqlNode);
 
-        PrintUtils.print("After pasrsing sql query", relNode);
+        PrintUtils.print("After parsing sql query", relNode);
 
 
         RuleSet rules = RuleSets.ofList(
                 WayangRules.WAYANG_TABLESCAN_RULE,
                 WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
                 WayangRules.WAYANG_PROJECT_RULE,
-                WayangRules.WAYANG_FILTER_RULE
+                WayangRules.WAYANG_FILTER_RULE,
+                WayangRules.WAYANG_JOIN_RULE
         );
         RelNode wayangRel = optimizer.optimize(
                 relNode,

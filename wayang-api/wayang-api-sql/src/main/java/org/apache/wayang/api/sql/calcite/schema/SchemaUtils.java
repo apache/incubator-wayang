@@ -25,75 +25,17 @@ import org.apache.wayang.core.api.Configuration;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 
-/**
- * This class contains some hardcoded functions for creating calcite schema.
- * TODO: Automatically create calcite schema based on user provided configurations of table sources
- */
+
 public class SchemaUtils {
-
-    private static Properties getPostgresProperties() {
-        /** Hardcoded for testing **/
-        Properties info = new Properties();
-        info.put("model",
-                "inline:"
-                        + "{\n"
-                        + "  version: '1.0',\n"
-                        + "  defaultSchema: 'tpch',\n"
-                        + "  schemas: [\n"
-                        + "     {\n"
-                        + "       name: 'postgres',\n"
-                        + "       type: 'custom',\n"
-                        + "       factory: 'org.apache.wayang.api.sql.calcite.jdbc.JdbcSchema$Factory',\n"
-                        + "       operand: {\n"
-                        + "         jdbcDriver: 'org.postgresql.Driver',\n"
-                        + "         jdbcUrl: 'jdbc:postgresql://localhost:5432/tpch',\n"
-                        + "         jdbcUser: 'user',\n"
-                        + "         jdbcPassword: 'password'\n"
-                        + "       }\n"
-                        + "     }\n"
-                        + "  ]\n"
-                        + "}");
-        return info;
-    }
-
-    private static Properties getFileProperties() {
-        Properties info = new Properties();
-        info.put("model",
-                "inline:"
-                        + "{\n"
-                        + "  version: '1.0',\n"
-                        + "  defaultSchema: 'tpch',\n"
-                        + "  schemas: [ {\n"
-                        + "    name: 'fs',\n"
-                        + "    type: 'custom',\n"
-                        + "    factory: 'org.apache.calcite.adapter.file.FileSchemaFactory',\n"
-                        + "    operand: {\n"
-                        + "        directory: '/data/Projects/databloom/test-data'\n"
-                        + "      } \n"
-                        + "    }\n"
-                        + "  ]\n"
-                        + "}"
-        );
-        return info;
-    }
-
-
-    public static CalciteSchema getPostgresSchema(Configuration configuration) throws SQLException {
-        final Connection connection = DriverManager.getConnection("jdbc:calcite:", getPostgresProperties());
+    public static CalciteSchema getSchema(Configuration configuration) throws SQLException {
+        String calciteModel = configuration.getStringProperty("wayang.calcite.model");
+        final Connection connection = DriverManager.getConnection("jdbc:calcite:model=inline: "+calciteModel);
         return getCalciteSchema(connection);
     }
-
-    public static CalciteSchema getFileSchema(Configuration configuration) throws SQLException {
-        final Connection connection = DriverManager.getConnection("jdbc:calcite:", getFileProperties());
-        return getCalciteSchema(connection);
-    }
-
     public static CalciteSchema getCalciteSchema(Connection connection) throws SQLException {
-            CalciteConnection calciteConnection = connection.unwrap(CalciteConnection.class);
-            final SchemaPlus schemaPlus = calciteConnection.getRootSchema();
-            CalciteSchema calciteSchema = CalciteSchema.from(schemaPlus);
-            return calciteSchema;
+        CalciteConnection calciteConnection = connection.unwrap(CalciteConnection.class);
+        final SchemaPlus schemaPlus = calciteConnection.getRootSchema();
+        return CalciteSchema.from(schemaPlus);
     }
 }

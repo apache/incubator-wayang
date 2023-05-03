@@ -39,8 +39,8 @@ public class SqlTest {
     public static void main(String[] args) {
         WayangPlan wayangPlan;
         Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/tpch");
-        configuration.setProperty("wayang.postgres.jdbc.user", "kbeedkar");
+        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/imdb");
+        configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
         configuration.setProperty("wayang.postgres.jdbc.password", "password");
 
         WayangContext wayangContext = new WayangContext(configuration)
@@ -50,11 +50,11 @@ public class SqlTest {
 
         Collection<Record> collector = new ArrayList<>();
 
-        TableSource customer = new PostgresTableSource("customer");
+        TableSource customer = new PostgresTableSource("person");
         MapOperator<Record, Record> projection = MapOperator.createProjection(
                 Record.class,
                 Record.class,
-                "c_name");
+                "name");
 
         /*int[] fields = new int[]{1};
         MapOperator<Record, Record> projection = new MapOperator(

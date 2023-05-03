@@ -26,9 +26,12 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.wayang.api.sql.calcite.rel.WayangProject;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.util.Tuple;
+import scala.Tuple1;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,14 +48,14 @@ public class WayangProjectVisitor extends WayangRelNodeVisitor<WayangProject> {
 
         /* Quick check */
         List<RexNode> projects = ((Project) wayangRelNode).getProjects();
-        for(RexNode rexNode : projects) {
+        for (RexNode rexNode : projects) {
             if (!(rexNode instanceof RexInputRef)) {
                 throw new IllegalStateException("Generalized Projections not supported yet");
             }
         }
 
         //TODO: create a map with specific dataset type
-        MapOperator<Record, Record> projection = new MapOperator(
+        MapOperator<Tuple2<Record, Record>, Record> projection = new MapOperator(
                 new MapFunctionImpl(projects),
                 Record.class,
                 Record.class);
@@ -69,7 +72,7 @@ public class WayangProjectVisitor extends WayangRelNodeVisitor<WayangProject> {
         private final int[] fields;
 
         private MapFunctionImpl(int[] fields) {
-            this. fields = fields;
+            this.fields = fields;
         }
 
         private MapFunctionImpl(List<RexNode> projects) {
@@ -80,7 +83,7 @@ public class WayangProjectVisitor extends WayangRelNodeVisitor<WayangProject> {
         public Record apply(Record record) {
 
             List<Object> projectedRecord = new ArrayList<>();
-            for(int field : fields) {
+            for (int field : fields) {
                 projectedRecord.add(record.getField(field));
             }
 
