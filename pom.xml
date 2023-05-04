@@ -1278,9 +1278,10 @@
                         <licenseMerge>MIT | MIT License | The MIT License </licenseMerge>
                         <licenseMerge>BSD 2-claus | BSD 2-Clause License | BSD 2-Clause | BSD-2-Clause</licenseMerge>
                         <licenseMerge>HSQLDB | HSQLDB License, a BSD open source license</licenseMerge>
+                        <licenseMerge>Eclipse | EPL 2.0 |  EPL 1.0 | Eclipse Public License, Version 2.0 | Eclipse Distribution License - v 1.0</licenseMerge>
                     </licenseMerges>
                     <includedLicenses>
-                        ASF 2.0 | BSD 2-claus | BSD 3-claus | MIT | CC0 | HSQLDB | PostgreSQL
+                        ASF 2.0 | BSD 2-claus | BSD 3-claus | MIT | CC0 | HSQLDB | PostgreSQL | Eclipse | Public Domain | iCal4j - License
                     </includedLicenses>
                     <failOnBlacklist>true</failOnBlacklist>
                     <excludedGroups>

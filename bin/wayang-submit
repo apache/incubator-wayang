@@ -71,14 +71,11 @@ fi
 # Find Spark jars.
 if [ -d "${SPARK_HOME}" ]; then
   SPARK_JARS_DIR="${SPARK_HOME}/jars"
-  ls ${SPARK_JARS_DIR}/
 fi
 
 # Find Hadoop jars.
 if [ -d "${HADOOP_HOME}" ]; then
   HADOOP_JARS_DIR="${HADOOP_HOME}/share/hadoop/common/*:${HADOOP_HOME}/share/hadoop/common/lib/*"
-  ls ${HADOOP_HOME}/share/hadoop/common/
-  ls ${HADOOP_HOME}/share/hadoop/common/lib/
 fi
 
 if [ "$(ls ${SPARK_JARS_DIR} | grep ^hadoop | wc -l)" == "0" ]; then
@@ -94,11 +91,11 @@ fi
 
 
 WAYANG_CODE="${WAYANG_HOME}/jars"
-ls ${WAYANG_CODE}
+
 WAYANG_LIBS="${WAYANG_HOME}/libs"
-ls ${WAYANG_LIBS}
+
 WAYANG_CONF="${WAYANG_HOME}/conf"
-ls ${WAYANG_CONF}
+
 # Bootstrap the classpath.
 WAYANG_CLASSPATH="${WAYANG_CONF}/*:${WAYANG_CODE}/*:${WAYANG_LIBS}/*"
 WAYANG_CLASSPATH="${SPARK_JARS_DIR}/*:${WAYANG_CLASSPATH}:${HADOOP_JARS_DIR}"
@@ -116,7 +113,12 @@ if [ -n "${OTHER_FLAGS}" ]; then
 	FLAGS="${FLAGS} ${OTHER_FLAGS}"
 fi
 
-echo "lala"
-echo "$RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS ${@:2}"
-eval "$RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS ${@:2}"
+# Wrap args in quotes to be able to execute args with parenthesis, spaces, etc
+ARGS=""
+for arg in $(echo ${@:2})
+do
+  ARGS="$ARGS \"${arg}\""
+done
+
+eval "$RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS ${ARGS}"
 
