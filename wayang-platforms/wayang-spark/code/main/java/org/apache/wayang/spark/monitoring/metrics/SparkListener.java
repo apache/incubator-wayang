@@ -97,7 +97,7 @@ public class SparkListener extends org.apache.spark.scheduler.SparkListener {
         ExecutorInfo executorInfo=executorAddedSpark.executorInfo();
          executorAdded.setExecutorHost(executorInfo.executorHost());
          executorAdded.setTotalCores(executorInfo.totalCores());
-         executorAdded.setResourceInfo(executorInfo.resourceProfileId());
+        // executorAdded.setResourceInfo(executorInfo.resourceProfileId());
          executorAdded.setExecutorHost(executorInfo.executorHost());
          executorAdded.executorTime(executorAddedSpark.time());
         try {
