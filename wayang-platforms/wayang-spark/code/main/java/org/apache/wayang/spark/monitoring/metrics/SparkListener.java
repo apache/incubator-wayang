@@ -136,28 +136,7 @@ public class SparkListener extends org.apache.spark.scheduler.SparkListener {
             this.logger.error("Exception {} for executor added",e);
         }
     }
-    /**
 
-     This method is called when metrics are updated for an executor in a Spark application, and it sends information about
-     the updated executor to a Kafka topic.
-     @param executorMetricsUpdateSpark the SparkListenerExecutorMetricsUpdate event containing information about the updated executor's metrics
-     */
-    @Override
-    public void onExecutorMetricsUpdate(SparkListenerExecutorMetricsUpdate executorMetricsUpdateSpark) {
-        super.onExecutorMetricsUpdate(executorMetricsUpdateSpark);
-        Executor executorUpdated= new ExecutorUpdated();
-         executorUpdated.setExecutorID(executorMetricsUpdateSpark.execId());
-         executorUpdated.setEventame("ExecutorUpdated");
-        try {
-            ByteArrayOutputStream boas = new ByteArrayOutputStream();
-            ObjectOutput out = new ObjectOutputStream(boas);
-            out.writeObject(executorUpdated);
-            producer.send(new ProducerRecord(kafkaTopic, "ExecutorUpdated", boas.toByteArray()));
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }
-    }
     /**
 
      This method is called when a task starts in a Spark application, and it creates a new TaskStart object with information
@@ -208,18 +187,12 @@ public class SparkListener extends org.apache.spark.scheduler.SparkListener {
 
     }
 
-    @Override
-    public void onNodeExcludedForStage(SparkListenerNodeExcludedForStage nodeExcludedForStage) {
-        super.onNodeExcludedForStage(nodeExcludedForStage);
-        nodeExcludedForStage.stageId();
-        nodeExcludedForStage.time();
-        nodeExcludedForStage.stageAttemptId();
-    }
     /**
-
-     This class is an implementation of the SparkListener interface that listens for events in a Spark application and
-
-     create objects to represent those events. These objects are then serialized and sent to a Kafka topic.
+     * This method is called when a Spark application starts. It extends the behavior of the
+     * superclass by passing along the given SparkListenerApplicationStart event to its parent
+     * implementation.
+     *
+     * @param applicationStartSpark the SparkListenerApplicationStart event that was triggered
      */
     @Override
     public void onApplicationStart(SparkListenerApplicationStart applicationStartSpark) {
@@ -407,22 +380,6 @@ public class SparkListener extends org.apache.spark.scheduler.SparkListener {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(this.stageObjects);
-
-
-            //////MyOwnTest
-            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            List<SerializableObject> deserializedObjects = (List<SerializableObject>) ois.readObject();
-
-            StageCompleted stageCompleted1=null;
-            for (SerializableObject object : deserializedObjects) {
-                System.out.println(object.getClass().getName());
-                if(object instanceof StageCompleted){
-                    stageCompleted1= (StageCompleted) object;
-
-                }
-            }
-            System.out.println("Stage Completed---"+stageCompleted1.getNumberOfTasks());
             producer.send(new ProducerRecord(kafkaTopic, "Stage", baos.toByteArray()));
             this.stageObjects= new ArrayList<>();
             this.listOfTasks= new ArrayList<>();
@@ -481,7 +438,6 @@ public class SparkListener extends org.apache.spark.scheduler.SparkListener {
         stageExecutorMetrics.setStageAttemptId(executorMetricsSpark.stageAttemptId());
         this.listOfStages.add(stageExecutorMetrics);
         this.stageObjects.add((SerializableObject)stageExecutorMetrics);
-
     }
     /**
      * This method is called when the Spark application ends. It creates a new ApplicationEnd object containing
