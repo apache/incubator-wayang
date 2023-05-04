@@ -136,7 +136,28 @@ public class SparkListener extends org.apache.spark.scheduler.SparkListener {
             this.logger.error("Exception {} for executor added",e);
         }
     }
+    /**
 
+     This method is called when metrics are updated for an executor in a Spark application, and it sends information about
+     the updated executor to a Kafka topic.
+     @param executorMetricsUpdateSpark the SparkListenerExecutorMetricsUpdate event containing information about the updated executor's metrics
+     */
+    @Override
+    public void onExecutorMetricsUpdate(SparkListenerExecutorMetricsUpdate executorMetricsUpdateSpark) {
+        super.onExecutorMetricsUpdate(executorMetricsUpdateSpark);
+        Executor executorUpdated= new ExecutorUpdated();
+         executorUpdated.setExecutorID(executorMetricsUpdateSpark.execId());
+         executorUpdated.setEventame("ExecutorUpdated");
+        try {
+            ByteArrayOutputStream boas = new ByteArrayOutputStream();
+            ObjectOutput out = new ObjectOutputStream(boas);
+            out.writeObject(executorUpdated);
+            producer.send(new ProducerRecord(kafkaTopic, "ExecutorUpdated", boas.toByteArray()));
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
     /**
 
      This method is called when a task starts in a Spark application, and it creates a new TaskStart object with information
@@ -422,23 +443,7 @@ public class SparkListener extends org.apache.spark.scheduler.SparkListener {
         this.stageObjects.add((SerializableObject) stageSubmitted);
 
     }
-    /**
-     * This method is called whenever executor metrics are updated for a stage in the Spark engine. It adds the
-     * details of the updated metrics to a list of stages and a list of stage objects.
-     *
-     * @param executorMetricsSpark the SparkListenerStageExecutorMetrics object containing information about the updated metrics
-     */
-    @Override
-    public void onStageExecutorMetrics(SparkListenerStageExecutorMetrics executorMetricsSpark) {
-        super.onStageExecutorMetrics(executorMetricsSpark);
-        Stage stageExecutorMetrics= new StageExecutorMetrics();
-        stageExecutorMetrics.setID(executorMetricsSpark.stageId());
-        stageExecutorMetrics.setEventame("StageExecutorMetric");
-        stageExecutorMetrics.setExecutorID(executorMetricsSpark.execId());
-        stageExecutorMetrics.setStageAttemptId(executorMetricsSpark.stageAttemptId());
-        this.listOfStages.add(stageExecutorMetrics);
-        this.stageObjects.add((SerializableObject)stageExecutorMetrics);
-    }
+
     /**
      * This method is called when the Spark application ends. It creates a new ApplicationEnd object containing
      * the start time of the application and a list of jobs, and adds the object to a list of application objects.
