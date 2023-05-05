@@ -40,7 +40,7 @@ public class WayangTableScan extends TableScan implements WayangRel {
                            RelOptTable table,
                            int[] fields) {
         super(cluster, traitSet, hints, table);
-        if(fields==null) {
+        if (fields == null) {
             int size = table.getRowType().getFieldCount();
             fields = new int[size];
             for (int i = 0; i < size; i++) {
@@ -78,7 +78,7 @@ public class WayangTableScan extends TableScan implements WayangRel {
 
     @Override
     public String toString() {
-        return "Wayang TableScan ["+ getQualifiedName() + "]";
+        return "Wayang TableScan [" + getQualifiedName() + "]";
     }
 
     public String getQualifiedName() {
@@ -95,7 +95,6 @@ public class WayangTableScan extends TableScan implements WayangRel {
 
     // TODO: hard-coded for now - retrieve URL from CsvTranslatableTable under source
     public String getSourcePath() {
-//        System.out.println(table.unwrap(CsvTranslatableTable.class).source());
-        return "file:/C:/incubator-Wayang-CrossPlatform/incubator-wayang-SQL/wayang-api/wayang-api-sql/src/test/resources/data1.csv"; }
-
+        return String.format("file:/C:/tmp/data/%s.csv", this.getTableName());
+    }
 }
