@@ -37,7 +37,7 @@
 
     <properties>
         <java-module-name>org.apache.wayang.platform.flink</java-module-name>
-        <flink.version>1.7.1</flink.version>
+        <flink.version>1.10.0</flink.version>
     </properties>
 
     <dependencies>
