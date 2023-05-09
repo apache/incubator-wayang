@@ -33,6 +33,7 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.spark.monitoring.metrics.SparkListener;
 import org.apache.wayang.spark.execution.SparkContextReference;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkCollectionSource;
@@ -53,6 +54,7 @@ public class SparkPlatform extends Platform {
     private static final String CONFIG_NAME = "spark";
 
     private static final String DEFAULT_CONFIG_FILE = "wayang-spark-defaults.properties";
+    private static final String MONITORING_METRICS_FILE="wayang-spark-metrics.properties";
 
     public static final String INITIALIZATION_MS_CONFIG_KEY = "wayang.spark.init.ms";
 
@@ -83,12 +85,8 @@ public class SparkPlatform extends Platform {
             "spark.io.compression.codec",
             "spark.driver.memory",
             "spark.executor.heartbeatInterval",
-            "spark.network.timeout",
-    };
-
-    private static final String[] OPTIONAL_HADOOP_PROPERTIES = {
-        "fs.s3.awsAccessKeyId",
-        "fs.s3.awsSecretAccessKey"
+            "spark.network.timeout"
+            // "spark.extraListeners"
     };
 
     /**
@@ -116,16 +114,20 @@ public class SparkPlatform extends Platform {
      * @return a {@link SparkContextReference} wrapping the {@link JavaSparkContext}
      */
     public SparkContextReference getSparkContext(Job job) {
-
+        //System.out.println("In Job with "+job.isMontiorWithHackIT());
+        //System.exit(0);
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
         final SparkConf sparkConf;
         final Configuration configuration = job.getConfiguration();
+
         if (this.sparkContextReference != null && !this.sparkContextReference.isDisposed()) {
             final JavaSparkContext sparkContext = this.sparkContextReference.get();
             this.logger.warn(
                     "There is already a SparkContext (master: {}): , which will be reused. " +
                             "Not all settings might be effective.", sparkContext.getConf().get("spark.master"));
             sparkConf = sparkContext.getConf();
+
+
 
         } else {
             sparkConf = new SparkConf(true);
@@ -143,22 +145,17 @@ public class SparkPlatform extends Platform {
         if (job.getName() != null) {
             sparkConf.set("spark.app.name", job.getName());
         }
-
+        // sparkConf.set("spark.extraListeners","org.apache.wayang.monitoring.spark.SparkListener");
         if (this.sparkContextReference == null || this.sparkContextReference.isDisposed()) {
             this.sparkContextReference = new SparkContextReference(job.getCrossPlatformExecutor(), new JavaSparkContext(sparkConf));
         }
         final JavaSparkContext sparkContext = this.sparkContextReference.get();
 
-        org.apache.hadoop.conf.Configuration hadoopconf = sparkContext.hadoopConfiguration();
-        for (String property: OPTIONAL_HADOOP_PROPERTIES){
-            System.out.println(property);
-            configuration.getOptionalStringProperty(property).ifPresent(
-                value -> hadoopconf.set(property, value)
-            );
+        //SparkContext sc= sparkContext.sc();
+        if(job.isMontiorWithHackIT()) {
+            sparkConf.set("spark.extraListeners","org.apache.wayang.spark.monitoring.spark_monitoring.SparkListener");
+            sparkContext.sc().addSparkListener(new SparkListener());
         }
-
-        // Set up the JAR files.
-        //sparkContext.clearJars();
         if (!sparkContext.isLocal()) {
             // Add Wayang JAR files.
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // wayang-spark
