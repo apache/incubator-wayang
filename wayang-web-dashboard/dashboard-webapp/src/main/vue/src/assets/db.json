@@ -29,7 +29,7 @@
       "body": "0.1.0"
     }
   ],
-  "jobs_overview":[
+  "jobs_overview": [
     {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       "name": "WordCount",
@@ -37,9 +37,17 @@
       "submitted_on": 1676398063863,
       "duration": 5487165,
       "end_time": null,
-      "stages": [1,5],
-      "tasks": [2,6],
-      "plugins": ["HackIt"]
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        6
+      ],
+      "plugins": [
+        "HackIt"
+      ]
     },
     {
       "id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
@@ -48,9 +56,17 @@
       "submitted_on": 1676398063863,
       "duration": 5487165,
       "end_time": null,
-      "stages": [2,3],
-      "tasks": [4,7],
-      "plugins": ["HackIt"]
+      "stages": [
+        2,
+        3
+      ],
+      "tasks": [
+        4,
+        7
+      ],
+      "plugins": [
+        "HackIt"
+      ]
     },
     {
       "id": "3fa85f64-5737-4562-b3fc-2c963a66afa6",
@@ -59,8 +75,14 @@
       "submitted_on": 1676398063863,
       "duration": 5487165,
       "end_time": 1676398563863,
-      "stages": [1,5],
-      "tasks": [2,5],
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
       "plugins": []
     },
     {
@@ -70,9 +92,17 @@
       "submitted_on": 1676398063863,
       "duration": 547165,
       "end_time": null,
-      "stages": [1,5],
-      "tasks": [2,5],
-      "plugins": ["Random"]
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
+      "plugins": [
+        "Random"
+      ]
     },
     {
       "id": "3fa85f64-5717-4562-c3fc-2c963f66afa6",
@@ -81,9 +111,18 @@
       "submitted_on": 1676398063863,
       "duration": 24871675,
       "end_time": 1676399063863,
-      "stages": [1,1],
-      "tasks": [1,2],
-      "plugins": ["Plugin1", "Plugin2"]
+      "stages": [
+        1,
+        1
+      ],
+      "tasks": [
+        1,
+        2
+      ],
+      "plugins": [
+        "Plugin1",
+        "Plugin2"
+      ]
     },
     {
       "id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
@@ -92,8 +131,14 @@
       "submitted_on": 1676398063863,
       "duration": 5487165,
       "end_time": null,
-      "stages": [1,5],
-      "tasks": [2,5],
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
       "plugins": []
     },
     {
@@ -103,8 +148,14 @@
       "submitted_on": 1676398063863,
       "duration": 1447165,
       "end_time": null,
-      "stages": [1,5],
-      "tasks": [2,5],
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
       "plugins": []
     },
     {
@@ -114,8 +165,14 @@
       "submitted_on": 1676398063863,
       "duration": 54165,
       "end_time": 1676399563863,
-      "stages": [1,5],
-      "tasks": [2,5],
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
       "plugins": []
     }
   ],
@@ -126,7 +183,7 @@
       "status": "running",
       "submitted_on": 1676398063863,
       "duration": 5487165,
-      "hackit":true,
+      "hackit": true,
       "platform_metrics": {
         "job_id": "job_20220328090000_0003",
         "duration": 157892,
@@ -270,7 +327,7 @@
       "status": "running",
       "submitted_on": 1676398063863,
       "duration": 5487165,
-      "hackit":true,
+      "hackit": true,
       "graph": {
         "nodes": [
           {
@@ -924,6 +981,173 @@
           ]
         }
       }
+    }
+  ],
+  "job_metrics": [
+    {
+      "executorCpuTime": 203125000,
+      "executorDeserializeCpuTime": 218750000,
+      "executorDeserializeTime": 202,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 277,
+      "jvmGCTime": 34,
+      "peakExecutionMemory": 0,
+      "resultSize": 969,
+      "resultSerializationTime": 2,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 46875000,
+      "executorDeserializeCpuTime": 31250000,
+      "executorDeserializeTime": 18,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 89,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 883,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 156250000,
+      "executorDeserializeCpuTime": 62500000,
+      "executorDeserializeTime": 52,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 163,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 1173,
+      "resultSerializationTime": 6,
+      "inputmetrics.readBytes": 4208,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 46875000,
+      "executorDeserializeCpuTime": 31250000,
+      "executorDeserializeTime": 38,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 51,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 1130,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4080,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 15625000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 16,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 39,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 1130,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4208,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 46875000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 10,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 49,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 1130,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4080,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 203125000,
+      "executorDeserializeCpuTime": 46875000,
+      "executorDeserializeTime": 52,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 242,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 8112,
+      "resultSize": 1261,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4208,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 62500000,
+      "executorDeserializeCpuTime": 31250000,
+      "executorDeserializeTime": 18,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 78,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 9056,
+      "resultSize": 1261,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4080,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 406250000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 13,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 423,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 26928,
+      "resultSize": 1476,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 125000000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 14,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 124,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 30020,
+      "resultSize": 1476,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "executorCpuTime": 93750000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 14,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 98,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 9690,
+      "resultSize": 1313,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
     }
   ]
 }

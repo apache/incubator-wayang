@@ -40,34 +40,6 @@
           <th scope="row">Duration:</th>
           <td>{{ formattedDuration(job.duration) }}</td>
         </tr>
-        <!-- add more attributes as needed -->
-        <tr v-if="job.platform_metrics">
-          <th scope="row">
-            <button
-              class="btn btn-sm btn-primary"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#platformMetricsCollapse"
-              aria-expanded="false"
-              aria-controls="platformMetricsCollapse"
-              @click="showDetails = !showDetails"
-            >
-              {{ showDetails ? 'Hide Details' : 'Show Details' }}
-            </button>
-          </th>
-          <td>
-            <div class="collapse" id="platformMetricsCollapse">
-              <table class="table table-striped mt-2">
-                <tbody>
-                  <tr v-for="(value, key) in job.platform_metrics">
-                    <th scope="row">{{ key }}</th>
-                    <td>{{ value }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </td>
-        </tr>
       </tbody>
     </table>
   </div>

@@ -17,7 +17,7 @@
   under the License.
   -->
 <template>
-  <div class="container my-3">
+  <div class="container my-3 py-1">
     <div class="row">
       <div class="col-md-12">
         <div class="card rounded-0">
@@ -28,7 +28,19 @@
         </div>
       </div>
     </div>
-    <div class="row">
+    <div class="row py-3">
+      <div class="col-md-12">
+        <div class="col-md-12">
+          <div class="card rounded-0">
+            <div class="card-header">Job Metrics</div>
+            <div class="card-body">
+              <JobMetrics></JobMetrics>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row py-1">
       <div class="col-md-12">
         <div class="col-md-12">
           <div class="card rounded-0">
@@ -45,7 +57,7 @@
       </div>
     </div>
     <div id="hackit-debugger" v-if="job.hackit">
-      <div class="row mt-3 ">
+      <div class="row mt-3 py-1">
         <div class="col-md-12">
           <div class="card rounded-0">
             <div class="card-header">
@@ -76,6 +88,7 @@ import JobDetails from '@/components/JobDetails.vue'
 import HackitDebugger from '@/components/HackitDebugger.vue'
 import JobPlan from '@/components/JobPlan.vue'
 import HackitControls from '@/components/HackitControls.vue'
+import JobMetrics from '@/components/JobMetrics.vue'
 
 export default {
   name: 'JobDetail',
@@ -83,7 +96,8 @@ export default {
     JobDetails,
     HackitDebugger,
     JobPlan,
-    HackitControls
+    HackitControls,
+    JobMetrics
   },
   data() {
     return {

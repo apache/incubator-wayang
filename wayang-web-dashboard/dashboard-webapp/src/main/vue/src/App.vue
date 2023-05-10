@@ -21,7 +21,7 @@
     <div class="row ">
       <div class="col-12">
         <router-link to="/" class="navbar-brand">
-          <img src="/logo.png" alt="Logo" class="logo" />
+          <img src="logo.png" alt="Logo" class="logo" />
         </router-link>
       </div>
     </div>
