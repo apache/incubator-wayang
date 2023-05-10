@@ -26,8 +26,7 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Disabled;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -46,7 +45,6 @@ public class FlinkReduceByOperatorTest extends FlinkOperatorTestBase{
     // implementation of the implementation in the operator
     // labels:flink,bug
     @Test
-    @Disabled("until validation of implementation of the FlinkReduceByOperator")
     public void testExecution() throws Exception {
         // Prepare test data.
         List<Tuple2<String, Integer>> inputList = Arrays.stream("aaabbccccdeefff".split(""))
@@ -77,7 +75,13 @@ public class FlinkReduceByOperatorTest extends FlinkOperatorTestBase{
         final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        this.evaluate(reduceByOperator, inputs, outputs);
+        try {
+            this.evaluate(reduceByOperator, inputs, outputs);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail();
+        }
 
         // Verify the outcome.
         final Iterable<Tuple2<String, Integer>> result = output.<Tuple2<String, Integer>>provideDataSet().collect();
