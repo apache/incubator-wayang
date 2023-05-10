@@ -109,6 +109,7 @@ public class Job extends OneTimeExecutable {
      */
     private final WayangPlan wayangPlan;
 
+
     /**
      * {@link OptimizationContext} for the {@link #wayangPlan}.
      */
@@ -161,9 +162,12 @@ public class Job extends OneTimeExecutable {
 
     private Monitor monitor;
 
+
+
     /**
      * Name for this instance.
      */
+    private boolean montiorWithHackIT;
     private final String name;
 
     /**
@@ -199,7 +203,8 @@ public class Job extends OneTimeExecutable {
         for (String udfJar : udfJars) {
             this.addUdfJar(udfJar);
         }
-
+        // set HackIT debugger enable or disable
+        this.setMontiorWithHackIT(wayangContext.isWithHackITMonitioring());
         // Prepare re-optimization.
         if (this.configuration.getBooleanProperty("wayang.core.optimizer.reoptimize")) {
             this.cardinalityBreakpoint = new CardinalityBreakpoint(this.configuration);
@@ -612,6 +617,21 @@ public class Job extends OneTimeExecutable {
         return true;
     }
 
+    /**
+     *  getter method
+     * @return boolean either enable or disable HACKIT for WAYANG Job
+     */
+    public boolean isMontiorWithHackIT() {
+        return montiorWithHackIT;
+    }
+
+    /**
+     * setter method
+     * @param montiorWithHackIT boolean
+     */
+    public void setMontiorWithHackIT(boolean montiorWithHackIT) {
+        this.montiorWithHackIT = montiorWithHackIT;
+    }
     /**
      * Enumerate possible execution plans from the given {@link WayangPlan} and determine the (seemingly) best one.
      */

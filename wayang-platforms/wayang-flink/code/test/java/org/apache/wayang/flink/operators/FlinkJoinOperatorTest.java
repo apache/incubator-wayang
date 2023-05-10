@@ -25,14 +25,12 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Disabled;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
 
-//problematic
 /**
  * Test suite for {@link FlinkJoinOperator}.
  */
@@ -44,7 +42,6 @@ public class FlinkJoinOperatorTest extends FlinkOperatorTestBase{
     // implementation of the implementation in the operator
     // labels:flink,bug
     @Test
-    @Disabled("until validation of implementation of the FlinkJoinOperator")
     public void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input0 = this.createDataSetChannelInstance(Arrays.asList(

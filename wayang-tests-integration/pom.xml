@@ -36,7 +36,7 @@
     <properties>
         <java-module-name>org.apache.wayang.test.integration</java-module-name>
         <graphchi.version>0.2.2</graphchi.version>
-        <flink.version>1.7.1</flink.version>
+        <flink.version>1.10.0</flink.version>
         <giraph.version>1.2.0-hadoop2</giraph.version>
     </properties>
 
