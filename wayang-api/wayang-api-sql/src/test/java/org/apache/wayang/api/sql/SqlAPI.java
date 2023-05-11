@@ -19,6 +19,7 @@ package org.apache.wayang.api.sql;
 
 import com.google.common.io.Resources;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.wayang.api.sql.calcite.utils.JsonParser;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
@@ -30,24 +31,26 @@ import java.util.Iterator;
 public class SqlAPI {
 
     public static void exampleCrossPlatform() throws Exception {
-        Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.fs.table.url", "../resources/data1.csv");
-        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/imdb");
-        configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
-        configuration.setProperty("wayang.postgres.jdbc.password", "postgres");
+        Configuration configuration = new JsonParser(new Configuration()).setProperties();
 
-        String calciteModel = Resources.toString(
-            SqlAPI.class.getResource("/model.json"),
-            Charset.defaultCharset());
-        configuration.setProperty("wayang.calcite.model",calciteModel);
+        configuration.setProperty("wayang.fs.table.url", "../resources/supplier.csv");
+        configuration.setProperty("wayang.fs.table.url", "../resources/customer.csv");
+        configuration.setProperty("wayang.fs.table.url", "../resources/data1.csv");
 
         SqlContext sqlContext = new SqlContext(configuration);
 
         Collection<Record> result = sqlContext.executeSql(
-                "select f.name, f.age, f.zip, p.id, p.name, p.height \n"
-                + "from fs.data1 as f \n"
-                    + "join postgres.person as p \n"
-                    + "on f.id = p.id"
+            "select * \n"
+                + "from fs.data1 as d \n"
+                + "join postgres.involved as i \n"
+                + "on d.id = i.personid"
+
+//                "select s_suppkey, s_nationkey, c_nationkey \n"
+//                + "from fs.supplier as s \n"
+//                    + "join fs.customer as c \n"
+//                    + "on s.s_nationkey = c.c_nationkey \n"
+//                    + "join postgres.involved as i \n"
+//                    + "on p.id = i.personid"
         );
 
         printResults(10, result);
@@ -141,12 +144,18 @@ public class SqlAPI {
 
 
     public static void main(String... args) throws Exception {
-        BasicConfigurator.configure();
+//        BasicConfigurator.configure();
 //        new SqlAPI().examplePostgres();
 //        new SqlAPI().exampleFs();
 //        new SqlAPI().exampleWithPostgres();
 //        new SqlAPI().exampleJoinWithPostgres();
+        long startTime = System.nanoTime();
+
         new SqlAPI().exampleCrossPlatform();
+
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime);
+        System.out.println("Execution time: " + duration + " nanoseconds");
     }
 
 
