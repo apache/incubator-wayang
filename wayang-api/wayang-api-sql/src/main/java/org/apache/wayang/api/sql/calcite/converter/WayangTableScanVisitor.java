@@ -30,6 +30,7 @@ import org.apache.wayang.basic.data.Record;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 //TODO: create tablesource with column types
@@ -64,8 +65,15 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
             }
             String url = String.format("file:/%s/%s.csv", modelParser.getFsPath(), wayangRelNode.getTableName());
 
-            return new JavaCSVTableSource(url,
-                    DataSetType.createDefault(Record.class), fieldTypes);
+            String separator = modelParser.getSeparator();
+
+            if (Objects.equals(separator, "")) {
+                return new JavaCSVTableSource(url,
+                        DataSetType.createDefault(Record.class), fieldTypes);
+            } else {
+                return new JavaCSVTableSource(url,
+                        DataSetType.createDefault(Record.class), fieldTypes, separator.charAt(0));
+            }
         } else throw new RuntimeException("Source not supported");
     }
 }

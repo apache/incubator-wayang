@@ -28,10 +28,11 @@ public class ModelParser {
     }
 
     public Configuration setProperties() {
-        String calciteModel = json.toString();
+        JSONObject calciteObj = (JSONObject) json.get("calcite");
+        String calciteModel = calciteObj.toString();
         configuration.setProperty("wayang.calcite.model", calciteModel);
 
-        JSONArray schemas = (JSONArray) json.get("schemas");
+        JSONArray schemas = (JSONArray) calciteObj.get("schemas");
 
         Iterator itr = schemas.iterator();
 
@@ -48,7 +49,8 @@ public class ModelParser {
     }
 
     public String getFsPath() {
-        JSONArray schemas = (JSONArray) json.get("schemas");
+        JSONObject calciteObj = (JSONObject) json.get("calcite");
+        JSONArray schemas = (JSONArray) calciteObj.get("schemas");
 
         Iterator itr = schemas.iterator();
 
@@ -60,5 +62,9 @@ public class ModelParser {
             }
         }
         return null;
+    }
+
+    public String getSeparator() {
+        return (String) json.get("separator");
     }
 }

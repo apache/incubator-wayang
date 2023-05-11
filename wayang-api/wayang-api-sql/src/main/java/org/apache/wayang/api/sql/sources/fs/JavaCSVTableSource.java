@@ -52,6 +52,7 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
     private final String sourcePath;
 
     private final List<RelDataType> fieldTypes;
+    private char separator = ';';   // Default separator
 
     // TODO: incorporate fields later for projectable table scans
     // private final ImmutableIntList fields;
@@ -60,6 +61,20 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
         super(type);
         this.sourcePath = sourcePath;
         this.fieldTypes = fieldTypes;
+    }
+
+    /**
+     * Constructor with separator
+     * @param sourcePath
+     * @param type
+     * @param fieldTypes
+     * @param separator
+     */
+    public JavaCSVTableSource(String sourcePath, DataSetType type, List<RelDataType> fieldTypes, char separator) {
+        super(type);
+        this.sourcePath = sourcePath;
+        this.fieldTypes = fieldTypes;
+        this.separator = separator;
     }
 
     /*public JavaCSVTableSource(DataSetType<T> type) {
@@ -98,7 +113,7 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
         Class typeClass = this.getType().getDataUnitType().getTypeClass();
         assert typeClass == Record.class;
         try {
-            String[] tokens = CsvRowConverter.parseLine(s);
+            String[] tokens = CsvRowConverter.parseLine(s, this.separator);
 
             if (tokens.length != fieldTypes.size()) {
                 throw new IllegalStateException(String.format("Error while parsing CSV file %s at line %s", sourcePath, s));
