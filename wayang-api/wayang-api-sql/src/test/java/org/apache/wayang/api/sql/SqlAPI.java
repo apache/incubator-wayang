@@ -18,8 +18,7 @@
 package org.apache.wayang.api.sql;
 
 import com.google.common.io.Resources;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.wayang.api.sql.calcite.utils.JsonParser;
+import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
@@ -31,7 +30,7 @@ import java.util.Iterator;
 public class SqlAPI {
 
     public static void exampleCrossPlatform() throws Exception {
-        Configuration configuration = new JsonParser(new Configuration()).setProperties();
+        Configuration configuration = new ModelParser(new Configuration()).setProperties();
 
         configuration.setProperty("wayang.fs.table.url", "C:/tmp/data/data1.csv");
 

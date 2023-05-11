@@ -18,7 +18,8 @@
       "type": "custom",
       "factory": "org.apache.calcite.adapter.file.FileSchemaFactory",
       "operand": {
-        "directory": "C:/tmp/data"
+        "directory": "C:/tmp/data",
+        "separator": "|"
       }
     }
   ]

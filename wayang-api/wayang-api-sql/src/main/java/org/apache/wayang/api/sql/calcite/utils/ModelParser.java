@@ -7,21 +7,20 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
 
-public class JsonParser {
+public class ModelParser {
     private Configuration configuration;
     private JSONObject json;
 
-    public JsonParser() throws IOException, ParseException {
+    public ModelParser() throws IOException, ParseException {
         Object obj = new JSONParser().parse(new FileReader("wayang-api/wayang-api-sql/src/main/resources/model.json"));
         this.json = (JSONObject) obj;
     }
 
-    public JsonParser(Configuration configuration) throws IOException, ParseException {
+    public ModelParser(Configuration configuration) throws IOException, ParseException {
         this.configuration = configuration;
         Object obj = new JSONParser().parse(new FileReader("wayang-api/wayang-api-sql/src/main/resources/model.json"));
         this.json = (JSONObject) obj;
