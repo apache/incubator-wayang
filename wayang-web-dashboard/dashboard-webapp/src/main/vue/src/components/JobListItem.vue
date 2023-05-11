@@ -32,7 +32,7 @@
       <span v-for="plugin in job.plugins" :key="plugin" class="badge bg-info rounded-0 border border-2">{{ plugin }}</span>
     </td>
     <td>
-      <router-link class="btn btn-outline-secondary rounded-0" :to="'/jobs/' + job.id">Details</router-link>
+      <router-link class="btn btn-outline-secondary btn-sm rounded-0" :to="'/jobs/' + job.id">Details</router-link>
     </td>
   </tr>
 </template>
@@ -51,7 +51,7 @@ export default {
   methods:{
     formattedDate(timestamp) {
       const date = new Date(timestamp);
-      return date.toISOString();
+      return date.toISOString().split('.')[0];
     },
   },
   computed: {

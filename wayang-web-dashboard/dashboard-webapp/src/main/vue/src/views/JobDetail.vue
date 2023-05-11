@@ -34,7 +34,7 @@
           <div class="card rounded-0">
             <div class="card-header">Job Metrics</div>
             <div class="card-body">
-              <JobMetrics></JobMetrics>
+              <JobMetricsContainer></JobMetricsContainer>
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@ import JobDetails from '@/components/JobDetails.vue'
 import HackitDebugger from '@/components/HackitDebugger.vue'
 import JobPlan from '@/components/JobPlan.vue'
 import HackitControls from '@/components/HackitControls.vue'
-import JobMetrics from '@/components/JobMetrics.vue'
+import JobMetricsContainer from '@/components/JobMetricsContainer.vue'
 
 export default {
   name: 'JobDetail',
@@ -97,7 +97,7 @@ export default {
     HackitDebugger,
     JobPlan,
     HackitControls,
-    JobMetrics
+    JobMetricsContainer
   },
   data() {
     return {

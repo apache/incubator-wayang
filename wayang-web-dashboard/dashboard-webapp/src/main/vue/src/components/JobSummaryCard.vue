@@ -22,7 +22,7 @@
         <div class="card-body">
             <h6 class="card-title">Jobs: {{ card_data.jobCount }}</h6>
             <p class="card-text">Latest Submitted Job:</p>
-            <router-link :to="'/jobs/' + card_data.latestJob" class="btn btn-outline-secondary rounded-0">
+            <router-link :to="'/jobs/' + card_data.latestJob" class="btn btn-outline-secondary btn-sm rounded-0">
                 <span class="d-inline-block text-truncate" style="max-width: 100px;">{{card_data.latestJobName}}</span>
             </router-link>
         </div>
