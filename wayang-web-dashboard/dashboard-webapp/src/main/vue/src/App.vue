@@ -50,7 +50,6 @@ export default{
   name: 'App',
   computed:{
     activeRoute(){
-      console.log(this.$route)
      return this.$route.name
     }
   }
