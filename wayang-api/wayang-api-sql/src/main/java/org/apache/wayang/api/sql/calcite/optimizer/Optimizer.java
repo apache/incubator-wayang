@@ -35,6 +35,7 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.util.ChainedSqlOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -175,7 +176,7 @@ public class Optimizer {
     }
 
 
-    public SqlNode parseSql(String sql) throws Exception {
+    public SqlNode parseSql(String sql) throws SqlParseException {
         SqlParser.Config parserConfig = SqlParser.config()
                 .withCaseSensitive(config.caseSensitive())
                 .withQuotedCasing(config.quotedCasing())

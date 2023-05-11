@@ -10,7 +10,7 @@
         "jdbcDriver": "org.postgresql.Driver",
         "jdbcUrl": "jdbc:postgresql://localhost:5432/imdb",
         "jdbcUser": "postgres",
-        "jdbcPassword": "Ufj85zyv"
+        "jdbcPassword": "postgres"
       }
     },
     {
@@ -18,7 +18,7 @@
       "type": "custom",
       "factory": "org.apache.calcite.adapter.file.FileSchemaFactory",
       "operand": {
-        "directory": "C:/incubator-Wayang-CrossPlatform/incubator-wayang-SQL/wayang-api/wayang-api-sql/src/test/resources"
+        "directory": "C:/tmp/data"
       }
     }
   ]

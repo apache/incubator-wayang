@@ -33,28 +33,20 @@ public class SqlAPI {
     public static void exampleCrossPlatform() throws Exception {
         Configuration configuration = new JsonParser(new Configuration()).setProperties();
 
-        configuration.setProperty("wayang.fs.table.url", "../resources/supplier.csv");
-        configuration.setProperty("wayang.fs.table.url", "../resources/customer.csv");
-        configuration.setProperty("wayang.fs.table.url", "../resources/data1.csv");
+        configuration.setProperty("wayang.fs.table.url", "C:/tmp/data/data1.csv");
 
         SqlContext sqlContext = new SqlContext(configuration);
 
         Collection<Record> result = sqlContext.executeSql(
-            "select * \n"
-                + "from fs.data1 as d \n"
-                + "join postgres.involved as i \n"
-                + "on d.id = i.personid"
-
-//                "select s_suppkey, s_nationkey, c_nationkey \n"
-//                + "from fs.supplier as s \n"
-//                    + "join fs.customer as c \n"
-//                    + "on s.s_nationkey = c.c_nationkey \n"
-//                    + "join postgres.involved as i \n"
-//                    + "on p.id = i.personid"
+                "select * \n"
+                        + "from fs.data1 as d \n"
+                        + "join postgres.involved as i \n"
+                        + "on d.id = i.personid"
         );
 
         printResults(10, result);
     }
+
     public static void exampleFs() throws Exception {
         Configuration configuration = new Configuration();
         configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
@@ -83,17 +75,17 @@ public class SqlAPI {
         configuration.setProperty("wayang.postgres.jdbc.password", "postgres");
 
         String calciteModel = Resources.toString(
-            SqlAPI.class.getResource("/model.json"),
-            Charset.defaultCharset());
-        configuration.setProperty("wayang.calcite.model",calciteModel);
+                SqlAPI.class.getResource("/model.json"),
+                Charset.defaultCharset());
+        configuration.setProperty("wayang.calcite.model", calciteModel);
 
         SqlContext sqlContext = new SqlContext(configuration);
 
         Collection<Record> result = sqlContext.executeSql(
                 "select id, title, genre \n"
-                + "from postgres.movie m \n"
-                + "join postgres.movie_genre g \n"
-                + "on m.id = g.movieid"
+                        + "from postgres.movie m \n"
+                        + "join postgres.movie_genre g \n"
+                        + "on m.id = g.movieid"
         );
 
         printResults(10, result);
@@ -108,7 +100,7 @@ public class SqlAPI {
         String calciteModel = Resources.toString(
                 SqlAPI.class.getResource("/model.json"),
                 Charset.defaultCharset());
-        configuration.setProperty("wayang.calcite.model",calciteModel);
+        configuration.setProperty("wayang.calcite.model", calciteModel);
 
         SqlContext sqlContext = new SqlContext(configuration);
 
@@ -130,7 +122,7 @@ public class SqlAPI {
         String calciteModel = Resources.toString(
                 SqlAPI.class.getResource("/model.json"),
                 Charset.defaultCharset());
-        configuration.setProperty("wayang.calcite.model",calciteModel);
+        configuration.setProperty("wayang.calcite.model", calciteModel);
 
         SqlContext sqlContext = new SqlContext(configuration);
 

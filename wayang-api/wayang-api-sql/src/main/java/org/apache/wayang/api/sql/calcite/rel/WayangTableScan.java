@@ -27,6 +27,7 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Table;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
+import org.apache.wayang.api.sql.calcite.utils.JsonParser;
 
 import java.util.List;
 
@@ -93,9 +94,13 @@ public class WayangTableScan extends TableScan implements WayangRel {
         return table.getRowType().getFieldNames();
     }
 
-    // TODO: hard-coded for now - retrieve URL from CsvTranslatableTable under source
     public String getSourcePath() {
-//        System.out.println(table.unwrap(CsvTranslatableTable.class).source());
-        return String.format("file:/C:/incubator-Wayang-CrossPlatform/incubator-wayang-SQL/wayang-api/wayang-api-sql/src/test/resources/%s.csv", this.getTableName());
+        String dir;
+        try {
+            dir = new JsonParser().getFsPath();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return String.format("file:/%s/%s.csv", dir, this.getTableName());
     }
 }
