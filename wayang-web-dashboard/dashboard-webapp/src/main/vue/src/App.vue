@@ -21,18 +21,21 @@
     <div class="row ">
       <div class="col-12">
         <router-link to="/" class="navbar-brand">
-          <img src="logo.png" alt="Logo" class="logo" />
+          <img src="/logo.png" alt="Logo" class="logo" />
         </router-link>
       </div>
     </div>
     <div class="row p-3">
       <div class="col-2">
         <ul class="navbar-nav ms-auto p-3">
-          <li class="nav-item btn btn-outline-secondary rounded-0 border-0">
+          <li class="nav-item btn rounded-0 border-0" :class="activeRoute === 'Overview' ? 'btn-secondary' : 'btn-outline-secondary'">
             <router-link to="/overview" class="nav-link">Wayang Overview</router-link>
           </li>
-          <li class="nav-item btn btn-outline-secondary rounded-0 border-0">
+          <li class="nav-item btn rounded-0 border-0" :class="activeRoute === 'JobList' ? 'btn-secondary' : 'btn-outline-secondary'">
             <router-link to="/jobs" class="nav-link">Jobs</router-link>
+          </li>
+          <li class="nav-item btn btn-secondary rounded-0 border-0" v-if="activeRoute === 'JobDetail'">
+            <span>{{$route.params.id}}</span>
           </li>
         </ul>
       </div>
@@ -42,8 +45,17 @@
     </div>
   </div>
 </template>
-    
-  
+<script>
+export default{
+  name: 'App',
+  computed:{
+    activeRoute(){
+      console.log(this.$route)
+     return this.$route.name
+    }
+  }
+}
+</script>
 <style scoped>
 .logo {
   max-height: 50px;

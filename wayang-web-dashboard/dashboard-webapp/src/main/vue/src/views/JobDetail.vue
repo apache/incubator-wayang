@@ -105,7 +105,8 @@ export default {
       jobId: this.$route.params.id,
       task_id: null,
       isHackitEnabled: false,
-      hackitAction: null
+      hackitAction: null,
+      metrics: {},
     }
   },
   mounted() {

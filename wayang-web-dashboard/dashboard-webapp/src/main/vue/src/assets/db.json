@@ -985,6 +985,7 @@
   ],
   "job_metrics": [
     {
+      "timestamp":1680179055040,
       "executorCpuTime": 203125000,
       "executorDeserializeCpuTime": 218750000,
       "executorDeserializeTime": 202,
@@ -1000,6 +1001,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1680179066040,
       "executorCpuTime": 46875000,
       "executorDeserializeCpuTime": 31250000,
       "executorDeserializeTime": 18,
@@ -1015,6 +1017,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1680179155040,
       "executorCpuTime": 156250000,
       "executorDeserializeCpuTime": 62500000,
       "executorDeserializeTime": 52,
@@ -1030,6 +1033,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1680189055040,
       "executorCpuTime": 46875000,
       "executorDeserializeCpuTime": 31250000,
       "executorDeserializeTime": 38,
@@ -1045,6 +1049,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1680279055040,
       "executorCpuTime": 15625000,
       "executorDeserializeCpuTime": 15625000,
       "executorDeserializeTime": 16,
@@ -1060,6 +1065,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1680379055040,
       "executorCpuTime": 46875000,
       "executorDeserializeCpuTime": 15625000,
       "executorDeserializeTime": 10,
@@ -1075,6 +1081,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1681179055040,
       "executorCpuTime": 203125000,
       "executorDeserializeCpuTime": 46875000,
       "executorDeserializeTime": 52,
@@ -1090,6 +1097,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1683179055040,
       "executorCpuTime": 62500000,
       "executorDeserializeCpuTime": 31250000,
       "executorDeserializeTime": 18,
@@ -1105,6 +1113,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1683279055040,
       "executorCpuTime": 406250000,
       "executorDeserializeCpuTime": 15625000,
       "executorDeserializeTime": 13,
@@ -1120,6 +1129,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1683379055040,
       "executorCpuTime": 125000000,
       "executorDeserializeCpuTime": 15625000,
       "executorDeserializeTime": 14,
@@ -1135,6 +1145,7 @@
       "outputMetrics.writeRecord": 0
     },
     {
+      "timestamp":1680349055040,
       "executorCpuTime": 93750000,
       "executorDeserializeCpuTime": 15625000,
       "executorDeserializeTime": 14,
