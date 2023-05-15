@@ -18,7 +18,7 @@
 package org.apache.wayang.api.sql;
 
 import com.google.common.io.Resources;
-import org.apache.log4j.BasicConfigurator;
+import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
@@ -30,28 +30,22 @@ import java.util.Iterator;
 public class SqlAPI {
 
     public static void exampleCrossPlatform() throws Exception {
-        Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.fs.table.url", "../resources/data1.csv");
-        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/imdb");
-        configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
-        configuration.setProperty("wayang.postgres.jdbc.password", "postgres");
+        Configuration configuration = new ModelParser(new Configuration()).setProperties();
 
-        String calciteModel = Resources.toString(
-            SqlAPI.class.getResource("/model.json"),
-            Charset.defaultCharset());
-        configuration.setProperty("wayang.calcite.model",calciteModel);
+        configuration.setProperty("wayang.fs.table.url", "C:/tmp/data/data1.csv");
 
         SqlContext sqlContext = new SqlContext(configuration);
 
         Collection<Record> result = sqlContext.executeSql(
-                "select f.name, f.age, f.zip, p.id, p.name, p.height \n"
-                + "from fs.data1 as f \n"
-                    + "join postgres.person as p \n"
-                    + "on f.id = p.id"
+                "select * \n"
+                        + "from fs.data1 as d \n"
+                        + "join postgres.involved as i \n"
+                        + "on d.id = i.personid"
         );
 
         printResults(10, result);
     }
+
     public static void exampleFs() throws Exception {
         Configuration configuration = new Configuration();
         configuration.setProperty("wayang.fs.table.url", "/data/Projects/databloom/test-data/orders.csv");
@@ -80,17 +74,17 @@ public class SqlAPI {
         configuration.setProperty("wayang.postgres.jdbc.password", "postgres");
 
         String calciteModel = Resources.toString(
-            SqlAPI.class.getResource("/model.json"),
-            Charset.defaultCharset());
-        configuration.setProperty("wayang.calcite.model",calciteModel);
+                SqlAPI.class.getResource("/model.json"),
+                Charset.defaultCharset());
+        configuration.setProperty("wayang.calcite.model", calciteModel);
 
         SqlContext sqlContext = new SqlContext(configuration);
 
         Collection<Record> result = sqlContext.executeSql(
                 "select id, title, genre \n"
-                + "from postgres.movie m \n"
-                + "join postgres.movie_genre g \n"
-                + "on m.id = g.movieid"
+                        + "from postgres.movie m \n"
+                        + "join postgres.movie_genre g \n"
+                        + "on m.id = g.movieid"
         );
 
         printResults(10, result);
@@ -105,7 +99,7 @@ public class SqlAPI {
         String calciteModel = Resources.toString(
                 SqlAPI.class.getResource("/model.json"),
                 Charset.defaultCharset());
-        configuration.setProperty("wayang.calcite.model",calciteModel);
+        configuration.setProperty("wayang.calcite.model", calciteModel);
 
         SqlContext sqlContext = new SqlContext(configuration);
 
@@ -127,7 +121,7 @@ public class SqlAPI {
         String calciteModel = Resources.toString(
                 SqlAPI.class.getResource("/model.json"),
                 Charset.defaultCharset());
-        configuration.setProperty("wayang.calcite.model",calciteModel);
+        configuration.setProperty("wayang.calcite.model", calciteModel);
 
         SqlContext sqlContext = new SqlContext(configuration);
 
@@ -141,12 +135,18 @@ public class SqlAPI {
 
 
     public static void main(String... args) throws Exception {
-        BasicConfigurator.configure();
+//        BasicConfigurator.configure();
 //        new SqlAPI().examplePostgres();
 //        new SqlAPI().exampleFs();
 //        new SqlAPI().exampleWithPostgres();
 //        new SqlAPI().exampleJoinWithPostgres();
+        long startTime = System.nanoTime();
+
         new SqlAPI().exampleCrossPlatform();
+
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime);
+        System.out.println("Execution time: " + duration + " nanoseconds");
     }
 
 

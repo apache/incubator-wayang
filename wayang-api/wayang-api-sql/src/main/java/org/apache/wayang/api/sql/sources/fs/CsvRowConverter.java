@@ -164,4 +164,16 @@ public class CsvRowConverter {
     public static String[] parseLine(String s) throws IOException {
         return parser.parseLine(s);
     }
+
+    /**
+     * Parse line with a separator
+     * @param s
+     * @param separator
+     * @return
+     * @throws IOException
+     */
+    public static String[] parseLine(String s, char separator) throws IOException {
+        CSVParser csvParser = new CSVParser(separator);
+        return csvParser.parseLine(s);
+    }
 }

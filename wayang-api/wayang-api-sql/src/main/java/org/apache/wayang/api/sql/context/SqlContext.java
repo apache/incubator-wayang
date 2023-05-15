@@ -22,6 +22,7 @@ import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
@@ -66,7 +67,7 @@ public class SqlContext {
         calciteSchema = SchemaUtils.getSchema(configuration);
     }
 
-    public Collection<Record> executeSql(String sql) throws Exception {
+    public Collection<Record> executeSql(String sql) throws SqlParseException {
 
         Properties configProperties = Optimizer.ConfigProperties.getDefaults();
         RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
