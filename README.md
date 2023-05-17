@@ -32,10 +32,11 @@ Apache Wayang (incubating) can be used via the following APIs:
 
 ## Quick Guide
 
-For a quick guide on how to run WordCount see [here](tutorial.md).
+For a guide on how to quickly run WordCount see [here](tutorial.md).
 
 ## Installing Wayang
 
+You first have to build the binaries as shown [here](tutorial.md).
 Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
@@ -69,7 +70,7 @@ Since Apache Wayang (incubating) is not an execution engine itself but rather ma
 To execute your first application with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
 
 ```shell
-wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
+bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
 ```
 
 ## Getting Started
