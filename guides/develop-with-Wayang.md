@@ -69,7 +69,7 @@ This tutorial shows users how to import Wayang in their Java project using the m
             <version>1.7.13</version>
         </dependency>
 ```
-A sample pom file can be found [here](pom-example.xml)
+A sample pom file can be found [here](pom-example.xml).
 
 # Test WordCount
 ## Create a Java class that contains the main method that runs the Wordcount
@@ -117,6 +117,6 @@ public static void main(String[] args) {
                 .collect();
 
         System.out.println(wordcounts);
-    }
+}
 ```
-
+A sample Java class file can be found [here](WordCount.java).
