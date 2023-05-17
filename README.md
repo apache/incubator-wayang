@@ -33,11 +33,11 @@ Apache Wayang (incubating) can be used via the following APIs:
 
 ## Quick Guide for Running Wayang
 
-For a quick guide on how to run WordCount see [here](tutorial.md).
+For a quick guide on how to run WordCount see [here](guides/tutorial.md).
 
 ## Quick Guide for Developing with Wayang
 
-For a quick guide on how to use Wayang in your Java/Scala project see [here](develop-with-Wayang.md).
+For a quick guide on how to use Wayang in your Java/Scala project see [here](guides/develop-with-Wayang.md).
 
 ## Installing Wayang
 
