@@ -1,0 +1,1164 @@
+{
+  "overview": [
+    {
+      "title": "Wayang Version",
+      "body": "0.1.1"
+    },
+    {
+      "title": "Physical Nodes",
+      "body": "5"
+    },
+    {
+      "title": "Platforms",
+      "body": "Spark, Flink"
+    },
+    {
+      "title": "Plugins",
+      "body": "HackIt"
+    },
+    {
+      "title": "Up Since",
+      "body": "2/11/2023, 7:07:43 PM"
+    },
+    {
+      "title": "Status",
+      "body": "Running"
+    },
+    {
+      "title": "Wayang Dashboard Version",
+      "body": "0.1.0"
+    }
+  ],
+  "jobs_overview": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "name": "WordCount",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 5487165,
+      "end_time": null,
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        6
+      ],
+      "plugins": [
+        "HackIt"
+      ]
+    },
+    {
+      "id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "name": "NYCTaxi",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 5487165,
+      "end_time": null,
+      "stages": [
+        2,
+        3
+      ],
+      "tasks": [
+        4,
+        7
+      ],
+      "plugins": [
+        "HackIt"
+      ]
+    },
+    {
+      "id": "3fa85f64-5737-4562-b3fc-2c963a66afa6",
+      "name": "CellDataJob",
+      "status": "finished",
+      "submitted_on": 1676398063863,
+      "duration": 5487165,
+      "end_time": 1676398563863,
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
+      "plugins": []
+    },
+    {
+      "id": "3fa85f84-5737-4562-b3fc-2c963a66afa6",
+      "name": "WordCountJob",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 547165,
+      "end_time": null,
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
+      "plugins": [
+        "Random"
+      ]
+    },
+    {
+      "id": "3fa85f64-5717-4562-c3fc-2c963f66afa6",
+      "name": "LogsProcessingJob",
+      "status": "canceled",
+      "submitted_on": 1676398063863,
+      "duration": 24871675,
+      "end_time": 1676399063863,
+      "stages": [
+        1,
+        1
+      ],
+      "tasks": [
+        1,
+        2
+      ],
+      "plugins": [
+        "Plugin1",
+        "Plugin2"
+      ]
+    },
+    {
+      "id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "name": "ClicksWeb",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 5487165,
+      "end_time": null,
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
+      "plugins": []
+    },
+    {
+      "id": "3fa85a84-5737-4562-b3fc-2c963a66afa6",
+      "name": "IoTAggregationJob",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 1447165,
+      "end_time": null,
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
+      "plugins": []
+    },
+    {
+      "id": "3aa85f64-5737-4562-b3fc-2c963a66afa6",
+      "name": "ShakespeareWordCount",
+      "status": "failed",
+      "submitted_on": 1676398063863,
+      "duration": 54165,
+      "end_time": 1676399563863,
+      "stages": [
+        1,
+        5
+      ],
+      "tasks": [
+        2,
+        5
+      ],
+      "plugins": []
+    }
+  ],
+  "jobs": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "name": "WordCount",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 5487165,
+      "hackit": true,
+      "platform_metrics": {
+        "job_id": "job_20220328090000_0003",
+        "duration": 157892,
+        "num_stages": 4,
+        "stage_duration": [
+          54821,
+          43512,
+          36789,
+          22770
+        ],
+        "num_tasks": 20,
+        "task_duration": [
+          4096,
+          5120,
+          6144,
+          7168,
+          8192,
+          9216,
+          10240,
+          11264,
+          12288,
+          13312,
+          14336,
+          15360,
+          16384,
+          17408,
+          18432,
+          19456,
+          20480,
+          21504,
+          22528,
+          23552
+        ],
+        "shuffle_bytes_written": 234567890,
+        "shuffle_bytes_read": 876543210,
+        "shuffle_write_time": 23456,
+        "shuffle_read_time": 65432,
+        "num_active_executors": 7,
+        "num_idle_executors": 1,
+        "memory_used": 4096,
+        "cpu_time": 23456,
+        "input_bytes_read": 234567890,
+        "output_bytes_written": 876543210,
+        "input_records_read": 2345,
+        "output_records_written": 6789,
+        "gc_time": 2345
+      },
+      "graph": {
+        "nodes": [
+          {
+            "data": {
+              "id": "source",
+              "label": "source",
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa7"
+            }
+          },
+          {
+            "data": {
+              "id": "transformation1",
+              "label": "flatMap",
+              "task_id": "3fa86f64-5717-4562-b3fc-2c963f66afa8"
+            }
+          },
+          {
+            "data": {
+              "id": "transformation2",
+              "label": "map",
+              "task_id": "3fa87f64-5717-4562-b3fc-2c963f66afa8"
+            }
+          },
+          {
+            "data": {
+              "id": "transformation3",
+              "label": "reduceByKey",
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8"
+            }
+          },
+          {
+            "data": {
+              "id": "sink",
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+              "label": "sink"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "data": {
+              "id": "edge1",
+              "source": "source",
+              "target": "transformation1"
+            }
+          },
+          {
+            "data": {
+              "id": "edge2",
+              "source": "transformation1",
+              "target": "transformation2"
+            }
+          },
+          {
+            "data": {
+              "id": "edge3",
+              "source": "transformation2",
+              "target": "transformation3"
+            }
+          },
+          {
+            "data": {
+              "id": "edge4",
+              "source": "transformation3",
+              "target": "sink"
+            }
+          }
+        ]
+      },
+      "stages": [
+        {
+          "stage_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "stage_name": "Stage 1",
+          "tasks": [
+            {
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+              "task_name": "Source"
+            },
+            {
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+              "task_name": "Transformation"
+            },
+            {
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+              "task_name": "Sink"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "name": "NYCTaxi",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 5487165,
+      "hackit": true,
+      "graph": {
+        "nodes": [
+          {
+            "data": {
+              "id": "source",
+              "label": "Source",
+              "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afaa"
+            }
+          },
+          {
+            "data": {
+              "id": "transformation1",
+              "label": "Transformation 1",
+              "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afab"
+            }
+          },
+          {
+            "data": {
+              "id": "transformation2",
+              "label": "Transformation 2",
+              "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afac"
+            }
+          },
+          {
+            "data": {
+              "id": "transformation3",
+              "label": "Transformation 3",
+              "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afad"
+            }
+          },
+          {
+            "data": {
+              "id": "sink",
+              "label": "Sink",
+              "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afae"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "data": {
+              "id": "edge1",
+              "source": "source",
+              "target": "transformation1"
+            }
+          },
+          {
+            "data": {
+              "id": "edge2",
+              "source": "transformation1",
+              "target": "transformation2"
+            }
+          },
+          {
+            "data": {
+              "id": "edge3",
+              "source": "transformation1",
+              "target": "transformation3"
+            }
+          },
+          {
+            "data": {
+              "id": "edge4",
+              "source": "transformation2",
+              "target": "sink"
+            }
+          },
+          {
+            "data": {
+              "id": "edge5",
+              "source": "transformation3",
+              "target": "sink"
+            }
+          }
+        ]
+      },
+      "platform_metrics": {
+        "job_id": "job_20220327010000_0001",
+        "duration": 123456,
+        "num_stages": 2,
+        "stage_duration": [
+          65321,
+          58135
+        ],
+        "num_tasks": 10,
+        "task_duration": [
+          1024,
+          2048,
+          3072,
+          4096,
+          5120,
+          6144,
+          7168,
+          8192,
+          9216,
+          10240
+        ],
+        "shuffle_bytes_written": 123456789,
+        "shuffle_bytes_read": 987654321,
+        "shuffle_write_time": 12345,
+        "shuffle_read_time": 54321,
+        "num_active_executors": 5,
+        "num_idle_executors": 2,
+        "memory_used": 2048,
+        "cpu_time": 12345,
+        "input_bytes_read": 123456789,
+        "output_bytes_written": 987654321,
+        "input_records_read": 1234,
+        "output_records_written": 5678,
+        "gc_time": 1234
+      }
+    },
+    {
+      "id": "3fa85f64-5737-4562-b3fc-2c963a66afa6",
+      "name": "CellDataJob",
+      "status": "finished",
+      "submitted_on": 1676398063863,
+      "duration": 5487165
+    },
+    {
+      "id": "3fa85f84-5737-4562-b3fc-2c963a66afa6",
+      "name": "WordCountJob",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 5487165
+    },
+    {
+      "id": "3fa85f64-5717-4562-c3fc-2c963f66afa6",
+      "name": "LogsProcessingJob",
+      "status": "canceled",
+      "submitted_on": 1676398063863,
+      "duration": 5487165
+    },
+    {
+      "id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "name": "ClicksWeb",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 5487165
+    },
+    {
+      "id": "3aa85f64-5737-4562-b3fc-2c963a66afa6",
+      "name": "ShakespeareWordCount",
+      "status": "failed",
+      "submitted_on": 1676398063863,
+      "duration": 5487165,
+      "graph": {
+        "nodes": [
+          {
+            "data": {
+              "id": "source",
+              "label": "Source",
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa7"
+            }
+          },
+          {
+            "data": {
+              "id": "tokenize",
+              "label": "Tokenize",
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afab"
+            }
+          },
+          {
+            "data": {
+              "id": "stopwords",
+              "label": "Stopwords",
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afaa"
+            }
+          },
+          {
+            "data": {
+              "id": "count",
+              "label": "Count",
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f76afa8"
+            }
+          },
+          {
+            "data": {
+              "id": "sink",
+              "label": "Sink",
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afad"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "data": {
+              "id": "edge1",
+              "source": "source",
+              "target": "tokenize"
+            }
+          },
+          {
+            "data": {
+              "id": "edge2",
+              "source": "tokenize",
+              "target": "stopwords"
+            }
+          },
+          {
+            "data": {
+              "id": "edge3",
+              "source": "stopwords",
+              "target": "count"
+            }
+          },
+          {
+            "data": {
+              "id": "edge4",
+              "source": "count",
+              "target": "sink"
+            }
+          }
+        ]
+      },
+      "platform_metrics": {
+        "job_id": "job_20220327020000_0001",
+        "duration": 234567,
+        "num_stages": 3,
+        "stage_duration": [
+          100000,
+          60000,
+          74567
+        ],
+        "num_tasks": 15,
+        "task_duration": [
+          2048,
+          3072,
+          4096,
+          5120,
+          6144,
+          7168,
+          8192,
+          9216,
+          10240,
+          11264,
+          12288,
+          13312,
+          14336,
+          15360,
+          16384
+        ],
+        "shuffle_bytes_written": 234567890,
+        "shuffle_bytes_read": 876543210,
+        "shuffle_write_time": 23456,
+        "shuffle_read_time": 65432,
+        "num_active_executors": 7,
+        "num_idle_executors": 1,
+        "memory_used": 4096,
+        "cpu_time": 23456,
+        "input_bytes_read": 234567890,
+        "output_bytes_written": 876543210,
+        "input_records_read": 2345,
+        "output_records_written": 6789,
+        "gc_time": 2345
+      },
+      "stages": [
+        {
+          "stage_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "stage_name": "Stage 1",
+          "tasks": [
+            {
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+              "task_name": "Task 1"
+            },
+            {
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+              "task_name": "Task 2"
+            }
+          ]
+        },
+        {
+          "stage_id": "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+          "stage_name": "Stage 2",
+          "tasks": [
+            {
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afaa",
+              "task_name": "Task 3"
+            },
+            {
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afab",
+              "task_name": "Task 4"
+            }
+          ]
+        },
+        {
+          "stage_id": "3fa85f64-5717-4562-b3fc-2c963f66afac",
+          "stage_name": "Stage 3",
+          "tasks": [
+            {
+              "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afad",
+              "task_name": "Task 5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3fa85a84-5737-4562-b3fc-2c963a66afa6",
+      "name": "IoTAggregationJob",
+      "status": "running",
+      "submitted_on": 1676398063863,
+      "duration": 5487165
+    }
+  ],
+  "plugins": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "name": "HackIt",
+      "status": "active",
+      "version": 0.1
+    },
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "name": "HackIt2",
+      "status": "active",
+      "version": 0.1
+    }
+  ],
+  "tuples": [
+    {
+      "job_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "subject_id": 1,
+          "activity_label": "Walking",
+          "timestamp": "2016-05-30 14:13:16",
+          "acceleration_x": 0.27324998,
+          "acceleration_y": -0.031390495,
+          "acceleration_z": 0.0066611624,
+          "gyroscope_x": 0.03807301,
+          "gyroscope_y": 0.037263952,
+          "gyroscope_z": -0.0050823064
+        },
+        "metadata": {
+          "timestamp": 1680179055000,
+          "tuple_id": 1,
+          "tags": [
+            "MONITOR"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "subject_id": 2,
+          "activity_label": "Walking",
+          "timestamp": "2016-06-02 13:14:14",
+          "acceleration_x": 0.2847828,
+          "acceleration_y": -0.019634986,
+          "acceleration_z": -0.031512145,
+          "gyroscope_x": -0.057105787,
+          "gyroscope_y": 0.0006557526,
+          "gyroscope_z": -0.028644928
+        },
+        "metadata": {
+          "timestamp": 1680179055040,
+          "tuple_id": 2,
+          "tags": [
+            "MONITOR",
+            "CUSTOM_TAG_1"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "subject_id": 3,
+          "activity_label": "Walking",
+          "timestamp": "2016-06-01 10:53:08",
+          "acceleration_x": 0.27842945,
+          "acceleration_y": -0.014614308,
+          "acceleration_z": -0.03022871,
+          "gyroscope_x": -0.047901008,
+          "gyroscope_y": -0.00068126145,
+          "gyroscope_z": -0.0011097406
+        },
+        "metadata": {
+          "timestamp": 1680179056000,
+          "tuple_id": 3,
+          "tags": [
+            "MONITOR",
+            "CUSTOM_TAG_1"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "subject_id": 4,
+          "activity_label": "Walking",
+          "timestamp": "2016-05-30 16:15:25",
+          "acceleration_x": 0.28061098,
+          "acceleration_y": -0.0192165,
+          "acceleration_z": -0.013119803,
+          "gyroscope_x": 0.038402643,
+          "gyroscope_y": -0.0015931913,
+          "gyroscope_z": 0.029956576
+        },
+        "metadata": {
+          "timestamp": 1680179057000,
+          "tuple_id": 4,
+          "tags": [
+            "MONITOR",
+            "DEBUG",
+            "CUSTOM_TAG_1"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "subject_id": 5,
+          "activity_label": "Walking",
+          "timestamp": "2016-06-03 12:15:14",
+          "acceleration_x": 0.27554935,
+          "acceleration_y": -0.015275819,
+          "acceleration_z": -0.020764702,
+          "gyroscope_x": -0.03552413,
+          "gyroscope_y": -0.0063406304,
+          "gyroscope_z": 0.027040802
+        },
+        "metadata": {
+          "timestamp": 1680179059000,
+          "tuple_id": 5,
+          "tags": [
+            "MONITOR"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afab",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "VendorID": 1,
+          "tpep_pickup_datetime": "2018-01-01 00:21:05",
+          "tpep_dropoff_datetime": "2018-01-01 00:24:23",
+          "passenger_count": 1,
+          "trip_distance": 0.5,
+          "RatecodeID": 1,
+          "store_and_fwd_flag": "N",
+          "PULocationID": 41,
+          "DOLocationID": 24,
+          "payment_type": 1,
+          "fare_amount": 4.5,
+          "extra": 0.5,
+          "mta_tax": 0.5,
+          "tip_amount": 1,
+          "tolls_amount": 0,
+          "improvement_surcharge": 0.3,
+          "total_amount": 6.8
+        },
+        "metadata": {
+          "timestamp": 1680189055000,
+          "tuple_id": 1,
+          "tags": [
+            "MONITOR",
+            "DEBUG"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afab",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "VendorID": 2,
+          "tpep_pickup_datetime": "2018-01-01 00:43:09",
+          "tpep_dropoff_datetime": "2018-01-01 01:10:09",
+          "passenger_count": 2,
+          "trip_distance": 11.2,
+          "RatecodeID": 1,
+          "store_and_fwd_flag": "N",
+          "PULocationID": 239,
+          "DOLocationID": 138,
+          "payment_type": 1,
+          "fare_amount": 32,
+          "extra": 0,
+          "mta_tax": 0.5,
+          "tip_amount": 6.7,
+          "tolls_amount": 0,
+          "improvement_surcharge": 0.3,
+          "total_amount": 39.5
+        },
+        "metadata": {
+          "timestamp": 1680189055040,
+          "tuple_id": 2,
+          "tags": [
+            "MONITOR"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afab",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "VendorID": 2,
+          "tpep_pickup_datetime": "2018-01-01 00:00:11",
+          "tpep_dropoff_datetime": "2018-01-01 00:09:32",
+          "passenger_count": 2,
+          "trip_distance": 2.4,
+          "RatecodeID": 1,
+          "store_and_fwd_flag": "N",
+          "PULocationID": 236,
+          "DOLocationID": 75,
+          "payment_type": 1,
+          "fare_amount": 9,
+          "extra": 0,
+          "mta_tax": 0.5,
+          "tip_amount": 2,
+          "tolls_amount": 0,
+          "improvement_surcharge": 0.3,
+          "total_amount": 11.8
+        },
+        "metadata": {
+          "timestamp": 1680189056000,
+          "tuple_id": 3,
+          "tags": [
+            "MONITOR"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afab",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "VendorID": 1,
+          "tpep_pickup_datetime": "2018-01-01 00:03:10",
+          "tpep_dropoff_datetime": "2018-01-01 00:09:38",
+          "passenger_count": 1,
+          "trip_distance": 1.2,
+          "RatecodeID": 1,
+          "store_and_fwd_flag": "N",
+          "PULocationID": 186,
+          "DOLocationID": 234,
+          "payment_type": 1,
+          "fare_amount": 6,
+          "extra": 0.5,
+          "mta_tax": 0.5,
+          "tip_amount": 1,
+          "tolls_amount": 0,
+          "improvement_surcharge": 0.3,
+          "total_amount": 8.3
+        },
+        "metadata": {
+          "timestamp": 1680189057000,
+          "tuple_id": 4,
+          "tags": [
+            "MONITOR"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5737-4562-b3fc-2c963f66afa6",
+      "task_id": "5fa85f64-5717-4562-b3fc-2c963f66afab",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "VendorID": 1,
+          "tpep_pickup_datetime": "2018-01-01 00:13:02",
+          "tpep_dropoff_datetime": "2018-01-01 00:16:48",
+          "passenger_count": 1,
+          "trip_distance": 0.7,
+          "RatecodeID": 1,
+          "store_and_fwd_flag": "N",
+          "PULocationID": 164,
+          "DOLocationID": 161,
+          "payment_type": 2,
+          "fare_amount": 4.5,
+          "extra": 0.5,
+          "mta_tax": 0.5,
+          "tip_amount": 0,
+          "tolls_amount": 0,
+          "improvement_surcharge": 0.3,
+          "total_amount": 5.8
+        },
+        "metadata": {
+          "timestamp": 1680189059000,
+          "tuple_id": 5,
+          "tags": [
+            "MONITOR"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "subject_id": 1,
+          "activity_label": "Walking",
+          "timestamp": "2016-05-30 14:13:16",
+          "acceleration_x": 0.27324998,
+          "acceleration_y": -0.031390495,
+          "acceleration_z": 0.0066611624,
+          "gyroscope_x": 0.03807301,
+          "gyroscope_y": 0.037263952,
+          "gyroscope_z": -0.0050823064
+        },
+        "metadata": {
+          "timestamp": 1680179055000,
+          "tuple_id": 1,
+          "tags": [
+            "MONITOR"
+          ]
+        }
+      }
+    },
+    {
+      "job_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+      "hackit_tuple": {
+        "wayang_tuple": {
+          "subject_id": 2,
+          "activity_label": "Walking",
+          "timestamp": "2016-06-02 13:14:14",
+          "acceleration_x": 0.2847828,
+          "acceleration_y": -0.019634986,
+          "acceleration_z": -0.031512145,
+          "gyroscope_x": -0.057105787,
+          "gyroscope_y": 0.0006557526,
+          "gyroscope_z": -0.028644928
+        },
+        "metadata": {
+          "timestamp": 1680179055040,
+          "tuple_id": 2,
+          "tags": [
+            "MONITOR",
+            "CUSTOM_TAG_1"
+          ]
+        }
+      }
+    }
+  ],
+  "job_metrics": [
+    {
+      "timestamp":1680179055040,
+      "executorCpuTime": 203125000,
+      "executorDeserializeCpuTime": 218750000,
+      "executorDeserializeTime": 202,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 277,
+      "jvmGCTime": 34,
+      "peakExecutionMemory": 0,
+      "resultSize": 969,
+      "resultSerializationTime": 2,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1680179066040,
+      "executorCpuTime": 46875000,
+      "executorDeserializeCpuTime": 31250000,
+      "executorDeserializeTime": 18,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 89,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 883,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1680179155040,
+      "executorCpuTime": 156250000,
+      "executorDeserializeCpuTime": 62500000,
+      "executorDeserializeTime": 52,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 163,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 1173,
+      "resultSerializationTime": 6,
+      "inputmetrics.readBytes": 4208,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1680189055040,
+      "executorCpuTime": 46875000,
+      "executorDeserializeCpuTime": 31250000,
+      "executorDeserializeTime": 38,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 51,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 1130,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4080,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1680279055040,
+      "executorCpuTime": 15625000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 16,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 39,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 1130,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4208,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1680379055040,
+      "executorCpuTime": 46875000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 10,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 49,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 0,
+      "resultSize": 1130,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4080,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1681179055040,
+      "executorCpuTime": 203125000,
+      "executorDeserializeCpuTime": 46875000,
+      "executorDeserializeTime": 52,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 242,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 8112,
+      "resultSize": 1261,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4208,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1683179055040,
+      "executorCpuTime": 62500000,
+      "executorDeserializeCpuTime": 31250000,
+      "executorDeserializeTime": 18,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 78,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 9056,
+      "resultSize": 1261,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 4080,
+      "inputMetrics.readRecord": 100,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1683279055040,
+      "executorCpuTime": 406250000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 13,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 423,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 26928,
+      "resultSize": 1476,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1683379055040,
+      "executorCpuTime": 125000000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 14,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 124,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 30020,
+      "resultSize": 1476,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    },
+    {
+      "timestamp":1680349055040,
+      "executorCpuTime": 93750000,
+      "executorDeserializeCpuTime": 15625000,
+      "executorDeserializeTime": 14,
+      "diskBytesSpilled": 0,
+      "executorRunTime": 98,
+      "jvmGCTime": 0,
+      "peakExecutionMemory": 9690,
+      "resultSize": 1313,
+      "resultSerializationTime": 0,
+      "inputmetrics.readBytes": 0,
+      "inputMetrics.readRecord": 0,
+      "outputMetrics.writeBytes": 0,
+      "outputMetrics.writeRecord": 0
+    }
+  ]
+}
