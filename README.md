@@ -41,6 +41,7 @@ For a quick guide on how to use Wayang in your Java/Scala project see [here](gui
 
 ## Installing Wayang
 
+You first have to build the binaries as shown [here](tutorial.md).
 Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
@@ -74,7 +75,7 @@ Since Apache Wayang (incubating) is not an execution engine itself but rather ma
 To execute your first application with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
 
 ```shell
-wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
+bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
 ```
 
 ## Getting Started
