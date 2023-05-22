@@ -1,5 +1,6 @@
 # Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
-#### The first cross-platform data processing system
+
+## The first open-source cross-platform data processing system
 
 [![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg)
 [![License](https://img.shields.io/github/license/apache/incubator-wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
@@ -30,9 +31,13 @@ Apache Wayang (incubating) can be used via the following APIs:
 - Scala
 - SQL (limited support of simple select-project queries for now)
 
-## Quick Guide
+## Quick Guide for Running Wayang
 
-For a guide on how to quickly run WordCount see [here](tutorial.md).
+For a quick guide on how to run WordCount see [here](guides/tutorial.md).
+
+## Quick Guide for Developing with Wayang
+
+For a quick guide on how to use Wayang in your Java/Scala project see [here](guides/develop-with-Wayang.md).
 
 ## Installing Wayang
 
@@ -77,10 +82,10 @@ bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/READM
 
 Wayang is available via Maven Central. To use it with Maven, include the following code snippet into your POM file:
 ```xml
-<dependency> 
+<dependency>
   <groupId>org.apache.wayang</groupId>
   <artifactId>wayang-***</artifactId>
-  <version>0.6.0</version> 
+  <version>0.6.0</version>
 </dependency>
 ```
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
