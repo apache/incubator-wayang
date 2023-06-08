@@ -365,26 +365,7 @@ object kmeans {
 * [Scala 2.12](https://www.scala-lang.org/download/2.12.0.html)
 * [Maven](https://maven.apache.org/)
 
-## Contributing
-As a contributor, you can help shape the future of the project by providing feedback, joining our mailing lists, reporting bugs, requesting features, and participating in discussions. As you become more involved, you can also help with development by providing patches for bug fixes or features and helping to improve our documentation.
 
-If you show sustained commitment to the project, you may be invited to become a committer. This brings with it the privilege of write access to the project repository and resources.
-
-To learn more about how to get involved with the Apache Wayang project, please visit our “Get Involved” [page](https://wayang.apache.org/community/) and read the [Apache code of conduct](https://www.apache.org/foundation/policies/conduct.html). We look forward to your contributions! 
-
-## Authors
-The list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors).
-
-## License
-All files in this repository are licensed under the Apache Software License 2.0
-
-Copyright 2020 - 2023 The Apache Software Foundation.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
