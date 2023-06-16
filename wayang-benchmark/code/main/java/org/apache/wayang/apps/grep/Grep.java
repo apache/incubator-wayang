@@ -105,7 +105,9 @@ public class Grep implements Serializable {
     String output = args[2]+"/lala.out";
 
     String command = "rm -r "+output;
-    Process process = Runtime.getRuntime().exec(command);
+    Runtime rt = Runtime.getRuntime();
+    Process process = rt.exec(new String[] {
+                    (command)});
 
     long pre = System.currentTimeMillis();
     switch (platform){
