@@ -17,6 +17,11 @@
 
 -->
 This page contains examples to be executed using Wayang.
+- [WordCount](#wordcount)
+  * [Java scala-like API](#java-scala-like-api)
+  * [Scala API](#scala-api)
+- [k-means](#k-means)
+  * [Scala API](#scala-api-1)
 
 ## WordCount
 
