@@ -182,7 +182,7 @@ You can see examples on how to start using Wayang [here](guides/wayang-examples.
 * [Maven](https://maven.apache.org/)
 
 ## Contributing
-For more information about how to contribute with Apache Wayang, see the [CONTRIBUTING.md](CONTRIBUTING.md) guide.
+Before submitting a PR, please take a look on how to contribute with Apache Wayang contributing guidelines [here](CONTRIBUTING.md).
 
 ## Authors
 The list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors).
