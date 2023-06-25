@@ -1,8 +1,8 @@
 ==============================================================
-Apache Wayang (incubating) 0.6.0
+Apache Wayang (incubating) 1.0.0
 ==============================================================
 
-This is the first official release of Apache Wayang (incubating).
+This is the first official major release of Apache Wayang (incubating).
 
 This release supports the following frameworks:
    
@@ -21,27 +21,79 @@ could be different.
 
 New Features
 ------------
+[WAYANG-34] Terasort
+[WAYANG-IDE] Recognition of Scala code in IDE
+[WAYANG-8] Inclusion of Python as platform of processing
+[WAYANG-211] JVM-platform inside of Python-API
+[WAYANG-273] - WebUI Draft
+Grep Benchmark
+Test classes and operators for Flink
+Support for S3 files locations
+Initial version of the SQL API and suppport for joins
 
-support M1 ARM architecture
 
 Incompatible changes
 --------------------
 
-- NONE -
+TODO: Check if something here is missing
 
 Miscellaneous changes
 ---------------------
 
-WAYANG-3 Unification of logs
-WAYANG-[32, 33, 35, 38] License issues removed
+Updates in documentation files:
+    - README.md
+    - NOTICE
+    - DISCLAIMER.md
+    - Usage instructions
+    - Add EPL and PD license
+
+CI updates:
+    - Protoc
+    - Skywalking-eyes check
+    - Deadlink check
+    - CodeQl Check
+    - UT check
+    - Auto Build And Install
+    - Create Issues from the TODO in the code
+    - Removed Travis, added Apache Calcite
+
+Update maven-wrapper to 3.1.0, maven to 3.8.4 for performance improvements
+Update .dlc.json
+Updates for monitoring the runtime metrics of underlying platform (Spark)
+[WAYANG-47] Properties Spark 2.11 updated with Spark version
+
 
 Known Issues
 ------------
 
-WAYANG-23 Iteration Memory Issue
 
 Bug Fixes
 ---------
+Delete paranamer-2.3 from dependecies (PR#76)
+Code scanning alert (PR#80)
+Correction in DistinctOperator for Apache Flink (PR#226)
+Fix of broken links
+Fix on WayangJoinVisitor
+Concat strings vulnerability
+[WAYANG-assembly] correction in the folder structure (PR#259)
+[WAYANG-48] Fix errors when running WordCount
 
-WAYANG-12 Issues on the compilation
-WAYANG-40 Different version of platform depending on the scala version
+
+New Contributors
+---------
+
+* @chrisdutz made their first contribution in https://github.com/apache/incubator-wayang/pull/1
+* @2pk03 made their first contribution in https://github.com/apache/incubator-wayang/pull/8
+* @ggevay made their first contribution in https://github.com/apache/incubator-wayang/pull/27
+* @CalvinKirs made their first contribution in https://github.com/apache/incubator-wayang/pull/44
+* @hboutemy made their first contribution in https://github.com/apache/incubator-wayang/pull/77
+* @regaleo605 made their first contribution in https://github.com/apache/incubator-wayang/pull/78
+* @zkaoudi made their first contribution in https://github.com/apache/incubator-wayang/pull/230
+* @JorgeQuiane made their first contribution in https://github.com/apache/incubator-wayang/pull/231
+* @kbeedkar made their first contribution in https://github.com/apache/incubator-wayang/pull/284
+* @bgeng777 made their first contribution in https://github.com/apache/incubator-wayang/pull/301
+* @damik3 made their first contribution in https://github.com/apache/incubator-wayang/pull/304
+* @kmoltke made their first contribution in https://github.com/apache/incubator-wayang/pull/309
+* @michellesackmann made their first contribution in https://github.com/apache/incubator-wayang/pull/310
+* @AdeelAslamUnimore made their first contribution in https://github.com/apache/incubator-wayang/pull/311
+* @ichbinrich made their first contribution in https://github.com/apache/incubator-wayang/pull/315
