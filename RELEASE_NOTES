@@ -96,3 +96,19 @@ New Contributors
 * @michellesackmann made their first contribution in https://github.com/apache/incubator-wayang/pull/310
 * @AdeelAslamUnimore made their first contribution in https://github.com/apache/incubator-wayang/pull/311
 * @ichbinrich made their first contribution in https://github.com/apache/incubator-wayang/pull/315
+
+
+==============================================================
+(Unreleased) Apache PLC4X 0.12.0-SNAPSHOT
+==============================================================
+
+New Features
+------------
+
+Incompatible changes
+--------------------
+This release does not support PR#311
+
+Bug Fixes
+---------
+
