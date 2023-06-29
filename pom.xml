@@ -1498,11 +1498,11 @@
                     <releaseProfiles>apache-release</releaseProfiles>
                     <!--<pushChanges>false</pushChanges>-->
                     <!--<dryRun>true</dryRun>-->
-                    <releaseVersion>0.6.0</releaseVersion>
+                    <releaseVersion>0.7.0</releaseVersion>
                     <updateWorkingCopyVersions>true</updateWorkingCopyVersions>
                     <updateDependencies>true</updateDependencies>
-                    <tag>wayang-0.6.0</tag>
-                    <scmReleaseCommitComment>@{prefix} prepare release 0.6.0</scmReleaseCommitComment>
+                    <tag>wayang-0.7.0</tag>
+                    <scmReleaseCommitComment>@{prefix} prepare release 0.7.0</scmReleaseCommitComment>
                     <tagNameFormat>apache-@{project.artifactId}-@{project.version}-incubating</tagNameFormat>
                     <tagNameFormat>v${project.version}</tagNameFormat>
                 </configuration>
