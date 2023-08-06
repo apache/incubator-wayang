@@ -1,11 +1,13 @@
 ==============================================================
-Apache Wayang (incubating) 0.7.0
+Apache Wayang (incubating) 0.7.1
 ==============================================================
 
-This is the first official major release of Apache Wayang (incubating).
+This is a patch/bugfix release of Apache Wayang (incubating).
 
 This release supports the following frameworks:
-   
+- This patch version fixes a problem in the artifact gpg encrypting key.
+
+Previous updates that are included in this release:
 - Apache Flink v1.7.1
 - Apache Giraph v1.2.0-hadoop2
 - GraphChi v0.2.2 (only available with scala 11.x)
@@ -97,18 +99,4 @@ New Contributors
 * @AdeelAslamUnimore made their first contribution in https://github.com/apache/incubator-wayang/pull/311
 * @ichbinrich made their first contribution in https://github.com/apache/incubator-wayang/pull/315
 
-
-==============================================================
-(Unreleased) Incubator Apache Wayang 0.7.1-SNAPSHOT
-==============================================================
-
-New Features
-------------
-
-Incompatible changes
---------------------
-This release does not support PR#311
-
-Bug Fixes
----------
 
