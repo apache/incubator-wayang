@@ -66,7 +66,7 @@
         <connection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</developerConnection>
         <url>https://github.com/apache/incubator-wayang</url>
-        <tag>rel/0.7.0</tag>
+        <tag>rel/0.7.1</tag>
     </scm>
 
     <issueManagement>
@@ -100,7 +100,7 @@
         <maven.kotlin.skip>false</maven.kotlin.skip>
 
         <!-- Timestamp for the reproducible builds -->
-        <project.build.outputTimestamp>2023-07-11T21:33:08Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2023-08-06T20:03:15Z</project.build.outputTimestamp>
 
         <assertj.version>3.17.2</assertj.version>
         <commons-io.version>2.5</commons-io.version>
