@@ -1521,6 +1521,5 @@
         <module>wayang-benchmark</module>
         <module>wayang-assembly</module>
         <module>wayang-docs</module>
-        <module>wayang-web-dashboard</module>
     </modules>
 </project>
