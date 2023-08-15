@@ -65,7 +65,7 @@ Updates for monitoring the runtime metrics of underlying platform (Spark)
 
 Known Issues
 ------------
-
+Wayang Doc tests need further improvements.
 
 Bug Fixes
 ---------
