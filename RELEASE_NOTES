@@ -27,7 +27,6 @@ New Features
 [WAYANG-IDE] Recognition of Scala code in IDE
 [WAYANG-8] Inclusion of Python as platform of processing
 [WAYANG-211] JVM-platform inside of Python-API
-[WAYANG-273] - WebUI Draft
 Grep Benchmark
 Test classes and operators for Flink
 Support for S3 files locations
@@ -36,7 +35,7 @@ Initial version of the SQL API and suppport for joins
 
 Incompatible changes
 --------------------
-
+Removing [WAYANG-273] - WebUI Draft from release
 
 Miscellaneous changes
 ---------------------
