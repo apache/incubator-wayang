@@ -100,7 +100,7 @@
         <maven.kotlin.skip>false</maven.kotlin.skip>
 
         <!-- Timestamp for the reproducible builds -->
-        <project.build.outputTimestamp>2023-08-15T10:42:57Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2023-08-15T10:46:43Z</project.build.outputTimestamp>
 
         <assertj.version>3.17.2</assertj.version>
         <commons-io.version>2.5</commons-io.version>
