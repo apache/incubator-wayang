@@ -31,11 +31,6 @@
     <version>0.7.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <packaging>jar</packaging>
-    <build>
-    <finalName>apache-${project.artifactId}-${project.version}-incubating</finalName>
-    </build>
-
     <name>Apache Wayang (incubating)</name>
     <description>
         Apache Wayang (incubating) is a tool to build platform-agnostic data processing apps and have them both optimized for and
@@ -1003,7 +998,7 @@
     </dependencies>
 
     <build>
-
+        <finalName>apache-${project.artifactId}-${project.version}-incubating</finalName>
         <!--
             Default versioned declarations of managed plugins
             to be overridden when the distribute profile is active.
