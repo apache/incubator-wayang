@@ -182,7 +182,7 @@
             </dependencies>
 
             <build>
-              <finalName>apache-wayang-0.7.1-incubating-source-release</finalName>
+              <finalName>apache-${project.artifactId}-incubating-${project.version}</finalName>
                 <plugins>
                     <!-- Configures JavaDoc generation. -->
                     <plugin>
