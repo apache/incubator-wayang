@@ -445,7 +445,7 @@
                         <plugin>
                             <groupId>net.alchim31.maven</groupId>
                             <artifactId>scala-maven-plugin</artifactId>
-                            <version>4.5.4</version>
+                            <version>4.8.1</version>
                             <executions>
                                 <execution>
                                     <id>compile-scala</id>
@@ -1494,7 +1494,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>3.0.0-M4</version>
+                <version>3.0.1</version>
 
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
