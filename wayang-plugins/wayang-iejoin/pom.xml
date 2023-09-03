@@ -56,7 +56,6 @@
 
 
     <modules>
-        <module>wayang-iejoin_2.11</module>
         <module>wayang-iejoin_2.12</module>
     </modules>
 
