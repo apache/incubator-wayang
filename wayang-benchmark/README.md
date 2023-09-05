@@ -1,3 +1,12 @@
+<!---
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  license agreements; and to You under the Apache License, version 2.0:
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+  This file is part of the Apache Wayang (incubating) project.
+--->
+
 # Apache Wayang (incubating) Benchmarks <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
 
 This repository provides example applications and further benchmarking tools to evaluate and get started with [Apache Wayang (incubating)](https://wayang.apache.org).
