@@ -5,6 +5,9 @@ This product includes software developed at
 The Apache Software Foundation (http://www.apache.org/).
 
 --
+Some of the files under
+wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb
+have the following copyright:
 Copyright 2016 Sebastian Kruse
 
 Licensed under the Apache License, Version 2.0 (the "License");
