@@ -15,6 +15,7 @@
 hybrid/*
 pom.xml.*
 .vscode
+.vscode/
 
 10e*.input
 *_pb2.py
