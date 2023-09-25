@@ -56,7 +56,7 @@ For a quick guide on how to use Wayang in your Java/Scala project see [here](gui
 
 ## Installing Wayang
 
-You first have to build the binaries as shown [here](tutorial.md).
+You first have to build the binaries as shown [here](guides/tutorial.md).
 Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
