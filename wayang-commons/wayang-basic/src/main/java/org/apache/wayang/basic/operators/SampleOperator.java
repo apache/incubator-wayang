@@ -33,7 +33,7 @@ import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
 
 /**
- * A random sample operator randomly selects its inputs from the input slot and pushes that element to the output slot.
+ * A sample operator randomly selects its inputs from the input slot and pushes that element to the output slot.
  */
 public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
@@ -65,8 +65,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * Special dataset size that represents "unknown".
      */
-    // TODO: With 0 being a legal dataset size, it would be nice to use a different "null" value, e.g., -1.
-    public static final long UNKNOWN_DATASET_SIZE = 0L;
+    public static final long UNKNOWN_DATASET_SIZE = -1L;
 
     /**
      * Generate a random seed.
