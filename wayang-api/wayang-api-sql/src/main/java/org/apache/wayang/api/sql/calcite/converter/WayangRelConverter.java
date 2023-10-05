@@ -20,10 +20,7 @@
 package org.apache.wayang.api.sql.calcite.converter;
 
 import org.apache.calcite.rel.RelNode;
-import org.apache.wayang.api.sql.calcite.rel.WayangFilter;
-import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
-import org.apache.wayang.api.sql.calcite.rel.WayangProject;
-import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
+import org.apache.wayang.api.sql.calcite.rel.*;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 
 public class WayangRelConverter {
@@ -37,6 +34,8 @@ public class WayangRelConverter {
             return new WayangFilterVisitor(this).visit((WayangFilter) node);
         } else if (node instanceof WayangJoin) {
             return new WayangJoinVisitor(this).visit((WayangJoin) node);
+        } else if (node instanceof WayangAggregate) {
+            return new WayangAggregateVisitor(this).visit((WayangAggregate) node);
         }
         throw new IllegalStateException("Operator translation not supported yet");
     }
