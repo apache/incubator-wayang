@@ -49,9 +49,7 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
         for (AggregateCall aggregateCall : aggregateCalls) {
             if (aggregateCall.getAggregation().getName().equals("SUM")) {
                 int fieldIndex = aggregateCall.getArgList().get(0);
-                //System.out.println(fieldIndex);
                 int groupCount = wayangRelNode.getGroupCount();
-                //System.out.println(groupCount);
                 if (groupCount > 0) {
                     int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
@@ -79,9 +77,7 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
             }
             else if (aggregateCall.getAggregation().getName().equals("MIN")) {
                 int fieldIndex = aggregateCall.getArgList().get(0);
-                //System.out.println(fieldIndex);
                 int groupCount = wayangRelNode.getGroupCount();
-                //System.out.println(groupCount);
                 if (groupCount > 0) {
                     int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
@@ -109,9 +105,8 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
             }
             else if (aggregateCall.getAggregation().getName().equals("MAX")) {
                 int fieldIndex = aggregateCall.getArgList().get(0);
-                //System.out.println(fieldIndex);
+
                 int groupCount = wayangRelNode.getGroupCount();
-                //System.out.println(groupCount);
                 if (groupCount > 0) {
                     int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
@@ -137,10 +132,42 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
                     return globalReduceOperator;
                 }
             }
+            else if (aggregateCall.getAggregation().getName().equals("COUNT")) {
+                MapOperator mapOperator = new MapOperator(
+                        new addCountCol(),
+                        Record.class,
+                        Record.class
+                );
+                childOp.connectTo(0, mapOperator, 0);
+
+                int groupCount = wayangRelNode.getGroupCount();
+                if (groupCount > 0) {
+                    int groupIndex = 0; // wayangRelNode.getGroupSets()
+                    // Create the ReduceByOperator
+                    ReduceByOperator<Record, Object> reduceByOperator;
+                    reduceByOperator = new ReduceByOperator<>(
+                            new TransformationDescriptor<>(new KeyExtractor(groupIndex), Record.class, Object.class),
+                            new ReduceDescriptor<>(new countFunction(),
+                                    DataUnitType.createGrouped(Record.class),
+                                    DataUnitType.createBasicUnchecked(Record.class))
+                    );
+                    // Connect it to the child operator
+                    mapOperator.connectTo(0, reduceByOperator, 0);
+
+                    return reduceByOperator;
+                } else {
+                    GlobalReduceOperator<Record> globalReduceOperator;
+                    globalReduceOperator = new GlobalReduceOperator<>(
+                            new ReduceDescriptor<>(new countFunction(),
+                                    DataUnitType.createGrouped(Record.class),
+                                    DataUnitType.createBasicUnchecked(Record.class))
+                    );
+                    mapOperator.connectTo(0, globalReduceOperator, 0);
+                    return globalReduceOperator;
+                }
+            }
             else if (aggregateCall.getAggregation().getName().equals("AVG")) {
-                //System.out.println(aggregateCall.getArgList());
                 int fieldIndex = aggregateCall.getArgList().get(0);
-                //System.out.println(fieldIndex);
                 MapOperator mapOperator1 = new MapOperator(
                         new addCountCol(),
                         Record.class,
@@ -149,7 +176,6 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
                 childOp.connectTo(0, mapOperator1, 0);
 
                 int groupCount = wayangRelNode.getGroupCount();
-                //System.out.println(groupCount);
                 if (groupCount > 0) {
                     int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
@@ -324,24 +350,6 @@ class addCountCol implements FunctionDescriptor.SerializableFunction<Record, Rec
         }
         resValues[l] = count;
         return new Record(resValues);
-    }
-}
-
-class removeCountCol implements FunctionDescriptor.SerializableFunction<Record, Record> {
-    public removeCountCol() {}
-
-    @Override
-    public Record apply(final Record record) {
-        int l = record.size();
-        int count = record.getInt(l-1);
-        Object[] resValues = new Object[l-1];
-        resValues[0] = count;
-        for(int i=0; i<l-2; i++){
-            resValues[i+1] = record.getField(i);
-        }
-
-        return new Record(resValues);
-
     }
 }
 
