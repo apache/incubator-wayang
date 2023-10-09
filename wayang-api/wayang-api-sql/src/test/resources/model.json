@@ -12,6 +12,14 @@
       "jdbcUser": "aditya",
       "jdbcPassword": "12345678"
       }
+    },
+    {
+      "name": 'fs',
+      "type": 'custom',
+      "factory": 'org.apache.calcite.adapter.file.FileSchemaFactory',
+      "operand": {
+        "directory": 'C:/incubator-Wayang-CrossPlatform/incubator-wayang-SQL/wayang-api/wayang-api-sql/src/test/resources'
+      }
     }
   ]
 }
