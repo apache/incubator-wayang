@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import org.apache.log4j.LogMF;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -139,27 +138,42 @@ public class CsvRowConverter {
         }
     }
 
-    private static BigDecimal parseDecimal(int precision, int scale, String string) {
+    public static BigDecimal parseDecimal(int precision, int scale, String string) {
 
-        BigDecimal result = new BigDecimal(string);
-        // If the parsed value has more fractional digits than the specified scale, round ties away
-        // from 0.
-        if (result.scale() > scale) {
+        //System.out.println( ">>> " + string );
+        BigDecimal result = null;
 
-            logger.warn(
-                    "Decimal value {} exceeds declared scale ({}). Performing rounding to keep the "
-                            + "first {} fractional digits.",
-                    result, scale, scale);
-            result = result.setScale(scale, RoundingMode.HALF_UP);
+        try {
+
+            result = new BigDecimal(string);
+            //System.out.println( result );
+
+            // If the parsed value has more fractional digits than the specified scale, round ties away from 0.
+            if (result.scale() > scale) {
+                logger.info(
+                        "Decimal value {} exceeds declared scale ({}). Performing rounding to keep the "
+                                + "first {} fractional digits.",
+                        result, scale, scale);
+                result = result.setScale(scale, RoundingMode.HALF_UP);
+            }
+
+            // Throws an exception if the parsed value has more digits to the left of the decimal point
+            // than the specified value.
+            if (result.precision() - result.scale() > precision - scale) {
+                throw new IllegalArgumentException(String
+                        .format(Locale.ROOT, "Decimal value %s exceeds declared precision (%d) and scale (%d).",
+                                result, precision, scale));
+            }
+
         }
-        // Throws an exception if the parsed value has more digits to the left of the decimal point
-        // than the specified value.
-        if (result.precision() - result.scale() > precision - scale) {
+        catch (Exception ex) {
+            ex.printStackTrace();
             throw new IllegalArgumentException(String
-                    .format(Locale.ROOT, "Decimal value %s exceeds declared precision (%d) and scale (%d).",
-                            result, precision, scale));
+                    .format(Locale.ROOT, "BigDecimal %s can't be parsed.", string));
         }
+
         return result;
+
     }
 
 
