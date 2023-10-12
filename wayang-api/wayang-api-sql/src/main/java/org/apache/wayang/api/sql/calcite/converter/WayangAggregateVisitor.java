@@ -31,8 +31,9 @@ import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.Tuple;
+import org.apache.calcite.util.ImmutableBitSet;
 
-import java.util.List;
+import java.util.*;
 
 public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate> {
 
@@ -50,12 +51,12 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
             if (aggregateCall.getAggregation().getName().equals("SUM")) {
                 int fieldIndex = aggregateCall.getArgList().get(0);
                 int groupCount = wayangRelNode.getGroupCount();
+                System.out.println(groupCount);
                 if (groupCount > 0) {
-                    int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
                     ReduceByOperator<Record, Object> reduceByOperator;
                     reduceByOperator = new ReduceByOperator<>(
-                            new TransformationDescriptor<>(new KeyExtractor(groupIndex), Record.class, Object.class),
+                            new TransformationDescriptor<>(new KeyExtractor(wayangRelNode.getGroupSet().asSet()), Record.class, Object.class),
                             new ReduceDescriptor<>(new SumFunction(fieldIndex),
                                     DataUnitType.createGrouped(Record.class),
                                     DataUnitType.createBasicUnchecked(Record.class))
@@ -79,11 +80,10 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
                 int fieldIndex = aggregateCall.getArgList().get(0);
                 int groupCount = wayangRelNode.getGroupCount();
                 if (groupCount > 0) {
-                    int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
                     ReduceByOperator<Record, Object> reduceByOperator;
                     reduceByOperator = new ReduceByOperator<>(
-                            new TransformationDescriptor<>(new KeyExtractor(groupIndex), Record.class, Object.class),
+                            new TransformationDescriptor<>(new KeyExtractor(wayangRelNode.getGroupSet().asSet()), Record.class, Object.class),
                             new ReduceDescriptor<>(new minFunction(fieldIndex),
                                     DataUnitType.createGrouped(Record.class),
                                     DataUnitType.createBasicUnchecked(Record.class))
@@ -105,14 +105,12 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
             }
             else if (aggregateCall.getAggregation().getName().equals("MAX")) {
                 int fieldIndex = aggregateCall.getArgList().get(0);
-
                 int groupCount = wayangRelNode.getGroupCount();
                 if (groupCount > 0) {
-                    int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
                     ReduceByOperator<Record, Object> reduceByOperator;
                     reduceByOperator = new ReduceByOperator<>(
-                            new TransformationDescriptor<>(new KeyExtractor(groupIndex), Record.class, Object.class),
+                            new TransformationDescriptor<>(new KeyExtractor(wayangRelNode.getGroupSet().asSet()), Record.class, Object.class),
                             new ReduceDescriptor<>(new maxFunction(fieldIndex),
                                     DataUnitType.createGrouped(Record.class),
                                     DataUnitType.createBasicUnchecked(Record.class))
@@ -142,11 +140,10 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
 
                 int groupCount = wayangRelNode.getGroupCount();
                 if (groupCount > 0) {
-                    int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
                     ReduceByOperator<Record, Object> reduceByOperator;
                     reduceByOperator = new ReduceByOperator<>(
-                            new TransformationDescriptor<>(new KeyExtractor(groupIndex), Record.class, Object.class),
+                            new TransformationDescriptor<>(new KeyExtractor(wayangRelNode.getGroupSet().asSet()), Record.class, Object.class),
                             new ReduceDescriptor<>(new countFunction(),
                                     DataUnitType.createGrouped(Record.class),
                                     DataUnitType.createBasicUnchecked(Record.class))
@@ -174,14 +171,12 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
                         Record.class
                 );
                 childOp.connectTo(0, mapOperator1, 0);
-
                 int groupCount = wayangRelNode.getGroupCount();
                 if (groupCount > 0) {
-                    int groupIndex = 0; // wayangRelNode.getGroupSets()
                     // Create the ReduceByOperator
                     ReduceByOperator<Record, Object> reduceByOperator;
                     reduceByOperator = new ReduceByOperator<>(
-                            new TransformationDescriptor<>(new KeyExtractor(groupIndex), Record.class, Object.class),
+                            new TransformationDescriptor<>(new KeyExtractor(wayangRelNode.getGroupSet().asSet()), Record.class, Object.class),
                             new ReduceDescriptor<>(new avgFunction(fieldIndex),
                                     DataUnitType.createGrouped(Record.class),
                                     DataUnitType.createBasicUnchecked(Record.class))
@@ -222,29 +217,23 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
         return childOp;
     }
 }
-class KeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
-    private final int index;
 
-    public KeyExtractor(int index) {
-        this.index = index;
+class KeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
+    private Set<Integer> indexSet;
+
+    public KeyExtractor(Set<Integer> indexSet){
+        this.indexSet = indexSet;
     }
 
     public Object apply(final Record record) {
-        return record.getField(index);
+        List<Object> keys = new ArrayList<>();
+        for(Integer index : indexSet){
+            keys.add(record.getField(index));
+        }
+        return keys;
     }
 }
 
-class KeyExtractorTuple implements FunctionDescriptor.SerializableFunction<Tuple<Record,Integer>, Object> {
-    private final int index;
-
-    public KeyExtractorTuple(int index) {
-        this.index = index;
-    }
-
-    public Object apply(final Tuple<Record,Integer> tuple) {
-        return tuple.field0.getField(index);
-    }
-}
 
 class avgFunction implements FunctionDescriptor.SerializableBinaryOperator<Record> {
     private final int fieldIndex;
