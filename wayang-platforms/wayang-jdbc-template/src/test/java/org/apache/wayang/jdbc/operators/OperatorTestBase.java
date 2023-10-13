@@ -18,6 +18,9 @@
 
 package org.apache.wayang.jdbc.operators;
 
+import org.apache.wayang.spark.execution.SparkExecutor;
+import org.apache.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.wayang.spark.platform.SparkPlatform;
 import org.junit.BeforeClass;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -52,6 +55,11 @@ public class OperatorTestBase {
         return new JavaExecutor(JavaPlatform.getInstance(), job);
     }
 
+    protected static SparkExecutor createSparkExecutor() {
+        final Job job = createJob();
+        return new SparkExecutor(SparkPlatform.getInstance(), job);
+    }
+
     private static Job createJob() {
         final Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
@@ -68,6 +76,12 @@ public class OperatorTestBase {
                                    ChannelInstance[] inputs,
                                    ChannelInstance[] outputs) {
         operator.evaluate(inputs, outputs, createJavaExecutor(), createOperatorContext(operator));
+    }
+
+    protected static void evaluate(SparkExecutionOperator operator,
+                                   ChannelInstance[] inputs,
+                                   ChannelInstance[] outputs) {
+        operator.evaluate(inputs, outputs, createSparkExecutor(), createOperatorContext(operator));
     }
 
 }

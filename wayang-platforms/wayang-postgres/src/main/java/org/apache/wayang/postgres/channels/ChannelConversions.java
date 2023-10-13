@@ -23,9 +23,10 @@ import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.jdbc.operators.SqlToStreamOperator;
 import org.apache.wayang.postgres.platform.PostgresPlatform;
+import org.apache.wayang.spark.channels.RddChannel;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Register for the {@link ChannelConversion}s supported for this platform.
@@ -38,8 +39,15 @@ public class ChannelConversions {
             () -> new SqlToStreamOperator(PostgresPlatform.getInstance())
     );
 
-    public static final Collection<ChannelConversion> ALL = Collections.singleton(
-            SQL_TO_STREAM_CONVERSION
+    public static final ChannelConversion SQL_TO_UNCACHED_RDD_CONVERSION = new DefaultChannelConversion(
+            PostgresPlatform.getInstance().getSqlQueryChannelDescriptor(),
+            RddChannel.UNCACHED_DESCRIPTOR,
+            null
+    );
+
+    public static final Collection<ChannelConversion> ALL = Arrays.asList(
+            SQL_TO_STREAM_CONVERSION,
+            SQL_TO_UNCACHED_RDD_CONVERSION
     );
 
 }
