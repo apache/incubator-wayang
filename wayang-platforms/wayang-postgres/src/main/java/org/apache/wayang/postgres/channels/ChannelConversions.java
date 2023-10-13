@@ -21,6 +21,7 @@ package org.apache.wayang.postgres.channels;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
 import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
 import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.jdbc.operators.SqlToRddOperator;
 import org.apache.wayang.jdbc.operators.SqlToStreamOperator;
 import org.apache.wayang.postgres.platform.PostgresPlatform;
 import org.apache.wayang.spark.channels.RddChannel;
@@ -42,7 +43,7 @@ public class ChannelConversions {
     public static final ChannelConversion SQL_TO_UNCACHED_RDD_CONVERSION = new DefaultChannelConversion(
             PostgresPlatform.getInstance().getSqlQueryChannelDescriptor(),
             RddChannel.UNCACHED_DESCRIPTOR,
-            null
+            () -> new SqlToRddOperator(PostgresPlatform.getInstance())
     );
 
     public static final Collection<ChannelConversion> ALL = Arrays.asList(
