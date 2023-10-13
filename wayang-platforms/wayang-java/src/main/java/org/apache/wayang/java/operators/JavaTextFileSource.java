@@ -35,10 +35,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.stream.Stream;
 
 /**
@@ -65,20 +71,57 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
             ChannelInstance[] outputs,
             JavaExecutor javaExecutor,
             OptimizationContext.OperatorContext operatorContext) {
+
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        String url = this.getInputUrl().trim();
-        FileSystem fs = FileSystems.getFileSystem(url).orElseThrow(
-                () -> new WayangException(String.format("Cannot access file system of %s.", url))
-        );
+        String urlStr = this.getInputUrl().trim();
 
         try {
-            final InputStream inputStream = fs.open(url);
-            Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
-            ((StreamChannel.Instance) outputs[0]).accept(lines);
-        } catch (IOException e) {
-            throw new WayangException(String.format("Reading %s failed.", url), e);
+
+            URL sourceUrl = new URL( urlStr );
+            String protocol = sourceUrl.getProtocol();
+
+            if ( protocol.startsWith("https") || protocol.startsWith("http")  ) {
+                try {
+                    HttpURLConnection connection = (HttpURLConnection) sourceUrl.openConnection();
+                    connection.setRequestMethod("GET");
+                    // Check if the response code indicates success (HTTP status code 200)
+                    if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        System.out.println(">>> Ready to stream the data from URL: " + urlStr);
+                        // Read the data line by line and process it in the StreamChannel
+                        Stream<String> lines2 = new BufferedReader(new InputStreamReader(connection.getInputStream())).lines();
+                        ((StreamChannel.Instance) outputs[0]).accept(lines2);
+                    }
+                }
+                catch (IOException ioException) {
+                    ioException.printStackTrace();
+                    throw new WayangException(String.format("Reading from URL: %s failed.", urlStr), ioException);
+                }
+            }
+            else if ( sourceUrl.getProtocol().startsWith("file") ) {
+
+                FileSystem fs = FileSystems.getFileSystem(urlStr).orElseThrow(
+                        () -> new WayangException(String.format("Cannot access file system of %s. ", urlStr))
+                );
+
+                try {
+                    final InputStream inputStream = fs.open(urlStr);
+                    Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
+                    ((StreamChannel.Instance) outputs[0]).accept(lines);
+                }
+                catch (IOException ioException) {
+                    ioException.printStackTrace();
+                    throw new WayangException(String.format("Reading from FILE: %s failed.", urlStr), ioException);
+                }
+            }
+            else {
+                throw new WayangException(String.format("PROTOCOL NOT SUPPORTED IN JavaTextFileSource. [%s] [%s] SUPPORTED ARE: (file|http|https)", urlStr, protocol));
+            }
+        }
+        catch (MalformedURLException e) {
+            e.printStackTrace();
+            throw new WayangException(String.format("Provided URL is not a valid URL: %s (MalformedURLException)", urlStr), e);
         }
 
         ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
