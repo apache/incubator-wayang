@@ -19,7 +19,6 @@
 package org.apache.wayang.jdbc.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
@@ -37,10 +36,7 @@ import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
 import java.sql.Connection;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -91,14 +87,14 @@ public class SqlToRddOperator extends UnaryToUnaryOperator<Record, Record> imple
         Iterable<Record> resultSetIterable = () -> resultSetIterator;
 
         // Convert the ResultSet to a JavaRDD.
-        JavaSparkContext sparkContext = new JavaSparkContext(executor.sc.sc());
-        JavaRDD<Record> resultSetRDD = sparkContext.parallelize(
-                StreamSupport.stream(resultSetIterable.spliterator(), false)
-                        .collect(Collectors.toList())
+        JavaRDD<Record> resultSetRDD = executor.sc.parallelize(
+                StreamSupport.stream(resultSetIterable.spliterator(), false).collect(Collectors.toList()),
+                executor.getNumDefaultPartitions()
         );
 
         output.accept(resultSetRDD, executor);
 
+        // TODO: Add load profile estimators
         ExecutionLineageNode queryLineageNode = new ExecutionLineageNode(operatorContext);
         queryLineageNode.addPredecessor(input.getLineage());
         ExecutionLineageNode outputLineageNode = new ExecutionLineageNode(operatorContext);
