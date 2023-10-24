@@ -24,6 +24,8 @@ import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 
+class Test1 {}
+
 object Test1 {
 
   def main(args: Array[String]): Unit = {
@@ -48,6 +50,7 @@ object Test1 {
     val wayangContext2 = new WayangContext(configuration2.get).withPlugin(Spark.basicPlugin())
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(wayangContext1, wayangContext2))
+      .withUdfJarsOf(classOf[Test1])
 
     multiContextPlanBuilder
       .readTextFile("file:///tmp/in1.txt")

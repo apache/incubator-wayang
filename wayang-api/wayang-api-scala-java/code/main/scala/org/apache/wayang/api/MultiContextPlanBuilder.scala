@@ -22,11 +22,24 @@ import org.apache.wayang.core.api.WayangContext
 
 class MultiContextPlanBuilder(wayangContexts: List[WayangContext], jobName: String) {
 
+  private var withClassesOf: Option[Seq[Class[_]]] = None
+
   def this(wayangContexts: List[WayangContext]) = this(wayangContexts, null)
 
+  def withUdfJarsOf(classes: Class[_]*): MultiContextPlanBuilder = {
+    this.withClassesOf = Some(classes)
+    this
+  }
+
   def readTextFile(url: String): MultiContextDataQuanta[String] = {
+
     new MultiContextDataQuanta[String](
-      wayangContexts.map(wayangContext => new PlanBuilder(wayangContext).readTextFile(url))
+      wayangContexts.map(wayangContext => {
+        withClassesOf match {
+          case Some(classes) => new PlanBuilder(wayangContext).withUdfJarsOf(classes: _*).readTextFile(url)
+          case None => new PlanBuilder(wayangContext).readTextFile(url)
+        }
+      })
     )(this)
   }
 
