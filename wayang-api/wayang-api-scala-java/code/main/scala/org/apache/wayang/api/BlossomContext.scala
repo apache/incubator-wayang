@@ -18,27 +18,37 @@
 
 package org.apache.wayang.api
 
-class MultiContextPlanBuilder(val contexts: List[BlossomContext], jobName: String) {
+import org.apache.wayang.core.api.{Configuration, WayangContext}
+import org.apache.wayang.core.plugin.Plugin
 
-  private var withClassesOf: Option[Seq[Class[_]]] = None
+class BlossomContext(configuration: Configuration) extends WayangContext(configuration) {
 
-  def this(contexts: List[BlossomContext]) = this(contexts, null)
+  var sink: Option[BlossomContext.UnarySink] = None
 
-  def withUdfJarsOf(classes: Class[_]*): MultiContextPlanBuilder = {
-    this.withClassesOf = Some(classes)
+  def this() = {
+    this(new Configuration())
+  }
+
+  override def withPlugin(plugin: Plugin): BlossomContext = {
+    super.withPlugin(plugin)
     this
   }
 
-  def readTextFile(url: String): MultiContextDataQuanta[String] = {
-
-    new MultiContextDataQuanta[String](
-      contexts.map(wayangContext => {
-        this.withClassesOf match {
-          case Some(classes) => new PlanBuilder(wayangContext).withUdfJarsOf(classes: _*).readTextFile(url)
-          case None => new PlanBuilder(wayangContext).readTextFile(url)
-        }
-      })
-    )(this)
+  def withTextFileSink(url: String): BlossomContext = {
+    this.sink = Some(BlossomContext.TextFileSink(url))
+    this
   }
 
+  def withObjectFileSink(url: String): BlossomContext = {
+    this.sink = Some(BlossomContext.ObjectFileSink(url))
+    this
+  }
+
+
+}
+
+object BlossomContext {
+  private[api] trait UnarySink
+  private[api] case class TextFileSink(textFileUrl: String) extends UnarySink
+  private[api] case class ObjectFileSink(textFileUrl: String) extends UnarySink
 }

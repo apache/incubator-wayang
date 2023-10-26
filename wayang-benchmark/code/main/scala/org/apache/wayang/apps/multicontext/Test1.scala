@@ -19,8 +19,8 @@
 
 package org.apache.wayang.apps.multicontext
 
-import org.apache.wayang.api.MultiContextPlanBuilder
-import org.apache.wayang.core.api.{Configuration, WayangContext}
+import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
+import org.apache.wayang.core.api.Configuration
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 
@@ -46,17 +46,17 @@ object Test1 {
       configuration2 = Some(loadConfiguration(args(1)))
     }
 
-    val wayangContext1 = new WayangContext(configuration1.get).withPlugin(Spark.basicPlugin())
-    val wayangContext2 = new WayangContext(configuration2.get).withPlugin(Spark.basicPlugin())
+    val context1 = new BlossomContext(configuration1.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11.txt")
+    val context2 = new BlossomContext(configuration2.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out12.txt")
 
-    val multiContextPlanBuilder = new MultiContextPlanBuilder(List(wayangContext1, wayangContext2))
+    val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[Test1])
 
     multiContextPlanBuilder
       .readTextFile("file:///tmp/in1.txt")
       .map(s => s + " Wayang out.")
       .filter(s => s.length > 20)
-      .writeTextFile(List("file:///tmp/out11.txt", "file:///tmp/out12.txt"), s => s)
+      .execute()
   }
 
 
