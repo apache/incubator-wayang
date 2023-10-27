@@ -1,8 +1,6 @@
 ==============================================================
-Apache Wayang (incubating) 0.6.0
+Apache Wayang (incubating) 0.7.1
 ==============================================================
-
-This is the first official release of Apache Wayang (incubating).
 
 This release supports the following frameworks:
    
@@ -12,7 +10,7 @@ This release supports the following frameworks:
 - Java Streams (version depends on the java version)
 - JDBC-Template
 - Postgres v9.4.1208 (Implementation JDBC-Template)
-- Apache Spark v3.1.2 (scala 12.x) and v2.4.8 (scala 11.x)
+- Apache Spark v3.1.2 (scala 2.12) and v2.4.8 (scala 2.11)
 - SQLite3 v3.8.11.2 (implementation JDBC-Template)
 
 NOTE: depending on the scala version the list of the supported platforms available
@@ -22,26 +20,9 @@ could be different.
 New Features
 ------------
 
-support M1 ARM architecture
+Basic SQL support
 
 Incompatible changes
 --------------------
 
 - NONE -
-
-Miscellaneous changes
----------------------
-
-WAYANG-3 Unification of logs
-WAYANG-[32, 33, 35, 38] License issues removed
-
-Known Issues
-------------
-
-WAYANG-23 Iteration Memory Issue
-
-Bug Fixes
----------
-
-WAYANG-12 Issues on the compilation
-WAYANG-40 Different version of platform depending on the scala version
