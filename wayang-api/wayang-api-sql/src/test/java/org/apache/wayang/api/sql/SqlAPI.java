@@ -148,8 +148,11 @@ public class SqlAPI {
 
 
         Collection<Record> result = sqlContext.executeSql(
-                "SELECT avg(amount),customer_id,staff_id FROM postgres.payment group by customer_id,staff_id having customer_id<11"
+                "SELECT  staff_id, sum(amount), count(*), avg(amount) FROM postgres.payment group by staff_id"
         );
+
+
+
         printResults(10, result);
     }
 
