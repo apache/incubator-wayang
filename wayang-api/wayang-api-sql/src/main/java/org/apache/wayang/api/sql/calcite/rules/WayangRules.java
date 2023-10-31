@@ -26,6 +26,7 @@ import org.apache.calcite.rel.convert.ConverterRule;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalJoin;
+import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
@@ -33,6 +34,7 @@ import org.apache.wayang.api.sql.calcite.rel.WayangFilter;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
 import org.apache.wayang.api.sql.calcite.rel.WayangProject;
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
+import org.apache.wayang.api.sql.calcite.rel.WayangAggregate;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.ArrayList;
@@ -51,6 +53,7 @@ public class WayangRules {
     public static final RelOptRule WAYANG_TABLESCAN_RULE = new WayangTableScanRule(WayangTableScanRule.DEFAULT_CONFIG);
     public static final RelOptRule WAYANG_TABLESCAN_ENUMERABLE_RULE =
             new WayangTableScanRule(WayangTableScanRule.ENUMERABLE_CONFIG);
+    public static final RelOptRule WAYANG_AGGREGATE_RULE =  new WayangAggregateRule(WayangAggregateRule.DEFAULT_CONFIG);
 
 
     private static class WayangProjectRule extends ConverterRule {
@@ -171,6 +174,34 @@ public class WayangRules {
                     join.getCondition(),
                     join.getVariablesSet(),
                     join.getJoinType()
+            );
+        }
+    }
+    private static class WayangAggregateRule extends ConverterRule {
+
+        public static final Config DEFAULT_CONFIG = Config.INSTANCE
+                .withConversion(LogicalAggregate.class,
+                        Convention.NONE, WayangConvention.INSTANCE,
+                        "WayangAggregateRule")
+                .withRuleFactory(WayangAggregateRule::new);
+
+        protected WayangAggregateRule(Config config) {
+            super(config);
+        }
+
+        @Override
+        public @Nullable RelNode convert(RelNode relNode) {
+            LogicalAggregate aggregate = (LogicalAggregate) relNode;
+            RelNode input = convert(aggregate.getInput(), aggregate.getInput().getTraitSet().replace(WayangConvention.INSTANCE));
+
+            return new WayangAggregate(
+                    aggregate.getCluster(),
+                    aggregate.getTraitSet().replace(WayangConvention.INSTANCE),
+                    aggregate.getHints(),
+                    input,
+                    aggregate.getGroupSet(),
+                    aggregate.getGroupSets(),
+                    aggregate.getAggCallList()
             );
         }
     }

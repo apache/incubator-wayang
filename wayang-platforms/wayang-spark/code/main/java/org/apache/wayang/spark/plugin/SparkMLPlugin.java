@@ -21,40 +21,33 @@ package org.apache.wayang.spark.plugin;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
-import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.plugin.Plugin;
-import org.apache.wayang.java.platform.JavaPlatform;
-import org.apache.wayang.spark.channels.ChannelConversions;
 import org.apache.wayang.spark.mapping.Mappings;
 import org.apache.wayang.spark.platform.SparkPlatform;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
-/**
- * This {@link Plugin} enables to use the basic Wayang {@link Operator}s on the {@link SparkPlatform}.
- */
-public class SparkBasicPlugin implements Plugin {
+public class SparkMLPlugin implements Plugin {
 
     @Override
     public Collection<Mapping> getMappings() {
-        return Mappings.BASIC_MAPPINGS;
+        return Mappings.ML_MAPPINGS;
     }
 
     @Override
     public Collection<ChannelConversion> getChannelConversions() {
-        return ChannelConversions.ALL;
+        return Collections.emptyList();
     }
 
     @Override
     public Collection<Platform> getRequiredPlatforms() {
-        return Arrays.asList(SparkPlatform.getInstance(), JavaPlatform.getInstance());
+        return Collections.singletonList(SparkPlatform.getInstance());
     }
 
     @Override
     public void setProperties(Configuration configuration) {
         // Nothing to do, because we already configured the properties in #configureDefaults(...).
     }
-
 }

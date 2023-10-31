@@ -104,10 +104,8 @@ public class Grep implements Serializable {
     String input = args[2]+"/python/src/pywy/tests/resources/10e"+size+"MB.input";
     String output = args[2]+"/lala.out";
 
-    String command = "rm -r "+output;
-    Runtime rt = Runtime.getRuntime();
-    Process process = rt.exec(new String[] {
-                    (command)});
+    String[] command = {"rm", "-r", output};
+    Process process = Runtime.getRuntime().exec(command);
 
     long pre = System.currentTimeMillis();
     switch (platform){

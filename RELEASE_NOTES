@@ -14,7 +14,7 @@ Previous updates that are included in this release:
 - Java Streams (version depends on the java version)
 - JDBC-Template
 - Postgres v9.4.1208 (Implementation JDBC-Template)
-- Apache Spark v3.1.2 (scala 12.x) and v2.4.8 (scala 11.x)
+- Apache Spark v3.1.2 (scala 2.12) and v2.4.8 (scala 2.11)
 - SQLite3 v3.8.11.2 (implementation JDBC-Template)
 
 NOTE: depending on the scala version the list of the supported platforms available
@@ -32,70 +32,7 @@ Test classes and operators for Flink
 Support for S3 files locations
 Initial version of the SQL API and suppport for joins
 
+Basic SQL support
 
 Incompatible changes
 --------------------
-Removing [WAYANG-273] - WebUI Draft from release
-
-Miscellaneous changes
----------------------
-
-Updates in documentation files:
-    - README.md
-    - NOTICE
-    - DISCLAIMER.md
-    - Usage instructions
-    - Add EPL and PD license
-
-CI updates:
-    - Protoc
-    - Skywalking-eyes check
-    - Deadlink check
-    - CodeQl Check
-    - UT check
-    - Auto Build And Install
-    - Create Issues from the TODO in the code
-    - Removed Travis, added Apache Calcite
-
-Update maven-wrapper to 3.1.0, maven to 3.8.4 for performance improvements
-Update .dlc.json
-Updates for monitoring the runtime metrics of underlying platform (Spark)
-[WAYANG-47] Properties Spark 2.11 updated with Spark version
-
-
-Known Issues
-------------
-Wayang Doc tests need further improvements.
-
-Bug Fixes
----------
-Delete paranamer-2.3 from dependecies (PR#76)
-Code scanning alert (PR#80)
-Correction in DistinctOperator for Apache Flink (PR#226)
-Fix of broken links
-Fix on WayangJoinVisitor
-Concat strings vulnerability
-[WAYANG-assembly] correction in the folder structure (PR#259)
-[WAYANG-48] Fix errors when running WordCount
-
-
-New Contributors
----------
-
-* @chrisdutz made their first contribution in https://github.com/apache/incubator-wayang/pull/1
-* @2pk03 made their first contribution in https://github.com/apache/incubator-wayang/pull/8
-* @ggevay made their first contribution in https://github.com/apache/incubator-wayang/pull/27
-* @CalvinKirs made their first contribution in https://github.com/apache/incubator-wayang/pull/44
-* @hboutemy made their first contribution in https://github.com/apache/incubator-wayang/pull/77
-* @regaleo605 made their first contribution in https://github.com/apache/incubator-wayang/pull/78
-* @zkaoudi made their first contribution in https://github.com/apache/incubator-wayang/pull/230
-* @JorgeQuiane made their first contribution in https://github.com/apache/incubator-wayang/pull/231
-* @kbeedkar made their first contribution in https://github.com/apache/incubator-wayang/pull/284
-* @bgeng777 made their first contribution in https://github.com/apache/incubator-wayang/pull/301
-* @damik3 made their first contribution in https://github.com/apache/incubator-wayang/pull/304
-* @kmoltke made their first contribution in https://github.com/apache/incubator-wayang/pull/309
-* @michellesackmann made their first contribution in https://github.com/apache/incubator-wayang/pull/310
-* @AdeelAslamUnimore made their first contribution in https://github.com/apache/incubator-wayang/pull/311
-* @ichbinrich made their first contribution in https://github.com/apache/incubator-wayang/pull/315
-
-
