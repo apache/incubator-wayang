@@ -152,10 +152,10 @@ public class SparkPlatform extends Platform {
         final JavaSparkContext sparkContext = this.sparkContextReference.get();
 
         //SparkContext sc= sparkContext.sc();
-        if(job.isMontiorWithHackIT()) {
-            sparkConf.set("spark.extraListeners","org.apache.wayang.spark.monitoring.spark_monitoring.SparkListener");
-            sparkContext.sc().addSparkListener(new SparkListener());
-        }
+        // if(job.isMontiorWithHackIT()) {
+        //     sparkConf.set("spark.extraListeners","org.apache.wayang.spark.monitoring.spark_monitoring.SparkListener");
+        //     sparkContext.sc().addSparkListener(new SparkListener());
+        // }
         if (!sparkContext.isLocal()) {
             // Add Wayang JAR files.
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // wayang-spark
