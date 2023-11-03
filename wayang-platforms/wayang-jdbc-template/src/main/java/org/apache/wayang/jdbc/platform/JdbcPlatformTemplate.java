@@ -47,6 +47,8 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     public final String jdbcPasswordProperty = String.format("wayang.%s.jdbc.password", this.getPlatformId());
 
+    public final String jdbcDriverName = String.format("wayang.%s.jdbc.drivername", this.getPlatformId());
+
     private String getDefaultConfigurationFile() {
         return String.format("wayang-%s-defaults.properties", this.getPlatformId());
     }
@@ -132,7 +134,8 @@ public abstract class JdbcPlatformTemplate extends Platform {
                 configuration.getStringProperty(this.jdbcUrlProperty),
                 configuration.getStringProperty(this.jdbcUserProperty, null),
                 configuration.getStringProperty(this.jdbcPasswordProperty, null),
-                this.getJdbcDriverClassName()
+                configuration.getStringProperty(this.jdbcDriverName)
+//                this.getJdbcDriverClassName()
         );
     }
 }

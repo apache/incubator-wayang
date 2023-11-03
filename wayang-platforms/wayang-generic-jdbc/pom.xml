@@ -21,42 +21,36 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>wayang</artifactId>
+        <artifactId>wayang-platforms</artifactId>
         <groupId>org.apache.wayang</groupId>
         <version>0.7.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>wayang-platforms</artifactId>
+    <artifactId>wayang-generic-jdbc</artifactId>
     <version>0.7.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
 
-    <name>Wayang Platform</name>
+    <name>Wayang Platform Generic Jdbc</name>
     <description>
-        This module aggregates platforms implemented on Wayang.
+        Wayang implementation of the operators to be working with the platform "Postgres"
     </description>
 
-    <modules>
-        <module>wayang-java</module>
-        <module>wayang-spark</module>
-        <module>wayang-postgres</module>
-        <module>wayang-jdbc-template</module>
-        <module>wayang-sqlite3</module>
-        <module>wayang-giraph</module>
-        <module>wayang-flink</module>
-        <module>wayang-graphchi</module>
-        <module>wayang-generic-jdbc</module>
-    </modules>
+    <properties>
+        <java-module-name>org.apache.wayang.platform.genericjdbc</java-module-name>
+        <postgres.version>42.3.8</postgres.version>
+    </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.wayang</groupId>
-                <artifactId>wayang-commons</artifactId>
-                <version>0.7.1-SNAPSHOT</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.wayang</groupId>
+            <artifactId>wayang-basic</artifactId>
+            <version>0.7.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.wayang</groupId>
+            <artifactId>wayang-jdbc-template</artifactId>
+            <version>0.7.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
 
 </project>
