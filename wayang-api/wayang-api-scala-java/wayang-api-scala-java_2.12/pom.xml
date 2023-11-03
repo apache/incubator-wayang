@@ -32,13 +32,11 @@
       <groupId>org.apache.wayang</groupId>
       <artifactId>wayang-spark_2.12</artifactId>
       <version>0.6.1-SNAPSHOT</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.12</artifactId>
       <version>${spark.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>

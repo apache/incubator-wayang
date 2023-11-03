@@ -46,17 +46,26 @@ object Test1 {
       configuration2 = Some(loadConfiguration(args(1)))
     }
 
-    val context1 = new BlossomContext(configuration1.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11.txt")
-    val context2 = new BlossomContext(configuration2.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out12.txt")
+    val context1 = new BlossomContext(configuration1.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
+    val context2 = new BlossomContext(configuration2.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out12")
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[Test1])
 
+    val beforeUsedMem = Runtime.getRuntime.totalMemory() - Runtime.getRuntime.freeMemory()
     multiContextPlanBuilder
       .readTextFile("file:///tmp/in1.txt")
       .map(s => s + " Wayang out.")
       .filter(s => s.length > 20)
       .execute()
+    val afterUsedMem = Runtime.getRuntime.totalMemory() - Runtime.getRuntime.freeMemory()
+
+    val actualMemUsed = afterUsedMem - beforeUsedMem
+
+    println()
+    println(s"Used $actualMemUsed")   // Printed "Used 69,681,136", "Used 63,189,776", "Used 36,298,936", "Used 52,618,920"
+    println()
+
   }
 
 

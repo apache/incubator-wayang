@@ -18,18 +18,22 @@
 
 package org.apache.wayang.api
 
+import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
+import org.apache.logging.log4j.{LogManager, Logger}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.plugin.Plugin
 
 class BlossomContext(configuration: Configuration) extends WayangContext(configuration) {
 
-  var sink: Option[BlossomContext.UnarySink] = None
+  private var sink: Option[BlossomContext.UnarySink] = None
+  private var plugins: List[String] = List()
 
   def this() = {
     this(new Configuration())
   }
 
   override def withPlugin(plugin: Plugin): BlossomContext = {
+    this.plugins = this.plugins :+ plugin.getClass.getName
     super.withPlugin(plugin)
     this
   }
@@ -44,7 +48,8 @@ class BlossomContext(configuration: Configuration) extends WayangContext(configu
     this
   }
 
-
+  def getSink: Option[BlossomContext.UnarySink] = sink
+  def getPlugins: List[String] = plugins
 }
 
 object BlossomContext {
