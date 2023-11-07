@@ -1524,6 +1524,7 @@
         <module>wayang-resources</module>
         <module>wayang-benchmark</module>
         <module>wayang-assembly</module>
+        <module>wayang-ml4all</module>
         <!-- <module>wayang-docs</module> -->
     </modules>
 </project>

@@ -34,7 +34,7 @@ import static org.apache.wayang.ml4all.abstraction.plan.Platforms.*;
 public class RunSGD {
 
     // Default parameters.
-    static String relativePath = "wayang-ml4all/src/main/resources/input/adult.zeros";
+    static String relativePath = "wayang-ml4all/src/main/resources/input/adult.zeros.input";
     static int datasetSize  = 100827;
     static int features = 123;
 

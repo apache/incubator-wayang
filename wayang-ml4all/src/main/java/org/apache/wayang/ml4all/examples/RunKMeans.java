@@ -38,7 +38,7 @@ public class RunKMeans {
         int numberOfCentroids = 3;
 //        String file = "fsrc/main/resources/input/kmeans_data.txt";
 //        int dimension = 3;
-        String relativePath = "wayang-ml4all/src/main/resources/input/USCensus1990-sample.txt";
+        String relativePath = "wayang-ml4all/src/main/resources/input/USCensus1990-sample.input";
         String file = new File(relativePath).getAbsoluteFile().toURI().toURL().toString();
         String propertiesFile = new File("wayang-ml4all/src/main/resources/wayang.properties").getAbsoluteFile().toURI().toURL().toString();
         int dimension = 68;
