@@ -19,7 +19,10 @@
 
 package org.apache.wayang.api
 
+import org.apache.wayang.api.serialization.SerializationUtils
+import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.api.exception.WayangException
+import org.apache.wayang.spark.Spark
 
 import java.io.{FileInputStream, FileOutputStream}
 import java.nio.file.{Files, Path}
@@ -65,20 +68,29 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaList: List[DataQuanta[
   }
 
   def execute2(): Unit = {
+    println("Inside execute2")
     dataQuantaList.zip(multiContextPlanBuilder.contexts).foreach {
       case (dataQuanta, context) =>
-        val dataQuantaPath = MultiContextDataQuanta.writeToTempFile(dataQuanta)
-        val contextPath = MultiContextDataQuanta.writeToTempFile(context)
+        // TODO:
+//        val dataQuantaPath = MultiContextDataQuanta.writeToTempFile(dataQuanta)
+//        val contextPath = MultiContextDataQuanta.writeToTempFile(context)
+        val dataQuantaPath = context.getSink.get.asInstanceOf[BlossomContext.TextFileSink].textFileUrl
+        val contextPath = "dummy_value"
 
         val wayangHome = System.getenv("WAYANG_HOME")
 
         // Spawn a new process and pass the temp file paths as command-line arguments
-        val process = new ProcessBuilder(s"$wayangHome/bin/wayang-submit", "org.apache.wayang.api.MultiContextDataQuanta", dataQuantaPath.toString, contextPath.toString).start()
+        println(s"About to start a process with arg ${dataQuantaPath}")
+        val processBuilder = new ProcessBuilder(s"$wayangHome/bin/wayang-submit", "org.apache.wayang.api.MultiContextDataQuanta", dataQuantaPath.toString, contextPath.toString)
+        processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT)
+        val process = processBuilder.start()
         process.waitFor() // Wait for the process to complete. Remove if asynchronous execution is desired.
 
-        // Cleanup: Delete the temp files (optional if you want to inspect them post-execution)
-        Files.deleteIfExists(dataQuantaPath)
-        Files.deleteIfExists(contextPath)
+
+      // Cleanup: Delete the temp files (optional if you want to inspect them post-execution)
+//        Files.deleteIfExists(dataQuantaPath)
+//        Files.deleteIfExists(contextPath)
     }
   }
 
@@ -122,25 +134,37 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaList: List[DataQuanta[
 
 object MultiContextDataQuanta {
   def main(args: Array[String]): Unit = {
+    println("args")
+    println(args.mkString("Array(", ", ", ")"))
     if (args.length != 2) {
       System.err.println("Expected two arguments: paths to the serialized dataQuanta and context.")
       System.exit(1)
     }
 
-    println("New process here!")
+    println(s"New process here about to write to ${args.head}!")
 
-    val dataQuantaPath = Path.of(args(0))
-    val contextPath = Path.of(args(1))
+    // TODO:
 
-    val dataQuanta = MultiContextDataQuanta.readFromTempFile(dataQuantaPath).asInstanceOf[DataQuanta[Any]]
-    val context = MultiContextDataQuanta.readFromTempFile(contextPath).asInstanceOf[BlossomContext]
+    val configuration = new Configuration()
+    val wayangContext = new WayangContext(configuration).withPlugin(Spark.basicPlugin())
+    new PlanBuilder(wayangContext)
+      .readTextFile("file:///tmp/in1.txt")
+      .map(s => s + " Wayang out.")
+      .filter(s => s.length > 20)
+      .writeTextFile(args.head, s => s)
 
-    // Now, you can perform your operation as before
-    context.getSink match {
-      case Some(textFileSink: BlossomContext.TextFileSink) => dataQuanta.writeTextFile(textFileSink.textFileUrl, s => s.toString)
-      case Some(objectFileSink: BlossomContext.ObjectFileSink) => dataQuanta.writeTextFile(objectFileSink.textFileUrl, s => s.toString)
-      case None => throw new WayangException("All contexts must be attached to an output sink.")
-    }
+//    val dataQuantaPath = Path.of(args(0))
+//    val contextPath = Path.of(args(1))
+//
+//    val dataQuanta = MultiContextDataQuanta.readFromTempFile(dataQuantaPath).asInstanceOf[DataQuanta[Any]]
+//    val context = MultiContextDataQuanta.readFromTempFile(contextPath).asInstanceOf[BlossomContext]
+//
+//    // Now, you can perform your operation as before
+//    context.getSink match {
+//      case Some(textFileSink: BlossomContext.TextFileSink) => dataQuanta.writeTextFile(textFileSink.textFileUrl, s => s.toString)
+//      case Some(objectFileSink: BlossomContext.ObjectFileSink) => dataQuanta.writeTextFile(objectFileSink.textFileUrl, s => s.toString)
+//      case None => throw new WayangException("All contexts must be attached to an output sink.")
+//    }
   }
 
   private def writeToTempFile(obj: AnyRef): Path = {

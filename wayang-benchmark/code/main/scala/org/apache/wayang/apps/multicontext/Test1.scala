@@ -30,7 +30,7 @@ object Test1 {
 
   def main(args: Array[String]): Unit = {
 
-    println("Multi world 123!")
+    println("Multi world 123456!")
     println(scala.util.Properties.versionString)
 
     var configuration1: Option[Configuration] = None
@@ -49,7 +49,7 @@ object Test1 {
     val context1 = new BlossomContext(configuration1.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
     val context2 = new BlossomContext(configuration2.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out12")
 
-    val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
+    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[Test1])
 
     val beforeUsedMem = Runtime.getRuntime.totalMemory() - Runtime.getRuntime.freeMemory()
@@ -57,7 +57,7 @@ object Test1 {
       .readTextFile("file:///tmp/in1.txt")
       .map(s => s + " Wayang out.")
       .filter(s => s.length > 20)
-      .execute()
+      .execute2()
     val afterUsedMem = Runtime.getRuntime.totalMemory() - Runtime.getRuntime.freeMemory()
 
     val actualMemUsed = afterUsedMem - beforeUsedMem

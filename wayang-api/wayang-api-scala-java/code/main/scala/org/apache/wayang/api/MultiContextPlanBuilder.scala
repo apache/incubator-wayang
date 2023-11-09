@@ -18,11 +18,9 @@
 
 package org.apache.wayang.api
 
-class MultiContextPlanBuilder(val contexts: List[BlossomContext], jobName: String) {
+case class MultiContextPlanBuilder(var contexts: List[BlossomContext]) {
 
-  private var withClassesOf: Option[Seq[Class[_]]] = None
-
-  def this(contexts: List[BlossomContext]) = this(contexts, null)
+  private[api] var withClassesOf: Option[Seq[Class[_]]] = None
 
   def withUdfJarsOf(classes: Class[_]*): MultiContextPlanBuilder = {
     this.withClassesOf = Some(classes)
@@ -32,10 +30,10 @@ class MultiContextPlanBuilder(val contexts: List[BlossomContext], jobName: Strin
   def readTextFile(url: String): MultiContextDataQuanta[String] = {
 
     new MultiContextDataQuanta[String](
-      contexts.map(wayangContext => {
+      contexts.map(blossomContext => {
         this.withClassesOf match {
-          case Some(classes) => new PlanBuilder(wayangContext).withUdfJarsOf(classes: _*).readTextFile(url)
-          case None => new PlanBuilder(wayangContext).readTextFile(url)
+          case Some(classes) => new PlanBuilder(blossomContext).withUdfJarsOf(classes: _*).readTextFile(url)
+          case None => new PlanBuilder(blossomContext).readTextFile(url)
         }
       })
     )(this)
