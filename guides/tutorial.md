@@ -29,14 +29,14 @@ Running following commands to build Wayang and generate the tar.gz
 cd incubator-wayang
 ./mvnw clean package -pl :wayang-assembly -Pdistribution 
 ```
-Then you can find the `wayang-assembly-0.6.1-SNAPSHOT-dist.tar.gz` under `wayang-assembly/target` directory.
+Then you can find the `wayang-assembly-0.7.1-SNAPSHOT-dist.tar.gz` under `wayang-assembly/target` directory.
 
 
 # Prepare the environment
 ## Wayang
 ```shell
-tar -xvf wayang-assembly-0.6.1-SNAPSHOT-dist.tar.gz
-cd wayang-0.6.1-SNAPSHOT
+tar -xvf wayang-assembly-0.7.1-SNAPSHOT-dist.tar.gz
+cd wayang-0.7.1-SNAPSHOT
 ```
 
 In linux
@@ -60,7 +60,7 @@ source ~/.zshrc
 To execute the WordCount example with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
 
 ```shell
-cd wayang-0.6.1-SNAPSHOT
+cd wayang-0.7.1-SNAPSHOT
 ./bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
 ```
 Then you should be able to see outputs like this:
