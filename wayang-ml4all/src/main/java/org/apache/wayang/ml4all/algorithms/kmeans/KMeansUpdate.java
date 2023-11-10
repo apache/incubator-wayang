@@ -20,14 +20,14 @@ package org.apache.wayang.ml4all.algorithms.kmeans;
 
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.ml4all.abstraction.api.Update;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 
 import java.util.List;
 
 public class KMeansUpdate extends Update<Tuple2<Integer, double[]>, Tuple2<Integer, Tuple2<Integer, double[]>>> {
 
     @Override
-    public Tuple2<Integer, double[]> process(Tuple2<Integer, Tuple2<Integer, double[]>> input, ML4allContext context) {
+    public Tuple2<Integer, double[]> process(Tuple2<Integer, Tuple2<Integer, double[]>> input, ML4allGlobalVars context) {
         int count = input.field1.field0;
         double[] newCenter = input.field1.field1;
         for (int j = 0; j < newCenter.length; j++) {
@@ -37,7 +37,7 @@ public class KMeansUpdate extends Update<Tuple2<Integer, double[]>, Tuple2<Integ
     }
 
     @Override
-    public ML4allContext assign(List<Tuple2<Integer, double[]>> input, ML4allContext context) {
+    public ML4allGlobalVars assign(List<Tuple2<Integer, double[]>> input, ML4allGlobalVars context) {
         double[][] centers = (double[][]) context.getByKey("centers");
         for (int i = 0; i < input.size(); i++) {
             Tuple2<Integer, double[]> c = input.get(i);

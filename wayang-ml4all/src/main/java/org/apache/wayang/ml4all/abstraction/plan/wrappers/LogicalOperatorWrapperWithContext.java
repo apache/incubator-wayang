@@ -20,18 +20,18 @@ package org.apache.wayang.ml4all.abstraction.plan.wrappers;
 
 import org.apache.wayang.core.function.ExecutionContext;
 import org.apache.wayang.core.function.FunctionDescriptor;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 
 public abstract class LogicalOperatorWrapperWithContext<R, V> implements FunctionDescriptor.ExtendedSerializableFunction<V, R> {
 
-    protected ML4allContext context;
+    protected ML4allGlobalVars context;
     int currentIteration;
     private boolean first = true;
 
     @Override
     public void open(ExecutionContext executionContext) {
         currentIteration = executionContext.getCurrentIteration();
-        context = executionContext.<ML4allContext>getBroadcast("context").iterator().next();
+        context = executionContext.<ML4allGlobalVars>getBroadcast("context").iterator().next();
         if (this instanceof ComputePerPartitionWrapper) {
             if (first) {
                 initialise();

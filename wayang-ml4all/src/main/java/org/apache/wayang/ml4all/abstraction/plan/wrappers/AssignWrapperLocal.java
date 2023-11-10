@@ -19,10 +19,9 @@
 package org.apache.wayang.ml4all.abstraction.plan.wrappers;
 
 import org.apache.wayang.ml4all.abstraction.api.UpdateLocal;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
-import org.apache.wayang.ml4all.abstraction.plan.wrappers.LogicalOperatorWrapperWithContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 
-public class AssignWrapperLocal<V> extends LogicalOperatorWrapperWithContext<ML4allContext, V> {
+public class AssignWrapperLocal<V> extends LogicalOperatorWrapperWithContext<ML4allGlobalVars, V> {
 
     UpdateLocal<V,?> logOp;
 
@@ -31,8 +30,8 @@ public class AssignWrapperLocal<V> extends LogicalOperatorWrapperWithContext<ML4
     }
 
     @Override
-    public ML4allContext apply(V o) {
-        ML4allContext newContext = context.clone();
+    public ML4allGlobalVars apply(V o) {
+        ML4allGlobalVars newContext = context.clone();
         return this.logOp.assign(o, newContext);
     }
 

@@ -19,13 +19,13 @@
 package org.apache.wayang.ml4all.algorithms.sgd;
 
 import org.apache.wayang.ml4all.abstraction.api.Compute;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 
 public class ComputeLogisticGradient extends Compute<double[], double[]> {
 
 
     @Override
-    public double[] process(double[] point, ML4allContext context) {
+    public double[] process(double[] point, ML4allGlobalVars context) {
 
         double[] weights = (double[]) context.getByKey("weights");
         double[] gradient = new double[point.length];

@@ -18,10 +18,10 @@
 
 package org.apache.wayang.ml4all.abstraction.api;
 
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 
 public abstract class LocalStage extends LogicalOperator {
 
     /* initialize variables and add them in the context */
-    public abstract void staging (ML4allContext context);
+    public abstract void staging (ML4allGlobalVars context);
 }

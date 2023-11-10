@@ -18,7 +18,7 @@
 
 package org.apache.wayang.ml4all.abstraction.api;
 
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 
 /**
  * Created by zoi on 22/1/15.
@@ -31,7 +31,7 @@ public abstract class Compute<R, V> extends LogicalOperator {
      * @param input a data unit
      * @param context
      */
-    public abstract R process(V input, ML4allContext context);
+    public abstract R process(V input, ML4allGlobalVars context);
 
     /**
      * Aggregates the output of the process() method to use in a group by

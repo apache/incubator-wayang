@@ -18,7 +18,7 @@
 
 package org.apache.wayang.ml4all.examples;
 
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 import org.apache.wayang.ml4all.abstraction.plan.ML4allPlan;
 import org.apache.wayang.ml4all.abstraction.plan.Platforms;
 import org.apache.wayang.ml4all.algorithms.kmeans.*;
@@ -34,8 +34,6 @@ public class RunKMeans {
     public static void main(String[] args) throws MalformedURLException {
 
         int numberOfCentroids = 3;
-//        String file = "fsrc/main/resources/input/kmeans_data.txt";
-//        int dimension = 3;
         String relativePath = "wayang-ml4all/src/main/resources/input/USCensus1990-sample.input";
         String file = new File(relativePath).getAbsoluteFile().toURI().toURL().toString();
         String propertiesFile = new File("wayang-ml4all/src/main/resources/wayang.properties").getAbsoluteFile().toURI().toURL().toString();
@@ -68,7 +66,7 @@ public class RunKMeans {
         plan.setUpdateOp(new KMeansUpdate());
         plan.setLoopOp(new KMeansConvergeOrMaxIterationsLoop(accuracy, maxIterations));
 
-        ML4allContext context = plan.execute(file, platform, propertiesFile);
+        ML4allGlobalVars context = plan.execute(file, platform, propertiesFile);
         System.out.println("Centers:" + Arrays.deepToString((double [][])context.getByKey("centers")));
 
         System.out.println("Total time: " + (System.currentTimeMillis() - start_time));

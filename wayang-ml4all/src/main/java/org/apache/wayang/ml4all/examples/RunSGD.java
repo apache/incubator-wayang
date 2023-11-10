@@ -18,7 +18,7 @@
 
 package org.apache.wayang.ml4all.examples;
 
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 import org.apache.wayang.ml4all.abstraction.plan.ML4allPlan;
 import org.apache.wayang.ml4all.abstraction.plan.Platforms;
 import org.apache.wayang.ml4all.algorithms.sgd.*;
@@ -91,7 +91,7 @@ public class RunSGD {
         plan.setUpdateLocalOp(new WeightsUpdate());
         plan.setLoopOp(new SGDLoop(accuracy, max_iterations));
 
-        ML4allContext context = plan.execute(file, platform, propertiesFile);
+        ML4allGlobalVars context = plan.execute(file, platform, propertiesFile);
         System.out.println("Training finished in " + (System.currentTimeMillis() - start_time));
         System.out.println(context);
         System.out.println("Weights:" + Arrays.toString((double [])context.getByKey("weights")));

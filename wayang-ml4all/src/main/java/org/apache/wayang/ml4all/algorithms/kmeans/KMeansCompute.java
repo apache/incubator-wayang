@@ -20,12 +20,12 @@ package org.apache.wayang.ml4all.algorithms.kmeans;
 
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.ml4all.abstraction.api.Compute;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 
 public class KMeansCompute extends Compute<Tuple2<Integer, Tuple2<Integer, double[]>>, double[]> {
 
     @Override
-    public Tuple2 process(double[] input, ML4allContext context) {
+    public Tuple2 process(double[] input, ML4allGlobalVars context) {
         double[][] centers = (double[][]) context.getByKey("centers");
         double min = Double.MAX_VALUE;
         int minIndex = 0;

@@ -38,7 +38,6 @@ import org.apache.wayang.spark.Spark;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 /**
  * Wayang physical plan for ML4all algorithms
@@ -148,22 +147,22 @@ public class ML4allPlan {
     }
 
     /*
-     * Return the last state of ML4allContext that contains the model
+     * Return the last state of ML4allGlobalVars that contains the model
      */
-    public ML4allContext execute(String inputFileUrl, Platforms platform, String propertiesFile) {
+    public ML4allGlobalVars execute(String inputFileUrl, Platforms platform, String propertiesFile) {
         // Instantiate Wayang and activate the backend.
         WayangContext wayangContext = initiateWayangContext(platform, propertiesFile);
 
         JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext)
-                .withUdfJar(ReflectionUtils.getDeclaringJar(ML4allContext.class))
+                .withUdfJar(ReflectionUtils.getDeclaringJar(ML4allGlobalVars.class))
                 .withUdfJar(ReflectionUtils.getDeclaringJar(JavaPlatform.class))
                 .withJobName("ML4all plan");
 
-        ML4allContext context = new ML4allContext();
-        localStageOp.staging(context);
-        ArrayList<ML4allContext> broadcastContext = new ArrayList<>(1);
-        broadcastContext.add(context);
-        final DataQuantaBuilder<?, ML4allContext> contextBuilder = javaPlanBuilder.loadCollection(broadcastContext).withName("init context");
+        ML4allGlobalVars vars = new ML4allGlobalVars();
+        localStageOp.staging(vars);
+        ArrayList<ML4allGlobalVars> broadcastContext = new ArrayList<>(1);
+        broadcastContext.add(vars);
+        final DataQuantaBuilder<?, ML4allGlobalVars> contextBuilder = javaPlanBuilder.loadCollection(broadcastContext).withName("init context");
 
         if (platform.equals(Platforms.SPARK_JAVA)) {
             final DataQuantaBuilder transformBuilder = javaPlanBuilder
@@ -172,12 +171,12 @@ public class ML4allPlan {
                     .mapPartitions(new TransformPerPartitionWrapper(transformOp)).withName("transform")
                     .withTargetPlatform(Spark.platform());
 
-            Collection<ML4allContext> results =
+            Collection<ML4allGlobalVars> results =
                     contextBuilder.doWhile((PredicateDescriptor.SerializablePredicate<Collection<Double>>) collection ->
                                     new LoopCheckWrapper<>(loopOp).apply(collection.iterator().next()), ctx -> {
 
-                                DataQuantaBuilder convergenceDataset; //TODO: don't restrict the convergence value to be double
-                                DataQuantaBuilder<?, ML4allContext> newContext;
+                                DataQuantaBuilder convergenceDataset;
+                                DataQuantaBuilder<?, ML4allGlobalVars> newContext;
 
                                 DataQuantaBuilder sampledData;
                                 if (hasSample()) //sample data first
@@ -232,12 +231,12 @@ public class ML4allPlan {
                     .readTextFile(inputFileUrl).withName("source")
                     .mapPartitions(new TransformPerPartitionWrapper(transformOp)).withName("transform");
 
-            Collection<ML4allContext> results =
+            Collection<ML4allGlobalVars> results =
                     contextBuilder.doWhile((PredicateDescriptor.SerializablePredicate<Collection<Double>>) collection ->
                             new LoopCheckWrapper<>(loopOp).apply(collection.iterator().next()), ctx -> {
 
                         DataQuantaBuilder convergenceDataset;
-                        DataQuantaBuilder<?, ML4allContext> newContext;
+                        DataQuantaBuilder<?, ML4allGlobalVars> newContext;
 
                         DataQuantaBuilder sampledData;
                         if (hasSample()) //sample data first

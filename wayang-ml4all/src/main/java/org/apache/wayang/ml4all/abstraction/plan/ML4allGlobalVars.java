@@ -24,11 +24,11 @@ import java.util.HashMap;
 /**
  * For keeping global variables to access in the logical operators.
  */
-public class ML4allContext implements Serializable {
+public class ML4allGlobalVars implements Serializable {
 
     private HashMap<String, Object> map = new HashMap(32);
 
-    public ML4allContext put(String key, Object value) {
+    public ML4allGlobalVars put(String key, Object value) {
         this.map.put(key, value);
         return this;
     }
@@ -38,8 +38,8 @@ public class ML4allContext implements Serializable {
     }
 
     @Override
-    public ML4allContext clone() {
-        ML4allContext newContext = new ML4allContext();
+    public ML4allGlobalVars clone() {
+        ML4allGlobalVars newContext = new ML4allGlobalVars();
         this.map.forEach((k,v) -> newContext.put(k, v));
         return newContext;
     }

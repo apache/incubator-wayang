@@ -19,7 +19,7 @@
 package org.apache.wayang.ml4all.algorithms.sgd;
 
 import org.apache.wayang.ml4all.abstraction.api.UpdateLocal;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allContext;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
 
 public class WeightsUpdate extends UpdateLocal<double[], double[]> {
 
@@ -37,7 +37,7 @@ public class WeightsUpdate extends UpdateLocal<double[], double[]> {
     }
 
     @Override
-    public double[] process(double[] input, ML4allContext context) {
+    public double[] process(double[] input, ML4allGlobalVars context) {
         double[] weights = (double[]) context.getByKey("weights");
         double count = input[0];
         int current_iteration = (int) context.getByKey("iter");
@@ -50,7 +50,7 @@ public class WeightsUpdate extends UpdateLocal<double[], double[]> {
     }
 
     @Override
-    public ML4allContext assign(double[] input, ML4allContext context) {
+    public ML4allGlobalVars assign(double[] input, ML4allGlobalVars context) {
         context.put("weights", input);
         int iteration = (int) context.getByKey("iter");
         context.put("iter", ++iteration);
