@@ -116,42 +116,12 @@ public class ML4allPlan {
         this.datasetsize = datasetsize;
     }
 
-
-    public WayangContext initiateWayangContext(Platforms platform, String propertiesFile) {
-        // Instantiate Wayang and activate the backend.
-        Configuration conf;
-        if (propertiesFile == null)
-            conf = new Configuration();
-        else
-            conf = new Configuration(propertiesFile);
-        WayangContext wayangContext = new WayangContext(conf);
-
-        switch (platform) {
-            case SPARK:
-                wayangContext.with(Spark.basicPlugin());
-                break;
-            case JAVA:
-                wayangContext.with(Java.basicPlugin());
-                break;
-            case SPARK_JAVA:
-                wayangContext.with(Java.basicPlugin());
-                wayangContext.with(Spark.basicPlugin());
-                break;
-            default:
-                System.err.format("Unknown platform: \"%s\"\n", platform);
-                System.exit(3);
-                return null;
-        }
-        wayangContext.getConfiguration().setProperty("wayang.core.optimizer.reoptimize", "false");
-        return wayangContext;
-    }
-
     /*
      * Return the last state of ML4allGlobalVars that contains the model
      */
-    public ML4allGlobalVars execute(String inputFileUrl, Platforms platform, String propertiesFile) {
-        // Instantiate Wayang and activate the backend.
-        WayangContext wayangContext = initiateWayangContext(platform, propertiesFile);
+    public ML4allGlobalVars execute(String inputFileUrl, WayangContext wayangContext) {
+
+        wayangContext.getConfiguration().setProperty("wayang.core.optimizer.reoptimize", "false");
 
         JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext)
                 .withUdfJar(ReflectionUtils.getDeclaringJar(ML4allGlobalVars.class))
@@ -164,125 +134,62 @@ public class ML4allPlan {
         broadcastContext.add(vars);
         final DataQuantaBuilder<?, ML4allGlobalVars> contextBuilder = javaPlanBuilder.loadCollection(broadcastContext).withName("init context");
 
-        if (platform.equals(Platforms.SPARK_JAVA)) {
-            final DataQuantaBuilder transformBuilder = javaPlanBuilder
-                    .readTextFile(inputFileUrl).withName("source")
-                    .withTargetPlatform(Spark.platform())
-                    .mapPartitions(new TransformPerPartitionWrapper(transformOp)).withName("transform")
-                    .withTargetPlatform(Spark.platform());
+        final DataQuantaBuilder transformBuilder = javaPlanBuilder
+                .readTextFile(inputFileUrl).withName("source")
+                .mapPartitions(new TransformPerPartitionWrapper(transformOp)).withName("transform");
 
-            Collection<ML4allGlobalVars> results =
-                    contextBuilder.doWhile((PredicateDescriptor.SerializablePredicate<Collection<Double>>) collection ->
-                                    new LoopCheckWrapper<>(loopOp).apply(collection.iterator().next()), ctx -> {
+        Collection<ML4allGlobalVars> results =
+                contextBuilder.doWhile((PredicateDescriptor.SerializablePredicate<Collection<Double>>) collection ->
+                        new LoopCheckWrapper<>(loopOp).apply(collection.iterator().next()), ctx -> {
 
-                                DataQuantaBuilder convergenceDataset;
-                                DataQuantaBuilder<?, ML4allGlobalVars> newContext;
+                    DataQuantaBuilder convergenceDataset;
+                    DataQuantaBuilder<?, ML4allGlobalVars> newContext;
 
-                                DataQuantaBuilder sampledData;
-                                if (hasSample()) //sample data first
-                                    sampledData = transformBuilder
-                                            .customOperator(new SampleOperator(iter -> sampleOp.sampleSize(), DataSetType.createDefault(Void.class), sampleOp.sampleMethod(), iter -> sampleOp.seed(iter)));
-                                else //sampled data is entire dataset
-                                    sampledData = transformBuilder;
+                    DataQuantaBuilder sampledData;
+                    if (hasSample()) //sample data first
+                        sampledData = transformBuilder
+                                .sample(sampleOp.sampleSize()).withSampleMethod(sampleOp.sampleMethod()).withDatasetSize(datasetsize).withBroadcast(ctx, "context");
+                    else //sampled data is entire dataset
+                        sampledData = transformBuilder;
 
-                                if (isUpdateLocal()) { //eg., for GD
-                                    DataQuantaBuilder newWeights = sampledData
-                                            .map(new ComputeWrapper<>(computeOp)).withBroadcast(ctx, "context").withName("compute")
-                                            .reduce(new AggregateWrapper<>(computeOp)).withName("reduce")
-                                            .map(new UpdateLocalWrapper(updateLocalOp)).withBroadcast(ctx, "context").withName("update").withTargetPlatform(Java.platform());
+                    if (isUpdateLocal()) { //eg., for GD
+                        DataQuantaBuilder newWeights = sampledData
+                                .map(new ComputeWrapper<>(computeOp)).withBroadcast(ctx, "context").withName("compute")
+                                .reduce(new AggregateWrapper<>(computeOp)).withName("reduce")
+                                .map(new UpdateLocalWrapper(updateLocalOp)).withBroadcast(ctx, "context").withName("update");
 
-                                    newContext = newWeights
-                                            .map(new AssignWrapperLocal(updateLocalOp)).withName("assign")
-                                            .withBroadcast(ctx, "context")
-                                            .withTargetPlatform(Java.platform());
-                                    convergenceDataset = newWeights
-                                            .map(new LoopConvergenceWrapper(loopOp)).withName("converge")
-                                            .withBroadcast(ctx, "context")
-                                            .withTargetPlatform(Java.platform());
-                                } else { //eg., for k-means
-                                    DataQuantaBuilder listDataset = sampledData
-                                            .map(new ComputeWrapper<>(computeOp)).withBroadcast(ctx, "context").withName("compute")
-                                            .reduceByKey(pair -> ((Tuple2) pair).field0, new AggregateWrapper<>(computeOp)).withName("reduce")
-                                            .map(new UpdateWrapper(updateOp)).withBroadcast(ctx, "context").withName("update")
-                                            .map(t -> {
-                                                ArrayList<Tuple2> list = new ArrayList<>(1);
-                                                list.add((Tuple2) t);
-                                                return list;
-                                            })
-                                            .reduce(new ReduceWrapper<>()).withName("global reduce")
-                                            .withTargetPlatform(Spark.platform());
-                                    newContext = listDataset
-                                            .map(new AssignWrapper(updateOp)).withName("assign")
-                                            .withBroadcast(ctx, "context")
-                                            .withTargetPlatform(Java.platform());
-                                    convergenceDataset = listDataset
-                                            .map(new LoopConvergenceWrapper(loopOp)).withName("converge")
-                                            .withBroadcast(ctx, "context")
-                                            .withTargetPlatform(Java.platform());
-                                }
+                        newContext = newWeights
+                                .map(new AssignWrapperLocal(updateLocalOp)).withName("assign")
+                                .withBroadcast(ctx, "context");
 
-                                return new Tuple<>(newContext, convergenceDataset);
-                            }).withTargetPlatform(Java.platform())
-                            .collect();
-            return WayangCollections.getSingle(results);
-        }
-        else {
-            final DataQuantaBuilder transformBuilder = javaPlanBuilder
-                    .readTextFile(inputFileUrl).withName("source")
-                    .mapPartitions(new TransformPerPartitionWrapper(transformOp)).withName("transform");
+                        convergenceDataset = newWeights
+                                .map(new LoopConvergenceWrapper(loopOp)).withName("converge")
+                                .withBroadcast(ctx, "context");
 
-            Collection<ML4allGlobalVars> results =
-                    contextBuilder.doWhile((PredicateDescriptor.SerializablePredicate<Collection<Double>>) collection ->
-                            new LoopCheckWrapper<>(loopOp).apply(collection.iterator().next()), ctx -> {
+                    } else { //eg., for k-means
+                        DataQuantaBuilder listDataset = sampledData
+                                .map(new ComputeWrapper<>(computeOp)).withBroadcast(ctx, "context").withName("compute")
+                                .reduceByKey(pair -> ((Tuple2) pair).field0, new AggregateWrapper<>(computeOp)).withName("reduce")
+                                .map(new UpdateWrapper(updateOp)).withBroadcast(ctx, "context").withName("update")
+                                .map(t -> {
+                                    ArrayList<Tuple2> list = new ArrayList<>(1);
+                                    list.add((Tuple2) t);
+                                    return list;
+                                })
+                                .reduce(new ReduceWrapper<>()).withName("global reduce");
+                        newContext = listDataset
+                                .map(new AssignWrapper(updateOp)).withName("assign")
+                                .withBroadcast(ctx, "context");
+                        convergenceDataset = listDataset
+                                .map(new LoopConvergenceWrapper(loopOp)).withName("converge")
+                                .withBroadcast(ctx, "context");
+                    }
 
-                        DataQuantaBuilder convergenceDataset;
-                        DataQuantaBuilder<?, ML4allGlobalVars> newContext;
-
-                        DataQuantaBuilder sampledData;
-                        if (hasSample()) //sample data first
-                            sampledData = transformBuilder
-                                    .sample(sampleOp.sampleSize()).withSampleMethod(sampleOp.sampleMethod()).withDatasetSize(datasetsize).withBroadcast(ctx, "context");
-                        else //sampled data is entire dataset
-                            sampledData = transformBuilder;
-
-                        if (isUpdateLocal()) { //eg., for GD
-                            DataQuantaBuilder newWeights = sampledData
-                                    .map(new ComputeWrapper<>(computeOp)).withBroadcast(ctx, "context").withName("compute")
-                                    .reduce(new AggregateWrapper<>(computeOp)).withName("reduce")
-                                    .map(new UpdateLocalWrapper(updateLocalOp)).withBroadcast(ctx, "context").withName("update");
-
-                            newContext = newWeights
-                                    .map(new AssignWrapperLocal(updateLocalOp)).withName("assign")
-                                    .withBroadcast(ctx, "context");
-
-                            convergenceDataset = newWeights
-                                    .map(new LoopConvergenceWrapper(loopOp)).withName("converge")
-                                    .withBroadcast(ctx, "context");
-
-                        } else { //eg., for k-means
-                            DataQuantaBuilder listDataset = sampledData
-                                    .map(new ComputeWrapper<>(computeOp)).withBroadcast(ctx, "context").withName("compute")
-                                    .reduceByKey(pair -> ((Tuple2) pair).field0, new AggregateWrapper<>(computeOp)).withName("reduce")
-                                    .map(new UpdateWrapper(updateOp)).withBroadcast(ctx, "context").withName("update")
-                                    .map(t -> {
-                                        ArrayList<Tuple2> list = new ArrayList<>(1);
-                                        list.add((Tuple2) t);
-                                        return list;
-                                    })
-                                    .reduce(new ReduceWrapper<>()).withName("global reduce");
-                            newContext = listDataset
-                                    .map(new AssignWrapper(updateOp)).withName("assign")
-                                    .withBroadcast(ctx, "context");
-                            convergenceDataset = listDataset
-                                    .map(new LoopConvergenceWrapper(loopOp)).withName("converge")
-                                    .withBroadcast(ctx, "context");
-                        }
-
-                        return new Tuple<>(newContext, convergenceDataset);
-                    }).collect();
+                    return new Tuple<>(newContext, convergenceDataset);
+                }).collect();
 
             return WayangCollections.getSingle(results);
-        }
+//        }
     }
 
 }

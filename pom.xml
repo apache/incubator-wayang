@@ -391,7 +391,7 @@
 
             - Prevents thrid-party snapshot dependencies in projects
         -->
-        <!-- TODO: This is actually automatically done by the maven-release-plugin:prepare goal Therefore if could be removed -->
+        <!-- TODO: This is actually automatically done by the maven-release-plugin:prepare goal Therefore it could be removed -->
         <profile>
             <id>pre-release</id>
             <build>
@@ -1208,8 +1208,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <!-- Right now this would fail the build as not all files have Apache headers -->
-                    <!-- TODO: Enable asap -->
                     <useMavenDefaultExcludes>true</useMavenDefaultExcludes>
                     <!--
                        Make rat output the files with missing licensed directly into the
