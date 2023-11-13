@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.logging.log4j.Logger
 import org.apache.wayang.api.BlossomContext
-import org.apache.wayang.api.serialization.CustomSerializers.{SerializablePredicateDeserializer, SerializablePredicateSerializer}
+import org.apache.wayang.api.serialization.CustomSerializers.{OperatorDeserializer, SerializableFunctionDeserializer, SerializableFunctionSerializer, SerializablePredicateDeserializer, SerializablePredicateSerializer}
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators.{FilterOperator, FlatMapOperator, MapOperator, ObjectFileSource, SampleOperator, TextFileSource}
 import org.apache.wayang.basic.types.RecordType
@@ -67,14 +67,16 @@ object SerializationUtils {
       .registerModule(DefaultScalaModule)
       .registerModule(new SimpleModule().addSerializer(classOf[BlossomContext], new CustomSerializers.BlossomContextSerializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[BlossomContext], new CustomSerializers.BlossomContextDeserializer()))
-      .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new SerializablePredicateSerializer))
+      .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new SerializablePredicateSerializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[SerializablePredicate[_]], new SerializablePredicateDeserializer[AnyRef]()))
-
+      .registerModule(new SimpleModule().addSerializer(classOf[FunctionDescriptor.SerializableFunction[_, _]], new SerializableFunctionSerializer()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[FunctionDescriptor.SerializableFunction[_, _]], new SerializableFunctionDeserializer[AnyRef, AnyRef]()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[Operator], new CustomSerializers.OperatorDeserializer()))
+//      .registerModule(new SimpleModule().addDeserializer(classOf[ElementaryOperator], new CustomSerializers.OperatorDeserializer()))
 
     // Register mix-ins during initialization
     mapper
       .addMixIn(classOf[WayangContext], classOf[WayangContextMixIn])
-      //      .addMixIn(classOf[BlossomContext], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[Configuration], classOf[ConfigurationMixIn])
       .addMixIn(classOf[CardinalityRepository], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[KeyValueProvider[_, _]], classOf[KeyValueProviderMixIn])
@@ -86,12 +88,13 @@ object SerializationUtils {
       .addMixIn(classOf[ConstantValueProvider[_]], classOf[ConstantValueProviderMixIn])
       .addMixIn(classOf[PlanTransformation], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[OperatorPattern[_]], classOf[OperatorPatternMixin])
-      .addMixIn(classOf[Slot[_]], classOf[SlotMixIn])
+      .addMixIn(classOf[Slot[_]], classOf[SlotMixIn[_]])
       .addMixIn(classOf[InputSlot[_]], classOf[InputSlotMixIn[_]])
       .addMixIn(classOf[OutputSlot[_]], classOf[OutputSlotMixIn[_]])
       .addMixIn(classOf[OperatorBase], classOf[OperatorBaseMixIn])
       .addMixIn(classOf[BlossomContext.UnarySink], classOf[BlossomContextUnarySinkMixIn])
       .addMixIn(classOf[ElementaryOperator], classOf[ElementaryOperatorMixIn])
+      .addMixIn(classOf[ActualOperator], classOf[ActualOperatorMixIn])
       .addMixIn(classOf[Operator], classOf[OperatorMixIn])
       .addMixIn(classOf[FilterOperator[_]], classOf[FilterOperatorMixIn[_]])
       .addMixIn(classOf[MapOperator[_, _]], classOf[MapOperatorMixIn[_, _]])
@@ -108,8 +111,6 @@ object SerializationUtils {
       .addMixIn(classOf[CardinalityEstimate], classOf[CardinalityEstimateMixIn])
       .addMixIn(classOf[DataSetType[_]], classOf[DataSetTypeMixIn[_]])
       .addMixIn(classOf[DataUnitType[_]], classOf[DataUnitTypeMixIn])
-
-
 
       //      .addMixIn(classOf[ChannelConversion], classOf[ChannelConversionMixIn])
       //      .addMixIn(classOf[JavaPlatform], classOf[JavaPlatformMixIn])
@@ -150,11 +151,10 @@ object SerializationUtils {
       .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[ObjectFileSource[_]], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
-      .addMixIn(classOf[TextFileSource], classOf[IgnoreLoggerMixIn])
+      .addMixIn(classOf[TextFileSource], classOf[TextFileSourceMixIn])
       .addMixIn(classOf[UnarySource[_]], classOf[UnarySourceMixIn[_]])
       .addMixIn(classOf[UnaryToUnaryOperator[_, _]], classOf[UnaryToUnaryOperatorMixIn[_, _]])
       .addMixIn(classOf[BinaryToUnaryOperator[_, _, _]], classOf[BinaryToUnaryOperatorMixIn[_, _, _]])
-
 
     // IntelliJ can't find imports so probably we won't need those
     //        .addMixIn(classOf[FlinkPlatform], classOf[IgnoreLoggerMixIn])
@@ -178,59 +178,142 @@ object SerializationUtils {
     private var logger: Logger = _
   }
 
-  //  abstract class SparkConfMixIn {
-  //    @JsonProperty("jars")
-  //    def setJars(jars: Array[String]): Unit
-  //  }
-
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[OperatorBase], name = "operatorBase"),
+    new JsonSubTypes.Type(value = classOf[OperatorBase], name = "OperatorBase"),
+    new JsonSubTypes.Type(value = classOf[ActualOperator], name = "ActualOperator"),
+    new JsonSubTypes.Type(value = classOf[CompositeOperator], name = "CompositeOperator"),
+    new JsonSubTypes.Type(value = classOf[LoopHeadOperator], name = "LoopHeadOperator"),
   ))
   abstract class OperatorMixIn {
   }
 
-  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[UnaryToUnaryOperator[_, _]], name = "unaryToUnaryOperator"),
-    new JsonSubTypes.Type(value = classOf[BinaryToUnaryOperator[_, _, _]], name = "binaryToUnaryOperator"),
-    new JsonSubTypes.Type(value = classOf[UnarySource[_]], name = "unarySource"),
+    new JsonSubTypes.Type(value = classOf[ElementaryOperator], name = "ElementaryOperator"),
+    new JsonSubTypes.Type(value = classOf[Subplan], name = "Subplan"),
   ))
-  abstract class OperatorBaseMixIn {
-    @JsonCreator
-    def this(@JsonProperty("inputSlots") inputSlots: Array[InputSlot[_]],
-             @JsonProperty("outputSlots") outputSlots: Array[OutputSlot[_]],
-             @JsonProperty("isSupportingBroadcastInputs") isSupportingBroadcastInputs: Boolean) = {
-      this()
-    }
+  abstract class ActualOperatorMixIn {
   }
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[FilterOperator[_]], name = "filterOperator"),
-    new JsonSubTypes.Type(value = classOf[MapOperator[_, _]], name = "mapOperator"),
-    new JsonSubTypes.Type(value = classOf[TextFileSource], name = "textFileSource"),
+    new JsonSubTypes.Type(value = classOf[UnarySource[_]], name = "UnarySource"),
+    new JsonSubTypes.Type(value = classOf[UnaryToUnaryOperator[_, _]], name = "UnaryToUnaryOperator"),
+    new JsonSubTypes.Type(value = classOf[BinaryToUnaryOperator[_, _, _]], name = "BinaryToUnaryOperator"),
+  ))
+  abstract class OperatorBaseMixIn {
+    @JsonIgnore
+    def getOriginal(): ExecutionOperator
+
+    @JsonIgnore
+    private var original: ExecutionOperator = _
+
+    //    @JsonCreator
+    //    def this(@JsonProperty("inputSlots") inputSlots: Array[InputSlot[_]],
+    //             @JsonProperty("outputSlots") outputSlots: Array[OutputSlot[_]],
+    //             @JsonProperty("isSupportingBroadcastInputs") isSupportingBroadcastInputs: Boolean) = {
+    //      this()
+    //    }
+  }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[UnarySource[_]], name = "UnarySource"),
+    new JsonSubTypes.Type(value = classOf[UnaryToUnaryOperator[_, _]], name = "UnaryToUnaryOperator"),
+    new JsonSubTypes.Type(value = classOf[BinaryToUnaryOperator[_, _, _]], name = "BinaryToUnaryOperator"),
   ))
   abstract class ElementaryOperatorMixIn {
   }
 
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[TextFileSource], name = "textFileSource"),
+    new JsonSubTypes.Type(value = classOf[TextFileSource], name = "TextFileSource"),
   ))
-  abstract class UnarySourceMixIn[T] {}
+  abstract class UnarySourceMixIn[T] {
+  }
 
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[FilterOperator[_]], name = "filterOperator"),
-    new JsonSubTypes.Type(value = classOf[MapOperator[_, _]], name = "mapOperator"),
+    new JsonSubTypes.Type(value = classOf[FilterOperator[_]], name = "FilterOperator"),
+    new JsonSubTypes.Type(value = classOf[MapOperator[_, _]], name = "MapOperator"),
   ))
-  abstract class UnaryToUnaryOperatorMixIn[InputType, OutputType] {}
+  abstract class UnaryToUnaryOperatorMixIn[InputType, OutputType] {
+  }
 
+//  @JsonSubTypes(Array(
+//  ))
+  abstract class BinaryToUnaryOperatorMixIn[InputType0, InputType1, OutputType] {
+  }
+
+
+  abstract class TextFileSourceMixIn {
+
+    @JsonIgnore
+    private var logger: Logger = _
+
+    @JsonCreator
+    def this(@JsonProperty("inputUrl") inputUrl: String,
+             @JsonProperty("encoding") encoding: String) = {
+      this()
+    }
+  }
+
+  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
+  abstract class FilterOperatorMixIn[Type] {
+    @JsonCreator
+    def this(@JsonProperty("predicateDescriptor") predicateDescriptor: PredicateDescriptor[Type],
+             @JsonProperty("type") `type`: DataSetType[Type]) = {
+      this()
+    }
+  }
+
+  abstract class MapOperatorMixIn[InputType, OutputType] {
+    @JsonCreator
+    def this(@JsonProperty("functionDescriptor") functionDescriptor: TransformationDescriptor[InputType, OutputType],
+             @JsonProperty("inputType") inputType: DataSetType[InputType],
+             @JsonProperty("outputType") outputType: DataSetType[OutputType]) = {
+      this()
+    }
+  }
+
+
+  @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
   @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[InputSlot[_]], name = "InputSlot"),
+    new JsonSubTypes.Type(value = classOf[OutputSlot[_]], name = "OutputSlot"),
   ))
-  abstract class BinaryToUnaryOperatorMixIn[InputType0, InputType1, OutputType] {}
+  abstract class SlotMixIn[T] {
 
+    //    @JsonCreator
+    //    def this(@JsonProperty("name") name: String,
+    //             @JsonProperty("owner") owner: Operator,
+    //             @JsonProperty("type") `type`: DataSetType[T]) = {
+    //      this()
+    //    }
+  }
+
+  //  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
+  abstract class InputSlotMixIn[T] {
+    @JsonCreator
+    def this(@JsonProperty("name") name: String,
+             @JsonProperty("owner") owner: Operator,
+             @JsonProperty("isBroadcast") isBroadcast: Boolean,
+             @JsonProperty("type") `type`: DataSetType[T]) = {
+      this()
+    }
+  }
+
+  //  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
+  abstract class OutputSlotMixIn[T] {
+    @JsonCreator
+    def this(@JsonProperty("name") name: String,
+             @JsonProperty("owner") owner: Operator,
+             @JsonProperty("type") `type`: DataSetType[T]) = {
+      this()
+    }
+  }
 
   abstract class WayangContextMixIn {
     @JsonIgnore
@@ -239,7 +322,6 @@ object SerializationUtils {
     // TODO: Is this okay?
     @JsonIgnore
     private var cardinalityRepository: CardinalityRepository = _
-
   }
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
@@ -278,11 +360,6 @@ object SerializationUtils {
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
   abstract class OperatorPatternMixin {
   }
-
-//  @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-//  @JsonFormat(shape = JsonFormat.Shape.OBJECT)  // Serialize as an object when found as a map key
-//  abstract class OutputSlotMixin {
-//  }
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
   abstract class ConfigurationMixIn {
@@ -331,10 +408,10 @@ object SerializationUtils {
   }
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[FunctionalKeyValueProvider[_, _]], name = "functionalKeyValueProvider"),
-    new JsonSubTypes.Type(value = classOf[MapBasedKeyValueProvider[_, _]], name = "mapBasedKeyValueProvider"
+    new JsonSubTypes.Type(value = classOf[FunctionalKeyValueProvider[_, _]], name = "FunctionalKeyValueProvider"),
+    new JsonSubTypes.Type(value = classOf[MapBasedKeyValueProvider[_, _]], name = "MapBasedKeyValueProvider"
     ))
   )
   abstract class KeyValueProviderMixIn {
@@ -342,75 +419,28 @@ object SerializationUtils {
     private var logger: Logger = _
   }
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[BlossomContext.TextFileSink], name = "textFileSink"),
-    new JsonSubTypes.Type(value = classOf[BlossomContext.ObjectFileSink], name = "objectFileSink"
+    new JsonSubTypes.Type(value = classOf[BlossomContext.TextFileSink], name = "BlossomContextTextFileSink"),
+    new JsonSubTypes.Type(value = classOf[BlossomContext.ObjectFileSink], name = "BlossomContextObjectFileSink"
     ))
   )
-  abstract class BlossomContextUnarySinkMixIn {
-  }
+  abstract class BlossomContextUnarySinkMixIn {}
 
-  @JsonTypeName("textFileSink")
-  abstract class BlossomContextTextFileSink {}
-
-  @JsonTypeName("objectFileSink")
-  abstract class ObjectFileSink {}
+  //  @JsonTypeName("textFileSink")
+  //  abstract class BlossomContextTextFileSink {}
+  //
+  //  @JsonTypeName("objectFileSink")
+  //  abstract class ObjectFileSinkMixIn {}
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[ExplicitCollectionProvider[_]], name = "explicitCollectionProvider"),
-    new JsonSubTypes.Type(value = classOf[FunctionalCollectionProvider[_]], name = "functionalCollectionProvider"
+    new JsonSubTypes.Type(value = classOf[ExplicitCollectionProvider[_]], name = "ExplicitCollectionProvider"),
+    new JsonSubTypes.Type(value = classOf[FunctionalCollectionProvider[_]], name = "FunctionalCollectionProvider"
     ))
   )
   abstract class CollectionProviderMixIn {
-  }
-
-  abstract class FilterOperatorMixIn[Type] {
-    @JsonCreator
-    def this(@JsonProperty("predicateDescriptor") predicateDescriptor: PredicateDescriptor[Type]) = {
-      this()
-    }
-  }
-
-
-  abstract class MapOperatorMixIn[InputType, OutputType] {
-    @JsonCreator
-    def this(@JsonProperty("functionDescriptor") functionDescriptor: TransformationDescriptor[InputType, OutputType],
-             @JsonProperty("inputType") inputType: DataSetType[InputType],
-             @JsonProperty("outputType") outputType: DataSetType[OutputType]) = {
-      this()
-    }
-  }
-
-  @JsonTypeName("predicateDescriptor")
-  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
-  abstract class PredicateDescriptorMixIn[Input] {
-    @JsonCreator def this(@JsonProperty("javaImplementation") javaImplementation: SerializablePredicate[Input],
-                          @JsonProperty("inputType") inputType: BasicDataUnitType[Input],
-                          @JsonProperty("selectivity") selectivity: ProbabilisticDoubleInterval,
-                          @JsonProperty("loadProfileEstimator") loadProfileEstimator: LoadProfileEstimator)  = {
-      this()
-    }
-  }
-
-  @JsonTypeName("transformationDescriptor")
-  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
-  abstract class TransformationDescriptorMixIn[Input, Output] {
-    @JsonCreator def this(@JsonProperty("javaImplementation") javaImplementation: FunctionDescriptor.SerializableFunction[Input, Output],
-                          @JsonProperty("inputType") inputType: BasicDataUnitType[Input],
-                          @JsonProperty("outputType") outputType: BasicDataUnitType[Output],
-                          @JsonProperty("loadProfileEstimator") loadProfileEstimator: LoadProfileEstimator) = {
-      this()
-    }
-  }
-
-  abstract class BasicDataUnitTypeMixIn[T] {
-    @JsonCreator
-    def this(@JsonProperty("typeClass") typeClass: Class[T]) = {
-      this()
-    }
   }
 
   abstract class ProbabilisticDoubleIntervalMixIn {
@@ -423,10 +453,10 @@ object SerializationUtils {
     }
   }
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[ConstantLoadProfileEstimator], name = "constantLoadProfileEstimator"),
-    new JsonSubTypes.Type(value = classOf[NestableLoadProfileEstimator], name = "nestableLoadProfileEstimator"),
+    new JsonSubTypes.Type(value = classOf[ConstantLoadProfileEstimator], name = "ConstantLoadProfileEstimator"),
+    new JsonSubTypes.Type(value = classOf[NestableLoadProfileEstimator], name = "NestableLoadProfileEstimator"),
   ))
   abstract class LoadProfileEstimatorMixIn {
   }
@@ -449,26 +479,47 @@ object SerializationUtils {
     }
   }
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[ProjectionDescriptor[_, _]], name = "projectionDescriptor"),
-    new JsonSubTypes.Type(value = classOf[AggregationDescriptor[_, _]], name = "aggregationDescriptor"),
-    new JsonSubTypes.Type(value = classOf[ConsumerDescriptor[_]], name = "consumerDescriptor"),
-    new JsonSubTypes.Type(value = classOf[FlatMapDescriptor[_, _]], name = "flatMapDescriptor"),
-    new JsonSubTypes.Type(value = classOf[MapPartitionsDescriptor[_, _]], name = "mapPartitionsDescriptor"),
-    new JsonSubTypes.Type(value = classOf[PredicateDescriptor[_]], name = "predicateDescriptor"),
-    new JsonSubTypes.Type(value = classOf[ReduceDescriptor[_]], name = "reduceDescriptor"),
-    new JsonSubTypes.Type(value = classOf[TransformationDescriptor[_, _]], name = "transformationDescriptor"),
+    new JsonSubTypes.Type(value = classOf[ProjectionDescriptor[_, _]], name = "ProjectionDescriptor"),
+    new JsonSubTypes.Type(value = classOf[AggregationDescriptor[_, _]], name = "AggregationDescriptor"),
+    new JsonSubTypes.Type(value = classOf[ConsumerDescriptor[_]], name = "ConsumerDescriptor"),
+    new JsonSubTypes.Type(value = classOf[FlatMapDescriptor[_, _]], name = "FlatMapDescriptor"),
+    new JsonSubTypes.Type(value = classOf[MapPartitionsDescriptor[_, _]], name = "MapPartitionsDescriptor"),
+    new JsonSubTypes.Type(value = classOf[PredicateDescriptor[_]], name = "PredicateDescriptor"),
+    new JsonSubTypes.Type(value = classOf[ReduceDescriptor[_]], name = "ReduceDescriptor"),
+    new JsonSubTypes.Type(value = classOf[TransformationDescriptor[_, _]], name = "TransformationDescriptor"),
   ))
   abstract class FunctionDescriptorMixIn {
     @JsonIgnore
     private var loadProfileEstimator: LoadProfileEstimator = _
   }
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
+  abstract class PredicateDescriptorMixIn[Input] {
+    @JsonCreator
+    def this(@JsonProperty("javaImplementation") javaImplementation: SerializablePredicate[Input],
+             @JsonProperty("inputType") inputType: BasicDataUnitType[Input],
+             @JsonProperty("selectivity") selectivity: ProbabilisticDoubleInterval,
+             @JsonProperty("loadProfileEstimator") loadProfileEstimator: LoadProfileEstimator) = {
+      this()
+    }
+  }
+
+  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
+  abstract class TransformationDescriptorMixIn[Input, Output] {
+    @JsonCreator def this(@JsonProperty("javaImplementation") javaImplementation: FunctionDescriptor.SerializableFunction[Input, Output],
+                          @JsonProperty("inputType") inputType: BasicDataUnitType[Input],
+                          @JsonProperty("outputType") outputType: BasicDataUnitType[Output],
+                          @JsonProperty("loadProfileEstimator") loadProfileEstimator: LoadProfileEstimator) = {
+      this()
+    }
+  }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[DefaultLoadEstimator], name = "defaultLoadEstimator"),
-    new JsonSubTypes.Type(value = classOf[IntervalLoadEstimator], name = "intervalLoadEstimator"),
+    new JsonSubTypes.Type(value = classOf[DefaultLoadEstimator], name = "DefaultLoadEstimator"),
+    new JsonSubTypes.Type(value = classOf[IntervalLoadEstimator], name = "IntervalLoadEstimator"),
   ))
   abstract class LoadEstimatorMixIn {
   }
@@ -494,34 +545,15 @@ object SerializationUtils {
     }
   }
 
-  @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-  abstract class InputSlotMixIn[T] {
-    @JsonCreator
-    def this(@JsonProperty("name") name: String,
-             @JsonProperty("owner") owner: Operator,
-             @JsonProperty("isBroadcast") isBroadcast: Boolean,
-             @JsonProperty("type") `type`: DataSetType[T]) = {
-      this()
-    }
-  }
-
-  @JsonFormat(shape = JsonFormat.Shape.OBJECT) // Serialize as an object when found as a map key
-  @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-  abstract class OutputSlotMixIn[T] {
-    @JsonCreator
-    def this(@JsonProperty("name") name: String,
-             @JsonProperty("owner") owner: Operator,
-             @JsonProperty("type") `type`: DataSetType[T]) = {
-      this()
-    }
-  }
-
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[InputSlot[_]], name = "inputSlot"),
-    new JsonSubTypes.Type(value = classOf[OutputSlot[_]], name = "outputSlot"),
+    new JsonSubTypes.Type(value = classOf[RecordType], name = "RecordType"),
   ))
-  abstract class SlotMixIn {
+  abstract class BasicDataUnitTypeMixIn[T] {
+    @JsonCreator
+    def this(@JsonProperty("typeClass") typeClass: Class[T]) = {
+      this()
+    }
   }
 
   abstract class DataSetTypeMixIn[T] {
@@ -531,15 +563,13 @@ object SerializationUtils {
     }
   }
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[BasicDataUnitType[_]], name = "basicDataUnitType"),
-    new JsonSubTypes.Type(value = classOf[DataUnitGroupType[_]], name = "dataUnitGroupType"),
-    new JsonSubTypes.Type(value = classOf[RecordType], name = "recordType"),
+    new JsonSubTypes.Type(value = classOf[BasicDataUnitType[_]], name = "BasicDataUnitType"),
+    new JsonSubTypes.Type(value = classOf[DataUnitGroupType[_]], name = "DataUnitGroupType"),
   ))
   abstract class DataUnitTypeMixIn {
   }
-
 
   //  @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
   //  abstract class SparkPlatformMixIn {
@@ -551,7 +581,7 @@ object SerializationUtils {
   //  abstract class JavaPlatformMixIn {
   //  }
 
-  //  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  //  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   //  @JsonSubTypes(Array(
   //    new JsonSubTypes.Type(value = classOf[JavaPlatform], name = "javaPlatform"),
   //    new JsonSubTypes.Type(value = classOf[SparkPlatform], name = "sparkPlatform"),
@@ -565,7 +595,7 @@ object SerializationUtils {
   //  abstract class PlatformMixIn {
   //  }
   //
-  //  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+  //  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   //  @JsonSubTypes(Array(
   //    new JsonSubTypes.Type(value = classOf[DefaultChannelConversion], name = "defaultChannelConversion"),
   //  ))

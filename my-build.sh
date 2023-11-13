@@ -18,8 +18,8 @@
 
 rm -r wayang-0.6.1-SNAPSHOT
 set -e
-mvn -T 1C -U clean install -Dmaven.test.skip
-# mvn clean package -DskipTests -pl :wayang-benchmark
+mvn -T 1C clean install -DskipTests -pl wayang-api/wayang-api-scala-java/wayang-api-scala-java_2.12
+mvn -T 1C clean install -Dmaven.test.skip -pl wayang-benchmark/wayang-benchmark_2.12
 mvn clean package -pl :wayang-assembly -Pdistribution
 tar -xvf wayang-assembly/target/wayang-assembly-0.6.1-SNAPSHOT-dist.tar.gz
 

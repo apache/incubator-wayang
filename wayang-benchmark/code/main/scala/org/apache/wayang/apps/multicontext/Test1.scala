@@ -24,6 +24,9 @@ import org.apache.wayang.core.api.Configuration
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 
+import java.lang.management.ManagementFactory
+
+
 class Test1 {}
 
 object Test1 {

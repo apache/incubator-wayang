@@ -21,16 +21,21 @@ package org.apache.wayang.api
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import org.apache.wayang.api.serialization.SerializationUtils
 import org.apache.wayang.api.serialization.SerializationUtils.{deserialize, serialize, serializeAsString}
+import org.apache.wayang.basic.operators.TextFileSink
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.function.FunctionDescriptor.SerializablePredicate
 import org.apache.wayang.core.function.PredicateDescriptor
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator
+import org.apache.wayang.core.plan.wayangplan.{ElementaryOperator, Operator, WayangPlan}
 import org.apache.wayang.core.types.BasicDataUnitType
+import org.apache.wayang.core.util.ReflectionUtils
+import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 import org.junit.{Assert, Test}
 
 import java.io.Serializable
+import scala.reflect.ClassTag
 
 class SerializationUtilsTest {
 
@@ -107,16 +112,31 @@ class SerializationUtilsTest {
   @Test
   def dataQuantaSerializationTest(): Unit = {
     val configuration = new Configuration()
-    val wayangContext = new WayangContext(configuration).withPlugin(Spark.basicPlugin())
-    val dataQuanta = new PlanBuilder(wayangContext)
+    val wayangContext = new WayangContext(configuration).withPlugin(Java.basicPlugin())
+    val planBuilder = new PlanBuilder(wayangContext).withUdfJarsOf(classOf[SerializationUtilsTest])
+
+    val dataQuanta = planBuilder
       .readTextFile("file:///tmp/in1.txt")
-//      .map(s => s + " Wayang out.")
-      .filter(s => s.length > 20)
+      .map(s => s + " Wayang out.")
+      .map(s => (s, "AAAA", "BBBB"))
+      .map(s => List(s._1, "a", "b", "c"))
+      .filter(s => s.head.length > 20)
+    // .filter(s => s.length > 20)
 
     try {
-      val serialized = SerializationUtils.serializeAsString(dataQuanta)
-      log(serialized, "gia-na-doume2.json")
-      val deserialized = SerializationUtils.deserializeFromString[DataQuanta[AnyRef]](serialized)
+      val serialized = SerializationUtils.serializeAsString(dataQuanta.operator)
+      log(serialized)
+      val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
+
+      // val dq1 = new DataQuanta[AnyRef](deserialized.asInstanceOf[ElementaryOperator])(ClassTag(classOf[AnyRef]), planBuilder)
+      // dq1.writeTextFile("file:///tmp/aaaaaaaaaaaaaa.txt", s => s.toString)
+
+      val sink = new TextFileSink[AnyRef]("file:///tmp/aaaaaaaaaaaaaa.txt", classOf[AnyRef])
+      deserialized.connectTo(0, sink, 0)
+
+      val plan = new WayangPlan(sink)
+      wayangContext.execute(plan, ReflectionUtils.getDeclaringJar(classOf[SerializationUtilsTest]))
+
     }
     catch {
       case t: Throwable =>
@@ -125,7 +145,7 @@ class SerializationUtilsTest {
     }
   }
 
-//  @Test
+  //  @Test
   def testPredicateDescriptor(): Unit = {
 
     val predicateDescriptor: PredicateDescriptor[Int] = new PredicateDescriptor[Int](
