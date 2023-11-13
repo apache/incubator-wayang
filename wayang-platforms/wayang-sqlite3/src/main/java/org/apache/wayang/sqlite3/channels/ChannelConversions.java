@@ -21,9 +21,12 @@ package org.apache.wayang.sqlite3.channels;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
 import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
 import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.wayang.jdbc.operators.SqlToRddOperator;
 import org.apache.wayang.jdbc.operators.SqlToStreamOperator;
+import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.sqlite3.platform.Sqlite3Platform;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -38,8 +41,15 @@ public class ChannelConversions {
             () -> new SqlToStreamOperator(Sqlite3Platform.getInstance())
     );
 
-    public static final Collection<ChannelConversion> ALL = Collections.singleton(
-            SQL_TO_STREAM_CONVERSION
+    public static final ChannelConversion SQL_TO_UNCACHED_RDD_CONVERSION = new DefaultChannelConversion(
+            Sqlite3Platform.getInstance().getSqlQueryChannelDescriptor(),
+            RddChannel.UNCACHED_DESCRIPTOR,
+            () -> new SqlToRddOperator(Sqlite3Platform.getInstance())
+    );
+
+    public static final Collection<ChannelConversion> ALL = Arrays.asList(
+            SQL_TO_STREAM_CONVERSION,
+            SQL_TO_UNCACHED_RDD_CONVERSION
     );
 
 }
