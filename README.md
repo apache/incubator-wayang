@@ -60,8 +60,8 @@ You first have to build the binaries as shown [here](guides/tutorial.md).
 Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
-tar -xvf wayang-0.6.1-snapshot.tar.gz
-cd wayang-0.6.1-SNAPSHOT
+tar -xvf wayang-0.7.1-snapshot.tar.gz
+cd wayang-0.7.1-SNAPSHOT
 ```
 
 In linux
@@ -100,7 +100,7 @@ Wayang is available via Maven Central. To use it with Maven, include the followi
 <dependency>
   <groupId>org.apache.wayang</groupId>
   <artifactId>wayang-***</artifactId>
-  <version>0.6.0</version>
+  <version>0.7.1</version>
 </dependency>
 ```
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:

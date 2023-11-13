@@ -18,12 +18,11 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.CollectionSource;
 import org.apache.wayang.basic.operators.FilterOperator;
+import org.apache.wayang.basic.operators.KMeansOperator;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -34,21 +33,17 @@ import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.tests.platform.MyMadeUpPlatform;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -455,6 +450,44 @@ public class SparkIntegrationIT {
 
         Collections.sort(collectedValues);
         Assert.assertEquals(expectedValues, collectedValues);
+    }
+
+    @Test
+    public void testKMeans() {
+        CollectionSource<double[]> collectionSource = new CollectionSource<>(
+                Arrays.asList(
+                        new double[]{1, 2, 3},
+                        new double[]{-1, -2, -3},
+                        new double[]{2, 4, 6}),
+                double[].class
+        );
+        collectionSource.addTargetPlatform(Java.platform());
+        collectionSource.addTargetPlatform(Spark.platform());
+
+        KMeansOperator kMeansOperator = new KMeansOperator(2);
+
+        // write results to a sink
+        List<Tuple2> results = new ArrayList<>();
+        LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
+
+        // Build Wayang plan by connecting operators
+        collectionSource.connectTo(0, kMeansOperator, 0);
+        kMeansOperator.connectTo(0, sink, 0);
+        WayangPlan wayangPlan = new WayangPlan(sink);
+
+        // Have Wayang execute the plan.
+        WayangContext wayangContext = new WayangContext();
+        wayangContext.register(Java.basicPlugin());
+        wayangContext.register(Spark.basicPlugin());
+        wayangContext.register(Spark.mlPlugin());
+        wayangContext.execute(wayangPlan);
+
+        // Verify the outcome.
+        Assert.assertEquals(3, results.size());
+        Assert.assertEquals(
+                ((Tuple2<double[], Integer>) results.get(0)).field1,
+                ((Tuple2<double[], Integer>) results.get(2)).field1
+        );
     }
 
     private static class SemijoinFunction implements PredicateDescriptor.ExtendedSerializablePredicate<Integer> {

@@ -22,6 +22,7 @@ import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.wayang.spark.plugin.SparkBasicPlugin;
 import org.apache.wayang.spark.plugin.SparkConversionPlugin;
 import org.apache.wayang.spark.plugin.SparkGraphPlugin;
+import org.apache.wayang.spark.plugin.SparkMLPlugin;
 
 /**
  * Register for relevant components of this module.
@@ -33,6 +34,8 @@ public class Spark {
     private final static SparkGraphPlugin GRAPH_PLUGIN = new SparkGraphPlugin();
 
     private final static SparkConversionPlugin CONVERSION_PLUGIN = new SparkConversionPlugin();
+
+    private final static SparkMLPlugin ML_PLUGIN = new SparkMLPlugin();
 
     /**
      * Retrieve the {@link SparkBasicPlugin}.
@@ -59,6 +62,15 @@ public class Spark {
      */
     public static SparkConversionPlugin conversionPlugin() {
         return CONVERSION_PLUGIN;
+    }
+
+    /**
+     * Retrieve the {@link SparkMLPlugin}.
+     *
+     * @return the {@link SparkMLPlugin}
+     */
+    public static SparkMLPlugin mlPlugin() {
+        return ML_PLUGIN;
     }
 
     /**

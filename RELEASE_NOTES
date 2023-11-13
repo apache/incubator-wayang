@@ -2,8 +2,12 @@
 Apache Wayang (incubating) 0.7.1
 ==============================================================
 
+This is a patch/bugfix release of Apache Wayang (incubating).
+
 This release supports the following frameworks:
-   
+- This patch version fixes a problem in the artifact gpg encrypting key.
+
+Previous updates that are included in this release:
 - Apache Flink v1.7.1
 - Apache Giraph v1.2.0-hadoop2
 - GraphChi v0.2.2 (only available with scala 11.x)
@@ -19,10 +23,16 @@ could be different.
 
 New Features
 ------------
+[WAYANG-34] Terasort
+[WAYANG-IDE] Recognition of Scala code in IDE
+[WAYANG-8] Inclusion of Python as platform of processing
+[WAYANG-211] JVM-platform inside of Python-API
+Grep Benchmark
+Test classes and operators for Flink
+Support for S3 files locations
+Initial version of the SQL API and suppport for joins
 
 Basic SQL support
 
 Incompatible changes
 --------------------
-
-- NONE -
