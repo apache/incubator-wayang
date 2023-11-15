@@ -184,6 +184,7 @@ You can see examples on how to start using Wayang [here](guides/wayang-examples.
 ## Contributing
 Before submitting a PR, please take a look on how to contribute with Apache Wayang contributing guidelines [here](CONTRIBUTING.md).
 
+There is also a guide on how to compile your code [here](guides/develop-in-Wayang.md).
 ## Authors
 The list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors).
 
