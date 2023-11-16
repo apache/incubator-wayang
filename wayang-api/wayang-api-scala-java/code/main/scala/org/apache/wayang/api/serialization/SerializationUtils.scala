@@ -20,38 +20,33 @@ package org.apache.wayang.api.serialization
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
 import com.fasterxml.jackson.annotation._
-import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind._
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.logging.log4j.Logger
 import org.apache.wayang.api.BlossomContext
-import org.apache.wayang.api.serialization.CustomSerializers.{OperatorDeserializer, SerializableFunctionDeserializer, SerializableFunctionSerializer, SerializablePredicateDeserializer, SerializablePredicateSerializer}
+import org.apache.wayang.api.serialization.customserializers._
 import org.apache.wayang.basic.function.ProjectionDescriptor
-import org.apache.wayang.basic.operators.{FilterOperator, FlatMapOperator, MapOperator, ObjectFileSource, SampleOperator, TextFileSource}
+import org.apache.wayang.basic.operators._
 import org.apache.wayang.basic.types.RecordType
 import org.apache.wayang.core.api.configuration._
 import org.apache.wayang.core.api.{Configuration, Job, WayangContext}
-import org.apache.wayang.core.function.FunctionDescriptor.SerializablePredicate
-import org.apache.wayang.core.function.{AggregationDescriptor, ConsumerDescriptor, FlatMapDescriptor, FunctionDescriptor, MapPartitionsDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
+import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableConsumer, SerializableFunction, SerializablePredicate}
+import org.apache.wayang.core.function._
 import org.apache.wayang.core.mapping.{Mapping, OperatorPattern, PlanTransformation}
 import org.apache.wayang.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, CardinalityEstimatorManager, CardinalityPusher}
 import org.apache.wayang.core.optimizer.channels.{ChannelConversion, ChannelConversionGraph}
-import org.apache.wayang.core.optimizer.costs.{ConstantLoadProfileEstimator, DefaultLoadEstimator, IntervalLoadEstimator, LoadEstimator, LoadProfileEstimator, LoadProfileEstimators, LoadProfileToTimeConverter, NestableLoadProfileEstimator, TimeToCostConverter}
+import org.apache.wayang.core.optimizer.costs._
 import org.apache.wayang.core.optimizer.enumeration._
 import org.apache.wayang.core.optimizer.{OptimizationContext, OptimizationUtils, ProbabilisticDoubleInterval, SanityChecker}
 import org.apache.wayang.core.plan.executionplan.{Channel, ExecutionPlan}
-import org.apache.wayang.core.plan.wayangplan.traversal.AbstractTopologicalTraversal
 import org.apache.wayang.core.plan.wayangplan._
+import org.apache.wayang.core.plan.wayangplan.traversal.AbstractTopologicalTraversal
 import org.apache.wayang.core.platform._
 import org.apache.wayang.core.profiling.{CardinalityRepository, ExecutionLog, InstrumentationStrategy}
 import org.apache.wayang.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
 import org.apache.wayang.core.util.fs.{FileSystems, HadoopFileSystem, LocalFileSystem}
 import org.apache.wayang.core.util.{AbstractReferenceCountable, ReflectionUtils}
-import org.apache.wayang.giraph.Giraph
-import org.apache.wayang.java.Java
-import org.apache.wayang.postgres.Postgres
-import org.apache.wayang.spark.Spark
-import org.apache.wayang.sqlite3.Sqlite3
 
 import java.util.function.{BiFunction, ToDoubleBiFunction, ToDoubleFunction}
 import scala.reflect.ClassTag
@@ -65,14 +60,23 @@ object SerializationUtils {
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .enable(SerializationFeature.INDENT_OUTPUT)
       .registerModule(DefaultScalaModule)
-      .registerModule(new SimpleModule().addSerializer(classOf[BlossomContext], new CustomSerializers.BlossomContextSerializer()))
-      .registerModule(new SimpleModule().addDeserializer(classOf[BlossomContext], new CustomSerializers.BlossomContextDeserializer()))
-      .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new SerializablePredicateSerializer()))
-      .registerModule(new SimpleModule().addDeserializer(classOf[SerializablePredicate[_]], new SerializablePredicateDeserializer[AnyRef]()))
-      .registerModule(new SimpleModule().addSerializer(classOf[FunctionDescriptor.SerializableFunction[_, _]], new SerializableFunctionSerializer()))
-      .registerModule(new SimpleModule().addDeserializer(classOf[FunctionDescriptor.SerializableFunction[_, _]], new SerializableFunctionDeserializer[AnyRef, AnyRef]()))
-      .registerModule(new SimpleModule().addDeserializer(classOf[Operator], new CustomSerializers.OperatorDeserializer()))
-//      .registerModule(new SimpleModule().addDeserializer(classOf[ElementaryOperator], new CustomSerializers.OperatorDeserializer()))
+      .registerModule(new SimpleModule().addSerializer(classOf[BlossomContext], new BlossomContextSerializer()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[BlossomContext], new BlossomContextDeserializer()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[Operator], new OperatorDeserializer()))
+
+      .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new GenericSerializableSerializer[SerializablePredicate[_]]()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[SerializablePredicate[_]], new GenericSerializableDeserializer[SerializablePredicate[_]]()))
+      .registerModule(new SimpleModule().addSerializer(classOf[SerializableFunction[_, _]], new GenericSerializableSerializer[FunctionDescriptor.SerializableFunction[_, _]]()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[SerializableFunction[_, _]], new GenericSerializableDeserializer[FunctionDescriptor.SerializableFunction[_, _]]()))
+      .registerModule(new SimpleModule().addSerializer(classOf[SerializableBinaryOperator[_]], new GenericSerializableSerializer[SerializableBinaryOperator[_]]()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[SerializableBinaryOperator[_]], new GenericSerializableDeserializer[SerializableBinaryOperator[_]]()))
+      .registerModule(new SimpleModule().addSerializer(classOf[SerializableConsumer[_]], new GenericSerializableSerializer[SerializableConsumer[_]]()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[SerializableConsumer[_]], new GenericSerializableDeserializer[SerializableConsumer[_]]()))
+
+    //      .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new FunctionDescriptorsSerializers.SerializablePredicateSerializer()))
+    //      .registerModule(new SimpleModule().addDeserializer(classOf[SerializablePredicate[_]], new FunctionDescriptorsDeserializers.SerializablePredicateDeserializer[AnyRef]()))
+    //      .registerModule(new SimpleModule().addSerializer(classOf[SerializableFunction[_, _]], new FunctionDescriptorsSerializers.SerializableFunctionSerializer()))
+    //      .registerModule(new SimpleModule().addDeserializer(classOf[SerializableFunction[_, _]], new FunctionDescriptorsDeserializers.SerializableFunctionDeserializer[AnyRef, AnyRef]()))
 
     // Register mix-ins during initialization
     mapper
@@ -153,6 +157,7 @@ object SerializationUtils {
       .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[TextFileSource], classOf[TextFileSourceMixIn])
       .addMixIn(classOf[UnarySource[_]], classOf[UnarySourceMixIn[_]])
+      .addMixIn(classOf[UnarySink[_]], classOf[UnarySinkMixIn[_]])
       .addMixIn(classOf[UnaryToUnaryOperator[_, _]], classOf[UnaryToUnaryOperatorMixIn[_, _]])
       .addMixIn(classOf[BinaryToUnaryOperator[_, _, _]], classOf[BinaryToUnaryOperatorMixIn[_, _, _]])
 
@@ -200,8 +205,11 @@ object SerializationUtils {
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[UnarySource[_]], name = "UnarySource"),
+    new JsonSubTypes.Type(value = classOf[UnarySink[_]], name = "UnarySink"),
     new JsonSubTypes.Type(value = classOf[UnaryToUnaryOperator[_, _]], name = "UnaryToUnaryOperator"),
     new JsonSubTypes.Type(value = classOf[BinaryToUnaryOperator[_, _, _]], name = "BinaryToUnaryOperator"),
+    new JsonSubTypes.Type(value = classOf[DoWhileOperator[_, _]], name = "DoWhileOperator"),
+    new JsonSubTypes.Type(value = classOf[RepeatOperator[_]], name = "RepeatOperator"),
   ))
   abstract class OperatorBaseMixIn {
     @JsonIgnore
@@ -210,38 +218,57 @@ object SerializationUtils {
     @JsonIgnore
     private var original: ExecutionOperator = _
 
-    //    @JsonCreator
-    //    def this(@JsonProperty("inputSlots") inputSlots: Array[InputSlot[_]],
-    //             @JsonProperty("outputSlots") outputSlots: Array[OutputSlot[_]],
-    //             @JsonProperty("isSupportingBroadcastInputs") isSupportingBroadcastInputs: Boolean) = {
-    //      this()
-    //    }
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[UnarySource[_]], name = "UnarySource"),
+    new JsonSubTypes.Type(value = classOf[UnarySink[_]], name = "UnarySink"),
     new JsonSubTypes.Type(value = classOf[UnaryToUnaryOperator[_, _]], name = "UnaryToUnaryOperator"),
     new JsonSubTypes.Type(value = classOf[BinaryToUnaryOperator[_, _, _]], name = "BinaryToUnaryOperator"),
+    new JsonSubTypes.Type(value = classOf[DoWhileOperator[_, _]], name = "DoWhileOperator"),
+    new JsonSubTypes.Type(value = classOf[RepeatOperator[_]], name = "RepeatOperator"),
   ))
   abstract class ElementaryOperatorMixIn {
   }
 
   @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[TextFileSource], name = "TextFileSource"),
+    new JsonSubTypes.Type(value = classOf[CollectionSource[_]], name = "CollectionSource"),
   ))
   abstract class UnarySourceMixIn[T] {
   }
 
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[FilterOperator[_]], name = "FilterOperator"),
+    new JsonSubTypes.Type(value = classOf[LocalCallbackSink[_]], name = "LocalCallbackSink"),
+  ))
+  abstract class UnarySinkMixIn[T] {
+  }
+
+  @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[MapOperator[_, _]], name = "MapOperator"),
+    new JsonSubTypes.Type(value = classOf[MapPartitionsOperator[_, _]], name = "MapPartitionsOperator"),
+    new JsonSubTypes.Type(value = classOf[FilterOperator[_]], name = "FilterOperator"),
+    new JsonSubTypes.Type(value = classOf[FlatMapOperator[_, _]], name = "FlatMapOperator"),
+    new JsonSubTypes.Type(value = classOf[SampleOperator[_]], name = "SampleOperator"),
+    new JsonSubTypes.Type(value = classOf[ReduceByOperator[_, _]], name = "ReduceByOperator"),
+    new JsonSubTypes.Type(value = classOf[GroupByOperator[_, _]], name = "GroupByOperator"),
+    new JsonSubTypes.Type(value = classOf[ReduceOperator[_]], name = "ReduceOperator"),
+    new JsonSubTypes.Type(value = classOf[SortOperator[_, _]], name = "SortOperator"),
+    new JsonSubTypes.Type(value = classOf[CartesianOperator[_, _]], name = "CartesianOperator"),
+    new JsonSubTypes.Type(value = classOf[ZipWithIdOperator[_]], name = "ZipWithIdOperator"),
+    new JsonSubTypes.Type(value = classOf[DistinctOperator[_]], name = "DistinctOperator"),
+    new JsonSubTypes.Type(value = classOf[CountOperator[_]], name = "CountOperator"),
   ))
   abstract class UnaryToUnaryOperatorMixIn[InputType, OutputType] {
   }
 
-//  @JsonSubTypes(Array(
-//  ))
+    @JsonSubTypes(Array(
+      new JsonSubTypes.Type(value = classOf[UnionAllOperator[_]], name = "UnionAllOperator"),
+      new JsonSubTypes.Type(value = classOf[IntersectOperator[_]], name = "IntersectOperator"),
+      new JsonSubTypes.Type(value = classOf[JoinOperator[_, _, _]], name = "JoinOperator"),
+      new JsonSubTypes.Type(value = classOf[CoGroupOperator[_, _, _]], name = "CoGroupOperator"),
+    ))
   abstract class BinaryToUnaryOperatorMixIn[InputType0, InputType1, OutputType] {
   }
 

@@ -18,8 +18,6 @@
 
 package org.apache.wayang.api
 
-import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
-import org.apache.logging.log4j.{LogManager, Logger}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.plugin.Plugin
 

@@ -18,25 +18,38 @@
 
 package org.apache.wayang.api
 
+import org.apache.wayang.basic.data.Record
+import org.apache.wayang.basic.operators.TableSource
+
+import scala.reflect.ClassTag
+
 case class MultiContextPlanBuilder(var contexts: List[BlossomContext]) {
 
-  private[api] var withClassesOf: Option[Seq[Class[_]]] = None
+  private[api] var withClassesOf: Seq[Class[_]] = Seq()
 
   def withUdfJarsOf(classes: Class[_]*): MultiContextPlanBuilder = {
-    this.withClassesOf = Some(classes)
+    this.withClassesOf ++= classes
     this
   }
 
-  def readTextFile(url: String): MultiContextDataQuanta[String] = {
+  private def getPlanBuilder: PlanBuilder = new PlanBuilder(new BlossomContext())
 
-    new MultiContextDataQuanta[String](
-      contexts.map(blossomContext => {
-        this.withClassesOf match {
-          case Some(classes) => new PlanBuilder(blossomContext).withUdfJarsOf(classes: _*).readTextFile(url)
-          case None => new PlanBuilder(blossomContext).readTextFile(url)
-        }
-      })
-    )(this)
-  }
+  private def wrapInMultiContextDataQuanta[T: ClassTag](f: PlanBuilder => DataQuanta[T]): MultiContextDataQuanta[T] =
+    new MultiContextDataQuanta[T](f(getPlanBuilder))(this)
+
+  def readTextFile(url: String): MultiContextDataQuanta[String] =
+    wrapInMultiContextDataQuanta(_.readTextFile(url))
+
+  def readObjectFile[T: ClassTag](url: String): MultiContextDataQuanta[T] =
+    wrapInMultiContextDataQuanta(_.readObjectFile(url))
+
+  def readTable(source: TableSource): MultiContextDataQuanta[Record] =
+    wrapInMultiContextDataQuanta(_.readTable(source))
+
+  def loadCollection[T: ClassTag](collection: java.util.Collection[T]): MultiContextDataQuanta[T] =
+    wrapInMultiContextDataQuanta(_.loadCollection(collection))
+
+  def loadCollection[T: ClassTag](iterable: Iterable[T]): MultiContextDataQuanta[T] =
+    wrapInMultiContextDataQuanta(_.loadCollection(iterable))
 
 }

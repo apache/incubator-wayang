@@ -20,80 +20,141 @@
 package org.apache.wayang.api
 
 import org.apache.wayang.api.serialization.SerializationUtils
-import org.apache.wayang.basic.operators.{ObjectFileSink, TextFileSink}
-import org.apache.wayang.core.api.{Configuration, WayangContext}
+import org.apache.wayang.basic.operators.{ObjectFileSink, SampleOperator, TextFileSink}
 import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
 import org.apache.wayang.core.util.ReflectionUtils
-import org.apache.wayang.spark.Spark
 
 import java.io.{FileInputStream, FileOutputStream}
+import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
-import scala.reflect.ClassTag
-import java.util.concurrent.{ConcurrentLinkedQueue, Executors}
+import java.util.concurrent.ConcurrentLinkedQueue
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future.sequence
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, ExecutionException, Future}
-import scala.util.{Failure, Success}
+import scala.reflect.ClassTag
 
-class MultiContextDataQuanta[Out: ClassTag](val dataQuantaList: List[DataQuanta[Out]], outputIndex: Int = 0)(val multiContextPlanBuilder: MultiContextPlanBuilder) {
+class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val multiContextPlanBuilder: MultiContextPlanBuilder) {
 
-  def map[NewOut: ClassTag](udf: Out => NewOut): MultiContextDataQuanta[NewOut] = {
-    new MultiContextDataQuanta[NewOut](
-      dataQuantaList.map(dataQuanta => dataQuanta.map[NewOut](udf))
-    )(multiContextPlanBuilder)
-  }
+  private def wrapInMultiContextDataQuanta[NewOut: ClassTag](f: DataQuanta[Out] => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
+    new MultiContextDataQuanta[NewOut](f(dataQuanta))(this.multiContextPlanBuilder)
 
-  def filter(udf: Out => Boolean): MultiContextDataQuanta[Out] = {
-    new MultiContextDataQuanta[Out](
-      dataQuantaList.map(dataQuanta => dataQuanta.filter(udf))
-    )(multiContextPlanBuilder)
-  }
+  def map[NewOut: ClassTag](udf: Out => NewOut): MultiContextDataQuanta[NewOut] =
+    wrapInMultiContextDataQuanta(_.map(udf))
 
-  /*
-    def writeTextFile(urls: List[String], formatterUdf: Out => String): Unit = {
-      require(urls.length == operators.length, "The number of text file sinks is not equal to the number of contexts specified.")
-      operators.zip(urls).foreach {
-        case (operator, url) => operator.writeTextFile(url, formatterUdf)
-      }
-    }
-  */
+  def mapPartitions[NewOut: ClassTag](udf: Iterable[Out] => Iterable[NewOut]): MultiContextDataQuanta[NewOut] =
+    wrapInMultiContextDataQuanta(_.mapPartitions(udf))
+
+  def filter(udf: Out => Boolean): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.filter(udf))
+
+  def flatMap[NewOut: ClassTag](udf: Out => Iterable[NewOut]): MultiContextDataQuanta[NewOut] =
+    wrapInMultiContextDataQuanta(_.flatMap(udf))
+
+  def sample(sampleSize: Int,
+             datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
+             seed: Option[Long] = None,
+             sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.sample(sampleSize, datasetSize, seed, sampleMethod))
+
+  def sampleDynamic(sampleSizeFunction: Int => Int,
+                    datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
+                    seed: Option[Long] = None,
+                    sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.sampleDynamic(sampleSizeFunction, datasetSize, seed, sampleMethod))
+
+  def reduceByKey[Key: ClassTag](keyUdf: Out => Key,
+                                 udf: (Out, Out) => Out): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.reduceByKey(keyUdf, udf))
+
+  def groupByKey[Key: ClassTag](keyUdf: Out => Key): MultiContextDataQuanta[java.lang.Iterable[Out]] =
+    wrapInMultiContextDataQuanta(_.groupByKey(keyUdf))
+
+  def reduce(udf: (Out, Out) => Out): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.reduce(udf))
+
+  def union(that: MultiContextDataQuanta[Out]): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.union(that.dataQuanta))
+
+  def intersect(that: MultiContextDataQuanta[Out]): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.intersect(that.dataQuanta))
+
+  import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
+
+  def join[ThatOut: ClassTag, Key: ClassTag](thisKeyUdf: Out => Key,
+                                             that: MultiContextDataQuanta[ThatOut],
+                                             thatKeyUdf: ThatOut => Key)
+  : MultiContextDataQuanta[WayangTuple2[Out, ThatOut]] =
+    wrapInMultiContextDataQuanta(_.join(thisKeyUdf, that.dataQuanta, thatKeyUdf))
+
+  def coGroup[ThatOut: ClassTag, Key: ClassTag](thisKeyUdf: Out => Key,
+                                                that: MultiContextDataQuanta[ThatOut],
+                                                thatKeyUdf: ThatOut => Key)
+  : MultiContextDataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
+    wrapInMultiContextDataQuanta(_.coGroup(thisKeyUdf, that.dataQuanta, thatKeyUdf))
+
+  def sort[Key: ClassTag](keyUdf: Out => Key): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.sort(keyUdf))
+
+  def cartesian[ThatOut: ClassTag](that: MultiContextDataQuanta[ThatOut])
+  : MultiContextDataQuanta[WayangTuple2[Out, ThatOut]] =
+    wrapInMultiContextDataQuanta(_.cartesian(that.dataQuanta))
+
+  def zipWithId: MultiContextDataQuanta[WayangTuple2[java.lang.Long, Out]] =
+    wrapInMultiContextDataQuanta(_.zipWithId)
+
+  def distinct: MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.distinct)
+
+  def count: MultiContextDataQuanta[java.lang.Long] =
+    wrapInMultiContextDataQuanta(_.count)
+
+  def doWhile[ConvOut: ClassTag](udf: Iterable[ConvOut] => Boolean,
+                                 bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut]),
+                                 numExpectedIterations: Int = 20)
+  : MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.doWhile(udf, bodyBuilder, numExpectedIterations))
+
+  def repeat(n: Int, bodyBuilder: DataQuanta[Out] => DataQuanta[Out]): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.repeat(n, bodyBuilder))
+
+  def foreach(f: Out => _): Unit =
+    dataQuanta.foreach(f)
+
 
   def execute(): Unit = {
-    dataQuantaList.zip(multiContextPlanBuilder.contexts).foreach {
-      case (dataQuanta, context) =>
-        context.getSink match {
-          case Some(textFileSink: BlossomContext.TextFileSink) => dataQuanta.writeTextFile(textFileSink.textFileUrl, s => s.toString)
-          case Some(objectFileSink: BlossomContext.ObjectFileSink) => dataQuanta.writeTextFile(objectFileSink.textFileUrl, s => s.toString)
-          case None => throw new WayangException("All contexts must be attached to an output sink.")
-        }
-    }
-  }
 
-  def execute2(): Unit = {
-    println("Inside execute2")
-
-    // ConcurrentLinkedQueue is thread-safe and suitable for storing paths of temp files.
-    val tempFiles: ConcurrentLinkedQueue[Path] = new ConcurrentLinkedQueue[Path]()
+    val tempFiles: ConcurrentLinkedQueue[Path] = new ConcurrentLinkedQueue[Path]() // To store the temp file names
     val processes: ListBuffer[Process] = ListBuffer() // To store the processes
 
-    dataQuantaList.zip(multiContextPlanBuilder.contexts).foreach {
-      case (dataQuanta, context) =>
-        val operatorPath = MultiContextDataQuanta.writeToTempFile(dataQuanta.operator)
-        val contextPath = MultiContextDataQuanta.writeToTempFile(context)
+    // For spawning child process using wayang-submit under wayang home
+    val wayangHome = System.getenv("WAYANG_HOME")
+
+    // Write operator to temp file
+    val operatorPath = MultiContextDataQuanta.writeToTempFile2(dataQuanta.operator)
+
+    multiContextPlanBuilder.contexts.foreach {
+      context =>
+
+        // Write context to temp file
+        val multiContextPlanBuilderPath = MultiContextDataQuanta.writeToTempFile2(MultiContextPlanBuilder(List(context)))
 
         // Store the paths for later deletion
         tempFiles.add(operatorPath)
-        tempFiles.add(contextPath)
+        tempFiles.add(multiContextPlanBuilderPath)
 
-        val wayangHome = System.getenv("WAYANG_HOME")
-        println(s"About to start a process with args ${(operatorPath, contextPath)}")
-        val processBuilder = new ProcessBuilder(s"$wayangHome/bin/wayang-submit", "org.apache.wayang.api.MultiContextDataQuanta", operatorPath.toString, contextPath.toString)
+        println(s"About to start a process with args ${(operatorPath, multiContextPlanBuilderPath)}")
+
+        // Spawn child process
+        val processBuilder = new ProcessBuilder(
+          s"$wayangHome/bin/wayang-submit",
+          "org.apache.wayang.api.MultiContextDataQuanta",
+          operatorPath.toString,
+          multiContextPlanBuilderPath.toString)
+
+        // Redirect children out to parent out
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT)
 
-        val process = processBuilder.start()
+        val process = processBuilder.start()  // Start process
         processes += process // Store the process for later
     }
 
@@ -102,42 +163,6 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaList: List[DataQuanta[
 
     // Delete all temporary files
     tempFiles.forEach(path => Files.deleteIfExists(path))
-
-    /*
-    def execute(): Unit = {
-      // Create the custom ExecutionContext
-      val threadPool = Executors.newFixedThreadPool(operators.size)
-      implicit val customExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(threadPool)
-
-      // Run your tasks
-      val futures = operators.zip(multiContextPlanBuilder.contexts).map {
-        case (operator, context) =>
-          Future {
-            println(s"Executing on thread: ${Thread.currentThread().getName}")
-            context.sink match {
-              case Some(textFileSink: BlossomContext.TextFileSink) =>
-                operator.writeTextFile(textFileSink.textFileUrl, s => s.toString)
-              case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
-                operator.writeTextFile(objectFileSink.textFileUrl, s => s.toString)
-              case None => throw new WayangException("All contexts must be attached to an output sink.")
-            }
-          }
-      }
-
-      // Wait for all futures to complete
-      val combinedFuture = sequence(futures)
-
-      try {
-        Await.result(combinedFuture, Duration.Inf)
-        println("All plans completed successfully.")
-      } catch {
-        case e: ExecutionException => throw e.getCause
-      } finally {
-        threadPool.shutdown() // Ensure the thread pool is always shut down
-      }
-    }
-    */
-
   }
 
 }
@@ -150,36 +175,48 @@ object MultiContextDataQuanta {
     println()
 
     if (args.length != 2) {
-      System.err.println("Expected two arguments: paths to the serialized dataQuanta and context.")
+      System.err.println("Expected two arguments: paths to the serialized operator and context.")
       System.exit(1)
     }
 
+    // Parse file paths
     val operatorPath = Path.of(args(0))
-    val contextPath = Path.of(args(1))
+    val multiContextPlanBuilderPath = Path.of(args(1))
 
-    val operator = MultiContextDataQuanta.readFromTempFile[Operator](operatorPath)
-    val context = MultiContextDataQuanta.readFromTempFile[BlossomContext](contextPath)
+    // Parse operator and multiContextPlanBuilder
+    val operator = MultiContextDataQuanta.readFromTempFile2[Operator](operatorPath)
+    val multiContextPlanBuilder = MultiContextDataQuanta.readFromTempFile2[MultiContextPlanBuilder](multiContextPlanBuilderPath)
 
+    // Get context
+    val context = multiContextPlanBuilder.contexts.head
+
+    // Get classes of and also add this one
+    var withClassesOf = multiContextPlanBuilder.withClassesOf
+    withClassesOf = withClassesOf :+ classOf[MultiContextDataQuanta[_]]
+    println(s"withClassesOf: $withClassesOf")
+
+    // Connect to sink and execute plan
     context.getSink match {
       case Some(textFileSink: BlossomContext.TextFileSink) =>
-        val sink = new TextFileSink[AnyRef](textFileSink.textFileUrl, classOf[AnyRef])
-        operator.connectTo(0, sink, 0)
-        context.execute(new WayangPlan(sink), ReflectionUtils.getDeclaringJar(classOf[MultiContextDataQuanta[_]]))
+        connectToSinkAndExecutePlan(new TextFileSink[AnyRef](textFileSink.textFileUrl, classOf[AnyRef]))
 
       case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
-        val sink = new ObjectFileSink[AnyRef](objectFileSink.textFileUrl, classOf[AnyRef])
-        operator.connectTo(0, sink, 0)
-        context.execute(new WayangPlan(sink), ReflectionUtils.getDeclaringJar(classOf[MultiContextDataQuanta[_]]))
+        connectToSinkAndExecutePlan(new ObjectFileSink[AnyRef](objectFileSink.textFileUrl, classOf[AnyRef]))
 
       case None =>
         throw new WayangException("All contexts must be attached to an output sink.")
 
       case _ =>
-        throw new WayangException("All contexts must be attached to an output sink.")
+        throw new WayangException("Invalid sink..")
+    }
+
+    def connectToSinkAndExecutePlan(sink: Operator): Unit = {
+      operator.connectTo(0, sink, 0)
+      context.execute(new WayangPlan(sink), withClassesOf.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
     }
   }
 
-  private def writeToTempFile(obj: AnyRef): Path = {
+  def writeToTempFile(obj: AnyRef): Path = {
     val tempFile = Files.createTempFile("serialized", ".tmp")
     val fos = new FileOutputStream(tempFile.toFile)
     try {
@@ -190,7 +227,7 @@ object MultiContextDataQuanta {
     tempFile
   }
 
-  private def readFromTempFile[T : ClassTag](path: Path): T = {
+  def readFromTempFile[T : ClassTag](path: Path): T = {
     val fis = new FileInputStream(path.toFile)
     try {
       SerializationUtils.deserialize[T](fis.readAllBytes())
@@ -199,4 +236,20 @@ object MultiContextDataQuanta {
       Files.deleteIfExists(path)
     }
   }
+
+  def writeToTempFile2(obj: AnyRef): Path = {
+    val tempFile = Files.createTempFile("serialized", ".tmp")
+    println(s"Just created temp file ${tempFile.toFile.getName}")
+    val serializedString = SerializationUtils.serializeAsString(obj)
+    Files.writeString(tempFile, serializedString, StandardCharsets.UTF_8)
+    tempFile
+  }
+
+  def readFromTempFile2[T: ClassTag](path: Path): T = {
+    val serializedString = Files.readString(path, StandardCharsets.UTF_8)
+    val deserializedObject = SerializationUtils.deserializeFromString[T](serializedString)
+    Files.deleteIfExists(path)
+    deserializedObject
+  }
+
 }

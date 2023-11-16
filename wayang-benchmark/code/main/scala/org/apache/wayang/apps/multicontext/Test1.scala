@@ -24,8 +24,6 @@ import org.apache.wayang.core.api.Configuration
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 
-import java.lang.management.ManagementFactory
-
 
 class Test1 {}
 
@@ -56,13 +54,16 @@ object Test1 {
       .withUdfJarsOf(classOf[Test1])
 
     val beforeUsedMem = Runtime.getRuntime.totalMemory() - Runtime.getRuntime.freeMemory()
-    multiContextPlanBuilder
-      .readTextFile("file:///tmp/in1.txt")
-      .map(s => s + " Wayang out.")
-      .filter(s => s.length > 20)
-      .execute2()
-    val afterUsedMem = Runtime.getRuntime.totalMemory() - Runtime.getRuntime.freeMemory()
 
+    multiContextPlanBuilder
+      .readTextFile("file:///tmp/in1.txt") // .withTargetPlatforms(List(Spark, Flink))
+      .map(s => s + " Wayang out.") // .withTargetPlatform(Spark) // And it uses the default behavior if spark does not exist on a context
+      .filter(s => s.length > 20)
+      .execute()
+
+      // .merge()
+
+    val afterUsedMem = Runtime.getRuntime.totalMemory() - Runtime.getRuntime.freeMemory()
     val actualMemUsed = afterUsedMem - beforeUsedMem
 
     println()

@@ -18,26 +18,35 @@
 
 package org.apache.wayang.api
 
-import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import org.apache.wayang.api.serialization.SerializationUtils
-import org.apache.wayang.api.serialization.SerializationUtils.{deserialize, serialize, serializeAsString}
 import org.apache.wayang.basic.operators.TextFileSink
 import org.apache.wayang.core.api.{Configuration, WayangContext}
-import org.apache.wayang.core.function.FunctionDescriptor.SerializablePredicate
-import org.apache.wayang.core.function.PredicateDescriptor
-import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
-import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator
-import org.apache.wayang.core.plan.wayangplan.{ElementaryOperator, Operator, WayangPlan}
-import org.apache.wayang.core.types.BasicDataUnitType
+import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
 import org.apache.wayang.core.util.ReflectionUtils
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
-import org.junit.{Assert, Test}
+import org.junit.rules.TestName
+import org.junit.{Assert, Rule, Test}
 
-import java.io.Serializable
-import scala.reflect.ClassTag
+import java.io.{File, FileWriter}
+import java.nio.file.{Files, Paths}
+import java.util.stream.Collectors
+import scala.jdk.CollectionConverters.asScalaBufferConverter
 
 class SerializationUtilsTest {
+
+  //
+  // Some magic from https://stackoverflow.com/a/36152864/5589918 in order to get the current test name
+  //
+  var _testName: TestName = new TestName
+
+  @Rule
+  def testName: TestName = _testName
+
+  def testName_=(aTestName: TestName): Unit = {
+    _testName = aTestName
+  }
+
 
   //  @Test
   def blossomContextSerializationTest(): Unit = {
@@ -65,6 +74,7 @@ class SerializationUtilsTest {
     }
   }
 
+
   //  @Test
   def multiContextPlanBuilderSerializationTest(): Unit = {
     val configuration1 = new Configuration()
@@ -80,10 +90,10 @@ class SerializationUtilsTest {
     try {
       val serialized = SerializationUtils.serializeAsString(multiContextPlanBuilder)
       val deserialized = SerializationUtils.deserializeFromString[MultiContextPlanBuilder](serialized)
-      log(SerializationUtils.serializeAsString(deserialized))
+      log(SerializationUtils.serializeAsString(deserialized), testName.getMethodName + ".log.json")
       Assert.assertEquals(
-        multiContextPlanBuilder.withClassesOf.get.toList,
-        deserialized.withClassesOf.get.toList
+        multiContextPlanBuilder.withClassesOf,
+        deserialized.withClassesOf
       )
       Assert.assertEquals(
         multiContextPlanBuilder.contexts(0).getConfiguration.getStringProperty("spark.master"),
@@ -109,34 +119,114 @@ class SerializationUtilsTest {
     }
   }
 
-  @Test
-  def dataQuantaSerializationTest(): Unit = {
-    val configuration = new Configuration()
-    val wayangContext = new WayangContext(configuration).withPlugin(Java.basicPlugin())
-    val planBuilder = new PlanBuilder(wayangContext).withUdfJarsOf(classOf[SerializationUtilsTest])
 
+//  @Test
+  def operatorSerializationTest(): Unit = {
+
+    // Define configuration
+    val configuration = new Configuration()
+    val wayangContext = new WayangContext(configuration)
+      .withPlugin(Java.basicPlugin())
+    val planBuilder = new PlanBuilder(wayangContext)
+      .withUdfJarsOf(classOf[SerializationUtilsTest])
+
+    // Define plan
     val dataQuanta = planBuilder
-      .readTextFile("file:///tmp/in1.txt")
-      .map(s => s + " Wayang out.")
+      .loadCollection(List("12345", "12345678", "1234567890", "1234567890123"))
+      .map(s => s + " Wayang out")
       .map(s => (s, "AAAA", "BBBB"))
       .map(s => List(s._1, "a", "b", "c"))
       .filter(s => s.head.length > 20)
-    // .filter(s => s.length > 20)
+      .map(s => s.head)
 
     try {
-      val serialized = SerializationUtils.serializeAsString(dataQuanta.operator)
-      log(serialized)
-      val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
+      val serialized = SerializationUtils.serialize(dataQuanta.operator) // serialize
+//      log(serialized, testName.getMethodName + ".log.json") // log
+      val deserialized = SerializationUtils.deserialize[Operator](serialized) // deserialize
 
-      // val dq1 = new DataQuanta[AnyRef](deserialized.asInstanceOf[ElementaryOperator])(ClassTag(classOf[AnyRef]), planBuilder)
-      // dq1.writeTextFile("file:///tmp/aaaaaaaaaaaaaa.txt", s => s.toString)
-
-      val sink = new TextFileSink[AnyRef]("file:///tmp/aaaaaaaaaaaaaa.txt", classOf[AnyRef])
+      // Attach an output sink to deserialized plan
+      val tempFileOut = s"/tmp/${testName.getMethodName}.out"
+      val sink = new TextFileSink[AnyRef](s"file://$tempFileOut", classOf[AnyRef])
       deserialized.connectTo(0, sink, 0)
 
+      // Execute plan
       val plan = new WayangPlan(sink)
       wayangContext.execute(plan, ReflectionUtils.getDeclaringJar(classOf[SerializationUtilsTest]))
 
+      // Check results
+      val expectedLines = List("1234567890 Wayang out", "1234567890123 Wayang out")
+      assertOutputFile(tempFileOut, expectedLines)
+    }
+
+    catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        throw t
+    }
+  }
+
+
+  @Test
+  def serializeToTempFileTest(): Unit = {
+    // Define configuration
+    val configuration = new Configuration()
+    val wayangContext = new WayangContext(configuration)
+      .withPlugin(Java.basicPlugin())
+    val planBuilder = new PlanBuilder(wayangContext)
+      .withUdfJarsOf(classOf[SerializationUtilsTest])
+
+    // Define plan
+    val dataQuanta = planBuilder
+      .loadCollection(List("12345", "12345678", "1234567890", "1234567890123"))
+      .map(s => s + " Wayang out")
+      .map(s => (s, "AAAA", "BBBB"))
+      .map(s => List(s._1, "a", "b", "c"))
+      .filter(s => s.head.length > 20)
+      .map(s => s.head)
+
+    val tempfile = MultiContextDataQuanta.writeToTempFile2(dataQuanta.operator)
+    val operator = MultiContextDataQuanta.readFromTempFile2[Operator](tempfile)
+
+    // Attach an output sink to deserialized plan
+    val tempFileOut = s"/tmp/${testName.getMethodName}.out"
+    val sink = new TextFileSink[AnyRef](s"file://$tempFileOut", classOf[AnyRef])
+    operator.connectTo(0, sink, 0)
+
+    // Execute plan
+    val plan = new WayangPlan(sink)
+    wayangContext.execute(plan, ReflectionUtils.getDeclaringJar(classOf[SerializationUtilsTest]))
+
+    // Check results
+    val expectedLines = List("1234567890 Wayang out", "1234567890123 Wayang out")
+    assertOutputFile(tempFileOut, expectedLines)
+  }
+
+
+//  @Test
+  def multiDataQuantaExecuteTest(): Unit = {
+
+    try {
+      // Create blossom contexts
+      val out1 = "/tmp/out11"
+      val out2 = "/tmp/out12"
+      val context1 = new BlossomContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink(s"file://$out1")
+      val context2 = new BlossomContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink(s"file://$out2")
+
+      // Create multiContextPlanBuilder
+      val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2))
+        .withUdfJarsOf(classOf[SerializationUtilsTest])
+
+      // Build and execute plan
+      multiContextPlanBuilder
+        .loadCollection(List("aaabbb", "aaabbbccc", "aaabbbcccddd", "aaabbbcccdddeee"))
+        .map(s => s + " Wayang out.")
+//        .filter(s => s.length > 20)
+        .execute()
+
+      // Check results
+      val expectedLines = List("aaabbbcccddd Wayang out", "aaabbbcccdddeee Wayang out")
+      assertOutputFile(out1, expectedLines)
+      assertOutputFile(out2, expectedLines)
     }
     catch {
       case t: Throwable =>
@@ -145,23 +235,23 @@ class SerializationUtilsTest {
     }
   }
 
-  //  @Test
-  def testPredicateDescriptor(): Unit = {
 
-    val predicateDescriptor: PredicateDescriptor[Int] = new PredicateDescriptor[Int](
-      null,
-      basicDataUnitType[Int],
-      ProbabilisticDoubleInterval.ofExactly(1.23),
-      new NestableLoadProfileEstimator((f1: Long, f2: Long) => f1 * f2, (in: Long, out: Long) => 0L)
-    )
+  def assertOutputFile(outputFilename: String, expectedLines: List[String]): Unit = {
 
-    val serialized = SerializationUtils.serializeAsString(predicateDescriptor)
-    log(serialized)
-    val deserialized = SerializationUtils.deserializeFromString[PredicateDescriptor[Int]](serialized)
+    // Read lines
+    val lines = Files.lines(Paths.get(outputFilename)).collect(Collectors.toList[String]).asScala
+
+    // Assert number of lines
+    Assert.assertEquals("Number of lines in the file should match", expectedLines.size, lines.size)
+
+    // Assert content of lines
+    lines.zip(expectedLines).foreach { case (actual, expected) =>
+      Assert.assertEquals("Line content should match", expected, actual)
+    }
   }
 
+
   def log(text: String, filename: String = "customLogFile.json"): Unit = {
-    import java.io.{File, FileWriter}
 
     // Get the user's desktop path
     val desktopPath = System.getProperty("user.home") + "/Desktop"
@@ -180,7 +270,7 @@ class SerializationUtilsTest {
       writer.close()
     }
 
-    // If you want to log the path of the temporary file
+    // Log the path of the temporary file
     println(s"Temp file created at: ${customFile.getAbsolutePath}")
   }
 
