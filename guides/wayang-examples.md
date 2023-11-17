@@ -235,3 +235,113 @@ object kmeans {
   }
 }
 ```
+
+## Collaborative Filtering
+
+This code demonstrates the implementation of a Collaborative Filtering algorithm used in Recommendation Systems using Wayang.
+
+```java
+import org.apache.wayang.api.*;
+import org.apache.wayang.basic.data.*;
+import org.apache.wayang.core.api.*;
+import org.apache.wayang.core.function.*;
+import org.apache.wayang.core.util.*;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.spark.Spark;
+import org.apache.commons.math3.linear.*;
+
+import java.util.*;
+
+public class CollaborativeFiltering {
+
+    public static void main(String[] args) {
+
+        // Create a Wayang context
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        PlanBuilder planBuilder = new PlanBuilder(wayangContext);
+
+        // Load the data
+        List<Tuple3<String, String, Integer>> data = Arrays.asList(
+            new Tuple3<>("user1", "item1", 5),
+            new Tuple3<>("user1", "item2", 3),
+            new Tuple3<>("user2", "item1", 4),
+            new Tuple3<>("user2", "item3", 2),
+            new Tuple3<>("user3", "item2", 1),
+            new Tuple3<>("user3", "item3", 5)
+        );
+
+        // Define a function to normalize the ratings
+        TransformationDescriptor.SerializableFunction<Tuple3<String, String, Integer>, Tuple3<String, String, Double>> normalizationFunction = 
+            tuple -> new Tuple3<>(tuple.field0, tuple.field1, (double)tuple.field2 / 5);
+
+        // Define a function to calculate the cosine similarity between users
+        TransformationDescriptor.SerializableFunction<Tuple2<String, RealVector>, Tuple2<String, RealVector>> similarityFunction = 
+            tuple -> {
+                // This is a placeholder. You would need to implement a real similarity calculation here.
+                // For example, you could calculate the cosine similarity like this:
+                double dotProduct = tuple.field1.dotProduct(otherUserVector);
+                double normProduct = tuple.field1.getNorm() * otherUserVector.getNorm();
+                double cosineSimilarity = dotProduct / normProduct;
+                return new Tuple2<>(tuple.field0, cosineSimilarity);
+            };
+
+        // Define a function to calculate the predicted rating for each user-item pair
+        TransformationDescriptor.SerializableFunction<Tuple3<String, String, Double>, Tuple3<String, String, Double>> predictionFunction = 
+            tuple -> {
+                // This is a placeholder. You would need to implement a real prediction calculation here.
+                // For example, you could calculate the predicted rating based on the similarity matrix and the user's ratings like this:
+                double predictedRating = 0.0;
+                double similaritySum = 0.0;
+                for (String otherUser : similarityMatrix.keySet()) {
+                    double similarity = similarityMatrix.get(otherUser);
+                    double otherUserRating = userRatings.get(otherUser).get(tuple.field1);
+                    predictedRating += similarity * otherUserRating;
+                    similaritySum += Math.abs(similarity);
+                }
+                predictedRating /= similaritySum;
+                return new Tuple3<>(tuple.field0, tuple.field1, predictedRating);
+            };
+
+        // Define a function to handle cold start problems
+        TransformationDescriptor.SerializableFunction<Tuple3<String, String, Double>, Tuple3<String, String, Double>> coldStartFunction = 
+            tuple -> {
+                if (tuple.field2 == null) {
+                    // If the user has no ratings, recommend the most popular item
+                    String mostPopularItem = itemPopularity.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .get()
+                        .getKey();
+                    return new Tuple3<>(tuple.field0, mostPopularItem, 5.0);
+                } else {
+                    return tuple;
+                }
+            };
+
+        // Define a function to handle cold start problems
+        TransformationDescriptor.SerializableFunction<Tuple3<String, String, Double>, Tuple3<String, String, Double>> coldStartFunction = 
+            tuple -> {
+                if (tuple.field2 == null) {
+                    // If the user has no ratings, recommend the most popular item
+                    return new Tuple3<>(tuple.field0, "item1", 1.0);
+                } else {
+                    return tuple;
+                }
+            };
+
+        // Execute the plan
+        Collection<Tuple3<String, String, Double>> output = planBuilder
+            .loadCollection(data)
+            .map(normalizationFunction)
+            .map(similarityFunction)
+            .map(predictionFunction)
+            .map(recommendationFunction)
+            .map(coldStartFunction)
+            .collect();
+
+        // Print the recommendations
+        for (Tuple3<String, String, Double> recommendation : output) {
+            System.out.println("User: " + recommendation.field0 + ", Item: " + recommendation.field1 + ", Rating: " + recommendation.field2);
+        }
+    }
+}
+```
