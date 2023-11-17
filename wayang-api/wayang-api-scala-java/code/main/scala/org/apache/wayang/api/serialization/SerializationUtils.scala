@@ -104,7 +104,11 @@ object SerializationUtils {
       .addMixIn(classOf[MapOperator[_, _]], classOf[MapOperatorMixIn[_, _]])
       .addMixIn(classOf[PredicateDescriptor[_]], classOf[PredicateDescriptorMixIn[_]])
       .addMixIn(classOf[TransformationDescriptor[_, _]], classOf[TransformationDescriptorMixIn[_, _]])
+      .addMixIn(classOf[ReduceDescriptor[_]], classOf[ReduceDescriptorMixIn[_]])
+      .addMixIn(classOf[FlatMapDescriptor[_, _]], classOf[FlatMapDescriptorMixIn[_, _]])
+      .addMixIn(classOf[MapPartitionsDescriptor[_, _]], classOf[MapPartitionsDescriptorMixIn[_, _]])
       .addMixIn(classOf[BasicDataUnitType[_]], classOf[BasicDataUnitTypeMixIn[_]])
+      .addMixIn(classOf[DataUnitGroupType[_]], classOf[DataUnitGroupTypeMixIn[_]])
       .addMixIn(classOf[ProbabilisticDoubleInterval], classOf[ProbabilisticDoubleIntervalMixIn])
       .addMixIn(classOf[LoadProfileEstimator], classOf[LoadProfileEstimatorMixIn])
       .addMixIn(classOf[FunctionDescriptor], classOf[FunctionDescriptorMixIn])
@@ -252,10 +256,12 @@ object SerializationUtils {
     new JsonSubTypes.Type(value = classOf[FlatMapOperator[_, _]], name = "FlatMapOperator"),
     new JsonSubTypes.Type(value = classOf[SampleOperator[_]], name = "SampleOperator"),
     new JsonSubTypes.Type(value = classOf[ReduceByOperator[_, _]], name = "ReduceByOperator"),
+    new JsonSubTypes.Type(value = classOf[MaterializedGroupByOperator[_, _]], name = "MaterializedGroupByOperator"),
+    new JsonSubTypes.Type(value = classOf[GlobalReduceOperator[_]], name = "GlobalReduceOperator"),
+    new JsonSubTypes.Type(value = classOf[GlobalMaterializedGroupOperator[_]], name = "GlobalMaterializedGroupOperator"),
     new JsonSubTypes.Type(value = classOf[GroupByOperator[_, _]], name = "GroupByOperator"),
     new JsonSubTypes.Type(value = classOf[ReduceOperator[_]], name = "ReduceOperator"),
     new JsonSubTypes.Type(value = classOf[SortOperator[_, _]], name = "SortOperator"),
-    new JsonSubTypes.Type(value = classOf[CartesianOperator[_, _]], name = "CartesianOperator"),
     new JsonSubTypes.Type(value = classOf[ZipWithIdOperator[_]], name = "ZipWithIdOperator"),
     new JsonSubTypes.Type(value = classOf[DistinctOperator[_]], name = "DistinctOperator"),
     new JsonSubTypes.Type(value = classOf[CountOperator[_]], name = "CountOperator"),
@@ -264,6 +270,7 @@ object SerializationUtils {
   }
 
     @JsonSubTypes(Array(
+      new JsonSubTypes.Type(value = classOf[CartesianOperator[_, _]], name = "CartesianOperator"),
       new JsonSubTypes.Type(value = classOf[UnionAllOperator[_]], name = "UnionAllOperator"),
       new JsonSubTypes.Type(value = classOf[IntersectOperator[_]], name = "IntersectOperator"),
       new JsonSubTypes.Type(value = classOf[JoinOperator[_, _, _]], name = "JoinOperator"),
@@ -543,6 +550,75 @@ object SerializationUtils {
     }
   }
 
+  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
+  abstract class ReduceDescriptorMixIn[Type] {
+    @JsonCreator
+    def this(@JsonProperty("javaImplementation") javaImplementation: FunctionDescriptor.SerializableBinaryOperator[Type],
+             @JsonProperty("inputType") inputType: DataUnitGroupType[Type],
+             @JsonProperty("outputType") outputType: BasicDataUnitType[Type],
+             @JsonProperty("loadProfileEstimator") loadProfileEstimator: LoadProfileEstimator) = {
+      this()
+    }
+  }
+
+  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
+  abstract class FlatMapDescriptorMixIn[Input, Output] {
+    @JsonCreator
+    def this(@JsonProperty("javaImplementation") javaImplementation: FunctionDescriptor.SerializableFunction[Input, Iterable[Output]],
+             @JsonProperty("inputType") inputType: BasicDataUnitType[Input],
+             @JsonProperty("outputType") outputType: BasicDataUnitType[Output],
+             @JsonProperty("selectivity") selectivity: ProbabilisticDoubleInterval,
+             @JsonProperty("loadProfileEstimator") loadProfileEstimator: LoadProfileEstimator) = {
+      this()
+    }
+  }
+
+  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
+  abstract class MapPartitionsDescriptorMixIn[Input, Output] {
+    @JsonCreator
+    def this(@JsonProperty("javaImplementation") javaImplementation: FunctionDescriptor.SerializableFunction[Iterable[Input], Iterable[Output]],
+             @JsonProperty("inputType") inputType: BasicDataUnitType[Input],
+             @JsonProperty("outputType") outputType: BasicDataUnitType[Output],
+             @JsonProperty("selectivity") selectivity: ProbabilisticDoubleInterval,
+             @JsonProperty("loadProfileEstimator") loadProfileEstimator: LoadProfileEstimator) = {
+      this()
+    }
+  }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[RecordType], name = "RecordType"),
+  ))
+  abstract class BasicDataUnitTypeMixIn[T] {
+    @JsonCreator
+    def this(@JsonProperty("typeClass") typeClass: Class[T]) = {
+      this()
+    }
+  }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  abstract class DataUnitGroupTypeMixIn[T] {
+    @JsonCreator
+    def this(@JsonProperty("baseType") baseType: DataUnitType[_]) = {
+      this()
+    }
+  }
+
+  abstract class DataSetTypeMixIn[T] {
+    @JsonCreator
+    def this(@JsonProperty("dataUnitType") dataUnitType: DataUnitType[T]) = {
+      this()
+    }
+  }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[BasicDataUnitType[_]], name = "BasicDataUnitType"),
+    new JsonSubTypes.Type(value = classOf[DataUnitGroupType[_]], name = "DataUnitGroupType"),
+  ))
+  abstract class DataUnitTypeMixIn {
+  }
+
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[DefaultLoadEstimator], name = "DefaultLoadEstimator"),
@@ -570,32 +646,6 @@ object SerializationUtils {
              @JsonProperty("isOverride") isOverride: Boolean) = {
       this()
     }
-  }
-
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
-  @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[RecordType], name = "RecordType"),
-  ))
-  abstract class BasicDataUnitTypeMixIn[T] {
-    @JsonCreator
-    def this(@JsonProperty("typeClass") typeClass: Class[T]) = {
-      this()
-    }
-  }
-
-  abstract class DataSetTypeMixIn[T] {
-    @JsonCreator
-    def this(@JsonProperty("dataUnitType") dataUnitType: DataUnitType[T]) = {
-      this()
-    }
-  }
-
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
-  @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[BasicDataUnitType[_]], name = "BasicDataUnitType"),
-    new JsonSubTypes.Type(value = classOf[DataUnitGroupType[_]], name = "DataUnitGroupType"),
-  ))
-  abstract class DataUnitTypeMixIn {
   }
 
   //  @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")

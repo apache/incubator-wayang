@@ -122,24 +122,26 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val
 
   def execute(): Unit = {
 
-    val tempFiles: ConcurrentLinkedQueue[Path] = new ConcurrentLinkedQueue[Path]() // To store the temp file names
+    val tempFilesToBeDeleted: ConcurrentLinkedQueue[Path] = new ConcurrentLinkedQueue[Path]() // To store the temp file names
     val processes: ListBuffer[Process] = ListBuffer() // To store the processes
 
     // For spawning child process using wayang-submit under wayang home
     val wayangHome = System.getenv("WAYANG_HOME")
 
     // Write operator to temp file
-    val operatorPath = MultiContextDataQuanta.writeToTempFile2(dataQuanta.operator)
+    val operatorPath = MultiContextDataQuanta.writeToTempFileAsString(dataQuanta.operator)
+    tempFilesToBeDeleted.add(operatorPath)
+
 
     multiContextPlanBuilder.contexts.foreach {
       context =>
 
         // Write context to temp file
-        val multiContextPlanBuilderPath = MultiContextDataQuanta.writeToTempFile2(MultiContextPlanBuilder(List(context)))
+        val multiContextPlanBuilderPath = MultiContextDataQuanta.writeToTempFileAsString(
+          MultiContextPlanBuilder(List(context)).withUdfJarsOf(multiContextPlanBuilder.withClassesOf: _*)
+        )
 
-        // Store the paths for later deletion
-        tempFiles.add(operatorPath)
-        tempFiles.add(multiContextPlanBuilderPath)
+        tempFilesToBeDeleted.add(multiContextPlanBuilderPath)
 
         println(s"About to start a process with args ${(operatorPath, multiContextPlanBuilderPath)}")
 
@@ -162,7 +164,7 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val
     processes.foreach(_.waitFor())
 
     // Delete all temporary files
-    tempFiles.forEach(path => Files.deleteIfExists(path))
+    tempFilesToBeDeleted.forEach(path => Files.deleteIfExists(path))
   }
 
 }
@@ -184,8 +186,8 @@ object MultiContextDataQuanta {
     val multiContextPlanBuilderPath = Path.of(args(1))
 
     // Parse operator and multiContextPlanBuilder
-    val operator = MultiContextDataQuanta.readFromTempFile2[Operator](operatorPath)
-    val multiContextPlanBuilder = MultiContextDataQuanta.readFromTempFile2[MultiContextPlanBuilder](multiContextPlanBuilderPath)
+    val operator = MultiContextDataQuanta.readFromTempFileFromString[Operator](operatorPath)
+    val multiContextPlanBuilder = MultiContextDataQuanta.readFromTempFileFromString[MultiContextPlanBuilder](multiContextPlanBuilderPath)
 
     // Get context
     val context = multiContextPlanBuilder.contexts.head
@@ -193,15 +195,17 @@ object MultiContextDataQuanta {
     // Get classes of and also add this one
     var withClassesOf = multiContextPlanBuilder.withClassesOf
     withClassesOf = withClassesOf :+ classOf[MultiContextDataQuanta[_]]
-    println(s"withClassesOf: $withClassesOf")
+
+    // Get out output type to create sink with
+    val outType = operator.getOutput(0).getType.getDataUnitType.getTypeClass
 
     // Connect to sink and execute plan
     context.getSink match {
       case Some(textFileSink: BlossomContext.TextFileSink) =>
-        connectToSinkAndExecutePlan(new TextFileSink[AnyRef](textFileSink.textFileUrl, classOf[AnyRef]))
+        connectToSinkAndExecutePlan(new TextFileSink(textFileSink.textFileUrl, outType))
 
       case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
-        connectToSinkAndExecutePlan(new ObjectFileSink[AnyRef](objectFileSink.textFileUrl, classOf[AnyRef]))
+        connectToSinkAndExecutePlan(new ObjectFileSink(objectFileSink.textFileUrl, outType))
 
       case None =>
         throw new WayangException("All contexts must be attached to an output sink.")
@@ -210,13 +214,15 @@ object MultiContextDataQuanta {
         throw new WayangException("Invalid sink..")
     }
 
+
     def connectToSinkAndExecutePlan(sink: Operator): Unit = {
       operator.connectTo(0, sink, 0)
       context.execute(new WayangPlan(sink), withClassesOf.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
     }
   }
 
-  def writeToTempFile(obj: AnyRef): Path = {
+
+  def writeToTempFileAsBinary(obj: AnyRef): Path = {
     val tempFile = Files.createTempFile("serialized", ".tmp")
     val fos = new FileOutputStream(tempFile.toFile)
     try {
@@ -227,7 +233,8 @@ object MultiContextDataQuanta {
     tempFile
   }
 
-  def readFromTempFile[T : ClassTag](path: Path): T = {
+
+  def readFromTempFileFromBinary[T : ClassTag](path: Path): T = {
     val fis = new FileInputStream(path.toFile)
     try {
       SerializationUtils.deserialize[T](fis.readAllBytes())
@@ -237,7 +244,8 @@ object MultiContextDataQuanta {
     }
   }
 
-  def writeToTempFile2(obj: AnyRef): Path = {
+
+  def writeToTempFileAsString(obj: AnyRef): Path = {
     val tempFile = Files.createTempFile("serialized", ".tmp")
     println(s"Just created temp file ${tempFile.toFile.getName}")
     val serializedString = SerializationUtils.serializeAsString(obj)
@@ -245,7 +253,8 @@ object MultiContextDataQuanta {
     tempFile
   }
 
-  def readFromTempFile2[T: ClassTag](path: Path): T = {
+
+  def readFromTempFileFromString[T: ClassTag](path: Path): T = {
     val serializedString = Files.readString(path, StandardCharsets.UTF_8)
     val deserializedObject = SerializationUtils.deserializeFromString[T](serializedString)
     Files.deleteIfExists(path)
