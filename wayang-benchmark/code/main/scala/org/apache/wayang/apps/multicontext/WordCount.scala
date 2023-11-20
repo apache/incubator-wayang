@@ -22,14 +22,33 @@ package org.apache.wayang.apps.multicontext
 import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
 import org.apache.wayang.core.api.Configuration
 import org.apache.wayang.java.Java
+import org.apache.wayang.spark.Spark
 
 class WordCount {}
 
 object WordCount {
 
   def main(args: Array[String]): Unit = {
-    val context1 = new BlossomContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink("file:///tmp/out11")
-    val context2 = new BlossomContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink("file:///tmp/out12")
+    println("Counting words in a multi wayang context!")
+    println("Scala version:")
+    println(scala.util.Properties.versionString)
+
+    var configuration1: Option[Configuration] = None
+    var configuration2: Option[Configuration] = None
+
+    if (args.length < 2) {
+      println("Loading default configurations.")
+      configuration1 = Some(new Configuration())
+      configuration2 = Some(new Configuration())
+    } else {
+      println("Loading custom configurations.")
+      configuration1 = Some(loadConfiguration(args(0)))
+      configuration2 = Some(loadConfiguration(args(1)))
+    }
+
+    val context1 = new BlossomContext(configuration1.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
+    val context2 = new BlossomContext(configuration2.get).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out12")
+
     val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[WordCount])
 
@@ -44,6 +63,17 @@ object WordCount {
       .map((_, 1))
       .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
       .execute()
+  }
+
+  private def loadConfiguration(url: String): Configuration = {
+    try {
+      new Configuration(url)
+    } catch {
+      case unexpected: Exception =>
+        unexpected.printStackTrace()
+        println(s"Can't load configuration from $url")
+        new Configuration()
+    }
   }
 
 }
