@@ -61,17 +61,17 @@ class BlossomContextDeserializer extends JsonDeserializer[BlossomContext] {
     val javaPluginName = Java.basicPlugin.getClass.getName
     val sparkPluginName = Spark.basicPlugin.getClass.getName
     val postgresPluginName = Postgres.plugin().getClass.getName
-    //      val flinkPluginName = Flink.basicPlugin().getClass.getName
-    val sqlite3PluginName = Sqlite3.plugin().getClass.getName
-    val giraphPluginName = Giraph.plugin().getClass.getName
+    // val flinkPluginName = Flink.basicPlugin().getClass.getName
+    // val sqlite3PluginName = Sqlite3.plugin().getClass.getName
+    // val giraphPluginName = Giraph.plugin().getClass.getName
 
     plugins.foreach {
       case pluginName if pluginName == javaPluginName => blossomContext.register(Java.basicPlugin())
       case pluginName if pluginName == sparkPluginName => blossomContext.register(Spark.basicPlugin())
       case pluginName if pluginName == postgresPluginName => blossomContext.register(Postgres.plugin())
-      //        case pluginName if pluginName == flinkPluginName => blossomContext.register(Flink.basicPlugin())
-      case pluginName if pluginName == sqlite3PluginName => blossomContext.register(Sqlite3.plugin())
-      case pluginName if pluginName == giraphPluginName => blossomContext.register(Giraph.plugin())
+      //      case pluginName if pluginName == flinkPluginName => blossomContext.register(Flink.basicPlugin())
+      //      case pluginName if pluginName == sqlite3PluginName => blossomContext.register(Sqlite3.plugin())
+      //      case pluginName if pluginName == giraphPluginName => blossomContext.register(Giraph.plugin())
       case _ => println("Unknown plugin detected")
     }
 
