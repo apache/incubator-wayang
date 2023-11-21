@@ -164,6 +164,7 @@ object SerializationUtils {
       .addMixIn(classOf[UnarySink[_]], classOf[UnarySinkMixIn[_]])
       .addMixIn(classOf[UnaryToUnaryOperator[_, _]], classOf[UnaryToUnaryOperatorMixIn[_, _]])
       .addMixIn(classOf[BinaryToUnaryOperator[_, _, _]], classOf[BinaryToUnaryOperatorMixIn[_, _, _]])
+      .addMixIn(classOf[LoopHeadOperator], classOf[LoopHeadOperatorMixIn])
 
     // IntelliJ can't find imports so probably we won't need those
     //        .addMixIn(classOf[FlinkPlatform], classOf[IgnoreLoggerMixIn])
@@ -236,6 +237,7 @@ object SerializationUtils {
   abstract class ElementaryOperatorMixIn {
   }
 
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[TextFileSource], name = "TextFileSource"),
     new JsonSubTypes.Type(value = classOf[CollectionSource[_]], name = "CollectionSource"),
@@ -243,12 +245,14 @@ object SerializationUtils {
   abstract class UnarySourceMixIn[T] {
   }
 
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[LocalCallbackSink[_]], name = "LocalCallbackSink"),
   ))
   abstract class UnarySinkMixIn[T] {
   }
 
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[MapOperator[_, _]], name = "MapOperator"),
     new JsonSubTypes.Type(value = classOf[MapPartitionsOperator[_, _]], name = "MapPartitionsOperator"),
@@ -269,14 +273,23 @@ object SerializationUtils {
   abstract class UnaryToUnaryOperatorMixIn[InputType, OutputType] {
   }
 
-    @JsonSubTypes(Array(
-      new JsonSubTypes.Type(value = classOf[CartesianOperator[_, _]], name = "CartesianOperator"),
-      new JsonSubTypes.Type(value = classOf[UnionAllOperator[_]], name = "UnionAllOperator"),
-      new JsonSubTypes.Type(value = classOf[IntersectOperator[_]], name = "IntersectOperator"),
-      new JsonSubTypes.Type(value = classOf[JoinOperator[_, _, _]], name = "JoinOperator"),
-      new JsonSubTypes.Type(value = classOf[CoGroupOperator[_, _, _]], name = "CoGroupOperator"),
-    ))
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[CartesianOperator[_, _]], name = "CartesianOperator"),
+    new JsonSubTypes.Type(value = classOf[UnionAllOperator[_]], name = "UnionAllOperator"),
+    new JsonSubTypes.Type(value = classOf[IntersectOperator[_]], name = "IntersectOperator"),
+    new JsonSubTypes.Type(value = classOf[JoinOperator[_, _, _]], name = "JoinOperator"),
+    new JsonSubTypes.Type(value = classOf[CoGroupOperator[_, _, _]], name = "CoGroupOperator"),
+  ))
   abstract class BinaryToUnaryOperatorMixIn[InputType0, InputType1, OutputType] {
+  }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[DoWhileOperator[_, _]], name = "DoWhileOperator"),
+    new JsonSubTypes.Type(value = classOf[RepeatOperator[_]], name = "RepeatOperator"),
+  ))
+  abstract class LoopHeadOperatorMixIn {
   }
 
 

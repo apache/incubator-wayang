@@ -9,10 +9,10 @@ import scala.reflect.ClassTag
 
 package object customserializers {
 
-  def parseNode[T: ClassTag](jp: JsonParser, rootNode: JsonNode, fieldName: String, valueTypeRef: TypeReference[T]): T = {
-    val node = rootNode.get(fieldName)
-    val parser: JsonParser = node.traverse(jp.getCodec)
-    mapper.readValue(parser, valueTypeRef)
-  }
+//  def parseNode[T: ClassTag](jp: JsonParser, rootNode: JsonNode, fieldName: String, valueTypeRef: TypeReference[T]): T = {
+//    val node = rootNode.get(fieldName)
+//    val parser: JsonParser = node.traverse(jp.getCodec)
+//    mapper.readValue(parser, valueTypeRef)
+//  }
 
 }

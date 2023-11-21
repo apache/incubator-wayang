@@ -2,7 +2,7 @@ package org.apache.wayang.api.serialization
 
 import org.apache.wayang.basic.operators.TextFileSink
 import org.apache.wayang.core.api.WayangContext
-import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
+import org.apache.wayang.core.plan.wayangplan.{LoopHeadOperator, Operator, WayangPlan}
 import org.apache.wayang.core.util.ReflectionUtils
 import org.junit.{Assert, Rule}
 import org.junit.rules.TestName
@@ -28,18 +28,23 @@ trait SerializationTestBase {
   }
 
 
-  def serializeThenDeserializeThenAssertOutput(operator: Operator, wayangContext: WayangContext, expectedLines: List[String]): Unit = {
+  def serializeThenDeserializeThenAssertOutput(operator: Operator, wayangContext: WayangContext, expectedLines: List[String], log: Boolean = false): Unit = {
+    println(s"\nExecuting test ${testName.getMethodName}")
     var tempFileOut: Option[String] = None
     try {
-      val serialized = SerializationUtils.serialize(operator)
-      // log(serialized, testName.getMethodName + ".log.json")
-      val deserialized = SerializationUtils.deserialize[Operator](serialized)
+      val serialized = SerializationUtils.serializeAsString(operator)
+      if (log) SerializationTestBase.log(serialized, testName.getMethodName + ".log.json")
+      val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
 
       // Attach an output sink to deserialized operator
       val outType = deserialized.getOutput(0).getType.getDataUnitType.getTypeClass
       tempFileOut = Some(s"/tmp/${testName.getMethodName}.out")
       val sink = new TextFileSink(s"file://${tempFileOut.get}", outType)
-      deserialized.connectTo(0, sink, 0)
+
+      deserialized match {
+        case loopHeadOperator: LoopHeadOperator => loopHeadOperator.connectTo(1, sink, 0)
+        case operator: Operator => operator.connectTo(0, sink, 0)
+      }
 
       // Execute plan
       val plan = new WayangPlan(sink)

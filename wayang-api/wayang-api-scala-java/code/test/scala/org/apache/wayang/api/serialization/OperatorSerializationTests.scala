@@ -6,7 +6,7 @@ import org.apache.wayang.java.Java
 import org.junit.Test
 
 
-class OperatorSerializationTests extends SerializationTestBase{
+class OperatorSerializationTests extends SerializationTestBase {
 
   @Test
   def testReadMapCollect(): Unit = {
@@ -27,14 +27,49 @@ class OperatorSerializationTests extends SerializationTestBase{
   }
 
   @Test
-  def testWordCount(): Unit = {
+  def testFilterDistinctCount(): Unit = {
     // Set up WayangContext.
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
     // Generate some test data.
+    val inputValues = List(1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8)
+
+    // Build and execute a Wayang plan.
+    val dq = wayang
+      .loadCollection(inputValues)
+      .filter(n => n >= 4)
+      .distinct
+      .count
+
+    // Check the outcome.
+    val expected = List("5")
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expected)
+  }
+
+  @Test
+  def testReduce(): Unit = {
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    // Generate some test data.
+    val inputValues = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+    // Build and execute a Wayang plan.
+    val dq = wayang
+      .loadCollection(inputValues)
+      .reduce((a, b) => a + b)
+
+    // Check the outcome.
+    val expected = List("55")
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expected)
+  }
+
+  @Test
+  def testWordCount(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
     val inputValues = Array("Big data is big.", "Is data big data?")
 
-    // Build and execute a word count WayangPlan.
     val dq = wayang
       .loadCollection(inputValues).withName("Load input values")
       .flatMap(_.split("\\s+")).withName("Split words")
@@ -49,7 +84,9 @@ class OperatorSerializationTests extends SerializationTestBase{
   @Test
   def testGroupBy(): Unit = {
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
+
     val dq = wayang
       .loadCollection(inputValues)
       .groupByKey(_ % 2).withName("group odd and even")
@@ -68,7 +105,6 @@ class OperatorSerializationTests extends SerializationTestBase{
 
   @Test
   def testSort(): Unit = {
-    // Set up WayangContext.
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
     val inputValues1 = Array(3, 4, 5, 2, 1)
@@ -84,7 +120,6 @@ class OperatorSerializationTests extends SerializationTestBase{
 
   @Test
   def testMapPartitions(): Unit = {
-    // Set up WayangContext.
     val wayang = new WayangContext().withPlugin(Java.basicPlugin())
 
     val dq = wayang
@@ -96,14 +131,12 @@ class OperatorSerializationTests extends SerializationTestBase{
       }
       .reduceByKey(_._1, { case ((kind1, count1), (kind2, count2)) => (kind1, count1 + count2) })
 
-
     val expectedValues = List(("even", 5), ("odd", 2)).map(_.toString())
     serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
   }
 
   @Test
   def testZipWithId(): Unit = {
-    // Set up WayangContext.
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
     val inputValues = for (i <- 0 until 100; j <- 0 until 42) yield i
@@ -120,6 +153,148 @@ class OperatorSerializationTests extends SerializationTestBase{
 
     val expectedValues = List((42, 100)).map(_.toString())
     serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+  }
+
+//  @Test
+  def testJoin(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues1 = Array(("Water", 0), ("Tonic", 5), ("Juice", 10))
+    val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
+
+    val builder = new PlanBuilder(wayang)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val dataQuanta2 = builder.loadCollection(inputValues2)
+    val dq = dataQuanta1
+      .join[(String, String), String](_._1, dataQuanta2, _._2)
+      .map(joinTuple => (joinTuple.field1._1, joinTuple.field0._2))
+
+    val expectedValues = List(("Apple juice", 10), ("Tap water", 0), ("Orange juice", 10))
+      .map(s => s.toString())
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+  }
+
+  @Test
+  def testJoin2(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues1 = Array(1, 3, 2, 4, 5)
+    val inputValues2 = Array(3, 5)
+
+    val builder = new PlanBuilder(wayang)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val dataQuanta2 = builder.loadCollection(inputValues2)
+    val dq = dataQuanta1
+      .join[Int, Int](n => n, dataQuanta2, n => n)
+      .map(joinTuple => joinTuple.field0)
+
+    val expectedValues = List("3", "5")
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+  }
+
+//  @Test
+  def testCoGroup(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues1 = Array(("Water", 0), ("Cola", 5), ("Juice", 10))
+    val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
+
+    val builder = new PlanBuilder(wayang)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val dataQuanta2 = builder.loadCollection(inputValues2)
+    val dq = dataQuanta1
+      .coGroup[(String, String), String](_._1, dataQuanta2, _._2)
+
+    val expectedValues = List(
+      (List(("Water", 0)), List(("Tap water", "Water"))),
+      (List(("Cola", 5)), List()),
+      (List(("Juice", 10)), List(("Apple juice", "Juice"), ("Orange juice", "Juice")))
+    )
+      .map(_.toString)
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+  }
+
+
+  @Test
+  def testUnion(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues1 = Array(1, 2, 3, 4)
+    val inputValues2 = Array(0, 1, 3, 5)
+
+    val builder = new PlanBuilder(wayang)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val dataQuanta2 = builder.loadCollection(inputValues2)
+    val dq = dataQuanta1.union(dataQuanta2)
+
+    val unionExpectedValues = List(1, 2, 3, 4, 0, 1, 3, 5).map(_.toString)
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, unionExpectedValues)
+  }
+
+  @Test
+  def testIntersect(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues1 = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
+    val inputValues2 = Array(9, 0, 2, 3, 3, 4, 5, 7, 8, 11)
+
+    val builder = new PlanBuilder(wayang)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val dataQuanta2 = builder.loadCollection(inputValues2)
+    val dq = dataQuanta1.intersect(dataQuanta2)
+
+    val intersectExpectedValues = List(2, 3, 4, 5, 7, 8, 9).map(_.toString)
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, intersectExpectedValues)
+  }
+
+  @Test
+  def testRepeat(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues = Array(1, 2)
+
+    val dq = wayang
+      .loadCollection(inputValues)
+      .repeat(3,
+        _.reduce(_ * _)
+          .flatMap(v => Seq(v, v + 1))
+      )
+
+    // initial: 1,2 -> 1st: 2,3 -> 2nd: 6,7 => 3rd: 42,43
+    val expectedValues = List("42", "43")
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues, log = true)
+  }
+
+  @Test
+  def testRepeat2(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues = Array(1, 2, 3, 4, 5)
+
+    val dq = wayang
+      .loadCollection(inputValues)
+      .repeat(10, _.map(_ + 1))
+
+    val expectedValues = List("11", "12", "13", "14", "15")
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues, log = true)
+  }
+
+  @Test
+  def testDoWhile(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues = Array(1, 2)
+
+    val dq = wayang
+      .loadCollection(inputValues)
+      .doWhile[Int](vals => vals.max > 100, {
+        start =>
+          val sum = start.reduce(_ + _).withName("Sum")
+          (start.union(sum), sum)
+      })
+
+    val expectedValues = List(1, 2, 3, 6, 12, 24, 48, 96, 192).map(_.toString)
+    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues, log = true)
   }
 
 }

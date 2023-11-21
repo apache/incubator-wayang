@@ -1,16 +1,18 @@
 package org.apache.wayang.api.serialization.customserializers
 
 import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode}
 import org.apache.wayang.api.serialization.SerializationUtils.mapper
+import org.apache.wayang.api.serialization.customserializers.OperatorDeserializer.inputSlotOwnerIdMap
 import org.apache.wayang.basic.operators._
+import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.function._
-import org.apache.wayang.core.plan.wayangplan.Operator
+import org.apache.wayang.core.plan.wayangplan.{InputSlot, Operator}
 import org.apache.wayang.core.types.DataSetType
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 class OperatorDeserializer extends JsonDeserializer[Operator] {
 
@@ -19,8 +21,12 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
 
   // Map type names to deserialization functions
   private val deserializers: Map[String, DeserializerFunction] = Map(
+
+    // Source
     "TextFileSource" -> deserializeTextFileSource,
     "CollectionSource" -> deserializeCollectionSource,
+
+    // Unary
     "MapOperator" -> deserializeMapOperator,
     "MapPartitionsOperator" -> deserializeMapPartitionsOperator,
     "FilterOperator" -> deserializeFilterOperator,
@@ -37,25 +43,42 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     "DistinctOperator" -> deserializeDistinctOperator,
     "CountOperator" -> deserializeCountOperator,
 
-
-/*    "CartesianOperator" -> deserializeCartesianOperator,
+    // Binary
+    "CartesianOperator" -> deserializeCartesianOperator,
     "UnionAllOperator" -> deserializeUnionAllOperator,
     "IntersectOperator" -> deserializeIntersectOperator,
     "JoinOperator" -> deserializeJoinOperator,
     "CoGroupOperator" -> deserializeCoGroupOperator,
+
+    // Loop
     "DoWhileOperator" -> deserializeDoWhileOperator,
     "RepeatOperator" -> deserializeRepeatOperator,
-    "LocalCallbackSink" -> deserializeLocalCallbackSink,*/
+
+/*
+    "LocalCallbackSink" -> deserializeLocalCallbackSink,
+ */
   )
 
 
   override def deserialize(jp: JsonParser, ctxt: DeserializationContext): Operator = {
+    val objectIdMap = OperatorDeserializer.operatorIdMap.get()
     val jsonNodeOperator: JsonNode = mapper.readTree(jp)
+
+    if (jsonNodeOperator.get("@type") == null) {
+      objectIdMap.get(jsonNodeOperator.asLong()) match {
+        case Some(operator) => return operator
+        case None => throw new WayangException(s"Can't deserialize operator with id ${jsonNodeOperator.asLong()}")
+      }
+    }
     val typeName = jsonNodeOperator.get("@type").asText
+    val id = jsonNodeOperator.get("@id").asLong
+    println(s"Type: $typeName")
 
     deserializers.get(typeName) match {
       case Some(deserializeFunc) =>
         val operator = deserializeFunc(jp, jsonNodeOperator)
+        println(s"Storing operator with id ${id}")
+        objectIdMap.put(id, operator)
         connectToInputOperatorsAndReturn(jsonNodeOperator, operator)
       case None =>
         throw new IllegalArgumentException(s"Unknown type: $typeName")
@@ -167,10 +190,53 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     new CountOperator(inputType)
   }
 
+  private def deserializeCartesianOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val inputType0 = mapper.treeToValue(rootNode.get("inputType0"), classOf[DataSetType[AnyRef]])
+    val inputType1 = mapper.treeToValue(rootNode.get("inputType1"), classOf[DataSetType[AnyRef]])
+    new CartesianOperator(inputType0, inputType1)
+  }
+
+  private def deserializeUnionAllOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val inputType0 = mapper.treeToValue(rootNode.get("inputType0"), classOf[DataSetType[AnyRef]])
+    new UnionAllOperator(inputType0)
+  }
+
+  private def deserializeIntersectOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val inputType0 = mapper.treeToValue(rootNode.get("inputType0"), classOf[DataSetType[AnyRef]])
+    new IntersectOperator(inputType0)
+  }
+
+  private def deserializeJoinOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val keyDescriptor0 = mapper.treeToValue(rootNode.get("keyDescriptor0"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
+    val keyDescriptor1 = mapper.treeToValue(rootNode.get("keyDescriptor1"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
+    new JoinOperator(keyDescriptor0, keyDescriptor1)
+  }
+
+  private def deserializeCoGroupOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val keyDescriptor0 = mapper.treeToValue(rootNode.get("keyDescriptor0"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
+    val keyDescriptor1 = mapper.treeToValue(rootNode.get("keyDescriptor1"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
+    new CoGroupOperator(keyDescriptor0, keyDescriptor1)
+  }
+
+  private def deserializeDoWhileOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val inputType = mapper.treeToValue(rootNode.get("inputType"), classOf[DataSetType[AnyRef]])
+    val convergenceType = mapper.treeToValue(rootNode.get("convergenceType"), classOf[DataSetType[AnyRef]])
+    val criterionDescriptor = mapper.treeToValue(rootNode.get("criterionDescriptor"), classOf[PredicateDescriptor[java.util.Collection[AnyRef]]])
+    val numExpectedIterations = mapper.treeToValue(rootNode.get("numExpectedIterations"), classOf[Integer])
+    new DoWhileOperator(inputType, convergenceType, criterionDescriptor, numExpectedIterations)
+  }
+
+  private def deserializeRepeatOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val numIterations = mapper.treeToValue(rootNode.get("numIterations"), classOf[Integer])
+    val typeValue = mapper.treeToValue(rootNode.get("type"), classOf[DataSetType[AnyRef]])
+    new RepeatOperator(numIterations, typeValue)
+  }
+
 
   private def connectToInputOperatorsAndReturn(node: JsonNode, operator: Operator): Operator = {
     val inputOperators = getInputOperators(node)
     for ((inputOperator, index) <- inputOperators.zipWithIndex) {
+      println(s"Connecting ${inputOperator.getClass.getSimpleName} to ${operator.getClass.getSimpleName}")
       inputOperator.connectTo(0, operator, index)
     }
     operator
@@ -190,7 +256,11 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
 
         // Access occupant
         val occupant = inputSlot.get("occupant")
-        if (occupant != null) {
+        val jsonNodeId = inputSlot.get("@id")
+        if (occupant != null && jsonNodeId != null) {
+
+          val inputSlotId = jsonNodeId.asLong
+          println(s"\tProcessing input slot with id ${inputSlotId}")
 
           // Access owner
           val owner = occupant.get("owner")
@@ -201,6 +271,16 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
             jsonParser.nextToken()
             val inputOperator = mapper.readValue[Operator](jsonParser, classOf[Operator])
             inputOperators = inputOperators :+ inputOperator
+
+            println(s"\tStoring input slot with id ${inputSlotId}")
+            inputSlotOwnerIdMap.get().put(inputSlotId, inputOperator)
+          }
+        }
+        else {
+          val inputOperator = inputSlotOwnerIdMap.get().get(inputSlot.asLong)
+          inputOperator match {
+            case Some(operator) => inputOperators = inputOperators :+ operator
+            case None => throw new WayangException(s"Can't find input slot ${inputSlot.asLong}")
           }
         }
       }
@@ -220,3 +300,12 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
   }
 }
 
+
+object OperatorDeserializer{
+
+  // operator serialization id -> operator
+  private val operatorIdMap: ThreadLocal[mutable.Map[Long, Operator]] = ThreadLocal.withInitial(() => mutable.Map[Long, Operator]())
+
+  // input slot serialization id  -> input slot owner
+  private val inputSlotOwnerIdMap: ThreadLocal[mutable.Map[Long, Operator]] = ThreadLocal.withInitial(() => mutable.Map[Long, Operator]())
+}

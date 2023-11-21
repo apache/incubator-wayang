@@ -16,12 +16,12 @@
 # limitations under the License.
 #
 
-rm -r wayang-0.6.1-SNAPSHOT
+rm -r wayang-0.6.1-SNAPSHOT 2> /dev/null
 set -e
 mvn -T 1C clean install -DskipTests -pl wayang-api/wayang-api-scala-java/wayang-api-scala-java_2.12
-mvn -T 1C clean install -Dmaven.test.skip -pl wayang-benchmark/wayang-benchmark_2.12
-mvn clean package -pl :wayang-assembly -Pdistribution
-tar -xvf wayang-assembly/target/wayang-assembly-0.6.1-SNAPSHOT-dist.tar.gz
+#mvn -T 1C clean install -DskipTests -pl wayang-benchmark/wayang-benchmark_2.12
+#mvn clean package -pl :wayang-assembly -Pdistribution
+#tar -xvf wayang-assembly/target/wayang-assembly-0.6.1-SNAPSHOT-dist.tar.gz
 
 # cd wayang-0.6.1-SNAPSHOT
 # echo "export WAYANG_HOME=$(pwd)" >> ~/.bashrc
