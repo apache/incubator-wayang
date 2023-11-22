@@ -28,30 +28,11 @@ trait SerializationTestBase {
   }
 
 
-  def serializeThenDeserializeThenAssertOutput(operator: Operator, wayangContext: WayangContext, expectedLines: List[String], log: Boolean = false): Unit = {
-    println(s"\nExecuting test ${testName.getMethodName}")
+  def serializeDeserializeExecuteAssert(operator: Operator, wayangContext: WayangContext, expectedLines: List[String], log: Boolean = false): Unit = {
     var tempFileOut: Option[String] = None
     try {
-      val serialized = SerializationUtils.serializeAsString(operator)
-      if (log) SerializationTestBase.log(serialized, testName.getMethodName + ".log.json")
-      val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
-
-      // Attach an output sink to deserialized operator
-      val outType = deserialized.getOutput(0).getType.getDataUnitType.getTypeClass
-      tempFileOut = Some(s"/tmp/${testName.getMethodName}.out")
-      val sink = new TextFileSink(s"file://${tempFileOut.get}", outType)
-
-      deserialized match {
-        case loopHeadOperator: LoopHeadOperator => loopHeadOperator.connectTo(1, sink, 0)
-        case operator: Operator => operator.connectTo(0, sink, 0)
-      }
-
-      // Execute plan
-      val plan = new WayangPlan(sink)
-      wayangContext.execute(plan, ReflectionUtils.getDeclaringJar(classOf[OperatorSerializationTests]))
-
-      // Check results
-      SerializationTestBase.assertOutputFile(tempFileOut.get, expectedLines)
+      tempFileOut = Some(serializeDeserializeExecute(operator, wayangContext, log)) // Serialize, deserialize, execute
+      SerializationTestBase.assertOutputFile(tempFileOut.get, expectedLines) // Check results
     }
     catch {
       case t: Throwable =>
@@ -64,6 +45,35 @@ trait SerializationTestBase {
         case Some(file) => new java.io.File(file).delete()
         case None => // Do nothing
       }
+    }
+  }
+
+  def serializeDeserializeExecute(operator: Operator, wayangContext: WayangContext, log: Boolean = false): String = {
+    try {
+      val serialized = SerializationUtils.serializeAsString(operator)
+      if (log) SerializationTestBase.log(serialized, testName.getMethodName + ".log.json")
+      val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
+
+      // Create an output sink
+      val outType = deserialized.getOutput(0).getType.getDataUnitType.getTypeClass
+      val tempFilenameOut = s"/tmp/${testName.getMethodName}.out"
+      val sink = new TextFileSink(s"file://$tempFilenameOut", outType)
+
+      // And attach it to the deserialized operator
+      deserialized match {
+        case loopHeadOperator: LoopHeadOperator => loopHeadOperator.connectTo(1, sink, 0)
+        case operator: Operator => operator.connectTo(0, sink, 0)
+      }
+
+      // Execute plan
+      val plan = new WayangPlan(sink)
+      wayangContext.execute(plan, ReflectionUtils.getDeclaringJar(classOf[OperatorSerializationTests]))
+      tempFilenameOut
+    }
+    catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        throw t
     }
   }
 
@@ -83,6 +93,15 @@ object SerializationTestBase {
     lines.zip(expectedLines).foreach { case (actual, expected) =>
       Assert.assertEquals("Line content should match", expected, actual)
     }
+  }
+
+  def assertOutputFileLineCount(outputFilename: String, expectedNumberOfLines: Int): Unit = {
+
+    // Read lines
+    val lines = Files.lines(Paths.get(outputFilename)).collect(Collectors.toList[String]).asScala
+
+    // Assert number of lines
+    Assert.assertEquals("Number of lines in the file should match", expectedNumberOfLines, lines.size)
   }
 
 

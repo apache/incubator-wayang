@@ -31,7 +31,7 @@ import org.apache.wayang.basic.operators._
 import org.apache.wayang.basic.types.RecordType
 import org.apache.wayang.core.api.configuration._
 import org.apache.wayang.core.api.{Configuration, Job, WayangContext}
-import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableConsumer, SerializableFunction, SerializablePredicate}
+import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableConsumer, SerializableFunction, SerializableIntUnaryOperator, SerializableLongUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.function._
 import org.apache.wayang.core.mapping.{Mapping, OperatorPattern, PlanTransformation}
 import org.apache.wayang.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, CardinalityEstimatorManager, CardinalityPusher}
@@ -48,6 +48,7 @@ import org.apache.wayang.core.types.{BasicDataUnitType, DataSetType, DataUnitGro
 import org.apache.wayang.core.util.fs.{FileSystems, HadoopFileSystem, LocalFileSystem}
 import org.apache.wayang.core.util.{AbstractReferenceCountable, ReflectionUtils}
 
+import java.util
 import java.util.function.{BiFunction, ToDoubleBiFunction, ToDoubleFunction}
 import scala.reflect.ClassTag
 
@@ -72,6 +73,10 @@ object SerializationUtils {
       .registerModule(new SimpleModule().addDeserializer(classOf[SerializableBinaryOperator[_]], new GenericSerializableDeserializer[SerializableBinaryOperator[_]]()))
       .registerModule(new SimpleModule().addSerializer(classOf[SerializableConsumer[_]], new GenericSerializableSerializer[SerializableConsumer[_]]()))
       .registerModule(new SimpleModule().addDeserializer(classOf[SerializableConsumer[_]], new GenericSerializableDeserializer[SerializableConsumer[_]]()))
+      .registerModule(new SimpleModule().addSerializer(classOf[SerializableIntUnaryOperator], new GenericSerializableSerializer[SerializableIntUnaryOperator]()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[SerializableIntUnaryOperator], new GenericSerializableDeserializer[SerializableIntUnaryOperator]()))
+      .registerModule(new SimpleModule().addSerializer(classOf[SerializableLongUnaryOperator], new GenericSerializableSerializer[SerializableLongUnaryOperator]()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[SerializableLongUnaryOperator], new GenericSerializableDeserializer[SerializableLongUnaryOperator]()))
 
     //      .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new FunctionDescriptorsSerializers.SerializablePredicateSerializer()))
     //      .registerModule(new SimpleModule().addDeserializer(classOf[SerializablePredicate[_]], new FunctionDescriptorsDeserializers.SerializablePredicateDeserializer[AnyRef]()))
@@ -156,7 +161,6 @@ object SerializationUtils {
       .addMixIn(classOf[FileSystems], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[HadoopFileSystem], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[LocalFileSystem], classOf[IgnoreLoggerMixIn])
-      .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[ObjectFileSource[_]], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[TextFileSource], classOf[TextFileSourceMixIn])
@@ -354,6 +358,10 @@ object SerializationUtils {
 
   //  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
   abstract class OutputSlotMixIn[T] {
+
+    @JsonIgnore
+    private var occupiedSlots: List[InputSlot[T]] = _
+
     @JsonCreator
     def this(@JsonProperty("name") name: String,
              @JsonProperty("owner") owner: Operator,

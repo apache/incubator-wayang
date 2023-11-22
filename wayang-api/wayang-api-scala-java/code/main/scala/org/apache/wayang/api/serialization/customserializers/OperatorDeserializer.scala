@@ -4,11 +4,12 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode}
 import org.apache.wayang.api.serialization.SerializationUtils.mapper
-import org.apache.wayang.api.serialization.customserializers.OperatorDeserializer.inputSlotOwnerIdMap
+import org.apache.wayang.api.serialization.customserializers.OperatorDeserializer.{inputSlotOwnerIdMap, outputSlotOwnerIdMap}
 import org.apache.wayang.basic.operators._
 import org.apache.wayang.core.api.exception.WayangException
+import org.apache.wayang.core.function.FunctionDescriptor.{SerializableIntUnaryOperator, SerializableLongUnaryOperator}
 import org.apache.wayang.core.function._
-import org.apache.wayang.core.plan.wayangplan.{InputSlot, Operator}
+import org.apache.wayang.core.plan.wayangplan.Operator
 import org.apache.wayang.core.types.DataSetType
 
 import scala.collection.JavaConverters._
@@ -72,12 +73,12 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     }
     val typeName = jsonNodeOperator.get("@type").asText
     val id = jsonNodeOperator.get("@id").asLong
-    println(s"Type: $typeName")
+    // println(s"Processing operator $typeName")
 
     deserializers.get(typeName) match {
       case Some(deserializeFunc) =>
         val operator = deserializeFunc(jp, jsonNodeOperator)
-        println(s"Storing operator with id ${id}")
+        // println(s"\tStoring $typeName with id ${id}")
         objectIdMap.put(id, operator)
         connectToInputOperatorsAndReturn(jsonNodeOperator, operator)
       case None =>
@@ -101,50 +102,45 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
   }
 
   private def deserializeMapOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-//    val functionDescriptor = parseNode(jp, rootNode, "functionDescriptor", new TypeReference[TransformationDescriptor[AnyRef, AnyRef]]() {})
     val functionDescriptor = mapper.treeToValue(rootNode.get("functionDescriptor"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
     new MapOperator(functionDescriptor)
   }
 
   private def deserializeMapPartitionsOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-//    val functionDescriptor = parseNode(jp, rootNode, "functionDescriptor", new TypeReference[MapPartitionsDescriptor[AnyRef, AnyRef]]() {})
     val functionDescriptor = mapper.treeToValue(rootNode.get("functionDescriptor"), classOf[MapPartitionsDescriptor[AnyRef, AnyRef]])
     new MapPartitionsOperator(functionDescriptor)
   }
 
   private def deserializeFilterOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-//    val predicateDescriptor = parseNode(jp, rootNode, "predicateDescriptor", new TypeReference[PredicateDescriptor[AnyRef]]() {})
     val predicateDescriptor = mapper.treeToValue(rootNode.get("predicateDescriptor"), classOf[PredicateDescriptor[AnyRef]])
     new FilterOperator(predicateDescriptor)
   }
 
   private def deserializeFlatMapOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-//    val functionDescriptor = parseNode(jp, rootNode, "functionDescriptor", new TypeReference[FlatMapDescriptor[AnyRef, AnyRef]]() {})
     val functionDescriptor = mapper.treeToValue(rootNode.get("functionDescriptor"), classOf[FlatMapDescriptor[AnyRef, AnyRef]])
     new FlatMapOperator(functionDescriptor)
   }
 
   private def deserializeSampleOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-    // TODO:
-    null
+    val sampleSizeFunction = mapper.treeToValue(rootNode.get("sampleSizeFunction"), classOf[SerializableIntUnaryOperator])
+    val typeValue = mapper.treeToValue(rootNode.get("type"), classOf[DataSetType[AnyRef]])
+    val sampleMethod = mapper.treeToValue(rootNode.get("sampleMethod"), classOf[SampleOperator.Methods])
+    val seedFunction = mapper.treeToValue(rootNode.get("seedFunction"), classOf[SerializableLongUnaryOperator])
+    new SampleOperator(sampleSizeFunction, typeValue, sampleMethod, seedFunction)
   }
 
   private def deserializeReduceByOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-//    val keyDescriptor = parseNode(jp, rootNode, "keyDescriptor", new TypeReference[TransformationDescriptor[AnyRef, AnyRef]]() {})
-//    val reduceDescriptor = parseNode(jp, rootNode, "reduceDescriptor", new TypeReference[ReduceDescriptor[AnyRef]]() {})
     val keyDescriptor = mapper.treeToValue(rootNode.get("keyDescriptor"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
     val reduceDescriptor = mapper.treeToValue(rootNode.get("reduceDescriptor"), classOf[ReduceDescriptor[AnyRef]])
     new ReduceByOperator(keyDescriptor, reduceDescriptor)
   }
 
   private def deserializeMaterializedGroupByOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-    // val keyDescriptor = parseNode(jp, rootNode, "keyDescriptor", new TypeReference[TransformationDescriptor[AnyRef, AnyRef]]() {})
     val keyDescriptor = mapper.treeToValue(rootNode.get("keyDescriptor"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
     new MaterializedGroupByOperator(keyDescriptor)
   }
 
   private def deserializeGlobalReduceOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-    // val reduceDescriptor = parseNode(jp, rootNode, "reduceDescriptor", new TypeReference[ReduceDescriptor[AnyRef]]() {})
     val reduceDescriptor = mapper.treeToValue(rootNode.get("reduceDescriptor"), classOf[ReduceDescriptor[AnyRef]])
     new GlobalReduceOperator(reduceDescriptor)
   }
@@ -156,13 +152,11 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
   }
 
   private def deserializeGroupByOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-    // val keyDescriptor = parseNode(jp, rootNode, "keyDescriptor", new TypeReference[TransformationDescriptor[AnyRef, AnyRef]]() {})
     val keyDescriptor = mapper.treeToValue(rootNode.get("keyDescriptor"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
     new GroupByOperator(keyDescriptor)
   }
   
   private def deserializeReduceOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-    // val reduceDescriptor = parseNode(jp, rootNode, "reduceDescriptor", new TypeReference[ReduceDescriptor[AnyRef]]() {})
     val reduceDescriptor = mapper.treeToValue(rootNode.get("reduceDescriptor"), classOf[ReduceDescriptor[AnyRef]])
     val inputType = mapper.treeToValue(rootNode.get("inputType"), classOf[DataSetType[AnyRef]])
     val outputType = mapper.treeToValue(rootNode.get("outputType"), classOf[DataSetType[AnyRef]])
@@ -170,7 +164,6 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
   }
 
   private def deserializeSortOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
-    // val keyDescriptor = parseNode(jp, rootNode, "keyDescriptor", new TypeReference[TransformationDescriptor[AnyRef, AnyRef]]() {})
     val keyDescriptor = mapper.treeToValue(rootNode.get("keyDescriptor"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
     new SortOperator(keyDescriptor)
   }
@@ -236,7 +229,7 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
   private def connectToInputOperatorsAndReturn(node: JsonNode, operator: Operator): Operator = {
     val inputOperators = getInputOperators(node)
     for ((inputOperator, index) <- inputOperators.zipWithIndex) {
-      println(s"Connecting ${inputOperator.getClass.getSimpleName} to ${operator.getClass.getSimpleName}")
+      // println(s"Connecting ${inputOperator.getClass.getSimpleName} to ${operator.getClass.getSimpleName}")
       inputOperator.connectTo(0, operator, index)
     }
     operator
@@ -255,16 +248,20 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
       inputSlots.elements().forEachRemaining { inputSlot =>
 
         // Access occupant
-        val occupant = inputSlot.get("occupant")
-        val jsonNodeId = inputSlot.get("@id")
-        if (occupant != null && jsonNodeId != null) {
+        if (inputSlot.get("@id") != null) {
 
-          val inputSlotId = jsonNodeId.asLong
-          println(s"\tProcessing input slot with id ${inputSlotId}")
+          val inputSlotId = inputSlot.get("@id").asLong()
+          // println(s"Processing input slot with id ${inputSlotId}")
+
+          val outputSlot = inputSlot.get("occupant")
 
           // Access owner
-          val owner = occupant.get("owner")
-          if (owner != null) {
+          if (outputSlot.get("@id") != null) {
+
+            val outputSlotId = outputSlot.get("@id").asLong
+            // println(s"Processing output slot with id ${outputSlotId}")
+
+            val owner = outputSlot.get("owner")
 
             // Deserialize the nested owner operator and add it into list to be returned
             val jsonParser = owner.traverse(mapper)
@@ -272,10 +269,25 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
             val inputOperator = mapper.readValue[Operator](jsonParser, classOf[Operator])
             inputOperators = inputOperators :+ inputOperator
 
-            println(s"\tStoring input slot with id ${inputSlotId}")
+            // println(s"\tStoring input slot with id ${inputSlotId}")
             inputSlotOwnerIdMap.get().put(inputSlotId, inputOperator)
+            // println(s"\tStoring output slot with id ${outputSlotId}")
+            outputSlotOwnerIdMap.get().put(outputSlotId, inputOperator)
+          }
+
+          // If owner does not have any fields and is just a number (a Jackson id of an output slot),
+          // then it means we have already parsed that node and associated it to an operator
+          else {
+            val inputOperator = outputSlotOwnerIdMap.get().get(outputSlot.asLong)
+            inputOperator match {
+              case Some(operator) => inputOperators = inputOperators :+ operator
+              case None => throw new WayangException(s"Can't find output slot ${outputSlot.asLong}")
+            }
           }
         }
+
+        // If occupant does not have any fields and is just a number a Jackson id of an input slot),
+        // then it means we have already parsed that node and associated it to an operator
         else {
           val inputOperator = inputSlotOwnerIdMap.get().get(inputSlot.asLong)
           inputOperator match {
@@ -301,11 +313,15 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
 }
 
 
-object OperatorDeserializer{
+object OperatorDeserializer {
 
   // operator serialization id -> operator
   private val operatorIdMap: ThreadLocal[mutable.Map[Long, Operator]] = ThreadLocal.withInitial(() => mutable.Map[Long, Operator]())
 
   // input slot serialization id  -> input slot owner
   private val inputSlotOwnerIdMap: ThreadLocal[mutable.Map[Long, Operator]] = ThreadLocal.withInitial(() => mutable.Map[Long, Operator]())
+
+  // output slot serialization id  -> input slot owner
+  private val outputSlotOwnerIdMap: ThreadLocal[mutable.Map[Long, Operator]] = ThreadLocal.withInitial(() => mutable.Map[Long, Operator]())
+
 }

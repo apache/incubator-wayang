@@ -116,8 +116,8 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val
   def repeat(n: Int, bodyBuilder: DataQuanta[Out] => DataQuanta[Out]): MultiContextDataQuanta[Out] =
     wrapInMultiContextDataQuanta(_.repeat(n, bodyBuilder))
 
-  def foreach(f: Out => _): Unit =
-    dataQuanta.foreach(f)
+//  def foreach(f: Out => _): Unit =
+//    dataQuanta.foreach(f)
 
 
   def execute(): Unit = {

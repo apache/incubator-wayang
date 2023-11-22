@@ -57,6 +57,14 @@ object WordCount {
 
     // Build and execute a word count
     multiContextPlanBuilder
+//      TODO:
+//      .readTextFile(List(url1, url2))
+//      .readTextFile(context1, "url1")
+//      .readTextFile(context2, "url2")
+//      .withTargetPlatforms(List(Spark, Java))
+//      .withTargetPlatform(context1, Spark.platform())
+//      .withTargetPlatform(context3, Spark.platform())
+//      .withTargetPlatform(Spark.platform())
       .loadCollection(inputValues)
       .flatMap(_.split("\\s+"))
       .map(_.replaceAll("\\W+", "").toLowerCase)

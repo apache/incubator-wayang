@@ -25,11 +25,7 @@ import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
 
 import java.io.Serializable;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 /**
  * A function operates on single data units or collections of those.
@@ -138,6 +134,16 @@ public abstract class FunctionDescriptor {
      * Extends a {@link SerializableConsumer} to an {@link ExtendedFunction}.
      */
     public interface ExtendedSerializableConsumer<T> extends SerializableConsumer<T>, ExtendedFunction{
+
+    }
+
+    @FunctionalInterface
+    public interface SerializableIntUnaryOperator extends IntUnaryOperator, Serializable {
+
+    }
+
+    @FunctionalInterface
+    public interface SerializableLongUnaryOperator extends LongUnaryOperator, Serializable {
 
     }
 }

@@ -23,7 +23,7 @@ class OperatorSerializationTests extends SerializationTestBase {
 
     // Check the outcome.
     val expectedOutputValues = inputValues.map(_ + 2).map(_.toString).toList
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedOutputValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedOutputValues)
   }
 
   @Test
@@ -43,7 +43,7 @@ class OperatorSerializationTests extends SerializationTestBase {
 
     // Check the outcome.
     val expected = List("5")
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expected)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expected)
   }
 
   @Test
@@ -61,7 +61,7 @@ class OperatorSerializationTests extends SerializationTestBase {
 
     // Check the outcome.
     val expected = List("55")
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expected)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expected)
   }
 
   @Test
@@ -78,7 +78,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)).withName("Sum counters")
 
     val expectedWordCounts = List(("big", 3), ("data", 3), ("is", 2)).map(_.toString())
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedWordCounts)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedWordCounts)
   }
 
   @Test
@@ -100,7 +100,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       }.withName("median")
 
     val expectedOutputValues = List("6", "5")
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedOutputValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedOutputValues)
   }
 
   @Test
@@ -115,7 +115,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       .sort(r => r)
 
     val expectedValues = List(1, 2, 3, 4, 5).map(_.toString)
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
   @Test
@@ -132,7 +132,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       .reduceByKey(_._1, { case ((kind1, count1), (kind2, count2)) => (kind1, count1 + count2) })
 
     val expectedValues = List(("even", 5), ("odd", 2)).map(_.toString())
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
   @Test
@@ -152,7 +152,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       .reduceByKey(_._1, (t1, t2) => (t1._1, t1._2 + t2._2))
 
     val expectedValues = List((42, 100)).map(_.toString())
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
 //  @Test
@@ -171,7 +171,7 @@ class OperatorSerializationTests extends SerializationTestBase {
 
     val expectedValues = List(("Apple juice", 10), ("Tap water", 0), ("Orange juice", 10))
       .map(s => s.toString())
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
   @Test
@@ -189,7 +189,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       .map(joinTuple => joinTuple.field0)
 
     val expectedValues = List("3", "5")
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
 //  @Test
@@ -211,7 +211,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       (List(("Juice", 10)), List(("Apple juice", "Juice"), ("Orange juice", "Juice")))
     )
       .map(_.toString)
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
 
@@ -228,7 +228,7 @@ class OperatorSerializationTests extends SerializationTestBase {
     val dq = dataQuanta1.union(dataQuanta2)
 
     val unionExpectedValues = List(1, 2, 3, 4, 0, 1, 3, 5).map(_.toString)
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, unionExpectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, unionExpectedValues)
   }
 
   @Test
@@ -244,7 +244,7 @@ class OperatorSerializationTests extends SerializationTestBase {
     val dq = dataQuanta1.intersect(dataQuanta2)
 
     val intersectExpectedValues = List(2, 3, 4, 5, 7, 8, 9).map(_.toString)
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, intersectExpectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, intersectExpectedValues)
   }
 
   @Test
@@ -262,7 +262,7 @@ class OperatorSerializationTests extends SerializationTestBase {
 
     // initial: 1,2 -> 1st: 2,3 -> 2nd: 6,7 => 3rd: 42,43
     val expectedValues = List("42", "43")
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues, log = true)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
   @Test
@@ -276,7 +276,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       .repeat(10, _.map(_ + 1))
 
     val expectedValues = List("11", "12", "13", "14", "15")
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues, log = true)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
   @Test
@@ -294,7 +294,21 @@ class OperatorSerializationTests extends SerializationTestBase {
       })
 
     val expectedValues = List(1, 2, 3, 6, 12, 24, 48, 96, 192).map(_.toString)
-    serializeThenDeserializeThenAssertOutput(dq.operator, wayang, expectedValues, log = true)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
+  }
+
+  @Test
+  def testSample(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues = for (i <- 0 until 100) yield i
+
+    val dq = wayang
+      .loadCollection(inputValues)
+      .sample(10)
+
+    val tempFilenameOut = serializeDeserializeExecute(dq.operator, wayang)
+    SerializationTestBase.assertOutputFileLineCount(tempFilenameOut, 10)
   }
 
 }
