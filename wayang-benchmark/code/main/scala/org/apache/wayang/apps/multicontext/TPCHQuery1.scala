@@ -1,0 +1,113 @@
+package org.apache.wayang.apps.multicontext
+
+import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
+import org.apache.wayang.apps.tpch.CsvUtils
+import org.apache.wayang.apps.tpch.data.LineItem
+import org.apache.wayang.apps.tpch.queries.Query1
+import org.apache.wayang.java.Java
+import org.apache.wayang.spark.Spark
+
+class TPCHQuery1 {
+
+}
+
+object TPCHQuery1 {
+
+  def main(args: Array[String]): Unit = {
+
+    if (args.length != 2 && args.length != 4) {
+      println("Usage: <lineitem-url> <delta> <optional-path-to-config-1> <optional-path-to-config-2>")
+      System.exit(1)
+    }
+
+    println("TPC-H querying #1 in multi context wayang!")
+    println("Scala version:")
+    println(scala.util.Properties.versionString)
+
+    val (configuration1, configuration2) = loadConfig(args.drop(2))
+
+    val context1 = new BlossomContext(configuration1)
+      .withPlugin(Java.basicPlugin())
+      .withPlugin(Spark.basicPlugin())
+      .withTextFileSink("file:///tmp/out11")
+    val context2 = new BlossomContext(configuration2)
+      .withPlugin(Java.basicPlugin())
+      .withPlugin(Spark.basicPlugin())
+      .withTextFileSink("file:///tmp/out12")
+
+    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2)).withUdfJarsOf(classOf[WordCount])
+
+    // Example structure of lineitem file:
+    // 1|155190|7706|1|17|21168.23|0.04|0.02|N|O|1996-03-13|1996-02-12|1996-03-22|DELIVER IN PERSON|TRUCK|egular courts above the
+    // 1|67310|7311|2|36|45983.16|0.09|0.06|N|O|1996-04-12|1996-02-28|1996-04-20|TAKE BACK RETURN|MAIL|ly final dependencies: slyly bold
+    // ...
+    val lineItemFile = args(0)
+    val _delta = args(1).toInt
+
+    multiContextPlanBuilder
+
+      // Load lineitem file
+      .readTextFile(lineItemFile)
+
+      // Parse
+      .map(s => LineItem.parseCsv(s))
+
+      // Filter line items
+      .filter(t => t.shipDate <= CsvUtils.parseDate("1998-12-01") - _delta)
+
+      // Project line items
+      .map(t => (t.returnFlag, t.lineStatus, t.quantity, t.extendedPrice, t.discount, t.tax))
+
+      // Calculate result fields
+      .map { case (returnFlag, lineStatus, quantity, extendedPrice, discount, tax) =>
+        Query1.Result(
+          returnFlag.toString,
+          lineStatus.toString,
+          quantity,
+          extendedPrice,
+          extendedPrice * (1 - discount),
+          extendedPrice * (1 - discount) * (1 + tax),
+          quantity,
+          extendedPrice,
+          discount,
+          1
+        )
+      }
+
+      // Aggregate line items
+      .reduceByKey(
+        result => (result.l_returnflag, result.l_linestatus),
+        (r1, r2) => Query1.Result(
+          r1.l_returnflag,
+          r1.l_linestatus,
+          r1.sum_qty + r2.sum_qty,
+          r1.sum_base_price + r2.sum_base_price,
+          r1.sum_disc_price + r2.sum_disc_price,
+          r1.sum_charge + r2.sum_charge,
+          r1.avg_qty + r2.avg_qty,
+          r1.avg_price + r2.avg_price,
+          r1.avg_disc + r2.avg_disc,
+          r1.count_order + r2.count_order
+        )
+      )
+
+      // Post-proces line items aggregates
+      .map(result => Query1.Result(
+        result.l_returnflag,
+        result.l_linestatus,
+        result.sum_qty,
+        result.sum_base_price,
+        result.sum_disc_price,
+        result.sum_charge,
+        result.avg_qty / result.count_order,
+        result.avg_price / result.count_order,
+        result.avg_disc / result.count_order,
+        result.count_order
+      ))
+
+      // Execute
+      .execute()
+
+
+  }
+}
