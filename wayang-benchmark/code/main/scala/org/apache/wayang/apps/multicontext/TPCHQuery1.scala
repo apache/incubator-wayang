@@ -35,7 +35,7 @@ object TPCHQuery1 {
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out12")
 
-    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2)).withUdfJarsOf(classOf[WordCount])
+    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2)).withUdfJarsOf(classOf[TPCHQuery1])
 
     // Example structure of lineitem file:
     // 1|155190|7706|1|17|21168.23|0.04|0.02|N|O|1996-03-13|1996-02-12|1996-03-22|DELIVER IN PERSON|TRUCK|egular courts above the
