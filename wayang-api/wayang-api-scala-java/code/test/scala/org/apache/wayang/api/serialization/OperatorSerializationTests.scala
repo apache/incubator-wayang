@@ -21,6 +21,8 @@ class OperatorSerializationTests extends SerializationTestBase {
       .loadCollection(inputValues).withName("Load input values")
       .map(_ + 2).withName("Add 2")
 
+    dq.operator.getTargetPlatforms
+
     // Check the outcome.
     val expectedOutputValues = inputValues.map(_ + 2).map(_.toString).toList
     serializeDeserializeExecuteAssert(dq.operator, wayang, expectedOutputValues)

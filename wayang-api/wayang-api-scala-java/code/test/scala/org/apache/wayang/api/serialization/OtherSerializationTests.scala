@@ -22,6 +22,7 @@ import org.apache.wayang.api.{BlossomContext, MultiContextDataQuanta, MultiConte
 import org.apache.wayang.basic.operators.TextFileSink
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
+import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.ReflectionUtils
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
@@ -167,6 +168,46 @@ class OtherSerializationTests extends SerializationTestBase {
       SerializationTestBase.assertOutputFile(out2, expectedLines)
     }
     catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        throw t
+    }
+  }
+
+
+  @Test
+  def platformSerializationTest(): Unit = {
+    try {
+      val serialized = SerializationUtils.serialize(Java.platform())
+      val deserialized = SerializationUtils.deserialize[Platform](serialized)
+      Assert.assertEquals(deserialized.getClass.getName, Java.platform().getClass.getName)
+    } catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        throw t
+    }
+  }
+
+
+  @Test
+  def targetPlatformsTest(): Unit = {
+    val configuration = new Configuration()
+    val wayangContext = new WayangContext(configuration)
+      .withPlugin(Java.basicPlugin())
+    val planBuilder = new PlanBuilder(wayangContext)
+      .withUdfJarsOf(classOf[OtherSerializationTests])
+
+    val dataQuanta = planBuilder
+      .loadCollection(List("12345", "12345678", "1234567890", "1234567890123"))
+      .map(s => s + " Wayang out").withTargetPlatforms(Spark.platform()).withTargetPlatforms(Java.platform())
+
+    try {
+      val serialized = SerializationUtils.serializeAsString(dataQuanta.operator)
+      val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
+      Assert.assertEquals(deserialized.getTargetPlatforms.size(), 2)
+      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(0).getClass.getName, Spark.platform().getClass.getName)
+      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(1).getClass.getName, Java.platform().getClass.getName)
+    } catch {
       case t: Throwable =>
         t.printStackTrace()
         throw t

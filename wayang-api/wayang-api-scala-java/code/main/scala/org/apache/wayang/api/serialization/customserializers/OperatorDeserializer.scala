@@ -1,7 +1,9 @@
 package org.apache.wayang.api.serialization.customserializers
 
 import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode}
 import org.apache.wayang.api.serialization.SerializationUtils.mapper
 import org.apache.wayang.api.serialization.customserializers.OperatorDeserializer.{inputSlotOwnerIdMap, outputSlotOwnerIdMap}
@@ -10,8 +12,11 @@ import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableIntUnaryOperator, SerializableLongUnaryOperator}
 import org.apache.wayang.core.function._
 import org.apache.wayang.core.plan.wayangplan.Operator
+import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.types.DataSetType
 
+import java.util
+import java.util.Set
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
@@ -55,9 +60,9 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     "DoWhileOperator" -> deserializeDoWhileOperator,
     "RepeatOperator" -> deserializeRepeatOperator,
 
-/*
-    "LocalCallbackSink" -> deserializeLocalCallbackSink,
- */
+    /*
+        "LocalCallbackSink" -> deserializeLocalCallbackSink,
+     */
   )
 
 
@@ -65,22 +70,45 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     val objectIdMap = OperatorDeserializer.operatorIdMap.get()
     val jsonNodeOperator: JsonNode = mapper.readTree(jp)
 
+    // If operator does not have any fields (or equivalently the standard @type field)
+    // and is just a number (a Jackson id of an output slot),
+    // then it means we have already parsed that operator and already stored it,
+    // so return the stored one
     if (jsonNodeOperator.get("@type") == null) {
       objectIdMap.get(jsonNodeOperator.asLong()) match {
         case Some(operator) => return operator
         case None => throw new WayangException(s"Can't deserialize operator with id ${jsonNodeOperator.asLong()}")
       }
     }
+
     val typeName = jsonNodeOperator.get("@type").asText
     val id = jsonNodeOperator.get("@id").asLong
     // println(s"Processing operator $typeName")
 
     deserializers.get(typeName) match {
+
       case Some(deserializeFunc) =>
+
+        // Deserialize operator
         val operator = deserializeFunc(jp, jsonNodeOperator)
-        // println(s"\tStoring $typeName with id ${id}")
+
+        // Add target platforms
+        val targetPlatformsNode: JsonNode = jsonNodeOperator.get("targetPlatforms")
+        targetPlatformsNode.asInstanceOf[ArrayNode].elements().asScala.foreach(   // Iterate over json array
+          platformStringNode => {
+            val platform = mapper.treeToValue(platformStringNode, classOf[Platform])  // Custom Platform deserializer gets called here
+            operator.addTargetPlatform(platform)  // Add to operator
+          }
+        )
+
+        // Store in map id -> operator
         objectIdMap.put(id, operator)
+        // println(s"\tStoring $typeName with id ${id}")
+
+        // Connect to input operators and return
         connectToInputOperatorsAndReturn(jsonNodeOperator, operator)
+
+      // If no deserialization function is matched, throw error
       case None =>
         throw new IllegalArgumentException(s"Unknown type: $typeName")
     }
@@ -155,7 +183,7 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     val keyDescriptor = mapper.treeToValue(rootNode.get("keyDescriptor"), classOf[TransformationDescriptor[AnyRef, AnyRef]])
     new GroupByOperator(keyDescriptor)
   }
-  
+
   private def deserializeReduceOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
     val reduceDescriptor = mapper.treeToValue(rootNode.get("reduceDescriptor"), classOf[ReduceDescriptor[AnyRef]])
     val inputType = mapper.treeToValue(rootNode.get("inputType"), classOf[DataSetType[AnyRef]])

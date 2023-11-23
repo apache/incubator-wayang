@@ -57,6 +57,7 @@ class BlossomContextDeserializer extends JsonDeserializer[BlossomContext] {
         println("Unknown sink type")
     }
 
+    // TODO: Add all plugins
     // 3. Add plugins
     val javaPluginName = Java.basicPlugin.getClass.getName
     val sparkPluginName = Spark.basicPlugin.getClass.getName

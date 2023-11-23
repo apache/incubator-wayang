@@ -63,8 +63,11 @@ object SerializationUtils {
       .registerModule(DefaultScalaModule)
       .registerModule(new SimpleModule().addSerializer(classOf[BlossomContext], new BlossomContextSerializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[BlossomContext], new BlossomContextDeserializer()))
+      .registerModule(new SimpleModule().addSerializer(classOf[Platform], new PlatformSerializer()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[Platform], new PlatformDeserializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[Operator], new OperatorDeserializer()))
 
+      // UDF serializers
       .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new GenericSerializableSerializer[SerializablePredicate[_]]()))
       .registerModule(new SimpleModule().addDeserializer(classOf[SerializablePredicate[_]], new GenericSerializableDeserializer[SerializablePredicate[_]]()))
       .registerModule(new SimpleModule().addSerializer(classOf[SerializableFunction[_, _]], new GenericSerializableSerializer[FunctionDescriptor.SerializableFunction[_, _]]()))
@@ -83,7 +86,7 @@ object SerializationUtils {
     //      .registerModule(new SimpleModule().addSerializer(classOf[SerializableFunction[_, _]], new FunctionDescriptorsSerializers.SerializableFunctionSerializer()))
     //      .registerModule(new SimpleModule().addDeserializer(classOf[SerializableFunction[_, _]], new FunctionDescriptorsDeserializers.SerializableFunctionDeserializer[AnyRef, AnyRef]()))
 
-    // Register mix-ins during initialization
+    // Register mix-ins
     mapper
       .addMixIn(classOf[WayangContext], classOf[WayangContextMixIn])
       .addMixIn(classOf[Configuration], classOf[ConfigurationMixIn])
@@ -124,12 +127,6 @@ object SerializationUtils {
       .addMixIn(classOf[CardinalityEstimate], classOf[CardinalityEstimateMixIn])
       .addMixIn(classOf[DataSetType[_]], classOf[DataSetTypeMixIn[_]])
       .addMixIn(classOf[DataUnitType[_]], classOf[DataUnitTypeMixIn])
-
-      //      .addMixIn(classOf[ChannelConversion], classOf[ChannelConversionMixIn])
-      //      .addMixIn(classOf[JavaPlatform], classOf[JavaPlatformMixIn])
-      //      .addMixIn(classOf[SparkPlatform], classOf[SparkPlatformMixIn])
-      //      .addMixIn(classOf[Platform], classOf[PlatformMixIn])
-      //      .addMixIn(classOf[SparkConf], classOf[SparkConfMixIn])
 
       // Ignore damn loggers
       .addMixIn(classOf[Job], classOf[IgnoreLoggerMixIn])
@@ -668,37 +665,6 @@ object SerializationUtils {
       this()
     }
   }
-
-  //  @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-  //  abstract class SparkPlatformMixIn {
-  //    @JsonIgnore
-  //    private var logger: Logger = _
-  //  }
-  //
-  //  @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-  //  abstract class JavaPlatformMixIn {
-  //  }
-
-  //  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
-  //  @JsonSubTypes(Array(
-  //    new JsonSubTypes.Type(value = classOf[JavaPlatform], name = "javaPlatform"),
-  //    new JsonSubTypes.Type(value = classOf[SparkPlatform], name = "sparkPlatform"),
-  //    //    new JsonSubTypes.Type(value = classOf[FlinkPlatform], name = "flinkPlatform"),
-  //    new JsonSubTypes.Type(value = classOf[GiraphPlatform], name = "giraphPlatform"),
-  //    //    new JsonSubTypes.Type(value = classOf[GraphChiPlatform], name = "graphChiPlatform"),
-  //    new JsonSubTypes.Type(value = classOf[PostgresPlatform], name = "postgresPlatform"),
-  //    new JsonSubTypes.Type(value = classOf[Sqlite3Platform], name = "sqlite3Platform"),
-  //    //    new JsonSubTypes.Type(value = classOf[HsqldbPlatform], name = "hsqldbPlatform"),
-  //  ))
-  //  abstract class PlatformMixIn {
-  //  }
-  //
-  //  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
-  //  @JsonSubTypes(Array(
-  //    new JsonSubTypes.Type(value = classOf[DefaultChannelConversion], name = "defaultChannelConversion"),
-  //  ))
-  //  abstract class ChannelConversionMixIn {
-  //  }
 
   def serialize(obj: AnyRef): Array[Byte] = {
     mapper.writeValueAsBytes(obj)
