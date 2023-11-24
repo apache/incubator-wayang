@@ -23,6 +23,8 @@ import org.apache.wayang.core.plugin.Plugin
 
 class BlossomContext(configuration: Configuration) extends WayangContext(configuration) {
 
+  val id: Long = BlossomContext.nextId()
+
   private var sink: Option[BlossomContext.UnarySink] = None
   private var plugins: List[String] = List()
 
@@ -51,6 +53,14 @@ class BlossomContext(configuration: Configuration) extends WayangContext(configu
 }
 
 object BlossomContext {
+
+  private var lastId = 0L
+
+  private def nextId(): Long = {
+    lastId += 1
+    lastId
+  }
+
   private[api] trait UnarySink
   private[api] case class TextFileSink(textFileUrl: String) extends UnarySink
   private[api] case class ObjectFileSink(textFileUrl: String) extends UnarySink

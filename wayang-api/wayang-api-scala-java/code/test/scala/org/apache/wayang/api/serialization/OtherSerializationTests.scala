@@ -81,19 +81,19 @@ class OtherSerializationTests extends SerializationTestBase {
         deserialized.withClassesOf
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.contexts(0).getConfiguration.getStringProperty("spark.master"),
+        multiContextPlanBuilder.blossomContexts(0).getConfiguration.getStringProperty("spark.master"),
         "master1"
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.contexts(1).getConfiguration.getStringProperty("spark.master"),
+        multiContextPlanBuilder.blossomContexts(1).getConfiguration.getStringProperty("spark.master"),
         "master2"
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.contexts(0).getSink.get.asInstanceOf[BlossomContext.TextFileSink].textFileUrl,
+        multiContextPlanBuilder.blossomContexts(0).getSink.get.asInstanceOf[BlossomContext.TextFileSink].textFileUrl,
         "file:///tmp/out11"
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.contexts(1).getSink.get.asInstanceOf[BlossomContext.ObjectFileSink].textFileUrl,
+        multiContextPlanBuilder.blossomContexts(1).getSink.get.asInstanceOf[BlossomContext.ObjectFileSink].textFileUrl,
         "file:///tmp/out12"
       )
     }
@@ -212,6 +212,44 @@ class OtherSerializationTests extends SerializationTestBase {
         t.printStackTrace()
         throw t
     }
+  }
+
+  @Test
+  def testTest(): Unit = {
+    val context1 = new BlossomContext(new Configuration())
+      .withPlugin(Java.basicPlugin())
+      .withPlugin(Spark.basicPlugin())
+      .withTextFileSink("file:///tmp/out11")
+    val context2 = new BlossomContext(new Configuration())
+      .withPlugin(Java.basicPlugin())
+      .withPlugin(Spark.basicPlugin())
+      .withTextFileSink("file:///tmp/out12")
+
+    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2))
+
+    multiContextPlanBuilder
+      .loadCollection(context1, List(1, 2, 3))
+      .loadCollection(context2, List(4, 5, 6))
+      .map(x => x + 1)
+
+    multiContextPlanBuilder
+      .readTextFile(context1, "url1")
+      .readTextFile(context1, "url2")
+      .map(x => x + " Wayang out")
+      .withTargetPlatforms(context1, Java.platform())
+      .withTargetPlatforms(context2, Spark.platform())
+      .filter(s => s.length > 10)
+      .withTargetPlatforms(context1, Java.platform())
+      .withTargetPlatforms(context2, Spark.platform())
+
+    multiContextPlanBuilder
+      .readObjectFile[String](context1, "url1")
+      .readObjectFile(context1, "url2")
+      .map(x => x + " Wayang out")
+      .withTargetPlatforms(Java.platform())
+      .filter(s => s.length > 10)
+      .withTargetPlatforms(context1, Spark.platform())
+      .withTargetPlatforms(context2, Java.platform())
   }
 
 }

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.logging.log4j.Logger
-import org.apache.wayang.api.BlossomContext
+import org.apache.wayang.api.{BlossomContext, DataQuanta, MultiContextPlanBuilder}
 import org.apache.wayang.api.serialization.customserializers._
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators._
@@ -88,6 +88,7 @@ object SerializationUtils {
 
     // Register mix-ins
     mapper
+      .addMixIn(classOf[MultiContextPlanBuilder], classOf[MultiContextPlanBuilderMixIn])
       .addMixIn(classOf[WayangContext], classOf[WayangContextMixIn])
       .addMixIn(classOf[Configuration], classOf[ConfigurationMixIn])
       .addMixIn(classOf[CardinalityRepository], classOf[IgnoreLoggerMixIn])
@@ -187,6 +188,15 @@ object SerializationUtils {
   abstract class IgnoreLoggerMixIn {
     @JsonIgnore
     private var logger: Logger = _
+  }
+
+  abstract class MultiContextPlanBuilderMixIn {
+    @JsonIgnore
+    private var blossomContextMap: Map[Long, BlossomContext] = _
+
+    @JsonIgnore
+    private var dataQuantaMap: Map[Long, DataQuanta[_]] = _
+
   }
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")

@@ -23,6 +23,7 @@ import org.apache.wayang.api.serialization.SerializationUtils
 import org.apache.wayang.basic.operators.{ObjectFileSink, SampleOperator, TextFileSink}
 import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
+import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.ReflectionUtils
 
 import java.io.{FileInputStream, FileOutputStream}
@@ -32,10 +33,26 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
-class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val multiContextPlanBuilder: MultiContextPlanBuilder) {
+class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQuanta[Out]])(val multiContextPlanBuilder: MultiContextPlanBuilder) {
 
   private def wrapInMultiContextDataQuanta[NewOut: ClassTag](f: DataQuanta[Out] => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
-    new MultiContextDataQuanta[NewOut](f(dataQuanta))(this.multiContextPlanBuilder)
+    new MultiContextDataQuanta[NewOut](dataQuantaMap.mapValues(f))(this.multiContextPlanBuilder)
+
+  private def wrapInMultiContextDataQuanta2[ThatOut: ClassTag, NewOut: ClassTag](thatMultiContextDataQuanta: MultiContextDataQuanta[ThatOut], f: (DataQuanta[Out], DataQuanta[ThatOut]) => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
+    new MultiContextDataQuanta[NewOut](this.dataQuantaMap.map { case (key, thisDataQuanta) =>
+      val thatDataQuanta = thatMultiContextDataQuanta.dataQuantaMap(key)
+      key -> f(thisDataQuanta, thatDataQuanta)
+    })(this.multiContextPlanBuilder)
+
+  def withTargetPlatforms(platforms: Platform*): MultiContextDataQuanta[Out] = {
+    platforms.foreach(platform => dataQuantaMap.values.foreach(_.operator.addTargetPlatform(platform)))
+    this
+  }
+
+  def withTargetPlatforms(blossomContext: BlossomContext, platforms: Platform*): MultiContextDataQuanta[Out] = {
+    platforms.foreach(platform => dataQuantaMap(blossomContext.id).operator.addTargetPlatform(platform))
+    this
+  }
 
   def map[NewOut: ClassTag](udf: Out => NewOut): MultiContextDataQuanta[NewOut] =
     wrapInMultiContextDataQuanta(_.map(udf))
@@ -72,10 +89,10 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val
     wrapInMultiContextDataQuanta(_.reduce(udf))
 
   def union(that: MultiContextDataQuanta[Out]): MultiContextDataQuanta[Out] =
-    wrapInMultiContextDataQuanta(_.union(that.dataQuanta))
+    wrapInMultiContextDataQuanta2(that, (thisDataQuanta, thatDataQuanta: DataQuanta[Out]) => thisDataQuanta.union(thatDataQuanta))
 
   def intersect(that: MultiContextDataQuanta[Out]): MultiContextDataQuanta[Out] =
-    wrapInMultiContextDataQuanta(_.intersect(that.dataQuanta))
+    wrapInMultiContextDataQuanta2(that, (thisDataQuanta, thatDataQuanta: DataQuanta[Out]) => thisDataQuanta.intersect(thatDataQuanta))
 
   import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
 
@@ -83,20 +100,20 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val
                                              that: MultiContextDataQuanta[ThatOut],
                                              thatKeyUdf: ThatOut => Key)
   : MultiContextDataQuanta[WayangTuple2[Out, ThatOut]] =
-    wrapInMultiContextDataQuanta(_.join(thisKeyUdf, that.dataQuanta, thatKeyUdf))
+    wrapInMultiContextDataQuanta2(that, (thisDataQuanta, thatDataQuanta: DataQuanta[ThatOut]) => thisDataQuanta.join(thisKeyUdf, thatDataQuanta, thatKeyUdf))
 
   def coGroup[ThatOut: ClassTag, Key: ClassTag](thisKeyUdf: Out => Key,
                                                 that: MultiContextDataQuanta[ThatOut],
                                                 thatKeyUdf: ThatOut => Key)
   : MultiContextDataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
-    wrapInMultiContextDataQuanta(_.coGroup(thisKeyUdf, that.dataQuanta, thatKeyUdf))
-
-  def sort[Key: ClassTag](keyUdf: Out => Key): MultiContextDataQuanta[Out] =
-    wrapInMultiContextDataQuanta(_.sort(keyUdf))
+    wrapInMultiContextDataQuanta2(that, (thisDataQuanta, thatDataQuanta: DataQuanta[ThatOut]) => thisDataQuanta.coGroup(thisKeyUdf, thatDataQuanta, thatKeyUdf))
 
   def cartesian[ThatOut: ClassTag](that: MultiContextDataQuanta[ThatOut])
   : MultiContextDataQuanta[WayangTuple2[Out, ThatOut]] =
-    wrapInMultiContextDataQuanta(_.cartesian(that.dataQuanta))
+    wrapInMultiContextDataQuanta2(that, (thisDataQuanta, thatDataQuanta: DataQuanta[ThatOut]) => thisDataQuanta.cartesian(thatDataQuanta))
+
+  def sort[Key: ClassTag](keyUdf: Out => Key): MultiContextDataQuanta[Out] =
+    wrapInMultiContextDataQuanta(_.sort(keyUdf))
 
   def zipWithId: MultiContextDataQuanta[WayangTuple2[java.lang.Long, Out]] =
     wrapInMultiContextDataQuanta(_.zipWithId)
@@ -116,9 +133,6 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val
   def repeat(n: Int, bodyBuilder: DataQuanta[Out] => DataQuanta[Out]): MultiContextDataQuanta[Out] =
     wrapInMultiContextDataQuanta(_.repeat(n, bodyBuilder))
 
-//  def foreach(f: Out => _): Unit =
-//    dataQuanta.foreach(f)
-
 
   def execute(): Unit = {
 
@@ -128,18 +142,17 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuanta: DataQuanta[Out])(val
     // For spawning child process using wayang-submit under wayang home
     val wayangHome = System.getenv("WAYANG_HOME")
 
-    // Write operator to temp file
-    val operatorPath = MultiContextDataQuanta.writeToTempFileAsString(dataQuanta.operator)
-    tempFilesToBeDeleted.add(operatorPath)
-
-
-    multiContextPlanBuilder.contexts.foreach {
+    multiContextPlanBuilder.blossomContexts.foreach {
       context =>
 
         // Write context to temp file
         val multiContextPlanBuilderPath = MultiContextDataQuanta.writeToTempFileAsString(
           MultiContextPlanBuilder(List(context)).withUdfJarsOf(multiContextPlanBuilder.withClassesOf: _*)
         )
+
+        // Write operator to temp file
+        val operatorPath = MultiContextDataQuanta.writeToTempFileAsString(dataQuantaMap(context.id).operator)
+        tempFilesToBeDeleted.add(operatorPath)
 
         tempFilesToBeDeleted.add(multiContextPlanBuilderPath)
 
@@ -190,7 +203,7 @@ object MultiContextDataQuanta {
     val multiContextPlanBuilder = MultiContextDataQuanta.readFromTempFileFromString[MultiContextPlanBuilder](multiContextPlanBuilderPath)
 
     // Get context
-    val context = multiContextPlanBuilder.contexts.head
+    val context = multiContextPlanBuilder.blossomContexts.head
 
     // Get classes of and also add this one
     var withClassesOf = multiContextPlanBuilder.withClassesOf
