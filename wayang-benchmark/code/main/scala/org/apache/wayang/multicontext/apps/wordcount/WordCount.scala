@@ -41,7 +41,7 @@ object WordCount {
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out12")
 
-    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2))
+    val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[WordCount])
 
     // Generate some test data

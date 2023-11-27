@@ -157,7 +157,7 @@ class OperatorSerializationTests extends SerializationTestBase {
     serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
-//  @Test
+  @Test
   def testJoin(): Unit = {
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 

@@ -148,7 +148,7 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
 
         // Write context to temp file
         val multiContextPlanBuilderPath = MultiContextDataQuanta.writeToTempFileAsString(
-          MultiContextPlanBuilder(List(context)).withUdfJarsOf(multiContextPlanBuilder.withClassesOf: _*)
+          new MultiContextPlanBuilder(List(context)).withUdfJarsOf(multiContextPlanBuilder.withClassesOf: _*)
         )
 
         // Write operator to temp file

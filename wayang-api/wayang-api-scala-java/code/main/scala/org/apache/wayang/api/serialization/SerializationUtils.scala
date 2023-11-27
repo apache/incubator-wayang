@@ -81,11 +81,6 @@ object SerializationUtils {
       .registerModule(new SimpleModule().addSerializer(classOf[SerializableLongUnaryOperator], new GenericSerializableSerializer[SerializableLongUnaryOperator]()))
       .registerModule(new SimpleModule().addDeserializer(classOf[SerializableLongUnaryOperator], new GenericSerializableDeserializer[SerializableLongUnaryOperator]()))
 
-    //      .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new FunctionDescriptorsSerializers.SerializablePredicateSerializer()))
-    //      .registerModule(new SimpleModule().addDeserializer(classOf[SerializablePredicate[_]], new FunctionDescriptorsDeserializers.SerializablePredicateDeserializer[AnyRef]()))
-    //      .registerModule(new SimpleModule().addSerializer(classOf[SerializableFunction[_, _]], new FunctionDescriptorsSerializers.SerializableFunctionSerializer()))
-    //      .registerModule(new SimpleModule().addDeserializer(classOf[SerializableFunction[_, _]], new FunctionDescriptorsDeserializers.SerializableFunctionDeserializer[AnyRef, AnyRef]()))
-
     // Register mix-ins
     mapper
       .addMixIn(classOf[MultiContextPlanBuilder], classOf[MultiContextPlanBuilderMixIn])
@@ -121,7 +116,7 @@ object SerializationUtils {
       .addMixIn(classOf[ProbabilisticDoubleInterval], classOf[ProbabilisticDoubleIntervalMixIn])
       .addMixIn(classOf[LoadProfileEstimator], classOf[LoadProfileEstimatorMixIn])
       .addMixIn(classOf[FunctionDescriptor], classOf[FunctionDescriptorMixIn])
-      //      .addMixIn(classOf[ConstantLoadProfileEstimator], classOf[ConstantLoadProfileEstimatorMixIn])
+      // .addMixIn(classOf[ConstantLoadProfileEstimator], classOf[ConstantLoadProfileEstimatorMixIn])
       .addMixIn(classOf[NestableLoadProfileEstimator], classOf[NestableLoadProfileEstimatorMixIn])
       .addMixIn(classOf[LoadEstimator], classOf[LoadEstimatorMixIn])
       .addMixIn(classOf[DefaultLoadEstimator], classOf[DefaultLoadEstimatorMixIn])
@@ -167,20 +162,6 @@ object SerializationUtils {
       .addMixIn(classOf[UnaryToUnaryOperator[_, _]], classOf[UnaryToUnaryOperatorMixIn[_, _]])
       .addMixIn(classOf[BinaryToUnaryOperator[_, _, _]], classOf[BinaryToUnaryOperatorMixIn[_, _, _]])
       .addMixIn(classOf[LoopHeadOperator], classOf[LoopHeadOperatorMixIn])
-
-    // IntelliJ can't find imports so probably we won't need those
-    //        .addMixIn(classOf[FlinkPlatform], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[JdbcExecutor], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[SparkListener], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[SparkObjectFileSource], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[OperatorProfiler], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[DynamicLoadProfileEstimators], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[GeneticOptimizerApp], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[LogEvaluator], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[SparkOperatorProfiler], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[RrdAccessor], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[GiraphPageRankOperator], classOf[IgnoreLoggerMixIn])
-    //          .addMixIn(classOf[GraphChiPageRankOperator], classOf[IgnoreLoggerMixIn])
 
     mapper
   }

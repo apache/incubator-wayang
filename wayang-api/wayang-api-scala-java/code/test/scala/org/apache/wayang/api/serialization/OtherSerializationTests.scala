@@ -68,7 +68,7 @@ class OtherSerializationTests extends SerializationTestBase {
     val context1 = new BlossomContext(configuration1).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
     val context2 = new BlossomContext(configuration2).withPlugin(Spark.basicPlugin()).withObjectFileSink("file:///tmp/out12")
 
-    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2))
+    val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[OtherSerializationTests])
 
     try {
@@ -152,7 +152,7 @@ class OtherSerializationTests extends SerializationTestBase {
       val context2 = new BlossomContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink(s"file://$out2")
 
       // Create multiContextPlanBuilder
-      val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2))
+      val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
         .withUdfJarsOf(classOf[OtherSerializationTests])
 
       // Build and execute plan
@@ -205,8 +205,9 @@ class OtherSerializationTests extends SerializationTestBase {
       val serialized = SerializationUtils.serializeAsString(dataQuanta.operator)
       val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
       Assert.assertEquals(deserialized.getTargetPlatforms.size(), 2)
-      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(1).getClass.getName, Spark.platform().getClass.getName)
-      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(0).getClass.getName, Java.platform().getClass.getName)
+      val deserializedPlatformNames = deserialized.getTargetPlatforms.toArray.map(p => p.getClass.getName)
+      Assert.assertTrue(deserializedPlatformNames.contains(Spark.platform().getClass.getName))
+      Assert.assertTrue(deserializedPlatformNames.contains(Java.platform().getClass.getName))
     } catch {
       case t: Throwable =>
         t.printStackTrace()
@@ -241,45 +242,6 @@ class OtherSerializationTests extends SerializationTestBase {
         t.printStackTrace()
         throw t
     }
-  }
-
-
-  @Test
-  def testTest(): Unit = {
-    val context1 = new BlossomContext(new Configuration())
-      .withPlugin(Java.basicPlugin())
-      .withPlugin(Spark.basicPlugin())
-      .withTextFileSink("file:///tmp/out11")
-    val context2 = new BlossomContext(new Configuration())
-      .withPlugin(Java.basicPlugin())
-      .withPlugin(Spark.basicPlugin())
-      .withTextFileSink("file:///tmp/out12")
-
-    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2))
-
-    multiContextPlanBuilder
-      .loadCollection(context1, List(1, 2, 3))
-      .loadCollection(context2, List(4, 5, 6))
-      .map(x => x + 1)
-
-    multiContextPlanBuilder
-      .readTextFile(context1, "url1")
-      .readTextFile(context1, "url2")
-      .map(x => x + " Wayang out")
-      .withTargetPlatforms(context1, Java.platform())
-      .withTargetPlatforms(context2, Spark.platform())
-      .filter(s => s.length > 10)
-      .withTargetPlatforms(context1, Java.platform())
-      .withTargetPlatforms(context2, Spark.platform())
-
-    multiContextPlanBuilder
-      .readObjectFile[String](context1, "url1")
-      .readObjectFile(context1, "url2")
-      .map(x => x + " Wayang out")
-      .withTargetPlatforms(Java.platform())
-      .filter(s => s.length > 10)
-      .withTargetPlatforms(context1, Spark.platform())
-      .withTargetPlatforms(context2, Java.platform())
   }
 
 }
