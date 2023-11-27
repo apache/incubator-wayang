@@ -1,15 +1,15 @@
-package org.apache.wayang.apps
+package org.apache.wayang.multicontext
 
 import org.apache.wayang.core.api.Configuration
 
-package object multicontext {
+package object apps {
 
   def loadConfig(args: Array[String]): (Configuration, Configuration) = {
     if (args.length < 2) {
-      println ("Loading default configurations.")
+      println("Loading default configurations.")
       (new Configuration(), new Configuration())
     } else {
-      println ("Loading custom configurations.")
+      println("Loading custom configurations.")
       (loadConfigFromUrl(args(0)), loadConfigFromUrl(args(1)))
     }
   }
@@ -24,4 +24,5 @@ package object multicontext {
         new Configuration()
     }
   }
+
 }

@@ -1,17 +1,16 @@
-package org.apache.wayang.apps.multicontext
+package org.apache.wayang.multicontext.apps.tpch
 
 import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
 import org.apache.wayang.apps.tpch.CsvUtils
 import org.apache.wayang.apps.tpch.data.LineItem
-import org.apache.wayang.apps.tpch.queries.Query1
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
+import org.apache.wayang.apps.tpch.queries.{Query1 => Query1Utils}
+import org.apache.wayang.multicontext.apps.loadConfig
 
-class TPCHQuery1 {
+class Query1 {}
 
-}
-
-object TPCHQuery1 {
+object Query1 {
 
   def main(args: Array[String]): Unit = {
 
@@ -35,14 +34,14 @@ object TPCHQuery1 {
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out12")
 
-    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2)).withUdfJarsOf(classOf[TPCHQuery1])
+    val multiContextPlanBuilder = MultiContextPlanBuilder(List(context1, context2)).withUdfJarsOf(classOf[Query1])
 
     // Example structure of lineitem file:
     // 1|155190|7706|1|17|21168.23|0.04|0.02|N|O|1996-03-13|1996-02-12|1996-03-22|DELIVER IN PERSON|TRUCK|egular courts above the
     // 1|67310|7311|2|36|45983.16|0.09|0.06|N|O|1996-04-12|1996-02-28|1996-04-20|TAKE BACK RETURN|MAIL|ly final dependencies: slyly bold
     // ...
     val lineItemFile = args(0)
-    val _delta = args(1).toInt
+    val delta = args(1).toInt
 
     multiContextPlanBuilder
 
@@ -53,14 +52,14 @@ object TPCHQuery1 {
       .map(s => LineItem.parseCsv(s))
 
       // Filter line items
-      .filter(t => t.shipDate <= CsvUtils.parseDate("1998-12-01") - _delta)
+      .filter(t => t.shipDate <= CsvUtils.parseDate("1998-12-01") - delta)
 
       // Project line items
       .map(t => (t.returnFlag, t.lineStatus, t.quantity, t.extendedPrice, t.discount, t.tax))
 
       // Calculate result fields
       .map { case (returnFlag, lineStatus, quantity, extendedPrice, discount, tax) =>
-        Query1.Result(
+        Query1Utils.Result(
           returnFlag.toString,
           lineStatus.toString,
           quantity,
@@ -77,7 +76,7 @@ object TPCHQuery1 {
       // Aggregate line items
       .reduceByKey(
         result => (result.l_returnflag, result.l_linestatus),
-        (r1, r2) => Query1.Result(
+        (r1, r2) => Query1Utils.Result(
           r1.l_returnflag,
           r1.l_linestatus,
           r1.sum_qty + r2.sum_qty,
@@ -91,8 +90,8 @@ object TPCHQuery1 {
         )
       )
 
-      // Post-proces line items aggregates
-      .map(result => Query1.Result(
+      // Post-process line items aggregates
+      .map(result => Query1Utils.Result(
         result.l_returnflag,
         result.l_linestatus,
         result.sum_qty,

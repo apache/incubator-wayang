@@ -1,14 +1,13 @@
-package org.apache.wayang.apps.multicontext
+package org.apache.wayang.multicontext.apps.wordcount
 
 import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
 import org.apache.wayang.java.Java
+import org.apache.wayang.multicontext.apps.loadConfig
 import org.apache.wayang.spark.Spark
 
-class MultiSourceMultiTargetPlatform {
+class WordCountWithTargetPlatforms {}
 
-}
-
-object MultiSourceMultiTargetPlatform {
+object WordCountWithTargetPlatforms {
 
   def main(args: Array[String]): Unit = {
     println("Counting words in multi context wayang!")
@@ -37,11 +36,19 @@ object MultiSourceMultiTargetPlatform {
     multiContextPlanBuilder
       .loadCollection(context1, inputValues1)
       .loadCollection(context2, inputValues2)
+
       .flatMap(_.split("\\s+"))
+      .withTargetPlatforms(context1, Spark.platform())
+      .withTargetPlatforms(context2, Java.platform())
+
       .map(_.replaceAll("\\W+", "").toLowerCase)
+      .withTargetPlatforms(Java.platform())
+
       .map((_, 1))
+
       .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
       .withTargetPlatforms(context1, Spark.platform())
+
       .execute()
   }
 }

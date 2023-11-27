@@ -17,10 +17,10 @@
  */
 
 
-package org.apache.wayang.apps.multicontext
+package org.apache.wayang.multicontext.apps.wordcount
 
 import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
-import org.apache.wayang.java.Java
+import org.apache.wayang.multicontext.apps.loadConfig
 import org.apache.wayang.spark.Spark
 
 class WordCount {}
