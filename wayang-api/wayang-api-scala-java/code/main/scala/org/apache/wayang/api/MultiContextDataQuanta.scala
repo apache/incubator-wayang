@@ -38,20 +38,21 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
   private def wrapInMultiContextDataQuanta[NewOut: ClassTag](f: DataQuanta[Out] => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
     new MultiContextDataQuanta[NewOut](dataQuantaMap.mapValues(f))(this.multiContextPlanBuilder)
 
-  private def wrapInMultiContextDataQuanta2[ThatOut: ClassTag, NewOut: ClassTag](thatMultiContextDataQuanta: MultiContextDataQuanta[ThatOut], f: (DataQuanta[Out], DataQuanta[ThatOut]) => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
+  private def wrapInMultiContextDataQuanta2[ThatOut: ClassTag, NewOut: ClassTag](thatMultiContextDataQuanta: MultiContextDataQuanta[ThatOut],
+   f: (DataQuanta[Out], DataQuanta[ThatOut]) => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
     new MultiContextDataQuanta[NewOut](this.dataQuantaMap.map { case (key, thisDataQuanta) =>
       val thatDataQuanta = thatMultiContextDataQuanta.dataQuantaMap(key)
       key -> f(thisDataQuanta, thatDataQuanta)
     })(this.multiContextPlanBuilder)
 
   def withTargetPlatforms(platforms: Platform*): MultiContextDataQuanta[Out] = {
-    platforms.foreach(platform => dataQuantaMap.values.foreach(_.operator.addTargetPlatform(platform)))
-    this
+    new MultiContextDataQuanta[Out](this.dataQuantaMap.mapValues(_.withTargetPlatforms(platforms: _*)))(multiContextPlanBuilder)
   }
 
   def withTargetPlatforms(blossomContext: BlossomContext, platforms: Platform*): MultiContextDataQuanta[Out] = {
-    platforms.foreach(platform => dataQuantaMap(blossomContext.id).operator.addTargetPlatform(platform))
-    this
+    val updatedDataQuanta = dataQuantaMap(blossomContext.id).withTargetPlatforms(platforms: _*)
+    val updatedDataQuantaMap = dataQuantaMap.updated(blossomContext.id, updatedDataQuanta)
+    new MultiContextDataQuanta[Out](updatedDataQuantaMap)(this.multiContextPlanBuilder)
   }
 
   def map[NewOut: ClassTag](udf: Out => NewOut): MultiContextDataQuanta[NewOut] =
@@ -187,7 +188,6 @@ object MultiContextDataQuanta {
   def main(args: Array[String]): Unit = {
     println("New process here")
     println(args.mkString("Array(", ", ", ")"))
-    println()
 
     if (args.length != 2) {
       System.err.println("Expected two arguments: paths to the serialized operator and context.")
@@ -260,7 +260,6 @@ object MultiContextDataQuanta {
 
   def writeToTempFileAsString(obj: AnyRef): Path = {
     val tempFile = Files.createTempFile("serialized", ".tmp")
-    println(s"Just created temp file ${tempFile.toFile.getName}")
     val serializedString = SerializationUtils.serializeAsString(obj)
     Files.writeString(tempFile, serializedString, StandardCharsets.UTF_8)
     tempFile

@@ -37,10 +37,12 @@ case class MultiContextPlanBuilder(blossomContexts: List[BlossomContext]) {
     this
   }
 
-  private def getPlanBuilder: PlanBuilder = new PlanBuilder(new BlossomContext())
+  private def getPlanBuilder(blossomContextId: Long): PlanBuilder = {
+    new PlanBuilder(blossomContextMap(blossomContextId))
+  }
 
   private def wrapInMultiContextDataQuanta[T: ClassTag](f: PlanBuilder => DataQuanta[T]): MultiContextDataQuanta[T] = {
-    val dataQuantaMap = blossomContexts.map(context => context.id -> f(getPlanBuilder)).toMap
+    val dataQuantaMap = blossomContexts.map(context => context.id -> f(getPlanBuilder(context.id))).toMap
     new MultiContextDataQuanta[T](dataQuantaMap)(this)
   }
 

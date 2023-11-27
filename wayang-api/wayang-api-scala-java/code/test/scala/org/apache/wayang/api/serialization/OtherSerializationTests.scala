@@ -205,14 +205,44 @@ class OtherSerializationTests extends SerializationTestBase {
       val serialized = SerializationUtils.serializeAsString(dataQuanta.operator)
       val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
       Assert.assertEquals(deserialized.getTargetPlatforms.size(), 2)
-      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(0).getClass.getName, Spark.platform().getClass.getName)
-      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(1).getClass.getName, Java.platform().getClass.getName)
+      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(1).getClass.getName, Spark.platform().getClass.getName)
+      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(0).getClass.getName, Java.platform().getClass.getName)
     } catch {
       case t: Throwable =>
         t.printStackTrace()
         throw t
     }
   }
+
+  @Test
+  def targetPlatforms2Test(): Unit = {
+    val configuration = new Configuration()
+    val wayangContext = new WayangContext(configuration)
+      .withPlugin(Java.basicPlugin())
+    val planBuilder = new PlanBuilder(wayangContext)
+      .withUdfJarsOf(classOf[OtherSerializationTests])
+
+    val inputValues1 = Array("Big data is big.", "Is data big data?")
+    val dataQuanta = planBuilder
+      .loadCollection(inputValues1)
+      .flatMap(_.split("\\s+"))
+      .map(_.replaceAll("\\W+", "").toLowerCase)
+      .map((_, 1))
+      .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
+      .withTargetPlatforms(Spark.platform())
+
+    try {
+      val serialized = SerializationUtils.serializeAsString(dataQuanta.operator)
+      val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
+      Assert.assertEquals(deserialized.getTargetPlatforms.size(), 1)
+      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(0).getClass.getName, Spark.platform().getClass.getName)
+    } catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        throw t
+    }
+  }
+
 
   @Test
   def testTest(): Unit = {
