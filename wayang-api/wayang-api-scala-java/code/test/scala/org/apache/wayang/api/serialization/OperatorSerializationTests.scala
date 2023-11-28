@@ -1,9 +1,11 @@
 package org.apache.wayang.api.serialization
 
-import org.apache.wayang.api.{PlanBuilder, createPlanBuilder}
+import org.apache.wayang.api.{DataQuanta, PlanBuilder, createPlanBuilder}
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.java.Java
-import org.junit.Test
+import org.junit.{Assert, Test}
+
+import java.io.{File, PrintWriter}
 
 
 class OperatorSerializationTests extends SerializationTestBase {
@@ -157,23 +159,67 @@ class OperatorSerializationTests extends SerializationTestBase {
     serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
+  // Function to create a temp file and write content to it
+  def createTempFile(content: String, prefix: String): File = {
+    val tempFile = File.createTempFile(prefix, ".txt")
+    val writer = new PrintWriter(tempFile)
+    try {
+      writer.write(content.trim)
+    } finally {
+      writer.close()
+    }
+    tempFile
+  }
+
   @Test
   def testJoin(): Unit = {
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
-    val inputValues1 = Array(("Water", 0), ("Tonic", 5), ("Juice", 10))
-    val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
+    // Contents for the temp files
+    val content1 =
+      """
+        |Water, 0
+        |Tonic, 5
+        |Juice, 10
+      """.stripMargin
 
+    val content2 =
+      """
+        |Apple juice, Juice
+        |Tap water, Water
+        |Orange juice, Juice
+      """.stripMargin
+
+    // Create temp files
+    val tempFile1 = createTempFile(content1, "testFile1")
+    val tempFile2 = createTempFile(content2, "testFile2")
+
+    // Build initial data quanta
     val builder = new PlanBuilder(wayang)
-    val dataQuanta1 = builder.loadCollection(inputValues1)
-    val dataQuanta2 = builder.loadCollection(inputValues2)
+    val dataQuanta1 = builder.readTextFile(s"file://$tempFile1")
+      .map(s => {
+        val values = s.split(", ")
+        (values(0), values(1).toInt)
+      })
+    val dataQuanta2 = builder.readTextFile(s"file://$tempFile2")
+      .map(s => {
+        val values = s.split(", ")
+        (values(0), values(1))
+      })
+
+    // Join
     val dq = dataQuanta1
       .join[(String, String), String](_._1, dataQuanta2, _._2)
       .map(joinTuple => (joinTuple.field1._1, joinTuple.field0._2))
 
+    // Assert output
     val expectedValues = List(("Apple juice", 10), ("Tap water", 0), ("Orange juice", 10))
       .map(s => s.toString())
-    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
+
+    // Clean up: Delete the temp files
+    tempFile1.delete()
+    tempFile2.delete()
   }
 
   @Test
@@ -194,26 +240,57 @@ class OperatorSerializationTests extends SerializationTestBase {
     serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
-//  @Test
+  @Test
   def testCoGroup(): Unit = {
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
-    val inputValues1 = Array(("Water", 0), ("Cola", 5), ("Juice", 10))
-    val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
+    // Contents for the temp files
+    val content1 =
+      """
+        |Water, 0
+        |Cola, 5
+        |Juice, 10
+      """.stripMargin
 
+    val content2 =
+      """
+        |Apple juice, Juice
+        |Tap water, Water
+        |Orange juice, Juice
+      """.stripMargin
+
+    // Create temp files
+    val tempFile1 = createTempFile(content1, "testFile1")
+    val tempFile2 = createTempFile(content2, "testFile2")
+
+    // Build initial data quanta
     val builder = new PlanBuilder(wayang)
-    val dataQuanta1 = builder.loadCollection(inputValues1)
-    val dataQuanta2 = builder.loadCollection(inputValues2)
+    val dataQuanta1 = builder.readTextFile(s"file://$tempFile1")
+      .map(s => {
+        val values = s.split(", ")
+        (values(0), values(1).toInt)
+      })
+    val dataQuanta2 = builder.readTextFile(s"file://$tempFile2")
+      .map(s => {
+        val values = s.split(", ")
+        (values(0), values(1))
+      })
+
+    // Co-group
     val dq = dataQuanta1
       .coGroup[(String, String), String](_._1, dataQuanta2, _._2)
 
+    // Assert output
     val expectedValues = List(
-      (List(("Water", 0)), List(("Tap water", "Water"))),
-      (List(("Cola", 5)), List()),
-      (List(("Juice", 10)), List(("Apple juice", "Juice"), ("Orange juice", "Juice")))
+      "([(Water,0)], [(Tap water,Water)])",
+      "([(Juice,10)], [(Apple juice,Juice), (Orange juice,Juice)])",
+      "([(Cola,5)], [])"
     )
-      .map(_.toString)
     serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
+
+    // Clean up: Delete the temp files
+    tempFile1.delete()
+    tempFile2.delete()
   }
 
 

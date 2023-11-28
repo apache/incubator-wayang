@@ -15,8 +15,6 @@ import org.apache.wayang.core.plan.wayangplan.Operator
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.types.DataSetType
 
-import java.util
-import java.util.Set
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
@@ -123,9 +121,10 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     new TextFileSource(inputUrl)
   }
 
+
   private def deserializeCollectionSource(jp: JsonParser, rootNode: JsonNode): Operator = {
-    val collection = mapper.treeToValue(rootNode.get("collection"), classOf[Iterable[_]])
-    val t = mapper.treeToValue(rootNode.get("type"), classOf[DataSetType[Any]])
+    val collection = mapper.treeToValue(rootNode.get("collection"), classOf[Iterable[AnyRef]])
+    val t = mapper.treeToValue(rootNode.get("type"), classOf[DataSetType[AnyRef]])
     new CollectionSource(collection.asJavaCollection, t)
   }
 
@@ -257,7 +256,6 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
   private def connectToInputOperatorsAndReturn(node: JsonNode, operator: Operator): Operator = {
     val inputOperators = getInputOperators(node)
     for ((inputOperator, index) <- inputOperators.zipWithIndex) {
-      // println(s"Connecting ${inputOperator.getClass.getSimpleName} to ${operator.getClass.getSimpleName}")
       inputOperator.connectTo(0, operator, index)
     }
     operator
