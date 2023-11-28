@@ -61,13 +61,15 @@ object SerializationUtils {
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .enable(SerializationFeature.INDENT_OUTPUT)
       .registerModule(DefaultScalaModule)
+
+      // Custom serializers
       .registerModule(new SimpleModule().addSerializer(classOf[BlossomContext], new BlossomContextSerializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[BlossomContext], new BlossomContextDeserializer()))
       .registerModule(new SimpleModule().addSerializer(classOf[Platform], new PlatformSerializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[Platform], new PlatformDeserializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[Operator], new OperatorDeserializer()))
 
-      // UDF serializers
+      // Custom serializers for UDFs
       .registerModule(new SimpleModule().addSerializer(classOf[SerializablePredicate[_]], new GenericSerializableSerializer[SerializablePredicate[_]]()))
       .registerModule(new SimpleModule().addDeserializer(classOf[SerializablePredicate[_]], new GenericSerializableDeserializer[SerializablePredicate[_]]()))
       .registerModule(new SimpleModule().addSerializer(classOf[SerializableFunction[_, _]], new GenericSerializableSerializer[FunctionDescriptor.SerializableFunction[_, _]]()))
@@ -97,15 +99,12 @@ object SerializationUtils {
       .addMixIn(classOf[PlanTransformation], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[OperatorPattern[_]], classOf[OperatorPatternMixin])
       .addMixIn(classOf[Slot[_]], classOf[SlotMixIn[_]])
-      .addMixIn(classOf[InputSlot[_]], classOf[InputSlotMixIn[_]])
       .addMixIn(classOf[OutputSlot[_]], classOf[OutputSlotMixIn[_]])
       .addMixIn(classOf[OperatorBase], classOf[OperatorBaseMixIn])
       .addMixIn(classOf[BlossomContext.UnarySink], classOf[BlossomContextUnarySinkMixIn])
       .addMixIn(classOf[ElementaryOperator], classOf[ElementaryOperatorMixIn])
       .addMixIn(classOf[ActualOperator], classOf[ActualOperatorMixIn])
       .addMixIn(classOf[Operator], classOf[OperatorMixIn])
-      .addMixIn(classOf[FilterOperator[_]], classOf[FilterOperatorMixIn[_]])
-      .addMixIn(classOf[MapOperator[_, _]], classOf[MapOperatorMixIn[_, _]])
       .addMixIn(classOf[PredicateDescriptor[_]], classOf[PredicateDescriptorMixIn[_]])
       .addMixIn(classOf[TransformationDescriptor[_, _]], classOf[TransformationDescriptorMixIn[_, _]])
       .addMixIn(classOf[ReduceDescriptor[_]], classOf[ReduceDescriptorMixIn[_]])
@@ -116,15 +115,22 @@ object SerializationUtils {
       .addMixIn(classOf[ProbabilisticDoubleInterval], classOf[ProbabilisticDoubleIntervalMixIn])
       .addMixIn(classOf[LoadProfileEstimator], classOf[LoadProfileEstimatorMixIn])
       .addMixIn(classOf[FunctionDescriptor], classOf[FunctionDescriptorMixIn])
-      // .addMixIn(classOf[ConstantLoadProfileEstimator], classOf[ConstantLoadProfileEstimatorMixIn])
       .addMixIn(classOf[NestableLoadProfileEstimator], classOf[NestableLoadProfileEstimatorMixIn])
       .addMixIn(classOf[LoadEstimator], classOf[LoadEstimatorMixIn])
       .addMixIn(classOf[DefaultLoadEstimator], classOf[DefaultLoadEstimatorMixIn])
       .addMixIn(classOf[CardinalityEstimate], classOf[CardinalityEstimateMixIn])
       .addMixIn(classOf[DataSetType[_]], classOf[DataSetTypeMixIn[_]])
       .addMixIn(classOf[DataUnitType[_]], classOf[DataUnitTypeMixIn])
+      .addMixIn(classOf[TextFileSource], classOf[IgnoreLoggerMixIn])
+      .addMixIn(classOf[UnarySource[_]], classOf[UnarySourceMixIn[_]])
+      .addMixIn(classOf[UnarySink[_]], classOf[UnarySinkMixIn[_]])
+      .addMixIn(classOf[UnaryToUnaryOperator[_, _]], classOf[UnaryToUnaryOperatorMixIn[_, _]])
+      .addMixIn(classOf[BinaryToUnaryOperator[_, _, _]], classOf[BinaryToUnaryOperatorMixIn[_, _, _]])
+      .addMixIn(classOf[LoopHeadOperator], classOf[LoopHeadOperatorMixIn])
+      .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
 
-      // Ignore damn loggers
+    // Ignore loggers if needed
+    /*
       .addMixIn(classOf[Job], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[OptimizationContext], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[OptimizationUtils], classOf[IgnoreLoggerMixIn])
@@ -155,13 +161,7 @@ object SerializationUtils {
       .addMixIn(classOf[HadoopFileSystem], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[LocalFileSystem], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[ObjectFileSource[_]], classOf[IgnoreLoggerMixIn])
-      .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
-      .addMixIn(classOf[TextFileSource], classOf[TextFileSourceMixIn])
-      .addMixIn(classOf[UnarySource[_]], classOf[UnarySourceMixIn[_]])
-      .addMixIn(classOf[UnarySink[_]], classOf[UnarySinkMixIn[_]])
-      .addMixIn(classOf[UnaryToUnaryOperator[_, _]], classOf[UnaryToUnaryOperatorMixIn[_, _]])
-      .addMixIn(classOf[BinaryToUnaryOperator[_, _, _]], classOf[BinaryToUnaryOperatorMixIn[_, _, _]])
-      .addMixIn(classOf[LoopHeadOperator], classOf[LoopHeadOperatorMixIn])
+     */
 
     mapper
   }
@@ -177,7 +177,6 @@ object SerializationUtils {
 
     @JsonIgnore
     private var dataQuantaMap: Map[Long, DataQuanta[_]] = _
-
   }
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
@@ -214,7 +213,6 @@ object SerializationUtils {
 
     @JsonIgnore
     private var original: ExecutionOperator = _
-
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
@@ -284,38 +282,6 @@ object SerializationUtils {
   abstract class LoopHeadOperatorMixIn {
   }
 
-
-  abstract class TextFileSourceMixIn {
-
-    @JsonIgnore
-    private var logger: Logger = _
-
-    @JsonCreator
-    def this(@JsonProperty("inputUrl") inputUrl: String,
-             @JsonProperty("encoding") encoding: String) = {
-      this()
-    }
-  }
-
-  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-  abstract class FilterOperatorMixIn[Type] {
-    @JsonCreator
-    def this(@JsonProperty("predicateDescriptor") predicateDescriptor: PredicateDescriptor[Type],
-             @JsonProperty("type") `type`: DataSetType[Type]) = {
-      this()
-    }
-  }
-
-  abstract class MapOperatorMixIn[InputType, OutputType] {
-    @JsonCreator
-    def this(@JsonProperty("functionDescriptor") functionDescriptor: TransformationDescriptor[InputType, OutputType],
-             @JsonProperty("inputType") inputType: DataSetType[InputType],
-             @JsonProperty("outputType") outputType: DataSetType[OutputType]) = {
-      this()
-    }
-  }
-
-
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
@@ -325,37 +291,11 @@ object SerializationUtils {
   ))
   abstract class SlotMixIn[T] {
 
-    //    @JsonCreator
-    //    def this(@JsonProperty("name") name: String,
-    //             @JsonProperty("owner") owner: Operator,
-    //             @JsonProperty("type") `type`: DataSetType[T]) = {
-    //      this()
-    //    }
   }
 
-  //  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-  abstract class InputSlotMixIn[T] {
-    @JsonCreator
-    def this(@JsonProperty("name") name: String,
-             @JsonProperty("owner") owner: Operator,
-             @JsonProperty("isBroadcast") isBroadcast: Boolean,
-             @JsonProperty("type") `type`: DataSetType[T]) = {
-      this()
-    }
-  }
-
-  //  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
   abstract class OutputSlotMixIn[T] {
-
     @JsonIgnore
     private var occupiedSlots: List[InputSlot[T]] = _
-
-    @JsonCreator
-    def this(@JsonProperty("name") name: String,
-             @JsonProperty("owner") owner: Operator,
-             @JsonProperty("type") `type`: DataSetType[T]) = {
-      this()
-    }
   }
 
   abstract class WayangContextMixIn {
@@ -406,7 +346,6 @@ object SerializationUtils {
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
   abstract class ConfigurationMixIn {
-
     @JsonIgnore
     private var cardinalityEstimatorProvider: KeyValueProvider[OutputSlot[_], CardinalityEstimator] = _
 
@@ -468,13 +407,8 @@ object SerializationUtils {
     new JsonSubTypes.Type(value = classOf[BlossomContext.ObjectFileSink], name = "BlossomContextObjectFileSink"
     ))
   )
-  abstract class BlossomContextUnarySinkMixIn {}
-
-  //  @JsonTypeName("textFileSink")
-  //  abstract class BlossomContextTextFileSink {}
-  //
-  //  @JsonTypeName("objectFileSink")
-  //  abstract class ObjectFileSinkMixIn {}
+  abstract class BlossomContextUnarySinkMixIn {
+  }
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
@@ -504,9 +438,6 @@ object SerializationUtils {
   abstract class LoadProfileEstimatorMixIn {
   }
 
-  //  @JsonTypeName("constantLoadProfileEstimator")
-  //  abstract class ConstantLoadProfileEstimatorMixIn {}
-  //
   @JsonTypeName("nestableLoadProfileEstimator")
   abstract class NestableLoadProfileEstimatorMixIn {
     @JsonCreator
