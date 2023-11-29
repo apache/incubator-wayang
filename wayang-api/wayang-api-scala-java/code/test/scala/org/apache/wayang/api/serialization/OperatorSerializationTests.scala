@@ -1,11 +1,16 @@
 package org.apache.wayang.api.serialization
 
-import org.apache.wayang.api.{DataQuanta, PlanBuilder, createPlanBuilder}
-import org.apache.wayang.core.api.WayangContext
+import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder, createPlanBuilder}
+import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.java.Java
+import org.apache.wayang.postgres.Postgres
+import org.apache.wayang.postgres.operators.PostgresTableSource
+import org.apache.wayang.sqlite3.Sqlite3
+import org.apache.wayang.sqlite3.operators.Sqlite3TableSource
 import org.junit.{Assert, Test}
 
 import java.io.{File, PrintWriter}
+import java.sql.{Connection, Statement}
 
 
 class OperatorSerializationTests extends SerializationTestBase {
@@ -348,6 +353,25 @@ class OperatorSerializationTests extends SerializationTestBase {
   def testRepeat2(): Unit = {
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
+    val inputValues = Array(1, 2)
+
+    val dq = wayang
+      .loadCollection(inputValues)
+      .repeat(3,
+        _.reduce(_ * _)
+          .flatMap(v => Seq(v, v + 1))
+      )
+      .filter(n => n == 43)
+
+    // initial: 1,2 -> 1st: 2,3 -> 2nd: 6,7 => 3rd: 42,43
+    val expectedValues = List("43")
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
+  }
+
+  @Test
+  def testRepeat3(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
     val inputValues = Array(1, 2, 3, 4, 5)
 
     val dq = wayang
@@ -377,6 +401,25 @@ class OperatorSerializationTests extends SerializationTestBase {
   }
 
   @Test
+  def testDoWhile2(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    val inputValues = Array(1, 2)
+
+    val dq = wayang
+      .loadCollection(inputValues)
+      .doWhile[Int](vals => vals.max > 100, {
+        start =>
+          val sum = start.reduce(_ + _).withName("Sum")
+          (start.union(sum), sum)
+      })
+      .filter(n => n > 50)
+
+    val expectedValues = List(96, 192).map(_.toString)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
+  }
+
+  @Test
   def testSample(): Unit = {
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
@@ -388,6 +431,66 @@ class OperatorSerializationTests extends SerializationTestBase {
 
     val tempFilenameOut = serializeDeserializeExecute(dq.operator, wayang)
     SerializationTestBase.assertOutputFileLineCount(tempFilenameOut, 10)
+  }
+
+  @Test
+  def testSqlite3(): Unit = {
+    // Initialize some test data.
+    val configuration = new Configuration
+    val sqlite3dbFile = File.createTempFile("wayang-sqlite3", "db")
+    sqlite3dbFile.deleteOnExit()
+    configuration.setProperty("wayang.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
+
+    try {
+      val connection: Connection = Sqlite3.platform.createDatabaseDescriptor(configuration).createJdbcConnection
+      try {
+        val statement: Statement = connection.createStatement
+        statement.addBatch("DROP TABLE IF EXISTS customer;")
+        statement.addBatch("CREATE TABLE customer (name TEXT, age INT);")
+        statement.addBatch("INSERT INTO customer VALUES ('John', 20)")
+        statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)")
+        statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)")
+        statement.executeBatch()
+      } finally {
+        if (connection != null) connection.close()
+      }
+    }
+
+    // Set up WayangContext.
+    val wayang = new BlossomContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
+
+    // Build plan
+    val dq = wayang
+      .readTable(new Sqlite3TableSource("customer", "name", "age"))
+      .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18").withTargetPlatforms(Java.platform)
+      .projectRecords(Seq("name"))
+      .map(_.getField(0).asInstanceOf[String])
+
+    // Execute and assert
+    val expectedValues = List("John", "Evelyn")
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
+  }
+
+  @Test
+  def testPostgres(): Unit = {
+    // Initialize some test data.
+    val configuration = new Configuration
+    configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/test_erp")
+    configuration.setProperty("wayang.postgres.jdbc.user", "postgres")
+    configuration.setProperty("wayang.postgres.jdbc.password", "1234")
+
+    // Set up WayangContext.
+    val wayang = new BlossomContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Postgres.plugin)
+
+    // Build plan
+    val dq = wayang
+      .readTable(new PostgresTableSource("clients", "first_name", "role"))
+      .projectRecords(Seq("first_name"))
+      .map(_.getField(0).asInstanceOf[String]).withTargetPlatforms(Java.platform)
+
+    // Execute and assert
+    val expectedValues = List("John", "Jane")
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
   }
 
 }

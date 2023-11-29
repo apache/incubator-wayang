@@ -49,6 +49,7 @@ import org.apache.wayang.core.util.fs.{FileSystems, HadoopFileSystem, LocalFileS
 import org.apache.wayang.core.util.{AbstractReferenceCountable, ReflectionUtils}
 
 import java.util
+import java.util.List
 import java.util.function.{BiFunction, ToDoubleBiFunction, ToDoubleFunction}
 import scala.reflect.ClassTag
 
@@ -107,10 +108,12 @@ object SerializationUtils {
       .addMixIn(classOf[Operator], classOf[OperatorMixIn])
       .addMixIn(classOf[PredicateDescriptor[_]], classOf[PredicateDescriptorMixIn[_]])
       .addMixIn(classOf[TransformationDescriptor[_, _]], classOf[TransformationDescriptorMixIn[_, _]])
+      .addMixIn(classOf[ProjectionDescriptor[_, _]], classOf[ProjectionDescriptorMixIn[_, _]])
       .addMixIn(classOf[ReduceDescriptor[_]], classOf[ReduceDescriptorMixIn[_]])
       .addMixIn(classOf[FlatMapDescriptor[_, _]], classOf[FlatMapDescriptorMixIn[_, _]])
       .addMixIn(classOf[MapPartitionsDescriptor[_, _]], classOf[MapPartitionsDescriptorMixIn[_, _]])
       .addMixIn(classOf[BasicDataUnitType[_]], classOf[BasicDataUnitTypeMixIn[_]])
+      .addMixIn(classOf[RecordType], classOf[RecordTypeMixIn])
       .addMixIn(classOf[DataUnitGroupType[_]], classOf[DataUnitGroupTypeMixIn[_]])
       .addMixIn(classOf[ProbabilisticDoubleInterval], classOf[ProbabilisticDoubleIntervalMixIn])
       .addMixIn(classOf[LoadProfileEstimator], classOf[LoadProfileEstimatorMixIn])
@@ -455,7 +458,6 @@ object SerializationUtils {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[ProjectionDescriptor[_, _]], name = "ProjectionDescriptor"),
     new JsonSubTypes.Type(value = classOf[AggregationDescriptor[_, _]], name = "AggregationDescriptor"),
     new JsonSubTypes.Type(value = classOf[ConsumerDescriptor[_]], name = "ConsumerDescriptor"),
     new JsonSubTypes.Type(value = classOf[FlatMapDescriptor[_, _]], name = "FlatMapDescriptor"),
@@ -480,12 +482,26 @@ object SerializationUtils {
     }
   }
 
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[ProjectionDescriptor[_, _]], name = "ProjectionDescriptor"),
+  ))
   @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
   abstract class TransformationDescriptorMixIn[Input, Output] {
     @JsonCreator def this(@JsonProperty("javaImplementation") javaImplementation: FunctionDescriptor.SerializableFunction[Input, Output],
                           @JsonProperty("inputType") inputType: BasicDataUnitType[Input],
                           @JsonProperty("outputType") outputType: BasicDataUnitType[Output],
                           @JsonProperty("loadProfileEstimator") loadProfileEstimator: LoadProfileEstimator) = {
+      this()
+    }
+  }
+
+  @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
+  abstract class ProjectionDescriptorMixIn[Input, Output] {
+    @JsonCreator def this(@JsonProperty("javaImplementation") javaImplementation: FunctionDescriptor.SerializableFunction[Input, Output],
+                          @JsonProperty("fieldNames") fieldNames: util.List[String],
+                          @JsonProperty("inputType") inputType: BasicDataUnitType[Input],
+                          @JsonProperty("outputType") outputType: BasicDataUnitType[Output]) = {
       this()
     }
   }
@@ -527,6 +543,14 @@ object SerializationUtils {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[BasicDataUnitType[_]], name = "BasicDataUnitType"),
+    new JsonSubTypes.Type(value = classOf[DataUnitGroupType[_]], name = "DataUnitGroupType"),
+  ))
+  abstract class DataUnitTypeMixIn {
+  }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[RecordType], name = "RecordType"),
   ))
   abstract class BasicDataUnitTypeMixIn[T] {
@@ -536,7 +560,13 @@ object SerializationUtils {
     }
   }
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  abstract class RecordTypeMixIn {
+    @JsonCreator
+    def this(@JsonProperty("fieldNames") fieldNames: Array[String]) = {
+      this()
+    }
+  }
+
   abstract class DataUnitGroupTypeMixIn[T] {
     @JsonCreator
     def this(@JsonProperty("baseType") baseType: DataUnitType[_]) = {
@@ -549,14 +579,6 @@ object SerializationUtils {
     def this(@JsonProperty("dataUnitType") dataUnitType: DataUnitType[T]) = {
       this()
     }
-  }
-
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
-  @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[BasicDataUnitType[_]], name = "BasicDataUnitType"),
-    new JsonSubTypes.Type(value = classOf[DataUnitGroupType[_]], name = "DataUnitGroupType"),
-  ))
-  abstract class DataUnitTypeMixIn {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")

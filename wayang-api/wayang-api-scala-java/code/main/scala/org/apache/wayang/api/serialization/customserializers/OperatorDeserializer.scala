@@ -7,13 +7,18 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode}
 import org.apache.wayang.api.serialization.SerializationUtils.mapper
 import org.apache.wayang.api.serialization.customserializers.OperatorDeserializer.{inputSlotOwnerIdMap, outputSlotOwnerIdMap}
+import org.apache.wayang.basic.data.Record
 import org.apache.wayang.basic.operators._
+import org.apache.wayang.basic.types.RecordType
 import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableIntUnaryOperator, SerializableLongUnaryOperator}
 import org.apache.wayang.core.function._
-import org.apache.wayang.core.plan.wayangplan.Operator
+import org.apache.wayang.core.plan.wayangplan.{LoopHeadOperator, Operator}
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.types.DataSetType
+import org.apache.wayang.jdbc.operators.JdbcTableSource
+import org.apache.wayang.postgres.operators.PostgresTableSource
+import org.apache.wayang.sqlite3.operators.Sqlite3TableSource
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -29,6 +34,8 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     // Source
     "TextFileSource" -> deserializeTextFileSource,
     "CollectionSource" -> deserializeCollectionSource,
+    "Sqlite3TableSource" -> deserializeSqlite3TableSource,
+    "PostgresTableSource" -> deserializePostgresTableSource,
 
     // Unary
     "MapOperator" -> deserializeMapOperator,
@@ -126,6 +133,18 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     val collection = mapper.treeToValue(rootNode.get("collection"), classOf[Iterable[AnyRef]])
     val t = mapper.treeToValue(rootNode.get("type"), classOf[DataSetType[AnyRef]])
     new CollectionSource(collection.asJavaCollection, t)
+  }
+
+  private def deserializeSqlite3TableSource(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val tableName = mapper.treeToValue(rootNode.get("tableName"), classOf[String])
+    val t = mapper.treeToValue(rootNode.get("type"), classOf[DataSetType[Record]])
+    new Sqlite3TableSource(tableName, t.getDataUnitType.asInstanceOf[RecordType].getFieldNames: _*)
+  }
+
+  private def deserializePostgresTableSource(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val tableName = mapper.treeToValue(rootNode.get("tableName"), classOf[String])
+    val t = mapper.treeToValue(rootNode.get("type"), classOf[DataSetType[Record]])
+    new PostgresTableSource(tableName, t.getDataUnitType.asInstanceOf[RecordType].getFieldNames: _*)
   }
 
   private def deserializeMapOperator(jp: JsonParser, rootNode: JsonNode): Operator = {
@@ -256,11 +275,32 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
   private def connectToInputOperatorsAndReturn(node: JsonNode, operator: Operator): Operator = {
     val inputOperators = getInputOperators(node)
     for ((inputOperator, index) <- inputOperators.zipWithIndex) {
-      inputOperator.connectTo(0, operator, index)
+      val thisOutputIndex = if (isLoopOutput(node)) 1 else 0
+      inputOperator.connectTo(thisOutputIndex, operator, index)
     }
     operator
   }
 
+  // If the inputSlot->occupant->outputSlot has the "finOut" name,
+  // then it means this node is the output of a loop operator
+  private def isLoopOutput(node: JsonNode): Boolean = {
+    val inputSlots = node.get("inputSlots")
+    if (inputSlots != null && inputSlots.isArray && inputSlots.size() == 1) {
+      // For each input slot
+      inputSlots.elements().forEachRemaining { inputSlot =>
+        // Access occupant
+        if (inputSlot.get("occupant") != null) {
+          val outputSlot = inputSlot.get("occupant")
+          // Access owner
+          if (outputSlot.get("name") != null) {
+            val name = outputSlot.get("name").asText()
+            return name == "finOut"
+          }
+        }
+      }
+    }
+    return false
+  }
 
   private def getInputOperators(node: JsonNode): List[Operator] = {
 
