@@ -25,7 +25,7 @@ import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.jdbc.operators.JdbcProjectionOperator;
 
 /**
- * PostgreSQL implementation of the {@link FilterOperator}.
+ * GenericJdbc implementation of the {@link FilterOperator}.
  */
 public class GenericJdbcProjectionOperator extends JdbcProjectionOperator implements GenericJdbcExecutionOperator {
 

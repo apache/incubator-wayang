@@ -18,24 +18,37 @@
 
 package org.apache.wayang.genericjdbc.operators;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.wayang.basic.operators.TableSource;
+import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
+import org.apache.wayang.genericjdbc.platform.GenericJdbcPlatform;
 import org.apache.wayang.jdbc.operators.JdbcTableSource;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
-/**
- * PostgreSQL implementation for the {@link TableSource}.
- */
+
 public class GenericJdbcTableSource extends JdbcTableSource implements GenericJdbcExecutionOperator {
 
     /**
      * Creates a new instance.
      *
      * @see TableSource#TableSource(String, String...)
+     * @param jdbcName on which table source should be called
+     *
+     *
      */
-    public GenericJdbcTableSource(String tableName, String... columnNames) {
+
+    public String jdbcName;
+    public GenericJdbcTableSource(String jdbcName, String tableName, String... columnNames) {
         super(tableName, columnNames);
+        this.jdbcName = jdbcName;
     }
 
     /**
@@ -43,12 +56,52 @@ public class GenericJdbcTableSource extends JdbcTableSource implements GenericJd
      *
      * @param that that should be copied
      */
-    public GenericJdbcTableSource(JdbcTableSource that) {
+    public GenericJdbcTableSource(GenericJdbcTableSource that) {
         super(that);
+        this.jdbcName = that.jdbcName;
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         throw new UnsupportedOperationException("This operator has no input channels.");
     }
+
+    public CardinalityEstimator getCardinalityEstimator(int outputIndex) {
+        assert outputIndex == 0;
+        return new CardinalityEstimator() {
+            @Override
+            public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
+                // see Job for StopWatch measurements
+                final TimeMeasurement timeMeasurement = optimizationContext.getJob().getStopWatch().start(
+                        "Optimization", "Cardinality&Load Estimation", "Push Estimation", "Estimate source cardinalities"
+                );
+
+                // Establish a DB connection.
+                try (Connection connection = GenericJdbcPlatform.getInstance()
+                        .createDatabaseDescriptor(optimizationContext.getConfiguration(),jdbcName)
+                        .createJdbcConnection()) {
+
+                    // Query the table cardinality.
+                    final String sql = String.format("SELECT count(*) FROM %s;", GenericJdbcTableSource.this.getTableName());
+                    final ResultSet resultSet = connection.createStatement().executeQuery(sql);
+                    if (!resultSet.next()) {
+                        throw new SQLException("No query result for \"" + sql + "\".");
+                    }
+                    long cardinality = resultSet.getLong(1);
+                    return new CardinalityEstimate(cardinality, cardinality, 1d);
+
+                } catch (Exception e) {
+                    LogManager.getLogger(this.getClass()).error(
+                            "Could not estimate cardinality for {}.", GenericJdbcTableSource.this, e
+                    );
+
+                    // If we could not load the cardinality, let's use a very conservative estimate.
+                    return new CardinalityEstimate(10, 10000000, 0.9);
+                } finally {
+                    timeMeasurement.stop();
+                }
+            }
+        };
+    }
 }
+

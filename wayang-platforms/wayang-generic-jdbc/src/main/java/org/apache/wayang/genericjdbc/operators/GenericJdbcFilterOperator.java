@@ -25,7 +25,7 @@ import org.apache.wayang.jdbc.operators.JdbcFilterOperator;
 
 
 /**
- * PostgreSQL implementation of the {@link FilterOperator}.
+ * GenericJdbc implementation of the {@link FilterOperator}.
  */
 public class GenericJdbcFilterOperator extends JdbcFilterOperator implements GenericJdbcExecutionOperator {
 

@@ -25,7 +25,7 @@ import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.java.platform.JavaPlatform;
-import org.apache.wayang.genericjdbc.channels.ChannelConversions;
+import org.apache.wayang.genericjdbc.channels.GenericChannelConversions;
 import org.apache.wayang.genericjdbc.mapping.Mappings;
 import org.apache.wayang.genericjdbc.platform.GenericJdbcPlatform;
 
@@ -49,7 +49,7 @@ public class GenericJdbcPlugin implements Plugin {
 
     @Override
     public Collection<ChannelConversion> getChannelConversions() {
-        return ChannelConversions.ALL;
+        return GenericChannelConversions.ALL;
     }
 
     @Override

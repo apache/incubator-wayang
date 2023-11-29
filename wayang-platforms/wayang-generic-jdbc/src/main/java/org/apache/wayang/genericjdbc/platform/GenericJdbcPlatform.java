@@ -18,15 +18,20 @@
 
 package org.apache.wayang.genericjdbc.platform;
 
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.jdbc.channels.SqlQueryChannel;
+import org.apache.wayang.genericjdbc.execution.GenericJdbcExecutor;
+import org.apache.wayang.jdbc.execution.DatabaseDescriptor;
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 /**
- * {@link Platform} implementation for SQLite3.
+ * {@link Platform} implementation for GenericJdbc.
  */
 public class GenericJdbcPlatform extends JdbcPlatformTemplate {
 
-    private static final String PLATFORM_NAME = "PostgreSQL";
+    private static final String PLATFORM_NAME = "GenericJdbc";
 
     private static final String CONFIG_NAME = "genericjdbc";
 
@@ -39,13 +44,35 @@ public class GenericJdbcPlatform extends JdbcPlatformTemplate {
         return instance;
     }
 
+    private final SqlQueryChannel.Descriptor sqlQueryChannelDescriptor = new SqlQueryChannel.Descriptor(this);
+
+    public SqlQueryChannel.Descriptor getGenericSqlQueryChannelDescriptor() {
+        return this.sqlQueryChannelDescriptor;
+    }
+
     protected GenericJdbcPlatform() {
         super(PLATFORM_NAME, CONFIG_NAME);
     }
 
-//    @Override
-//    public String getJdbcDriverClassName() {
-//        return org.postgres.Driver.class.getName();
-//    }
+    @Override
+    public Executor.Factory getExecutorFactory() {
+        return job -> new GenericJdbcExecutor(this, job);
+    }
+
+    @Override
+    public String getJdbcDriverClassName() {
+        return "None";
+    }
+
+
+    public DatabaseDescriptor createDatabaseDescriptor(Configuration configuration,String jdbcName) {
+        return new DatabaseDescriptor(
+                configuration.getStringProperty(String.format("wayang.%s.jdbc.url", jdbcName)),
+                configuration.getStringProperty(String.format("wayang.%s.jdbc.user", jdbcName), null),
+                configuration.getStringProperty(String.format("wayang.%s.jdbc.password", jdbcName), null),
+                configuration.getStringProperty(String.format("wayang.%s.jdbc.driverName", jdbcName))
+//                this.getJdbcDriverClassName()
+        );
+    }
 
 }

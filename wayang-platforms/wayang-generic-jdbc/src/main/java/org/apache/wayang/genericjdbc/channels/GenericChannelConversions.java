@@ -20,8 +20,8 @@ package org.apache.wayang.genericjdbc.channels;
 
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
 import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.wayang.genericjdbc.operators.GenericSqlToStreamOperator;
 import org.apache.wayang.java.channels.StreamChannel;
-import org.apache.wayang.jdbc.operators.SqlToStreamOperator;
 import org.apache.wayang.genericjdbc.platform.GenericJdbcPlatform;
 
 import java.util.Collection;
@@ -30,12 +30,12 @@ import java.util.Collections;
 /**
  * Register for the {@link ChannelConversion}s supported for this platform.
  */
-public class ChannelConversions {
+public class GenericChannelConversions {
 
     public static final ChannelConversion SQL_TO_STREAM_CONVERSION = new DefaultChannelConversion(
-            GenericJdbcPlatform.getInstance().getSqlQueryChannelDescriptor(),
+            GenericJdbcPlatform.getInstance().getGenericSqlQueryChannelDescriptor(),
             StreamChannel.DESCRIPTOR,
-            () -> new SqlToStreamOperator(GenericJdbcPlatform.getInstance())
+            () -> new GenericSqlToStreamOperator(GenericJdbcPlatform.getInstance())
     );
 
     public static final Collection<ChannelConversion> ALL = Collections.singleton(

@@ -24,7 +24,6 @@ import org.apache.wayang.basic.operators.TableSource;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.genericjdbc.operators.GenericJdbcTableSource;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
 import org.apache.wayang.postgres.operators.PostgresTableSource;
@@ -40,10 +39,9 @@ public class SqlTest {
     public static void main(String[] args) {
         WayangPlan wayangPlan;
         Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/postgres");
+        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/imdb");
         configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
         configuration.setProperty("wayang.postgres.jdbc.password", "password");
-        configuration.setProperty("wayang.postgres.jdbc.drivername", "org.postgresql.driver");
 
         WayangContext wayangContext = new WayangContext(configuration)
                 .withPlugin(Java.basicPlugin())
@@ -52,7 +50,7 @@ public class SqlTest {
 
         Collection<Record> collector = new ArrayList<>();
 
-        TableSource customer = new GenericJdbcTableSource("person");
+        TableSource customer = new PostgresTableSource("person");
         MapOperator<Record, Record> projection = MapOperator.createProjection(
                 Record.class,
                 Record.class,
@@ -94,4 +92,3 @@ public class SqlTest {
 
 
 }
-
