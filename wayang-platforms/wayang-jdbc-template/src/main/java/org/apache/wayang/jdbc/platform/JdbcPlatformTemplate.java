@@ -134,8 +134,8 @@ public abstract class JdbcPlatformTemplate extends Platform {
                 configuration.getStringProperty(this.jdbcUrlProperty),
                 configuration.getStringProperty(this.jdbcUserProperty, null),
                 configuration.getStringProperty(this.jdbcPasswordProperty, null),
-                configuration.getStringProperty(this.jdbcDriverName)
-//                this.getJdbcDriverClassName()
+//                configuration.getStringProperty(this.jdbcDriverName)
+                this.getJdbcDriverClassName()
         );
     }
 }
