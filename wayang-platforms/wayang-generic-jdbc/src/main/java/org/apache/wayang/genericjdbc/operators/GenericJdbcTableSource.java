@@ -40,7 +40,7 @@ public class GenericJdbcTableSource extends JdbcTableSource implements GenericJd
      * Creates a new instance.
      *
      * @see TableSource#TableSource(String, String...)
-     * @param jdbcName on which table source should be called
+     * @param jdbcName on which table resides
      *
      *
      */
