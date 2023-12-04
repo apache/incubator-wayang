@@ -31,35 +31,33 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.genericjdbc.operators.GenericJdbcTableSource;
 import org.apache.wayang.java.Java;
 
-
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
 * Joining 2 tables , person and orders using GenericJdbc Plugin.
- * Tables reside on 2 different platforms , mysql and postgres namely
- * Test to check the working of generic jdbc plugin for different jdbc platforms*/
+ * Tables reside on multiple instances of mysql platform
+ * Test to check the working of generic jdbc plugin for multiple instances of same DBMS */
 
 
 
-public class SqlTest {
+public class SqlTest2 {
 
 
     public static void main(String[] args) {
         WayangPlan wayangPlan;
         Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/postgres");
-        configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
-        configuration.setProperty("wayang.postgres.jdbc.password", "password");
+        configuration.setProperty("wayang.mysql1.jdbc.url", "jdbc:mysql://localhost:3315/db");
+        configuration.setProperty("wayang.mysql1.jdbc.user", "root");
+        configuration.setProperty("wayang.mysql1.jdbc.password", "password");
         // Give the driver name through configuration.
-        configuration.setProperty("wayang.postgres.jdbc.driverName", "org.postgresql.Driver");
+        configuration.setProperty("wayang.mysql1.jdbc.driverName", "com.mysql.cj.jdbc.Driver");
 
-        configuration.setProperty("wayang.mysql.jdbc.url", "jdbc:mysql://localhost:3306/db");
-        configuration.setProperty("wayang.mysql.jdbc.user", "mysql");
-        configuration.setProperty("wayang.mysql.jdbc.password", "password");
+        configuration.setProperty("wayang.mysql2.jdbc.url", "jdbc:mysql://localhost:3306/db");
+        configuration.setProperty("wayang.mysql2.jdbc.user", "mysql");
+        configuration.setProperty("wayang.mysql2.jdbc.password", "password");
         // Give the driver name through configuration.
-        configuration.setProperty("wayang.mysql.jdbc.driverName", "com.mysql.cj.jdbc.Driver");
+        configuration.setProperty("wayang.mysql2.jdbc.driverName", "com.mysql.cj.jdbc.Driver");
 
         WayangContext wayangContext = new WayangContext(configuration)
                 .withPlugin(Java.basicPlugin())
@@ -68,10 +66,9 @@ public class SqlTest {
 
         Collection<Tuple2<Record,Record>> collector = new ArrayList<>();
 
-
         /*Give the name of the jdbc platform along with table name*/
-        TableSource person = new GenericJdbcTableSource("postgres","person");
-        TableSource orders = new GenericJdbcTableSource("mysql","orders");
+        TableSource person = new GenericJdbcTableSource("mysql1","person");
+        TableSource orders = new GenericJdbcTableSource("mysql2","orders");
 
         FunctionDescriptor.SerializableFunction<Record, Object> keyFunctionPerson = record -> record.getField(0);
         FunctionDescriptor.SerializableFunction<Record, Object> keyFunctionOrders = record -> record.getField(1);
@@ -93,12 +90,12 @@ public class SqlTest {
 
         wayangPlan = new WayangPlan(sink);
 
-        wayangContext.execute("PostgreSql test", wayangPlan);
+        wayangContext.execute("Multiple instances of same DBMS test", wayangPlan);
 
 
         int count = 10;
         for(Tuple2<Record,Record> r : collector) {
-            System.out.println(r.getField1().getField(2).toString());
+            System.out.println(r.getField0().getField(1).toString());
             if(--count == 0 ) {
                 break;
             }
