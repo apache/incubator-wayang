@@ -31,7 +31,7 @@
 
     <name>Wayang Platform Generic Jdbc</name>
     <description>
-        Wayang implementation of the operators to be working with the platform "Postgres"
+        Wayang implementation of the operators to be working with any jdbc platform.
     </description>
 
     <properties>

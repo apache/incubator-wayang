@@ -36,6 +36,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
+/**
+* Joining 2 tables , person and orders using GenericJdbc Plugin.
+ * Tables reside on 2 different platforms , mysql and postgres namely*/
+
+
 
 public class SqlTest {
 
@@ -46,11 +51,13 @@ public class SqlTest {
         configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/postgres");
         configuration.setProperty("wayang.postgres.jdbc.user", "postgres");
         configuration.setProperty("wayang.postgres.jdbc.password", "password");
+        // Give the driver name through configuration.
         configuration.setProperty("wayang.postgres.jdbc.driverName", "org.postgresql.Driver");
 
         configuration.setProperty("wayang.mysql.jdbc.url", "jdbc:mysql://localhost:3306/db");
         configuration.setProperty("wayang.mysql.jdbc.user", "mysql");
         configuration.setProperty("wayang.mysql.jdbc.password", "password");
+        // Give the driver name through configuration.
         configuration.setProperty("wayang.mysql.jdbc.driverName", "com.mysql.cj.jdbc.Driver");
 
         WayangContext wayangContext = new WayangContext(configuration)
@@ -94,13 +101,6 @@ public class SqlTest {
             }
         }
         System.out.println("Done");
-
-
-
-
-
-
-
 
     }
 
