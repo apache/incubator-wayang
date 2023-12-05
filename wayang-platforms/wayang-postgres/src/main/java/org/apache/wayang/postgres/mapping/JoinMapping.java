@@ -60,8 +60,8 @@ public class JoinMapping implements Mapping {
         )
             .withAdditionalTest(op -> op.getKeyDescriptor0() instanceof TransformationDescriptor)
             .withAdditionalTest(op -> op.getKeyDescriptor1() instanceof TransformationDescriptor)
-            .withAdditionalTest(op -> op.getKeyDescriptor0().getSqlImplementation() !== null)
-            .withAdditionalTest(op -> op.getKeyDescriptor1().getSqlImplementation() !== null);
+            .withAdditionalTest(op -> op.getKeyDescriptor0().getSqlImplementation() != null)
+            .withAdditionalTest(op -> op.getKeyDescriptor1().getSqlImplementation() != null);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
