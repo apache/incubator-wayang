@@ -38,6 +38,7 @@ import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 import org.apache.wayang.jdbc.operators.JdbcExecutionOperator;
 import org.apache.wayang.jdbc.operators.JdbcFilterOperator;
+import org.apache.wayang.jdbc.operators.JdbcJoinOperator;
 import org.apache.wayang.jdbc.operators.JdbcProjectionOperator;
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 import org.apache.logging.log4j.LogManager;
@@ -92,6 +93,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         SqlQueryChannel.Instance tipChannelInstance = this.instantiateOutboundChannel(startTask, optimizationContext);
         Collection<ExecutionTask> filterTasks = new ArrayList<>(4);
         ExecutionTask projectionTask = null;
+        Collection<ExecutionTask> joinTasks = new ArrayList<>();
         Set<ExecutionTask> allTasks = stage.getAllTasks();
         assert allTasks.size() <= 3;
         ExecutionTask nextTask = this.findJdbcExecutionOperatorTaskInStage(startTask, stage);
@@ -102,7 +104,8 @@ public class JdbcExecutor extends ExecutorTemplate {
             } else if (nextTask.getOperator() instanceof JdbcProjectionOperator) {
                 assert projectionTask == null; //Allow one projection operator per stage for now.
                 projectionTask = nextTask;
-
+            } else if (nextTask.getOperator() instanceof JdbcJoinOperator) {
+                joinTasks.add(nextTask);
             } else {
                 throw new WayangException(String.format("Unsupported JDBC execution task %s", nextTask.toString()));
             }
@@ -121,7 +124,11 @@ public class JdbcExecutor extends ExecutorTemplate {
                 .map(this::getSqlClause)
                 .collect(Collectors.toList());
         String projection = projectionTask == null ? "*" : this.getSqlClause(projectionTask.getOperator());
-        String query = this.createSqlQuery(tableName, conditions, projection);
+        Collection<String> joins = joinTasks.stream()
+                .map(ExecutionTask::getOperator)
+                .map(this::getSqlClause)
+                .collect(Collectors.toList());
+        String query = this.createSqlQuery(tableName, conditions, projection, joins);
         tipChannelInstance.setSqlQuery(query);
 
         // Return the tipChannelInstance.
@@ -184,11 +191,18 @@ public class JdbcExecutor extends ExecutorTemplate {
      * @param tableName  the table to be queried
      * @param conditions conditions for the {@code WHERE} clause
      * @param projection projection for the {@code SELECT} clause
+     * @param joins join clauses for multiple {@code JOIN} clauses
      * @return the SQL query
      */
-    protected String createSqlQuery(String tableName, Collection<String> conditions, String projection) {
+    protected String createSqlQuery(String tableName, Collection<String> conditions, String projection, Collection<String> joins) {
         StringBuilder sb = new StringBuilder(1000);
         sb.append("SELECT ").append(projection).append(" FROM ").append(tableName);
+        if (!joins.isEmpty()) {
+            String separator = " ";
+            for (String join : joins) {
+                sb.append(separator).append(join);
+            }
+        }
         if (!conditions.isEmpty()) {
             sb.append(" WHERE ");
             String separator = "";

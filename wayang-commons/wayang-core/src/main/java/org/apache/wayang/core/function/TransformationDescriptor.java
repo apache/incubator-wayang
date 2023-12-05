@@ -18,6 +18,7 @@
 
 package org.apache.wayang.core.function;
 
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.optimizer.costs.LoadEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
@@ -38,6 +39,8 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
     protected final BasicDataUnitType<Output> outputType;
 
     private final FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation;
+
+    private Tuple2<String, String> sqlImplementation;
 
     public TransformationDescriptor(FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation,
                                     Class<Input> inputTypeClass,
@@ -86,6 +89,28 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
      */
     public Function<Input, Output> getJavaImplementation() {
         return this.javaImplementation;
+    }
+
+    /**
+     * This function is not built to last. It is thought to help out devising programs while we are still figuring
+     * out how to express functions in a platform-independent way.
+     *
+     * @return a Tuple2 holding tableName and a SQL predicate applicable in a {@code JOIN} clause
+     */
+    public Tuple2<String, String> getSqlImplementation() {
+        return this.sqlImplementation;
+    }
+
+    /**
+     * This function is not built to last. It is thought to help out devising programs while we are still figuring
+     * out how to express functions in a platform-independent way.
+     *
+     * @param tableName a SQL table name applicable in a {@code JOIN TABLE ON}.
+     * @param sqlImplementation a SQL predicate applicable in a {@code WHERE} clause representing this predicate
+     */
+    public TransformationDescriptor<Input, Output> withSqlImplementation(String tableName, String sqlImplementation) {
+        this.sqlImplementation = new Tuple2<String, String>(tableName, sqlImplementation);
+        return this;
     }
 
     /**
