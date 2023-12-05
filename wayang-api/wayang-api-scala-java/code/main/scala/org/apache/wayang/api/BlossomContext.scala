@@ -48,6 +48,11 @@ class BlossomContext(configuration: Configuration) extends WayangContext(configu
     this
   }
 
+  def withMergeFileSink(url: String): BlossomContext = {
+    this.sink = Some(BlossomContext.ObjectFileSink(url))
+    this
+  }
+
   def getSink: Option[BlossomContext.UnarySink] = sink
   def getPlugins: List[String] = plugins
 }

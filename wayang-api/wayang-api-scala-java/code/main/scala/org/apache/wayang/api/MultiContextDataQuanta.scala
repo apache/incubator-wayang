@@ -21,6 +21,7 @@ package org.apache.wayang.api
 
 import org.apache.wayang.api.serialization.SerializationUtils
 import org.apache.wayang.basic.operators.{ObjectFileSink, SampleOperator, TextFileSink}
+import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
 import org.apache.wayang.core.platform.Platform
@@ -39,7 +40,7 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
     new MultiContextDataQuanta[NewOut](dataQuantaMap.mapValues(f))(this.multiContextPlanBuilder)
 
   private def wrapInMultiContextDataQuanta2[ThatOut: ClassTag, NewOut: ClassTag](thatMultiContextDataQuanta: MultiContextDataQuanta[ThatOut],
-   f: (DataQuanta[Out], DataQuanta[ThatOut]) => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
+                                                                                 f: (DataQuanta[Out], DataQuanta[ThatOut]) => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
     new MultiContextDataQuanta[NewOut](this.dataQuantaMap.map { case (key, thisDataQuanta) =>
       val thatDataQuanta = thatMultiContextDataQuanta.dataQuantaMap(key)
       key -> f(thisDataQuanta, thatDataQuanta)
@@ -179,6 +180,59 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
 
     // Delete all temporary files
     tempFilesToBeDeleted.forEach(path => Files.deleteIfExists(path))
+  }
+
+
+  def executeAndReadSources(mergeContext: WayangContext): List[DataQuanta[Out]] = {
+
+    this.execute()
+
+    val planBuilder = new PlanBuilder(mergeContext).withUdfJarsOf(classOf[MultiContextDataQuanta[_]])
+    var sources: List[DataQuanta[Out]] = List()
+
+    multiContextPlanBuilder.blossomContexts.foreach(context =>
+      context.getSink match {
+        case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
+          sources = sources :+ planBuilder.readObjectFile[Out](objectFileSink.textFileUrl)
+
+        case None =>
+          throw new WayangException("All contexts must be attached to an output sink.")
+
+        case _ =>
+          throw new WayangException("Invalid sink.")
+      }
+    )
+
+    sources
+  }
+
+
+  def mergeUnion(mergeContext: WayangContext): DataQuanta[Out] = {
+    val sources: List[DataQuanta[Out]] = executeAndReadSources(mergeContext)
+    sources.reduce((dq1, dq2) => dq1.union(dq2))
+  }
+
+  def mergeIntersect(mergeContext: WayangContext): DataQuanta[Out] = {
+    val sources: List[DataQuanta[Out]] = executeAndReadSources(mergeContext)
+    sources.reduce((dq1, dq2) => dq1.intersect(dq2))
+  }
+
+  def mergeJoin[Key: ClassTag](mergeContext: WayangContext, keyUdf: Out => Key): DataQuanta[List[Out]] = {
+    val sources: List[DataQuanta[Out]] = executeAndReadSources(mergeContext)
+
+    // Start by merging the first two DataQuanta
+    var mergedResult = sources(0)
+      .join(keyUdf, sources(1), keyUdf)
+      .map(tuple => List(tuple.field0, tuple.field1))
+
+    // Continue merging from the third element
+    for (i <- 2 until sources.length) {
+      mergedResult = mergedResult
+        .join(list => keyUdf(list.head), sources(i), keyUdf)
+        .map(tuple => tuple.field0 :+ tuple.field1)
+    }
+
+    mergedResult
   }
 
 }
