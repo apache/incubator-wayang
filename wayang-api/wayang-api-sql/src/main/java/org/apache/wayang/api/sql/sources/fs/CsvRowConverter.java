@@ -29,6 +29,32 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
+public class CsvRowConverter {
+
+    private static final Logger LOGGER = Logger.getLogger(CsvRowConverter.class.getName());
+
+    private static BigDecimal parseDecimal(int precision, int scale, String string) {
+        BigDecimal result = new BigDecimal(string);
+        
+        if (result.scale() > scale) {
+            // Logging the rounding operation
+            LOGGER.log(Level.INFO, "Rounding decimal value {0} to scale {1}", new Object[]{result, scale});
+            result = result.setScale(scale, RoundingMode.HALF_UP);
+        }
+
+        if (result.precision() - result.scale() > precision - scale) {
+            String errorMessage = String.format(Locale.ROOT, "Decimal value %s exceeds declared precision (%d) and scale (%d).", result, precision, scale);
+            LOGGER.log(Level.SEVERE, errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return result;
+    }
+
+}
+
 
 /**
  * Based on Calcite's CSV enumerator.
@@ -143,11 +169,6 @@ public class CsvRowConverter {
         // If the parsed value has more fractional digits than the specified scale, round ties away
         // from 0.
         if (result.scale() > scale) {
-            //TODO: enable logging
-            /*LOGGER.warn(
-                    "Decimal value {} exceeds declared scale ({}). Performing rounding to keep the "
-                            + "first {} fractional digits.",
-                    result, scale, scale);*/
             result = result.setScale(scale, RoundingMode.HALF_UP);
         }
         // Throws an exception if the parsed value has more digits to the left of the decimal point
