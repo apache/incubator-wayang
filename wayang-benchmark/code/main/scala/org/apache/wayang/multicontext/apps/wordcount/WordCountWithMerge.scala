@@ -19,7 +19,7 @@
 
 package org.apache.wayang.multicontext.apps.wordcount
 
-import org.apache.wayang.api.{BlossomContext, DataQuanta, MultiContextPlanBuilder}
+import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.java.Java
 import org.apache.wayang.multicontext.apps.loadConfig
@@ -38,21 +38,23 @@ object WordCountWithMerge {
 
     val context1 = new BlossomContext(configuration1)
       .withPlugin(Java.basicPlugin())
-      .withMergeFileSink("file:///tmp/out11")
+      .withMergeFileSink("file:///tmp/out11")   // The mergeContext will read the output of context 1 from here
     val context2 = new BlossomContext(configuration2)
       .withPlugin(Java.basicPlugin())
-      .withMergeFileSink("file:///tmp/out12")
-    val mergeContext = new WayangContext(new Configuration())
-      .withPlugin(Java.basicPlugin())
+      .withMergeFileSink("file:///tmp/out12")   // The mergeContext will read the output of context 2 from here
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[WordCount])
+
+    // To be used after merging the previous two
+    val mergeContext = new WayangContext(new Configuration())
+      .withPlugin(Java.basicPlugin())
 
     // Generate some test data
     val inputValues1 = Array("Big data is big.", "Is data big data?")
     val inputValues2 = Array("Big big data is big big.", "Is data big data big?")
 
-    // Build and execute a word count
+    // Build and execute a word count in 2 different contexts
     multiContextPlanBuilder
       .loadCollection(context1, inputValues1)
       .loadCollection(context2, inputValues2)
@@ -61,16 +63,18 @@ object WordCountWithMerge {
       .map((_, 1))
       .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
 
-       .mergeUnion(mergeContext)
-       .writeTextFile("file:///tmp/out1.merged", s => s.toString())
+      // Merge contexts with union operator
+      .mergeUnion(mergeContext)
 
-//      .mergeJoin[String](mergeContext, _._1)
-//      .map(joinList => {
-//        val key = joinList.head._1
-//        val sum = joinList.map(_._2).sum
-//        (key, sum)
-//      })
-//      .writeTextFile("file:///tmp/out2.merged", s => s.toString())
+      // Continue processing merged DataQuanta
+      .filter(_._2 >= 3)
+      .reduceByKey(_._1, (t1, t2) => (t1._1, t1._2 + t2._2))
+
+      // Write out
+      // Writes:
+      //    (big,9)
+      //    (data,6)
+      .writeTextFile("file:///tmp/out1.merged", s => s.toString())
 
   }
 

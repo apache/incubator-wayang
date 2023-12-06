@@ -185,13 +185,19 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
 
   def executeAndReadSources(mergeContext: WayangContext): List[DataQuanta[Out]] = {
 
+    // Execute multi context job
     this.execute()
 
+    // Create plan builder for the new merge context
     val planBuilder = new PlanBuilder(mergeContext).withUdfJarsOf(classOf[MultiContextDataQuanta[_]])
+
+    // Sources to merge
     var sources: List[DataQuanta[Out]] = List()
 
+    // For each context, read its output from object file
     multiContextPlanBuilder.blossomContexts.foreach(context =>
       context.getSink match {
+
         case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
           sources = sources :+ planBuilder.readObjectFile[Out](objectFileSink.textFileUrl)
 
@@ -203,6 +209,7 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
       }
     )
 
+    // Return list of DataQuanta
     sources
   }
 
@@ -210,29 +217,6 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
   def mergeUnion(mergeContext: WayangContext): DataQuanta[Out] = {
     val sources: List[DataQuanta[Out]] = executeAndReadSources(mergeContext)
     sources.reduce((dq1, dq2) => dq1.union(dq2))
-  }
-
-  def mergeIntersect(mergeContext: WayangContext): DataQuanta[Out] = {
-    val sources: List[DataQuanta[Out]] = executeAndReadSources(mergeContext)
-    sources.reduce((dq1, dq2) => dq1.intersect(dq2))
-  }
-
-  def mergeJoin[Key: ClassTag](mergeContext: WayangContext, keyUdf: Out => Key): DataQuanta[List[Out]] = {
-    val sources: List[DataQuanta[Out]] = executeAndReadSources(mergeContext)
-
-    // Start by merging the first two DataQuanta
-    var mergedResult = sources(0)
-      .join(keyUdf, sources(1), keyUdf)
-      .map(tuple => List(tuple.field0, tuple.field1))
-
-    // Continue merging from the third element
-    for (i <- 2 until sources.length) {
-      mergedResult = mergedResult
-        .join(list => keyUdf(list.head), sources(i), keyUdf)
-        .map(tuple => tuple.field0 :+ tuple.field1)
-    }
-
-    mergedResult
   }
 
 }
