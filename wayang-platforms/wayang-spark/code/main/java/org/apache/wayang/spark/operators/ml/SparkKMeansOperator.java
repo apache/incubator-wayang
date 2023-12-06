@@ -34,8 +34,10 @@ import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
+import org.apache.wayang.spark.model.SparkMLModel;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
 import java.util.*;
@@ -52,14 +54,14 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        // TODO need DataFrameChannel?
+        // TODO cached or uncached?
         return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        // TODO need DataFrameChannel?
-        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+        // TODO do we need a single object channel?
+        return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
     @Override
@@ -69,10 +71,10 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
             SparkExecutor sparkExecutor,
             OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
-        assert outputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
         final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
-        final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
+        final CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
 
         final JavaRDD<double[]> inputRdd = input.provideRdd();
         final JavaRDD<Data> dataRdd = inputRdd.map(Data::new);
@@ -80,21 +82,16 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
         final KMeansModel model = new KMeans()
                 .setK(this.k)
                 .fit(df);
+        final Model outputModel = new Model(model);
+        output.accept(Collections.singletonList(outputModel));
 
-        final Dataset<Row> transform = model.transform(df);
-        final JavaRDD<Tuple2<double[], Integer>> outputRdd = transform.toJavaRDD()
-                .map(row -> new Tuple2<>(((Vector) row.get(0)).toArray(), (Integer) row.get(1)));
-
-        this.name(outputRdd);
-        output.accept(outputRdd, sparkExecutor);
-
+        // TODO lazy or eager?
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
-    // TODO support fit and transform
-
     @Override
     public boolean containsAction() {
+        // TODO true or false?
         return false;
     }
 
@@ -132,6 +129,33 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
         @Override
         public int hashCode() {
             return Objects.hash(features);
+        }
+    }
+
+    public static class Model implements org.apache.wayang.basic.model.KMeansModel, SparkMLModel<double[], Tuple2<double[], Integer>> {
+        private final KMeansModel model;
+
+        public Model(KMeansModel model) {
+            this.model = model;
+        }
+
+        @Override
+        public int getK() {
+            return model.getK();
+        }
+
+        @Override
+        public double[][] getClusterCenters() {
+            return Arrays.stream(model.clusterCenters()).map(Vector::toArray).toArray(double[][]::new);
+        }
+
+        @Override
+        public JavaRDD<Tuple2<double[], Integer>> transform(JavaRDD<double[]> input) {
+            final JavaRDD<Data> dataRdd = input.map(Data::new);
+            final Dataset<Row> df = SparkSession.builder().getOrCreate().createDataFrame(dataRdd, Data.class);
+            final Dataset<Row> transform = model.transform(df);
+            return transform.toJavaRDD()
+                    .map(row -> new Tuple2<>(((Vector) row.get(0)).toArray(), (Integer) row.get(1)));
         }
     }
 }

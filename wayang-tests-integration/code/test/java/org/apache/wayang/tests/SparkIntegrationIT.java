@@ -20,10 +20,8 @@ package org.apache.wayang.tests;
 
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.operators.CollectionSource;
-import org.apache.wayang.basic.operators.FilterOperator;
-import org.apache.wayang.basic.operators.KMeansOperator;
-import org.apache.wayang.basic.operators.LocalCallbackSink;
+import org.apache.wayang.basic.model.KMeansModel;
+import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.WayangContext;
@@ -453,6 +451,44 @@ public class SparkIntegrationIT {
     }
 
     @Test
+    public void testKMeansV1() {
+        CollectionSource<double[]> collectionSource = new CollectionSource<>(
+                Arrays.asList(
+                        new double[]{1, 2, 3},
+                        new double[]{-1, -2, -3},
+                        new double[]{2, 4, 6}),
+                double[].class
+        );
+        collectionSource.addTargetPlatform(Java.platform());
+        collectionSource.addTargetPlatform(Spark.platform());
+
+        KMeansOperatorV1 kMeansOperator = new KMeansOperatorV1(2);
+
+        // write results to a sink
+        List<Tuple2> results = new ArrayList<>();
+        LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
+
+        // Build Wayang plan by connecting operators
+        collectionSource.connectTo(0, kMeansOperator, 0);
+        kMeansOperator.connectTo(0, sink, 0);
+        WayangPlan wayangPlan = new WayangPlan(sink);
+
+        // Have Wayang execute the plan.
+        WayangContext wayangContext = new WayangContext();
+        wayangContext.register(Java.basicPlugin());
+        wayangContext.register(Spark.basicPlugin());
+        wayangContext.register(Spark.mlPlugin());
+        wayangContext.execute(wayangPlan);
+
+        // Verify the outcome.
+        Assert.assertEquals(3, results.size());
+        Assert.assertEquals(
+                ((Tuple2<double[], Integer>) results.get(0)).field1,
+                ((Tuple2<double[], Integer>) results.get(2)).field1
+        );
+    }
+
+    @Test
     public void testKMeans() {
         CollectionSource<double[]> collectionSource = new CollectionSource<>(
                 Arrays.asList(
@@ -466,13 +502,17 @@ public class SparkIntegrationIT {
 
         KMeansOperator kMeansOperator = new KMeansOperator(2);
 
+        TransformOperator<double[], Tuple2<double[], Integer>> transformOperator = TransformOperator.kMeans();
+
         // write results to a sink
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
 
         // Build Wayang plan by connecting operators
         collectionSource.connectTo(0, kMeansOperator, 0);
-        kMeansOperator.connectTo(0, sink, 0);
+        kMeansOperator.connectTo(0, transformOperator, 0);
+        collectionSource.connectTo(0, transformOperator, 1);
+        transformOperator.connectTo(0, sink, 0);
         WayangPlan wayangPlan = new WayangPlan(sink);
 
         // Have Wayang execute the plan.

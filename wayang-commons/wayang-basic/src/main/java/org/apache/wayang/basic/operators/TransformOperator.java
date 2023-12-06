@@ -18,33 +18,38 @@
 
 package org.apache.wayang.basic.operators;
 
-import org.apache.wayang.basic.model.KMeansModel;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.model.Model;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.TypeConverter;
 
 import java.util.Optional;
 
-public class KMeansOperator extends UnaryToUnaryOperator<double[], KMeansModel> {
+public class TransformOperator<IN, OUT> extends BinaryToUnaryOperator<Model<IN, OUT>, IN, OUT> {
 
-    // TODO other parameters
-    protected int k;
-
-    public KMeansOperator(int k) {
-        super(DataSetType.createDefaultUnchecked(double[].class),
-                DataSetType.createDefaultUnchecked(KMeansModel.class),
-                false);
-        this.k = k;
+    public static TransformOperator<double[], Tuple2<double[], Integer>> kMeans() {
+        return new TransformOperator<>(new TypeReference<>() {}, new TypeReference<>() {});
     }
 
-    public KMeansOperator(KMeansOperator that) {
+    public TransformOperator(DataSetType<IN> inType, DataSetType<OUT> outType) {
+        // TODO createDefaultUnchecked or createDefault?
+        super(DataSetType.createDefaultUnchecked(Model.class), inType, outType, false);
+    }
+
+    public TransformOperator(Class<IN> inType, Class<OUT> outType) {
+        this(DataSetType.createDefault(inType), DataSetType.createDefault(outType));
+    }
+
+    public TransformOperator(TypeReference<IN> inType, TypeReference<OUT> outType) {
+        this(TypeConverter.convert(inType), TypeConverter.convert(outType));
+    }
+
+    public TransformOperator(TransformOperator<IN, OUT> that) {
         super(that);
-        this.k = that.k;
-    }
-
-    public int getK() {
-        return k;
     }
 
     @Override
