@@ -20,6 +20,7 @@ package org.apache.wayang.postgres.mapping;
 
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.operators.JoinOperator;
+import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.OperatorPattern;
 import org.apache.wayang.core.mapping.PlanTransformation;
