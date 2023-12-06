@@ -18,7 +18,7 @@
 
 package org.apache.wayang.jdbc.operators;
 
-import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.basic.operators.JoinOperator;
@@ -66,8 +66,8 @@ public abstract class JdbcJoinOperator<KeyType>
 
     @Override
     public String createSqlClause(Connection connection, FunctionCompiler compiler) {
-        final Tuple2<String, String> left = this.keyDescriptor0.getSqlImplementation();
-        final Tuple2<String, String> right = this.keyDescriptor1.getSqlImplementation();
+        final Tuple<String, String> left = this.keyDescriptor0.getSqlImplementation();
+        final Tuple<String, String> right = this.keyDescriptor1.getSqlImplementation();
         final String leftTableName = left.field0;
         final String leftKey = left.field1;
         final String rightTableName = right.field0;
