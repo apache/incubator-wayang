@@ -133,7 +133,6 @@ object SerializationUtils {
       .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
 
     // Ignore loggers if needed
-    /*
       .addMixIn(classOf[Job], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[OptimizationContext], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[OptimizationUtils], classOf[IgnoreLoggerMixIn])
@@ -164,7 +163,6 @@ object SerializationUtils {
       .addMixIn(classOf[HadoopFileSystem], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[LocalFileSystem], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[ObjectFileSource[_]], classOf[IgnoreLoggerMixIn])
-     */
 
     mapper
   }

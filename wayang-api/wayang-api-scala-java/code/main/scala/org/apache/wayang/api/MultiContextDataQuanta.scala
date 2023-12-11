@@ -138,7 +138,7 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
 
   def execute(): Unit = {
 
-    val tempFilesToBeDeleted: ConcurrentLinkedQueue[Path] = new ConcurrentLinkedQueue[Path]() // To store the temp file names
+    val tempFilesToBeDeleted: ListBuffer[Path] = new ListBuffer[Path]() // To store the temp file names
     val processes: ListBuffer[Process] = ListBuffer() // To store the processes
 
     // For spawning child process using wayang-submit under wayang home
@@ -154,9 +154,9 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
 
         // Write operator to temp file
         val operatorPath = MultiContextDataQuanta.writeToTempFileAsString(dataQuantaMap(context.id).operator)
-        tempFilesToBeDeleted.add(operatorPath)
+        tempFilesToBeDeleted += operatorPath
 
-        tempFilesToBeDeleted.add(multiContextPlanBuilderPath)
+        tempFilesToBeDeleted += multiContextPlanBuilderPath
 
         println(s"About to start a process with args ${(operatorPath, multiContextPlanBuilderPath)}")
 
@@ -179,7 +179,7 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
     processes.foreach(_.waitFor())
 
     // Delete all temporary files
-    tempFilesToBeDeleted.forEach(path => Files.deleteIfExists(path))
+    tempFilesToBeDeleted.foreach(path => Files.deleteIfExists(path))
   }
 
 

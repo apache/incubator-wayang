@@ -33,6 +33,7 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
 
     // Source
     "TextFileSource" -> deserializeTextFileSource,
+    "ObjectFileSource" -> deserializeObjectFileSource,
     "CollectionSource" -> deserializeCollectionSource,
     "Sqlite3TableSource" -> deserializeSqlite3TableSource,
     "PostgresTableSource" -> deserializePostgresTableSource,
@@ -128,6 +129,11 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
     new TextFileSource(inputUrl)
   }
 
+  private def deserializeObjectFileSource(jp: JsonParser, rootNode: JsonNode): Operator = {
+    val inputUrl = rootNode.get("inputUrl").asText
+    val tClass = mapper.treeToValue(rootNode.get("tClass"), classOf[Class[AnyRef]])
+    new ObjectFileSource(inputUrl, tClass)
+  }
 
   private def deserializeCollectionSource(jp: JsonParser, rootNode: JsonNode): Operator = {
     val collection = mapper.treeToValue(rootNode.get("collection"), classOf[Iterable[AnyRef]])

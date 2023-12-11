@@ -19,15 +19,14 @@
 
 package org.apache.wayang.multicontext.apps.wordcount
 
-import org.apache.wayang.api.implicits.DataQuantaAsyncResult
-import org.apache.wayang.api.{BlossomContext, DataQuanta, MultiContextPlanBuilder, PlanBuilder}
-import org.apache.wayang.core.api.{Configuration, WayangContext}
-import org.apache.wayang.multicontext.apps.loadConfig
-import org.apache.wayang.spark.Spark
 import org.apache.wayang.api.implicits.DataQuantaImplicits._
 import org.apache.wayang.api.implicits.PlanBuilderImplicits._
+import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder}
+import org.apache.wayang.java.Java
+import org.apache.wayang.multicontext.apps.loadConfig
 
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 class Test {}
 
@@ -41,32 +40,15 @@ object Test {
     val (configuration1, configuration2) = loadConfig(args)
 
     val context1 = new BlossomContext(configuration1)
-      .withPlugin(Spark.basicPlugin())
-      .withTextFileSink("file:///tmp/out11")
+      .withPlugin(Java.basicPlugin())
     val context2 = new BlossomContext(configuration2)
-      .withPlugin(Spark.basicPlugin())
-      .withTextFileSink("file:///tmp/out12")
-
-    val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
-      .withUdfJarsOf(classOf[WordCount])
-
-    // Generate some test data
-    val inputValues = Array("Big data is big.", "Is data big data?")
-
-    // Build and execute a word count
-    multiContextPlanBuilder
-      .loadCollection(inputValues)
-      .flatMap(_.split("\\s+"))
-      .map(_.replaceAll("\\W+", "").toLowerCase)
-      .map((_, 1))
-      .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
-      .execute()
+      .withPlugin(Java.basicPlugin())
 
     val planBuilder1 = new PlanBuilder(context1).withUdfJarsOf(classOf[Test])
     val planBuilder2 = new PlanBuilder(context2).withUdfJarsOf(classOf[Test])
-    val planBuilder3 = new PlanBuilder(new WayangContext(new Configuration())).withUdfJarsOf(classOf[Test])
-    val planBuilder4 = new PlanBuilder(new WayangContext(new Configuration())).withUdfJarsOf(classOf[Test])
-
+    val planBuilder3 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(classOf[Test])
+    val planBuilder4 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(classOf[Test])
+    val planBuilder5 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(classOf[Test])
 
     val result1 = planBuilder1
       .loadCollection(List(1, 2, 3, 4, 5))
@@ -88,10 +70,12 @@ object Test {
       .filter(_ >= 2)
       .runAsync(tempFileOut = "file:///tmp/out4.temp")
 
-    val result5: Unit = planBuilder1
+    val result5: Future[Unit] = planBuilder5
       .combineFromAsync(result3, result4, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) => dq1.intersect(dq2))
       .map(_ * 5)
       .writeTextFile("file:///tmp/out5.final", s => s.toString)
+
+    Await.result(result5, Duration.Inf)
 
   }
 

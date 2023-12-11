@@ -11,23 +11,24 @@ import scala.reflect.ClassTag
 class AsyncDataQuanta[Out: ClassTag](val futureDataQuanta: Future[DataQuanta[Out]]) {
 
   def map[NewOut: ClassTag](f: Out => NewOut): AsyncDataQuanta[NewOut] = {
-    val newFuture = futureDataQuanta.map(dataQuanta => dataQuanta.map(f))(ec)
+    val newFuture = futureDataQuanta.map(dataQuanta => dataQuanta.map(f))
     new AsyncDataQuanta(newFuture)
   }
 
   def filter(p: Out => Boolean): AsyncDataQuanta[Out] = {
-    val newFuture = futureDataQuanta.map(dataQuanta => dataQuanta.filter(p))(ec)
+    val newFuture = futureDataQuanta.map(dataQuanta => dataQuanta.filter(p))
     new AsyncDataQuanta(newFuture)
   }
 
-  def writeTextFile(url: String, formatterUdf: Out => String): Unit = {
+  def writeTextFile(url: String, formatterUdf: Out => String): Future[Unit] = {
     futureDataQuanta.map(dataQuanta => dataQuanta.writeTextFile(url, formatterUdf))
   }
 
-  def runAsync(tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
-    futureDataQuanta.map { dataQuanta =>
-      dataQuanta.runAsync(tempFileOut)
-      DataQuantaAsyncResult(tempFileOut, implicitly[ClassTag[Out]])
+  def runAsync(tempFileOut: String): Future[DataQuantaRunAsyncResult[Out]] = {
+    futureDataQuanta.flatMap { dataQuanta =>
+      dataQuanta.runAsync(tempFileOut).map { _ =>
+        DataQuantaRunAsyncResult(tempFileOut, implicitly[ClassTag[Out]])
+      }
     }
   }
 

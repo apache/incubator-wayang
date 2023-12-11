@@ -38,7 +38,7 @@ import scala.reflect._
 /**
   * Utility to build [[WayangPlan]]s.
   */
-class PlanBuilder(wayangContext: WayangContext, private var jobName: String = null) {
+class PlanBuilder(private[api] val wayangContext: WayangContext, private var jobName: String = null) {
 
   private[api] val sinks = ListBuffer[Operator]()
 
