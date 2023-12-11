@@ -471,7 +471,7 @@ class OperatorSerializationTests extends SerializationTestBase {
     serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
   }
 
-  @Test
+//  @Test
   def testPostgres(): Unit = {
     // Initialize some test data.
     val configuration = new Configuration

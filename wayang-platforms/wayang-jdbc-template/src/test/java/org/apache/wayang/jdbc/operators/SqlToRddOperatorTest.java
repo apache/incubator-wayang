@@ -65,10 +65,10 @@ public class SqlToRddOperatorTest extends OperatorTestBase {
         // Create some test data.
         try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
             final Statement statement = jdbcConnection.createStatement();
-            statement.execute("CREATE TABLE testWithHsqldb (a INT, b VARCHAR(6));");
-            statement.execute("INSERT INTO testWithHsqldb VALUES (0, 'zero');");
-            statement.execute("INSERT INTO testWithHsqldb VALUES (1, 'one');");
-            statement.execute("INSERT INTO testWithHsqldb VALUES (2, 'two');");
+            statement.execute("CREATE TABLE testSqlToRddWithHsqldb (a INT, b VARCHAR(6));");
+            statement.execute("INSERT INTO testSqlToRddWithHsqldb VALUES (0, 'zero');");
+            statement.execute("INSERT INTO testSqlToRddWithHsqldb VALUES (1, 'one');");
+            statement.execute("INSERT INTO testSqlToRddWithHsqldb VALUES (2, 'two');");
         }
 
         final ExecutionOperator filterOperator = new HsqldbFilterOperator(
@@ -83,7 +83,7 @@ public class SqlToRddOperatorTest extends OperatorTestBase {
                 mock(OptimizationContext.OperatorContext.class),
                 0
         );
-        sqlQueryChannelInstance.setSqlQuery("SELECT * FROM testWithHsqldb;");
+        sqlQueryChannelInstance.setSqlQuery("SELECT * FROM testSqlToRddWithHsqldb;");
         ExecutionTask producer = new ExecutionTask(filterOperator);
         producer.setOutputChannel(0, sqlQueryChannel);
 
@@ -127,7 +127,7 @@ public class SqlToRddOperatorTest extends OperatorTestBase {
         // Create some test data.
         try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
             final Statement statement = jdbcConnection.createStatement();
-            statement.execute("CREATE TABLE testWithEmptyHsqldb (a INT, b VARCHAR(6));");
+            statement.execute("CREATE TABLE testSqlToRddWithEmptyHsqldb (a INT, b VARCHAR(6));");
         }
 
         final ExecutionOperator filterOperator = new HsqldbFilterOperator(
@@ -142,7 +142,7 @@ public class SqlToRddOperatorTest extends OperatorTestBase {
                 mock(OptimizationContext.OperatorContext.class),
                 0
         );
-        sqlQueryChannelInstance.setSqlQuery("SELECT * FROM testWithEmptyHsqldb;");
+        sqlQueryChannelInstance.setSqlQuery("SELECT * FROM testSqlToRddWithEmptyHsqldb;");
         ExecutionTask producer = new ExecutionTask(filterOperator);
         producer.setOutputChannel(0, sqlQueryChannel);
 
