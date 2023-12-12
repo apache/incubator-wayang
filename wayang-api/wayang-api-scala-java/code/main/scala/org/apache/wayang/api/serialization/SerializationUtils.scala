@@ -132,7 +132,7 @@ object SerializationUtils {
       .addMixIn(classOf[LoopHeadOperator], classOf[LoopHeadOperatorMixIn])
       .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
 
-    // Ignore loggers if needed
+    // Ignore loggers
       .addMixIn(classOf[Job], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[OptimizationContext], classOf[IgnoreLoggerMixIn])
       .addMixIn(classOf[OptimizationUtils], classOf[IgnoreLoggerMixIn])

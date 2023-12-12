@@ -33,7 +33,7 @@ class Test {}
 object Test {
 
   def main(args: Array[String]): Unit = {
-    println("Counting words in multi context wayang!")
+    println("Counting words in parallel job wayang!")
     println("Scala version:")
     println(scala.util.Properties.versionString)
 
@@ -47,8 +47,6 @@ object Test {
     val planBuilder1 = new PlanBuilder(context1).withUdfJarsOf(classOf[Test])
     val planBuilder2 = new PlanBuilder(context2).withUdfJarsOf(classOf[Test])
     val planBuilder3 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(classOf[Test])
-    val planBuilder4 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(classOf[Test])
-    val planBuilder5 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(classOf[Test])
 
     val result1 = planBuilder1
       .loadCollection(List(1, 2, 3, 4, 5))
@@ -60,21 +58,22 @@ object Test {
       .filter(_ <= 8)
       .runAsync(tempFileOut = "file:///tmp/out2.temp")
 
-    val result3 = planBuilder3
+    val result3 = planBuilder1
       .combineFromAsync(result1, result2, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) => dq1.union(dq2))
       .map(_ * 3)
       .runAsync(tempFileOut = "file:///tmp/out3.temp")
 
-    val result4 = planBuilder4
+    val result4 = planBuilder3
       .loadCollection(List(1, 2, 3, 4, 5))
       .filter(_ >= 2)
       .runAsync(tempFileOut = "file:///tmp/out4.temp")
 
-    val result5: Future[Unit] = planBuilder5
+    val result5: Future[Unit] = planBuilder1
       .combineFromAsync(result3, result4, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) => dq1.intersect(dq2))
       .map(_ * 5)
-      .writeTextFile("file:///tmp/out5.final", s => s.toString)
+      .writeTextFile("file:///tmp/out5.final", s => s.toString) // Should write 15
 
+    println("Waiting...")
     Await.result(result5, Duration.Inf)
 
   }
