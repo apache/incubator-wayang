@@ -18,6 +18,7 @@
 
 package org.apache.wayang.tests;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.*;
@@ -503,7 +504,7 @@ public class SparkIntegrationIT {
 
         ModelTransformOperator<double[], Integer> transformOperator = ModelTransformOperator.kMeans();
 
-        // write results to a sink
+        // Write results to a sink.
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
 

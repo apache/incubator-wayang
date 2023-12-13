@@ -22,10 +22,14 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.clustering.KMeans;
 import org.apache.spark.ml.clustering.KMeansModel;
 import org.apache.spark.ml.linalg.Vector;
+import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.ml.linalg.Vectors;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.KMeansOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -43,6 +47,17 @@ import org.apache.wayang.spark.operators.SparkExecutionOperator;
 import java.util.*;
 
 public class SparkKMeansOperator extends KMeansOperator implements SparkExecutionOperator {
+
+    private static final StructType schema = DataTypes.createStructType(
+            new ArrayList<>() {{
+                add(DataTypes.createStructField("features", new VectorUDT(), false));
+            }}
+    );
+
+    private static Dataset<Row> data2Row(JavaRDD<double[]> inputRdd) {
+        final JavaRDD<Row> rowRdd = inputRdd.map(e -> RowFactory.create(Vectors.dense(e)));
+        return SparkSession.builder().getOrCreate().createDataFrame(rowRdd, schema);
+    }
 
     public SparkKMeansOperator(int k) {
         super(k);
@@ -76,8 +91,7 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
         final CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
 
         final JavaRDD<double[]> inputRdd = input.provideRdd();
-        final JavaRDD<Data> dataRdd = inputRdd.map(Data::new);
-        final Dataset<Row> df = SparkSession.builder().getOrCreate().createDataFrame(dataRdd, Data.class);
+        final Dataset<Row> df = data2Row(inputRdd);
         final KMeansModel model = new KMeans()
                 .setK(this.k)
                 .fit(df);
@@ -90,43 +104,6 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
     @Override
     public boolean containsAction() {
         return false;
-    }
-
-    public static class Data {
-        private final Vector features;
-
-
-        public Data(Vector features) {
-            this.features = features;
-        }
-
-        public Data(double[] features) {
-            this.features = Vectors.dense(features);
-        }
-
-        public Vector getFeatures() {
-            return features;
-        }
-
-        @Override
-        public String toString() {
-            return "Data{" +
-                    "features=" + features +
-                    '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Data)) return false;
-            Data data = (Data) o;
-            return Objects.equals(features, data.features);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(features);
-        }
     }
 
     public static class Model implements org.apache.wayang.basic.model.KMeansModel, SparkMLModel<double[], Integer> {
@@ -148,8 +125,7 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
 
         @Override
         public JavaRDD<Tuple2<double[], Integer>> transform(JavaRDD<double[]> input) {
-            final JavaRDD<Data> dataRdd = input.map(Data::new);
-            final Dataset<Row> df = SparkSession.builder().getOrCreate().createDataFrame(dataRdd, Data.class);
+            final Dataset<Row> df = data2Row(input);
             final Dataset<Row> transform = model.transform(df);
             return transform.toJavaRDD()
                     .map(row -> new Tuple2<>(((Vector) row.get(0)).toArray(), (Integer) row.get(1)));
