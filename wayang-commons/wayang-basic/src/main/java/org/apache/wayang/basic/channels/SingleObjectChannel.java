@@ -27,6 +27,9 @@ import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.Executor;
 
+/**
+ * has not been used
+ */
 public class SingleObjectChannel extends Channel {
 
     public static final SingleObjectChannel.Descriptor DEFAULT_DESCRIPTOR = new SingleObjectChannel.Descriptor();

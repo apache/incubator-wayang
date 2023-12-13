@@ -18,9 +18,7 @@
 
 package org.apache.wayang.basic.model;
 
-import org.apache.wayang.basic.data.Tuple2;
-
-public interface KMeansModel extends Model<double[], Tuple2<double[], Integer>> {
+public interface KMeansModel extends Model<double[], Integer> {
 
     public int getK();
 

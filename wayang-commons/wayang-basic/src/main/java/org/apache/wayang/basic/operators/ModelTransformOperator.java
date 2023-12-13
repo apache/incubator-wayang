@@ -29,26 +29,26 @@ import org.apache.wayang.core.util.TypeConverter;
 
 import java.util.Optional;
 
-public class ModelTransformOperator<IN, OUT> extends BinaryToUnaryOperator<Model<IN, OUT>, IN, OUT> {
+public class ModelTransformOperator<X, Y> extends BinaryToUnaryOperator<Model<X, Y>, X, Tuple2<X, Y>> {
 
-    public static ModelTransformOperator<double[], Tuple2<double[], Integer>> kMeans() {
+    public static ModelTransformOperator<double[], Integer> kMeans() {
         return new ModelTransformOperator<>(new TypeReference<>() {}, new TypeReference<>() {});
     }
 
-    public ModelTransformOperator(DataSetType<IN> inType, DataSetType<OUT> outType) {
+    public ModelTransformOperator(DataSetType<X> inType, DataSetType<Tuple2<X, Y>> outType) {
         // TODO createDefaultUnchecked or createDefault?
         super(DataSetType.createDefaultUnchecked(Model.class), inType, outType, false);
     }
 
-    public ModelTransformOperator(Class<IN> inType, Class<OUT> outType) {
+    public ModelTransformOperator(Class<X> inType, Class<Tuple2<X, Y>> outType) {
         this(DataSetType.createDefault(inType), DataSetType.createDefault(outType));
     }
 
-    public ModelTransformOperator(TypeReference<IN> inType, TypeReference<OUT> outType) {
+    public ModelTransformOperator(TypeReference<X> inType, TypeReference<Tuple2<X, Y>> outType) {
         this(TypeConverter.convert(inType), TypeConverter.convert(outType));
     }
 
-    public ModelTransformOperator(ModelTransformOperator<IN, OUT> that) {
+    public ModelTransformOperator(ModelTransformOperator<X, Y> that) {
         super(that);
     }
 

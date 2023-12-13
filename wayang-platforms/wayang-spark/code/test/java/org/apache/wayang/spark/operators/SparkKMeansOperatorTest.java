@@ -76,7 +76,7 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
         // Prepare test data.
         CollectionChannel.Instance input1 = this.createCollectionChannelInstance(Collections.singletonList(
                 // a mock model
-                new SparkMLModel<double[], Tuple2<double[], Integer>>() {
+                new SparkMLModel<double[], Integer>() {
                     @Override
                     public JavaRDD<Tuple2<double[], Integer>> transform(JavaRDD<double[]> input) {
                         return getSC().parallelize(data.stream().map(e -> new Tuple2<>(e, 1)).collect(Collectors.toList()));
@@ -86,7 +86,7 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
         RddChannel.Instance input2 = this.createRddChannelInstance(data);
         RddChannel.Instance output = this.createRddChannelInstance();
 
-        SparkModelTransformOperator<double[], Tuple2<double[], Integer>> transformOperator = new SparkModelTransformOperator<>(ModelTransformOperator.kMeans());
+        SparkModelTransformOperator<double[], Integer> transformOperator = new SparkModelTransformOperator<>(ModelTransformOperator.kMeans());
 
         // Set up the ChannelInstances.
         ChannelInstance[] inputs = new ChannelInstance[]{input1, input2};

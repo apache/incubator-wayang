@@ -44,7 +44,7 @@ public class ModelTransformMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "transform", new ModelTransformOperator<>(DataSetType.none(), DataSetType.none()), false
+                "transform", new ModelTransformOperator(DataSetType.none(), DataSetType.none()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }

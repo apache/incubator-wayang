@@ -501,7 +501,7 @@ public class SparkIntegrationIT {
 
         KMeansOperator kMeansOperator = new KMeansOperator(2);
 
-        ModelTransformOperator<double[], Tuple2<double[], Integer>> transformOperator = ModelTransformOperator.kMeans();
+        ModelTransformOperator<double[], Integer> transformOperator = ModelTransformOperator.kMeans();
 
         // write results to a sink
         List<Tuple2> results = new ArrayList<>();

@@ -60,7 +60,6 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        // TODO do we need a single object channel?
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
@@ -130,7 +129,7 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
         }
     }
 
-    public static class Model implements org.apache.wayang.basic.model.KMeansModel, SparkMLModel<double[], Tuple2<double[], Integer>> {
+    public static class Model implements org.apache.wayang.basic.model.KMeansModel, SparkMLModel<double[], Integer> {
         private final KMeansModel model;
 
         public Model(KMeansModel model) {

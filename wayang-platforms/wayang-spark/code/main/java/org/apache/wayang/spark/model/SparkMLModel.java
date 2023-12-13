@@ -19,9 +19,10 @@
 package org.apache.wayang.spark.model;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.Model;
 
-public interface SparkMLModel<IN, OUT> extends Model<IN, OUT> {
+public interface SparkMLModel<X, Y> extends Model<X, Y> {
 
-    JavaRDD<OUT> transform(JavaRDD<IN> input);
+    JavaRDD<Tuple2<X, Y>> transform(JavaRDD<X> input);
 }
