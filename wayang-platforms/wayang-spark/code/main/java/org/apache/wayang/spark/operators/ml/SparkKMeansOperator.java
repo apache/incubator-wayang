@@ -85,13 +85,11 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
         final Model outputModel = new Model(model);
         output.accept(Collections.singletonList(outputModel));
 
-        // TODO lazy or eager?
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
     public boolean containsAction() {
-        // TODO true or false?
         return false;
     }
 

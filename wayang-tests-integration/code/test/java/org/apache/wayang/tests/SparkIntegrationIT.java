@@ -20,7 +20,6 @@ package org.apache.wayang.tests;
 
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.model.KMeansModel;
 import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -502,7 +501,7 @@ public class SparkIntegrationIT {
 
         KMeansOperator kMeansOperator = new KMeansOperator(2);
 
-        TransformOperator<double[], Tuple2<double[], Integer>> transformOperator = TransformOperator.kMeans();
+        ModelTransformOperator<double[], Tuple2<double[], Integer>> transformOperator = ModelTransformOperator.kMeans();
 
         // write results to a sink
         List<Tuple2> results = new ArrayList<>();

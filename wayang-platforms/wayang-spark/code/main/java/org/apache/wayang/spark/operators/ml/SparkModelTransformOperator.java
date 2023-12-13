@@ -19,7 +19,7 @@
 package org.apache.wayang.spark.operators.ml;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.wayang.basic.operators.TransformOperator;
+import org.apache.wayang.basic.operators.ModelTransformOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -38,13 +38,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class SparkTransformOperator<IN, OUT> extends TransformOperator<IN, OUT> implements SparkExecutionOperator {
+public class SparkModelTransformOperator<IN, OUT> extends ModelTransformOperator<IN, OUT> implements SparkExecutionOperator {
 
-    public SparkTransformOperator(DataSetType<IN> inType, DataSetType<OUT> outType) {
+    public SparkModelTransformOperator(DataSetType<IN> inType, DataSetType<OUT> outType) {
         super(inType, outType);
     }
 
-    public SparkTransformOperator(TransformOperator<IN, OUT> that) {
+    public SparkModelTransformOperator(ModelTransformOperator<IN, OUT> that) {
         super(that);
     }
 

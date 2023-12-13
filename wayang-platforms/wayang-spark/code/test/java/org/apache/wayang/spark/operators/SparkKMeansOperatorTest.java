@@ -21,14 +21,14 @@ package org.apache.wayang.spark.operators;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.KMeansModel;
-import org.apache.wayang.basic.operators.TransformOperator;
+import org.apache.wayang.basic.operators.ModelTransformOperator;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.model.SparkMLModel;
 import org.apache.wayang.spark.operators.ml.SparkKMeansOperator;
 import org.apache.wayang.spark.operators.ml.SparkKMeansOperatorV1;
-import org.apache.wayang.spark.operators.ml.SparkTransformOperator;
+import org.apache.wayang.spark.operators.ml.SparkModelTransformOperator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -86,7 +86,7 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
         RddChannel.Instance input2 = this.createRddChannelInstance(data);
         RddChannel.Instance output = this.createRddChannelInstance();
 
-        SparkTransformOperator<double[], Tuple2<double[], Integer>> transformOperator = new SparkTransformOperator<>(TransformOperator.kMeans());
+        SparkModelTransformOperator<double[], Tuple2<double[], Integer>> transformOperator = new SparkModelTransformOperator<>(ModelTransformOperator.kMeans());
 
         // Set up the ChannelInstances.
         ChannelInstance[] inputs = new ChannelInstance[]{input1, input2};

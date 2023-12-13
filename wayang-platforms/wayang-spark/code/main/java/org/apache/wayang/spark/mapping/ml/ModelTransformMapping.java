@@ -18,20 +18,20 @@
 
 package org.apache.wayang.spark.mapping.ml;
 
-import org.apache.wayang.basic.operators.TransformOperator;
+import org.apache.wayang.basic.operators.ModelTransformOperator;
 import org.apache.wayang.core.mapping.*;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.spark.operators.ml.SparkTransformOperator;
+import org.apache.wayang.spark.operators.ml.SparkModelTransformOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link TransformOperator} to {@link SparkTransformOperator}.
+ * Mapping from {@link ModelTransformOperator} to {@link SparkModelTransformOperator}.
  */
 @SuppressWarnings("unchecked")
-public class TransformMapping implements Mapping {
+public class ModelTransformMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -44,14 +44,14 @@ public class TransformMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "transform", new TransformOperator<>(DataSetType.none(), DataSetType.none()), false
+                "transform", new ModelTransformOperator<>(DataSetType.none(), DataSetType.none()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<TransformOperator<Object, Object>>(
-                (matchedOperator, epoch) -> new SparkTransformOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<ModelTransformOperator<Object, Object>>(
+                (matchedOperator, epoch) -> new SparkModelTransformOperator<>(matchedOperator).at(epoch)
         );
     }
 }
