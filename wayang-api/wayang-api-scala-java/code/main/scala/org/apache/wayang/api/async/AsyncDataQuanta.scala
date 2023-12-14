@@ -17,10 +17,10 @@
  */
 
 
-package org.apache.wayang.api.implicits
+package org.apache.wayang.api.async
 
-import org.apache.wayang.api.DataQuanta
-import org.apache.wayang.api.implicits.DataQuantaImplicits._
+import org.apache.wayang.api.{DataQuanta, PlanBuilder}
+import org.apache.wayang.api.async.DataQuantaImplicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -49,6 +49,14 @@ class AsyncDataQuanta[Out: ClassTag](val futureDataQuanta: Future[DataQuanta[Out
         DataQuantaRunAsyncResult(tempFileOut, implicitly[ClassTag[Out]])
       }
     }
+  }
+
+  def andThenRunAsync[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut], tempFileOut: String): Future[DataQuantaRunAsyncResult[Out]] = {
+    futureDataQuanta.flatMap(dataQuanta =>
+      runAsyncBody(plan(dataQuanta), tempFileOut).map { _ =>
+        DataQuantaRunAsyncResult(tempFileOut, implicitly[ClassTag[Out]])
+      }
+    )
   }
 
   // TODO: Add other operators

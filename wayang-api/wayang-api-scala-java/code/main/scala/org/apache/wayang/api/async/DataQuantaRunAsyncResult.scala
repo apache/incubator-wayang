@@ -17,7 +17,7 @@
  */
 
 
-package org.apache.wayang.api.implicits
+package org.apache.wayang.api.async
 
 import scala.reflect.ClassTag
 

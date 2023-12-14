@@ -17,7 +17,7 @@
  */
 
 
-package org.apache.wayang.api.implicits
+package org.apache.wayang.api.async
 
 import org.apache.wayang.api.{BlossomContext, DataQuanta, MultiContextDataQuanta, MultiContextPlanBuilder}
 

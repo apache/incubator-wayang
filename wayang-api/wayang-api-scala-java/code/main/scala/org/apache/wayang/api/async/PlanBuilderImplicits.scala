@@ -17,9 +17,9 @@
  */
 
 
-package org.apache.wayang.api.implicits
+package org.apache.wayang.api.async
 
-import org.apache.wayang.api.{DataQuanta, PlanBuilder}
+import org.apache.wayang.api.{DataQuanta, PlanBuilder, async}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -27,11 +27,17 @@ import scala.reflect.ClassTag
 
 object PlanBuilderImplicits {
 
+  implicit class PlanBuilderRunAsyncImplicit[Out: ClassTag](planBuilder: PlanBuilder) {
+    def runAsync(plan: PlanBuilder => DataQuanta[Out], tempFileOut: String): Future[DataQuantaRunAsyncResult[Out]] = {
+      async.runAsyncBody(plan(planBuilder), tempFileOut)
+    }
+  }
+
   implicit class PlanBuilderCombineFromAsyncImplicit[Out1: ClassTag, Out2: ClassTag](planBuilder: PlanBuilder) {
     def combineFromAsync[NewOut: ClassTag](result1: Future[DataQuantaRunAsyncResult[Out1]],
                                            result2: Future[DataQuantaRunAsyncResult[Out2]],
                                            combiner: (DataQuanta[Out1], DataQuanta[Out2]) => DataQuanta[NewOut]
-                                             ): AsyncDataQuanta[NewOut] = {
+                                          ): AsyncDataQuanta[NewOut] = {
       val combinedFuture = for {
         asyncResult1 <- result1
         asyncResult2 <- result2
