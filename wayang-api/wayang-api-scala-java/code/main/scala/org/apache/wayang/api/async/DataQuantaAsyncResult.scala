@@ -21,4 +21,4 @@ package org.apache.wayang.api.async
 
 import scala.reflect.ClassTag
 
-case class DataQuantaRunAsyncResult[Out: ClassTag](tempFileOut: String, classTag: ClassTag[Out])
+case class DataQuantaAsyncResult[Out: ClassTag](tempFileOut: String, classTag: ClassTag[Out])

@@ -29,12 +29,19 @@ class MultiContextPlanBuilder(val blossomContexts: List[BlossomContext]) {
 
   private[api] var withClassesOf: Seq[Class[_]] = Seq()
 
+  private[api] var udfJars = scala.collection.mutable.Set[String]()
+
   private val blossomContextMap: Map[Long, BlossomContext] = blossomContexts.map(context => context.id -> context).toMap
 
   private var dataQuantaMap: Map[Long, DataQuanta[_]] = Map()
 
   def this(blossomContexts: java.util.List[BlossomContext]) =
     this(blossomContexts.asScala.toList)
+
+  def withUdfJars(paths: String*): MultiContextPlanBuilder = {
+    this.udfJars ++= paths
+    this
+  }
 
   def withUdfJarsOf(classes: Class[_]*): MultiContextPlanBuilder = {
     this.withClassesOf ++= classes

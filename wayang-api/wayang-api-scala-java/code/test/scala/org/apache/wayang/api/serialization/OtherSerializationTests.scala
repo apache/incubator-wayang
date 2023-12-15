@@ -71,6 +71,7 @@ class OtherSerializationTests extends SerializationTestBase {
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[OtherSerializationTests])
+      .withUdfJars("Aaa", "Bbb", "Ccc")
 
     try {
       val serialized = SerializationUtils.serializeAsString(multiContextPlanBuilder)
@@ -80,6 +81,10 @@ class OtherSerializationTests extends SerializationTestBase {
       Assert.assertEquals(
         multiContextPlanBuilder.withClassesOf,
         deserialized.withClassesOf
+      )
+      Assert.assertEquals(
+        multiContextPlanBuilder.udfJars,
+        deserialized.udfJars
       )
       Assert.assertEquals(
         multiContextPlanBuilder.blossomContexts(0).getConfiguration.getStringProperty("spark.master"),

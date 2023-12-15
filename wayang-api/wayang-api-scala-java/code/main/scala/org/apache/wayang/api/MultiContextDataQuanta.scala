@@ -19,6 +19,7 @@
 
 package org.apache.wayang.api
 
+import org.apache.logging.log4j.{LogManager, Logger}
 import org.apache.wayang.api.serialization.SerializationUtils
 import org.apache.wayang.basic.operators.{ObjectFileSink, SampleOperator, TextFileSink}
 import org.apache.wayang.core.api.WayangContext
@@ -30,7 +31,6 @@ import org.apache.wayang.core.util.ReflectionUtils
 import java.io.{FileInputStream, FileOutputStream}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
-import java.util.concurrent.ConcurrentLinkedQueue
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
@@ -223,12 +223,15 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
 
 
 object MultiContextDataQuanta {
+
+  val logger: Logger = LogManager.getLogger(getClass)
+
   def main(args: Array[String]): Unit = {
-    println("New process here")
-    println(args.mkString("Array(", ", ", ")"))
+    logger.info("New process here")
+    logger.info(args.mkString("Array(", ", ", ")"))
 
     if (args.length != 2) {
-      System.err.println("Expected two arguments: paths to the serialized operator and context.")
+      logger.error("Expected two arguments: paths to the serialized operator and context.")
       System.exit(1)
     }
 
@@ -246,6 +249,9 @@ object MultiContextDataQuanta {
     // Get classes of and also add this one
     var withClassesOf = multiContextPlanBuilder.withClassesOf
     withClassesOf = withClassesOf :+ classOf[MultiContextDataQuanta[_]]
+    val udfJars = multiContextPlanBuilder.udfJars
+    udfJars ++= withClassesOf.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null)
+    logger.info(s"udfJars: ${udfJars}")
 
     // Get out output type to create sink with
     val outType = operator.getOutput(0).getType.getDataUnitType.getTypeClass
@@ -268,7 +274,7 @@ object MultiContextDataQuanta {
 
     def connectToSinkAndExecutePlan(sink: Operator): Unit = {
       operator.connectTo(0, sink, 0)
-      context.execute(new WayangPlan(sink), withClassesOf.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
+      context.execute(new WayangPlan(sink), udfJars.toSeq: _*)
     }
   }
 

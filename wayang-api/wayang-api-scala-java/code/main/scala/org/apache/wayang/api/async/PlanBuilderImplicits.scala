@@ -28,14 +28,14 @@ import scala.reflect.ClassTag
 object PlanBuilderImplicits {
 
   implicit class PlanBuilderRunAsyncImplicit[Out: ClassTag](planBuilder: PlanBuilder) {
-    def runAsync(plan: PlanBuilder => DataQuanta[Out], tempFileOut: String): Future[DataQuantaRunAsyncResult[Out]] = {
-      async.runAsyncBody(plan(planBuilder), tempFileOut)
+    def runAsync(plan: PlanBuilder => DataQuanta[Out], tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
+      async.runAsyncWithTempFileOut(plan(planBuilder), tempFileOut)
     }
   }
 
   implicit class PlanBuilderCombineFromAsyncImplicit[Out1: ClassTag, Out2: ClassTag](planBuilder: PlanBuilder) {
-    def combineFromAsync[NewOut: ClassTag](result1: Future[DataQuantaRunAsyncResult[Out1]],
-                                           result2: Future[DataQuantaRunAsyncResult[Out2]],
+    def combineFromAsync[NewOut: ClassTag](result1: Future[DataQuantaAsyncResult[Out1]],
+                                           result2: Future[DataQuantaAsyncResult[Out2]],
                                            combiner: (DataQuanta[Out1], DataQuanta[Out2]) => DataQuanta[NewOut]
                                           ): AsyncDataQuanta[NewOut] = {
       val combinedFuture = for {

@@ -42,7 +42,7 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
 
   private[api] val sinks = ListBuffer[Operator]()
 
-  private val udfJars = scala.collection.mutable.Set[String]()
+  private[api] val udfJars = scala.collection.mutable.Set[String]()
 
   private var experiment: Experiment = _
 
