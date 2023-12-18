@@ -29,10 +29,10 @@ class DataQuantaImplicits {}
 
 object DataQuantaImplicits {
 
-  implicit class DataQuantaRunAsyncImplicit[Out: ClassTag](dataQuanta: DataQuanta[Out]) {
+  /*implicit class DataQuantaRunAsyncImplicit[Out: ClassTag](dataQuanta: DataQuanta[Out]) {
     def runAsync(tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
       async.runAsyncWithTempFileOut(dataQuanta, tempFileOut)
     }
-  }
+  }*/
 
 }

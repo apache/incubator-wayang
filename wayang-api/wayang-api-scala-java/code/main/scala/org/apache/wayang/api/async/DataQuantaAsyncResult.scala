@@ -21,4 +21,11 @@ package org.apache.wayang.api.async
 
 import scala.reflect.ClassTag
 
+/**
+ * Result for asynchronous Data Quanta operations.
+ *
+ * @param tempFileOut The temporary file path where the result will be stored.
+ * @param classTag    The class tag of the result type.
+ * @tparam Out The type of the result.
+ */
 case class DataQuantaAsyncResult[Out: ClassTag](tempFileOut: String, classTag: ClassTag[Out])

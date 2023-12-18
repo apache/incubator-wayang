@@ -29,7 +29,11 @@ import scala.reflect.ClassTag
 
 class AsyncDataQuanta[Out: ClassTag](val futureDataQuanta: Future[DataQuanta[Out]]) {
 
-/*  def map[NewOut: ClassTag](f: Out => NewOut): AsyncDataQuanta[NewOut] = {
+/*
+
+  // API 1
+
+  def map[NewOut: ClassTag](f: Out => NewOut): AsyncDataQuanta[NewOut] = {
     val newFuture = futureDataQuanta.map(dataQuanta => dataQuanta.map(f))
     new AsyncDataQuanta(newFuture)
   }
@@ -49,23 +53,29 @@ class AsyncDataQuanta[Out: ClassTag](val futureDataQuanta: Future[DataQuanta[Out
         DataQuantaRunAsyncResult(tempFileOut, implicitly[ClassTag[Out]])
       }
     }
-  }*/
+  }
+*/
 
-  def transform[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut]): AsyncDataQuanta[NewOut] = {
+  // API 2 - Maybe internal only
+
+  private[api] def andThenTransform[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut]): AsyncDataQuanta[NewOut] = {
     new AsyncDataQuanta[NewOut](futureDataQuanta.map(plan(_)))
   }
 
-  def andThenRunAsync(tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
+  private[api] def andThenRunAsync(tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
     futureDataQuanta.flatMap(runAsyncWithTempFileOut(_, tempFileOut))
   }
 
-  def andThenWriteTextFileOut(url: String): Future[Unit] = {
+  private[api] def andThenWriteTextFileOut(url: String): Future[Unit] = {
     futureDataQuanta.flatMap(runAsyncWithTextFileOut(_, url))
   }
 
-  def andThenWriteObjectFileOut(url: String): Future[Unit] = {
+  private[api] def andThenWriteObjectFileOut(url: String): Future[Unit] = {
     futureDataQuanta.flatMap(runAsyncWithObjectFileOut(_, url))
   }
+
+/*
+  // API 3 - Public
 
   def andThenRunAsync[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut], tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
     futureDataQuanta.flatMap(dataQuanta =>
@@ -82,6 +92,7 @@ class AsyncDataQuanta[Out: ClassTag](val futureDataQuanta: Future[DataQuanta[Out
   def andThenRunAsyncWithObjectFileOut[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut], objectFileOut: String): Future[Unit] = {
     futureDataQuanta.flatMap(dataQuanta => runAsyncWithObjectFileOut(plan(dataQuanta), objectFileOut))
   }
+*/
 
 }
 

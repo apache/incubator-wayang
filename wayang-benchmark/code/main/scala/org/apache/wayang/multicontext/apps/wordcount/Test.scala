@@ -24,6 +24,7 @@ import org.apache.wayang.api.async.PlanBuilderImplicits._
 import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder}
 import org.apache.wayang.java.Java
 import org.apache.wayang.multicontext.apps.loadConfig
+import org.apache.wayang.spark.Spark
 
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.concurrent.{Await, Future, TimeoutException}
@@ -42,113 +43,42 @@ object Test {
     val context1 = new BlossomContext(configuration1)
       .withPlugin(Java.basicPlugin())
     val context2 = new BlossomContext(configuration2)
-      .withPlugin(Java.basicPlugin())
+      .withPlugin(Spark.basicPlugin())
 
     val planBuilder1 = new PlanBuilder(context1).withUdfJarsOf(classOf[Test])
     val planBuilder2 = new PlanBuilder(context2).withUdfJarsOf(classOf[Test])
     val planBuilder3 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(classOf[Test])
 
-    /*    val result1 = planBuilder1
-          .loadCollection(List(1, 2, 3, 4, 5))
-          .map(_ * 1)
-          .runAsync(tempFileOut = "file:///tmp/out1.temp")
+    val result1 = planBuilder1.runAsync(_
+      .loadCollection(List(1, 2, 3, 4, 5))
+      .map(_ * 1),
+      tempFileOut = "file:///tmp/out1.temp"
+    )
 
-        val result2 = planBuilder2
-          .loadCollection(List(6, 7, 8, 9, 10))
-          .filter(_ <= 8)
-          .runAsync(tempFileOut = "file:///tmp/out2.temp")
+    val result2 = planBuilder2.runAsync(_
+      .loadCollection(List(6, 7, 8, 9, 10))
+      .filter(_ <= 8),
+      tempFileOut = "file:///tmp/out2.temp"
+    )
 
-        val result3 = planBuilder1
-          .combineFromAsync(result1, result2, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) => dq1.union(dq2))
-          .map(_ * 3)
-          .runAsync(tempFileOut = "file:///tmp/out3.temp")
-
-        val result4 = planBuilder3
-          .loadCollection(List(1, 2, 3, 4, 5))
-          .filter(_ >= 2)
-          .runAsync(tempFileOut = "file:///tmp/out4.temp")
-
-        val result5: Future[Unit] = planBuilder1
-          .combineFromAsync(result3, result4, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) => dq1.intersect(dq2))
-          .map(_ * 5)
-          .writeTextFile("file:///tmp/out5.final", s => s.toString) // Should write 15
-
-        println("Waiting...")
-        Await.result(result5, Duration.Inf)*/
-
-        val result1 = planBuilder1
-          .runAsync(_
-            .loadCollection(List(1, 2, 3, 4, 5))
-            .map(_ * 1),
-            tempFileOut = "file:///tmp/out1.temp"
-          )
-
-        val result2 = planBuilder2
-          .runAsync(_
-            .loadCollection(List(6, 7, 8, 9, 10))
-            .filter(_ <= 8),
-            tempFileOut = "file:///tmp/out2.temp"
-          )
-
-        val result3 = planBuilder1
-          .combineFromAsync(result1, result2, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) =>
-            dq1.union(dq2)
-          )
-          .andThenRunAsync(_
-            .map(_ * 3),
-            tempFileOut = "file:///tmp/out3.temp"
-          )
-
-        val result4 = planBuilder3
-          .runAsync(_
-            .loadCollection(List(1, 2, 3, 4, 5))
-            .filter(_ >= 2),
-            tempFileOut = "file:///tmp/out4.temp"
-          )
-
-        val result5: Future[Unit] = planBuilder1
-          .combineFromAsync(result3, result4, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) =>
-            dq1.intersect(dq2)
-          )
-          .andThenRunAsyncWithTextFileOut(_
-            .map(_ * 5),
-            textFileOut = "file:///tmp/out5.final"
-          )
-
-/*    val result1 = planBuilder1
-      .runAsync(_
-        .loadCollection(List(1, 2, 3, 4, 5))
-        .map(_ * 1),
-        tempFileOut = "file:///tmp/out1.temp"
-      )
-
-    val result2 = planBuilder2
-      .runAsync(_
-        .loadCollection(List(6, 7, 8, 9, 10))
-        .filter(_ <= 8),
-        tempFileOut = "file:///tmp/out2.temp"
-      )
-
-    val result3 = planBuilder1
-      .combineFromAsync(result1, result2, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) => dq1.union(dq2))
-      .transform(_
+    val result3 = planBuilder1.mergeAsync(result1, result2, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) =>
+      dq1.union(dq2)
         .map(_ * 3)
-      )
-      .andThenRunAsync("file:///tmp/out3.temp")
+        .filter(_ < 100),
+      tempFileOut = "file:///tmp/out3.temp"
+    )
 
-    val result4 = planBuilder3
-      .runAsync(_
-        .loadCollection(List(1, 2, 3, 4, 5))
-        .filter(_ >= 2),
-        tempFileOut = "file:///tmp/out4.temp"
-      )
+    val result4 = planBuilder3.runAsync(_
+      .loadCollection(List(1, 2, 3, 4, 5))
+      .filter(_ >= 2),
+      tempFileOut = "file:///tmp/out4.temp"
+    )
 
-    val result5: Future[Unit] = planBuilder1
-      .combineFromAsync(result3, result4, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) => dq1.intersect(dq2))
-      .transform(_
-        .map(_ * 5)
-      )
-      .andThenWriteTextFileOut("file:///tmp/out5.final")*/
+    val result5 = planBuilder1.mergeAsyncWithTextFileOut(result3, result4, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) =>
+      dq1.intersect(dq2)
+        .map(_ * 4),
+      textFileOut = "file:///tmp/out5.final"
+    )
 
     println("Waiting...")
     try {
