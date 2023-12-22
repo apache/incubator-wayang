@@ -19,7 +19,9 @@
 
 package org.apache.wayang.api
 
-import org.apache.wayang.api.async.DataQuantaImplicits.DataQuantaRunAsyncImplicits
+import org.apache.wayang.api.async.DataQuantaAsyncResult2
+import org.apache.wayang.api.async.DataQuantaImplicits._
+import org.apache.wayang.api.async.PlanBuilderImplicits._
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.platform.Platform
@@ -164,15 +166,52 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
   def execute(): Unit = {
 
     // Execute plans asynchronously
-    val futures: List[Future[Unit]] = multiContextPlanBuilder.blossomContexts.map(blossomContext => {
+    /*val futures: List[Future[Unit]] = multiContextPlanBuilder.blossomContexts.map(blossomContext => {
       val dataQuanta = dataQuantaMap(blossomContext.id)
       dataQuanta.runAsync(blossomContext)
-    })
+    })*/
+
+    /*val futures: List[Future[Any]] = executeBody().map(_.future)
 
     // Block indefinitely until all futures finish
-    val aggregateFuture: Future[List[Unit]] = Future.sequence(futures)
+    val aggregateFuture: Future[List[Any]] = Future.sequence(futures)
+    Await.result(aggregateFuture, Duration.Inf)*/
+
+    executeBody()
+
+  }
+
+  private def executeBody(): List[DataQuantaAsyncResult2[Out]] = {
+
+    // Execute plans asynchronously
+    val asyncResults = multiContextPlanBuilder.blossomContexts.map(blossomContext => {
+
+      val dataQuanta = dataQuantaMap(blossomContext.id)
+
+      blossomContext.getSink match {
+
+        case Some(textFileSink: BlossomContext.TextFileSink) =>
+          dataQuanta.runAsync2(textFileSink.textFileUrl)
+
+        case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
+          dataQuanta.runAsync2(objectFileSink.textFileUrl)
+
+        case None =>
+          throw new WayangException("All contexts must be attached to an output sink.")
+
+        case _ =>
+          throw new WayangException("Invalid sink.")
+      }
+    })
+
+    // Get futures
+    val futures: List[Future[Any]] = asyncResults.map(_.future)
+
+    // Block indefinitely until all futures finish
+    val aggregateFuture: Future[List[Any]] = Future.sequence(futures)
     Await.result(aggregateFuture, Duration.Inf)
 
+    asyncResults
   }
 
 
@@ -185,11 +224,11 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
    */
   private def executeAndReadSources(mergeContext: WayangContext): List[DataQuanta[Out]] = {
 
-    // Execute multi context job
+    /*// Execute multi context job
     this.execute()
 
     // Create plan builder for the new merge context
-    val planBuilder = new PlanBuilder(mergeContext).withUdfJarsOf(classOf[MultiContextDataQuanta[_]])
+    val planBuilder = new PlanBuilder(mergeContext).withUdfJarsOf(this.getClass)
 
     // Sources to merge
     var sources: List[DataQuanta[Out]] = List()
@@ -210,7 +249,26 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
     )
 
     // Return list of DataQuanta
+    sources*/
+
+    // Create plan builder for the new merge context
+    val planBuilder = new PlanBuilder(mergeContext).withUdfJarsOf(this.getClass)
+
+    // Sources to merge
+    var sources: List[DataQuanta[Out]] = List()
+
+    val asyncResults = executeBody()
+
+    /*val futures: List[Future[Any]] = asyncResults.map(_.future)
+
+    // Block indefinitely until all futures finish
+    val aggregateFuture: Future[List[Any]] = Future.sequence(futures)
+    Await.result(aggregateFuture, Duration.Inf)*/
+
+    asyncResults.foreach(dataQuantaAsyncResult2 => sources = sources :+ planBuilder.loadAsync(dataQuantaAsyncResult2))
+
     sources
+
   }
 
 

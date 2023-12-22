@@ -23,9 +23,7 @@ import org.apache.wayang.api.{BlossomContext, DataQuanta, MultiContextPlanBuilde
 import org.apache.wayang.java.Java
 import org.apache.wayang.multicontext.apps.loadConfig
 
-class TestCombineEach {}
-
-object TestCombineEach {
+object WordCountCombineEach {
 
   def main(args: Array[String]): Unit = {
     println("Counting words in multi context wayang!")

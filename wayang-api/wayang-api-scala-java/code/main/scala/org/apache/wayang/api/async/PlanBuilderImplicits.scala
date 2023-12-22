@@ -51,6 +51,12 @@ object PlanBuilderImplicits {
     }
   }
 
+  implicit class PlanBuilderLoadAsyncImplicit[Out: ClassTag](planBuilder: PlanBuilder) {
+    def loadAsync(asyncResult: DataQuantaAsyncResult2[Out]): DataQuanta[Out] = {
+      planBuilder.readObjectFile[Out](asyncResult.tempFileOut)
+    }
+  }
+
 
   /**
    * Implicit class that provides merge functionality to PlanBuilder.
@@ -132,25 +138,6 @@ object PlanBuilderImplicits {
       val future = readAndCombineDataQuanta(result1, result2, combiner)
         .flatMap(combinedDataQuanta => runAsyncWithObjectFileOut(combinedDataQuanta, objectFileOut))
       Await.result(future, Duration(timeoutInSeconds, SECONDS))
-    }
-
-
-    /**
-     * The difference with the above methods is that this one is for internal use only, thus the `private[api]` modifier.
-     *
-     * Combines the results of two asynchronous DataQuanta operations using a combiner function.
-     *
-     * @param result1  The result of the first asynchronous operation.
-     * @param result2  The result of the second asynchronous operation.
-     * @param combiner A function that takes two DataQuanta instances of type Out1 and Out2, and returns a DataQuanta instance of type NewOut.
-     * @tparam NewOut The type of the resulting DataQuanta.
-     * @return An AsyncDataQuanta instance representing the combined result.
-     */
-    private[api] def combineFromAsync[Out1: ClassTag, Out2: ClassTag, NewOut: ClassTag](result1: Future[DataQuantaAsyncResult[Out1]],
-                                                                                        result2: Future[DataQuantaAsyncResult[Out2]],
-                                                                                        combiner: (DataQuanta[Out1], DataQuanta[Out2]) => DataQuanta[NewOut]
-                                                                                       ): AsyncDataQuanta[NewOut] = {
-      new AsyncDataQuanta[NewOut](readAndCombineDataQuanta(result1, result2, combiner))
     }
 
 

@@ -25,9 +25,7 @@ import org.apache.wayang.java.Java
 import org.apache.wayang.multicontext.apps.loadConfig
 import org.apache.wayang.spark.Spark
 
-class Test {}
-
-object Test {
+object WordCountAsync {
 
   def main(args: Array[String]): Unit = {
     println("Counting words in parallel job wayang!")
@@ -41,9 +39,9 @@ object Test {
     val context2 = new BlossomContext(configuration2)
       .withPlugin(Spark.basicPlugin())
 
-    val planBuilder1 = new PlanBuilder(context1).withUdfJarsOf(classOf[Test])
-    val planBuilder2 = new PlanBuilder(context2).withUdfJarsOf(classOf[Test])
-    val planBuilder3 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(classOf[Test])
+    val planBuilder1 = new PlanBuilder(context1).withUdfJarsOf(this.getClass)
+    val planBuilder2 = new PlanBuilder(context2).withUdfJarsOf(this.getClass)
+    val planBuilder3 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
 
     val result1 = planBuilder1.runAsync(_
       .loadCollection(List(1, 2, 3, 4, 5))

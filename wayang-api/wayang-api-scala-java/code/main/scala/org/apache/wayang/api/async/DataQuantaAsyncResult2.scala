@@ -19,30 +19,19 @@
 
 package org.apache.wayang.api.async
 
-import org.apache.wayang.api.DataQuanta
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
-class AsyncDataQuanta[Out: ClassTag](val futureDataQuanta: Future[DataQuanta[Out]]) {
-
-  private[api] def andThenTransform[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut]): AsyncDataQuanta[NewOut] = {
-    new AsyncDataQuanta[NewOut](futureDataQuanta.map(plan(_)))
-  }
-
-  private[api] def andThenRunAsync(tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
-    futureDataQuanta.flatMap(runAsyncWithTempFileOut(_, tempFileOut))
-  }
-
-  private[api] def andThenWriteTextFileOut(url: String): Future[Unit] = {
-    futureDataQuanta.flatMap(runAsyncWithTextFileOut(_, url))
-  }
-
-  private[api] def andThenWriteObjectFileOut(url: String): Future[Unit] = {
-    futureDataQuanta.flatMap(runAsyncWithObjectFileOut(_, url))
-  }
-
-}
-
+/**
+ * Represents an asynchronous result of data quanta processing.
+ *
+ * The `DataQuantaAsyncResult2` class is a case class used to encapsulate the result of an asynchronous data quanta processing.
+ * It contains the temporary output file path, the class tag of the output type, and the future representing the completion
+ * of the processing.
+ *
+ * @param tempFileOut The temporary output file path.
+ * @param classTag    The class tag of the output type.
+ * @param future      The future representing the completion of the processing.
+ * @tparam Out The type of the output.
+ */
+case class DataQuantaAsyncResult2[Out: ClassTag](tempFileOut: String, classTag: ClassTag[Out], future: Future[_])
