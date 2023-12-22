@@ -55,6 +55,9 @@ class BlossomContextSerializer extends StdSerializer[BlossomContext](classOf[Blo
     blossomContext.getPlugins.foreach(plugin => jsonGenerator.writeString(plugin))
     jsonGenerator.writeEndArray()
 
+    // Write the type of the context
+    jsonGenerator.writeStringField("@type", "BlossomContext")
+
     jsonGenerator.writeEndObject()
   }
 }

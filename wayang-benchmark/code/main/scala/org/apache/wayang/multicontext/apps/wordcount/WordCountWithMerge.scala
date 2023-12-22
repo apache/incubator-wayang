@@ -44,7 +44,7 @@ object WordCountWithMerge {
       .withMergeFileSink("file:///tmp/out12")   // The mergeContext will read the output of context 2 from here
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
-      .withUdfJarsOf(classOf[WordCount])
+      .withUdfJarsOf(this.getClass)
 
     // To be used after merging the previous two
     val mergeContext = new WayangContext(new Configuration())
@@ -55,13 +55,35 @@ object WordCountWithMerge {
     val inputValues2 = Array("Big big data is big big.", "Is data big data big?")
 
     // Build and execute a word count in 2 different contexts
-    multiContextPlanBuilder
+    /*multiContextPlanBuilder
       .loadCollection(context1, inputValues1)
       .loadCollection(context2, inputValues2)
       .flatMap(_.split("\\s+"))
       .map(_.replaceAll("\\W+", "").toLowerCase)
       .map((_, 1))
       .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
+
+      // Merge contexts with union operator
+      .mergeUnion(mergeContext)
+
+      // Continue processing merged DataQuanta
+      .filter(_._2 >= 3)
+      .reduceByKey(_._1, (t1, t2) => (t1._1, t1._2 + t2._2))
+
+      // Write out
+      // Writes:
+      //    (big,9)
+      //    (data,6)
+      .writeTextFile("file:///tmp/out1.merged", s => s.toString())*/
+
+    // Build and execute a word count in 2 different contexts
+    multiContextPlanBuilder
+      .loadCollection(context1, inputValues1)
+      .loadCollection(context2, inputValues2)
+      .foreach(_.flatMap(_.split("\\s+")))
+      .foreach(_.map(_.replaceAll("\\W+", "").toLowerCase))
+      .foreach(_.map((_, 1)))
+      .foreach(_.reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)))
 
       // Merge contexts with union operator
       .mergeUnion(mergeContext)

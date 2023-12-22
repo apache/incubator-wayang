@@ -19,7 +19,8 @@
 
 package org.apache.wayang.api.serialization
 
-import org.apache.wayang.api.{BlossomContext, MultiContextDataQuanta, MultiContextPlanBuilder, PlanBuilder}
+import org.apache.wayang.api
+import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder, PlanBuilder}
 import org.apache.wayang.basic.operators.TextFileSink
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
@@ -60,6 +61,43 @@ class OtherSerializationTests extends SerializationTestBase {
 
 
   @Test
+  def planBuilderSerializationTest(): Unit = {
+    val configuration1 = new Configuration()
+    configuration1.setProperty("spark.master", "master1")
+
+    val context1 = new BlossomContext(configuration1).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
+
+    val planBuilder = new PlanBuilder(context1)
+      .withUdfJarsOf(classOf[OtherSerializationTests])
+      .withUdfJars("Aaa", "Bbb", "Ccc")
+
+    try {
+      val serialized = SerializationUtils.serializeAsString(planBuilder)
+      val deserialized = SerializationUtils.deserializeFromString[PlanBuilder](serialized)
+      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName.getMethodName + ".log.json")
+
+      Assert.assertEquals(
+        planBuilder.udfJars,
+        deserialized.udfJars
+      )
+      Assert.assertEquals(
+        deserialized.wayangContext.asInstanceOf[BlossomContext].getConfiguration.getStringProperty("spark.master"),
+        "master1"
+      )
+      Assert.assertEquals(
+        deserialized.wayangContext.asInstanceOf[BlossomContext].getSink.get.asInstanceOf[BlossomContext.TextFileSink].textFileUrl,
+        "file:///tmp/out11"
+      )
+    }
+    catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        throw t
+    }
+  }
+
+
+  @Test
   def multiContextPlanBuilderSerializationTest(): Unit = {
     val configuration1 = new Configuration()
     configuration1.setProperty("spark.master", "master1")
@@ -78,10 +116,6 @@ class OtherSerializationTests extends SerializationTestBase {
       val deserialized = SerializationUtils.deserializeFromString[MultiContextPlanBuilder](serialized)
       // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName.getMethodName + ".log.json")
 
-      Assert.assertEquals(
-        multiContextPlanBuilder.withClassesOf,
-        deserialized.withClassesOf
-      )
       Assert.assertEquals(
         multiContextPlanBuilder.udfJars,
         deserialized.udfJars
@@ -129,8 +163,8 @@ class OtherSerializationTests extends SerializationTestBase {
       .filter(s => s.head.length > 20)
       .map(s => s.head)
 
-    val tempfile = MultiContextDataQuanta.writeToTempFileAsString(dataQuanta.operator)
-    val operator = MultiContextDataQuanta.readFromTempFileFromString[Operator](tempfile)
+    val tempfile = TempFileUtils.writeToTempFileAsString(dataQuanta.operator)
+    val operator = TempFileUtils.readFromTempFileFromString[Operator](tempfile)
 
     // Attach an output sink to deserialized plan
     val tempFileOut = s"/tmp/${testName.getMethodName}.out"
@@ -164,8 +198,8 @@ class OtherSerializationTests extends SerializationTestBase {
       // Build and execute plan
       multiContextPlanBuilder
         .loadCollection(List("aaabbb", "aaabbbccc", "aaabbbcccddd", "aaabbbcccdddeee"))
-        .map(s => s + " Wayang out.")
-        .filter(s => s.length > 20)
+        .foreach(_.map(s => s + " Wayang out."))
+        .foreach(_.filter(s => s.length > 20))
         .execute()
 
       // Check results

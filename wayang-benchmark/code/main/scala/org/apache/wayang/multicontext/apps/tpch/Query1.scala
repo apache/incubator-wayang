@@ -68,16 +68,16 @@ object Query1 {
       .readTextFile(lineItemFile)
 
       // Parse
-      .map(s => LineItem.parseCsv(s))
+      .foreach(_.map(s => LineItem.parseCsv(s)))
 
       // Filter line items
-      .filter(t => t.shipDate <= CsvUtils.parseDate("1998-12-01") - delta)
+      .foreach(_.filter(t => t.shipDate <= CsvUtils.parseDate("1998-12-01") - delta))
 
       // Project line items
-      .map(t => (t.returnFlag, t.lineStatus, t.quantity, t.extendedPrice, t.discount, t.tax))
+      .foreach(_.map(t => (t.returnFlag, t.lineStatus, t.quantity, t.extendedPrice, t.discount, t.tax)))
 
       // Calculate result fields
-      .map { case (returnFlag, lineStatus, quantity, extendedPrice, discount, tax) =>
+      .foreach(_.map { case (returnFlag, lineStatus, quantity, extendedPrice, discount, tax) =>
         Query1Utils.Result(
           returnFlag.toString,
           lineStatus.toString,
@@ -90,10 +90,10 @@ object Query1 {
           discount,
           1
         )
-      }
+      })
 
       // Aggregate line items
-      .reduceByKey(
+      .foreach(_.reduceByKey(
         result => (result.l_returnflag, result.l_linestatus),
         (r1, r2) => Query1Utils.Result(
           r1.l_returnflag,
@@ -107,10 +107,10 @@ object Query1 {
           r1.avg_disc + r2.avg_disc,
           r1.count_order + r2.count_order
         )
-      )
+      ))
 
       // Post-process line items aggregates
-      .map(result => Query1Utils.Result(
+      .foreach(_.map(result => Query1Utils.Result(
         result.l_returnflag,
         result.l_linestatus,
         result.sum_qty,
@@ -121,7 +121,7 @@ object Query1 {
         result.avg_price / result.count_order,
         result.avg_disc / result.count_order,
         result.count_order
-      ))
+      )))
 
       // Execute
       .execute()

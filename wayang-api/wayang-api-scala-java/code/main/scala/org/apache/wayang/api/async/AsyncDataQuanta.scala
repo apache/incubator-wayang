@@ -20,7 +20,6 @@
 package org.apache.wayang.api.async
 
 import org.apache.wayang.api.DataQuanta
-import org.apache.wayang.api.async.DataQuantaImplicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -28,35 +27,6 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 class AsyncDataQuanta[Out: ClassTag](val futureDataQuanta: Future[DataQuanta[Out]]) {
-
-/*
-
-  // API 1
-
-  def map[NewOut: ClassTag](f: Out => NewOut): AsyncDataQuanta[NewOut] = {
-    val newFuture = futureDataQuanta.map(dataQuanta => dataQuanta.map(f))
-    new AsyncDataQuanta(newFuture)
-  }
-
-  def filter(p: Out => Boolean): AsyncDataQuanta[Out] = {
-    val newFuture = futureDataQuanta.map(dataQuanta => dataQuanta.filter(p))
-    new AsyncDataQuanta(newFuture)
-  }
-
-  def writeTextFile(url: String, formatterUdf: Out => String): Future[Unit] = {
-    futureDataQuanta.map(dataQuanta => dataQuanta.writeTextFile(url, formatterUdf))
-  }
-
-  def runAsync(tempFileOut: String): Future[DataQuantaRunAsyncResult[Out]] = {
-    futureDataQuanta.flatMap { dataQuanta =>
-      runAsyncWithTempFileOut(dataQuanta, tempFileOut).map { _ =>
-        DataQuantaRunAsyncResult(tempFileOut, implicitly[ClassTag[Out]])
-      }
-    }
-  }
-*/
-
-  // API 2 - Maybe internal only
 
   private[api] def andThenTransform[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut]): AsyncDataQuanta[NewOut] = {
     new AsyncDataQuanta[NewOut](futureDataQuanta.map(plan(_)))
@@ -73,26 +43,6 @@ class AsyncDataQuanta[Out: ClassTag](val futureDataQuanta: Future[DataQuanta[Out
   private[api] def andThenWriteObjectFileOut(url: String): Future[Unit] = {
     futureDataQuanta.flatMap(runAsyncWithObjectFileOut(_, url))
   }
-
-/*
-  // API 3 - Public
-
-  def andThenRunAsync[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut], tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
-    futureDataQuanta.flatMap(dataQuanta =>
-      runAsyncWithTempFileOut(plan(dataQuanta), tempFileOut).map { _ =>
-        DataQuantaAsyncResult(tempFileOut, implicitly[ClassTag[Out]])
-      }
-    )
-  }
-
-  def andThenRunAsyncWithTextFileOut[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut], textFileOut: String): Future[Unit] = {
-    futureDataQuanta.flatMap(dataQuanta => runAsyncWithTextFileOut(plan(dataQuanta), textFileOut))
-  }
-
-  def andThenRunAsyncWithObjectFileOut[NewOut: ClassTag](plan: DataQuanta[Out] => DataQuanta[NewOut], objectFileOut: String): Future[Unit] = {
-    futureDataQuanta.flatMap(dataQuanta => runAsyncWithObjectFileOut(plan(dataQuanta), objectFileOut))
-  }
-*/
 
 }
 

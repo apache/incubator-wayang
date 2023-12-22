@@ -1,6 +1,7 @@
 package org.apache.wayang.api
 
 import org.apache.logging.log4j.{LogManager, Logger}
+import org.apache.wayang.api.serialization.TempFileUtils
 import org.apache.wayang.core.api.exception.WayangException
 
 import java.nio.file.Files
@@ -26,7 +27,6 @@ package object async {
     runAsyncWithObjectFileOut(dataQuanta, tempFileOut)
       .map(_ => DataQuantaAsyncResult(tempFileOut, implicitly[ClassTag[Out]]))
   }
-
 
 
   /**
@@ -70,30 +70,30 @@ package object async {
     }
   }
 
-  private def runAsyncBody[Out: ClassTag](dataQuanta: DataQuanta[Out], blossomContext: BlossomContext): Future[Unit] = Future {
+
+  def runAsyncBody[Out: ClassTag](dataQuanta: DataQuanta[Out], blossomContext: BlossomContext): Future[Unit] = Future {
 
     import scala.concurrent.blocking
 
-    // Write context to temp file
-    val multiContextPlanBuilderPath = MultiContextDataQuanta.writeToTempFileAsString(
-      new MultiContextPlanBuilder(List(blossomContext)).withUdfJarsOf(classOf[DataQuantaImplicits]).withUdfJars(dataQuanta.planBuilder.udfJars.toSeq: _*)
-    )
+    val planBuilderPath = TempFileUtils.writeToTempFileAsString(dataQuanta.planBuilder.withUdfJarsOf(this.getClass))
 
     // Write operator to temp file
-    val operatorPath = MultiContextDataQuanta.writeToTempFileAsString(dataQuanta.operator)
+    val operatorPath = TempFileUtils.writeToTempFileAsString(dataQuanta.operator)
 
     var process: Process = null
 
     try {
       val wayangHome = Option(System.getenv("WAYANG_HOME"))
         .getOrElse(throw new RuntimeException("WAYANG_HOME is not set in the environment"))
+      val wayangSubmit = s"$wayangHome/bin/wayang-submit"
+      val mainClass = "org.apache.wayang.api.async.Main"
 
       // Child process
       val processBuilder = new ProcessBuilder(
-        s"$wayangHome/bin/wayang-submit",
-        "org.apache.wayang.api.MultiContextDataQuanta",
+        wayangSubmit,
+        mainClass,
         operatorPath.toString,
-        multiContextPlanBuilderPath.toString)
+        planBuilderPath.toString)
 
       // Redirect children out to parent out
       processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -104,12 +104,12 @@ package object async {
 
       // And block this future while waiting for it
       blocking {
-        process.waitFor() // Block while waiting for the process
+        process.waitFor()
       }
     }
 
     finally {
-      Files.deleteIfExists(multiContextPlanBuilderPath)
+      Files.deleteIfExists(planBuilderPath)
       Files.deleteIfExists(operatorPath)
     }
 

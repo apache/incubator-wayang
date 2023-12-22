@@ -19,15 +19,11 @@
 
 package org.apache.wayang.multicontext.apps.wordcount
 
-import org.apache.wayang.api.async.DataQuantaImplicits._
 import org.apache.wayang.api.async.PlanBuilderImplicits._
 import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder}
 import org.apache.wayang.java.Java
 import org.apache.wayang.multicontext.apps.loadConfig
 import org.apache.wayang.spark.Spark
-
-import scala.concurrent.duration.{Duration, SECONDS}
-import scala.concurrent.{Await, Future, TimeoutException}
 
 class Test {}
 
@@ -74,18 +70,11 @@ object Test {
       tempFileOut = "file:///tmp/out4.temp"
     )
 
-    val result5 = planBuilder1.mergeAsyncWithTextFileOut(result3, result4, (dq1: DataQuanta[Int], dq2: DataQuanta[Int]) =>
-      dq1.intersect(dq2)
+    val result5: Unit = planBuilder1.mergeAsyncWithTextFileOut(result3, result4, (dq3: DataQuanta[Int], dq4: DataQuanta[Int]) =>
+      dq3.intersect(dq4)
         .map(_ * 4),
       textFileOut = "file:///tmp/out5.final"
     )
-
-    println("Waiting...")
-    try {
-      Await.result(result5, Duration(60, SECONDS))
-    } catch {
-      case _ : TimeoutException => println("The process took too long to complete.")
-    }
 
   }
 

@@ -42,18 +42,38 @@ object WordCount {
       .withTextFileSink("file:///tmp/out12")
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
-      .withUdfJarsOf(classOf[WordCount])
+      .withUdfJarsOf(this.getClass)
 
     // Generate some test data
     val inputValues = Array("Big data is big.", "Is data big data?")
 
     // Build and execute a word count
-    multiContextPlanBuilder
+    /*multiContextPlanBuilder
       .loadCollection(inputValues)
       .flatMap(_.split("\\s+"))
       .map(_.replaceAll("\\W+", "").toLowerCase)
       .map((_, 1))
       .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
+      .execute()*/
+
+    // Build and execute a word count
+    /*multiContextPlanBuilder
+      .loadCollection(inputValues)
+      .foreach(_.flatMap(_.split("\\s+")))
+      .foreach(_.map(_.replaceAll("\\W+", "").toLowerCase))
+      .foreach(_.map((_, 1)))
+      .foreach(_.reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)))
+      .execute()*/
+
+    // Build and execute a word count
+    multiContextPlanBuilder
+      .loadCollection(inputValues)
+      .foreach(_
+        .flatMap(_.split("\\s+"))
+        .map(_.replaceAll("\\W+", "").toLowerCase)
+        .map((_, 1))
+        .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
+      )
       .execute()
   }
 

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.logging.log4j.Logger
-import org.apache.wayang.api.{BlossomContext, DataQuanta, MultiContextPlanBuilder}
+import org.apache.wayang.api.{BlossomContext, DataQuanta, MultiContextPlanBuilder, PlanBuilder}
 import org.apache.wayang.api.serialization.customserializers._
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators._
@@ -178,6 +178,9 @@ object SerializationUtils {
 
     @JsonIgnore
     private var dataQuantaMap: Map[Long, DataQuanta[_]] = _
+
+    @JsonIgnore
+    private var planBuilderMap: Map[Long, PlanBuilder] = _
   }
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
@@ -284,8 +287,8 @@ object SerializationUtils {
   }
 
   @JsonIdentityInfo(generator = classOf[ObjectIdGenerators.IntSequenceGenerator], property = "@id")
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
     new JsonSubTypes.Type(value = classOf[InputSlot[_]], name = "InputSlot"),
     new JsonSubTypes.Type(value = classOf[OutputSlot[_]], name = "OutputSlot"),
@@ -299,6 +302,10 @@ object SerializationUtils {
     private var occupiedSlots: List[InputSlot[T]] = _
   }
 
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[BlossomContext], name = "BlossomContext"),
+  ))
   abstract class WayangContextMixIn {
     @JsonIgnore
     private var logger: Logger = _
