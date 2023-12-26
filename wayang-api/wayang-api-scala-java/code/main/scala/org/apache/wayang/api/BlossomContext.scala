@@ -49,7 +49,7 @@ class BlossomContext(configuration: Configuration) extends WayangContext(configu
   }
 
   def withMergeFileSink(url: String): BlossomContext = {
-    this.sink = Some(BlossomContext.ObjectFileSink(url))
+    this.sink = Some(BlossomContext.MergeFileSink(url))
     this
   }
 
@@ -67,6 +67,7 @@ object BlossomContext {
   }
 
   private[api] trait UnarySink
-  private[api] case class TextFileSink(textFileUrl: String) extends UnarySink
-  private[api] case class ObjectFileSink(textFileUrl: String) extends UnarySink
+  private[api] case class TextFileSink(url: String) extends UnarySink
+  private[api] case class ObjectFileSink(url: String) extends UnarySink
+  private[api] case class MergeFileSink(url: String) extends UnarySink
 }

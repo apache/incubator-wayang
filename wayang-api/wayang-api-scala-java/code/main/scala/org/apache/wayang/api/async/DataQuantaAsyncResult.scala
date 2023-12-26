@@ -19,13 +19,19 @@
 
 package org.apache.wayang.api.async
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
- * Result for asynchronous Data Quanta operations.
+ * Represents an asynchronous result of data quanta processing.
  *
- * @param tempFileOut The temporary file path where the result will be stored.
- * @param classTag    The class tag of the result type.
- * @tparam Out The type of the result.
+ * The `DataQuantaAsyncResult2` class is a case class used to encapsulate the result of an asynchronous data quanta processing.
+ * It contains the temporary output file path, the class tag of the output type, and the future representing the completion
+ * of the processing.
+ *
+ * @param tempFileOut The temporary output file path.
+ * @param classTag    The class tag of the output type.
+ * @param future      The future representing the completion of the processing.
+ * @tparam Out The type of the output.
  */
-case class DataQuantaAsyncResult[Out: ClassTag](tempFileOut: String, classTag: ClassTag[Out])
+case class DataQuantaAsyncResult[Out: ClassTag](tempFileOut: String, classTag: ClassTag[Out], future: Future[_])

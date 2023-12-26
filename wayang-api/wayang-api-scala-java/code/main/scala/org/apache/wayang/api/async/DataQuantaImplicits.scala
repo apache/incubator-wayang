@@ -7,38 +7,69 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
+/**
+ * Implicit conversions and utility methods for asynchronous operations on `DataQuanta`.
+ */
 object DataQuantaImplicits {
 
   implicit class DataQuantaRunAsyncImplicits[T: ClassTag](dataQuanta: DataQuanta[T]) {
 
-    def runAsync(blossomContext: BlossomContext): Future[Unit] = {
-      async.runAsyncBody(dataQuanta, blossomContext)
-    }
-
-    def runAsync2(tempFileOut: String, dataQuantaAsyncResults: DataQuantaAsyncResult2[_]*): DataQuantaAsyncResult2[T] = {
-      // Schedule new future to run after the previous futures have completed
+    /**
+     * Asynchronously runs a Wayang plan and writes out to `tempFileOut`.
+     * This method schedules a new future to run after the previous futures in `dataQuantaAsyncResults` have completed.
+     * The result of the execution is represented by an instance of `DataQuantaAsyncResult`.
+     *
+     * @param tempFileOut            the temporary file output path
+     * @param dataQuantaAsyncResults a variable number of previous asynchronous results
+     * @return a future representing the asynchronous result of running the data quanta
+     */
+    def runAsync(tempFileOut: String, dataQuantaAsyncResults: DataQuantaAsyncResult[_]*): DataQuantaAsyncResult[T] = {
+      // Schedule new future to run after the previous futures in `dataQuantaAsyncResults` have completed
       val resultFuture: Future[_] = getFutureSequence(dataQuantaAsyncResults: _*).flatMap { _ =>
         async.runAsyncWithTempFileOut(dataQuanta, tempFileOut)
       }
-      DataQuantaAsyncResult2(tempFileOut, implicitly[ClassTag[T]], resultFuture)
+      DataQuantaAsyncResult(tempFileOut, implicitly[ClassTag[T]], resultFuture)
     }
 
-    def writeTextFileAsync(url: String, dataQuantaAsyncResults: DataQuantaAsyncResult2[_]*): Future[Unit] = {
-      // Schedule new future to run after the previous futures have completed
+    /**
+     * Similar to [[DataQuanta.writeTextFile]] but for asynchronous execution.
+     *
+     * @param url                    The URL where the text file should be written.
+     * @param dataQuantaAsyncResults The asynchronous results of data quanta operations.
+     *                               Variable arguments of type 'DataQuantaAsyncResult[_]'.
+     *                               Multiple results can be provided in any order.
+     *                               The method will wait for all the provided futures to complete
+     *                               before executing the file writing operation.
+     * @return A future unit indicating the completion of the text file writing operation.
+     * @throws RuntimeException if any of the provided asynchronous results
+     *                          fails with an exception during execution.
+     */
+    def writeTextFileAsync(url: String, dataQuantaAsyncResults: DataQuantaAsyncResult[_]*): Future[Unit] = {
+      // Schedule new future to run after the previous futures in `dataQuantaAsyncResults` have completed
       getFutureSequence(dataQuantaAsyncResults: _*).flatMap { _ =>
         async.runAsyncWithTextFileOut(dataQuanta, url)
       }
     }
 
-    def writeObjectFileAsync(url: String, dataQuantaAsyncResults: DataQuantaAsyncResult2[_]*): Future[Unit] = {
-      // Schedule new future to run after the previous futures have completed
+    /**
+     * Similar to [[DataQuanta.writeObjectFile]] but for asynchronous execution.
+     *
+     * @param url                    The URL of the object file sink.
+     * @param dataQuantaAsyncResults The asynchronous results of data quanta operations.
+     *                               Variable arguments of type 'DataQuantaAsyncResult[_]'.
+     *                               Multiple results can be provided in any order.
+     *                               The method will wait for all the provided futures to complete
+     *                               before executing the file writing operation.* @return A `Future` that completes when the data quanta have been written successfully.
+     */
+    def writeObjectFileAsync(url: String, dataQuantaAsyncResults: DataQuantaAsyncResult[_]*): Future[Unit] = {
+      // Schedule new future to run after the previous futures in `dataQuantaAsyncResults` have completed
       getFutureSequence(dataQuantaAsyncResults: _*).flatMap { _ =>
         async.runAsyncWithObjectFileOut(dataQuanta, url)
       }
     }
 
-    // Extract method refactoring
-    private def getFutureSequence(dataQuantaAsyncResult2: DataQuantaAsyncResult2[_]*): Future[Seq[Any]] = {
+    // Extract futures
+    private def getFutureSequence(dataQuantaAsyncResult2: DataQuantaAsyncResult[_]*): Future[Seq[Any]] = {
       // Extract the futures
       val futures: Seq[Future[Any]] = dataQuantaAsyncResult2.map(_.future)
 

@@ -23,9 +23,8 @@ package object async {
    *         DataQuantaAsyncResult object that holds the path to the temporary output file
    *         and the class tag for the output type.
    */
-  def runAsyncWithTempFileOut[Out: ClassTag](dataQuanta: DataQuanta[Out], tempFileOut: String): Future[DataQuantaAsyncResult[Out]] = {
+  def runAsyncWithTempFileOut[Out: ClassTag](dataQuanta: DataQuanta[Out], tempFileOut: String): Future[Unit] = {
     runAsyncWithObjectFileOut(dataQuanta, tempFileOut)
-      .map(_ => DataQuantaAsyncResult(tempFileOut, implicitly[ClassTag[Out]]))
   }
 
 
@@ -39,6 +38,7 @@ package object async {
    * @throws WayangException if the WayangContext is not of type BlossomContext
    */
   def runAsyncWithTextFileOut[Out: ClassTag](dataQuanta: DataQuanta[Out], url: String): Future[Unit] = {
+    // Add sink to blossom context and then pass to runAsyncBody
     val wayangContext = dataQuanta.planBuilder.wayangContext
     wayangContext match {
       case context: BlossomContext =>
@@ -60,6 +60,7 @@ package object async {
    * @throws WayangException if the WayangContext is not of type BlossomContext
    */
   def runAsyncWithObjectFileOut[Out: ClassTag](dataQuanta: DataQuanta[Out], url: String): Future[Unit] = {
+    // Add sink to blossom context and then pass to runAsyncBody
     val wayangContext = dataQuanta.planBuilder.wayangContext
     wayangContext match {
       case context: BlossomContext =>
@@ -75,6 +76,7 @@ package object async {
 
     import scala.concurrent.blocking
 
+    // Write plan builder to temp file
     val planBuilderPath = TempFileUtils.writeToTempFileAsString(dataQuanta.planBuilder.withUdfJarsOf(this.getClass))
 
     // Write operator to temp file
@@ -95,7 +97,7 @@ package object async {
         operatorPath.toString,
         planBuilderPath.toString)
 
-      // Redirect children out to parent out
+      // Redirect children output to parent output
       processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
       processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT)
 

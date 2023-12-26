@@ -51,40 +51,20 @@ object WordCountWithTargetPlatforms {
     val inputValues1 = Array("Big data is big.", "Is data big data?")
     val inputValues2 = Array("Big big data is big big.", "Is data big data big?")
 
-    // Build and execute a word count
-    /*multiContextPlanBuilder
-      .loadCollection(context1, inputValues1)
-      .loadCollection(context2, inputValues2)
-
-      .flatMap(_.split("\\s+"))
-      .withTargetPlatforms(context1, Spark.platform())
-      .withTargetPlatforms(context2, Java.platform())
-
-      .map(_.replaceAll("\\W+", "").toLowerCase)
-      .withTargetPlatforms(Java.platform())
-
-      .map((_, 1))
-
-      .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
-      .withTargetPlatforms(context1, Spark.platform())
-
-      .execute()*/
-
-
     multiContextPlanBuilder
       .loadCollection(context1, inputValues1)
       .loadCollection(context2, inputValues2)
 
-      .foreach(_.flatMap(_.split("\\s+")))
+      .forEach(_.flatMap(_.split("\\s+")))
       .withTargetPlatforms(context1, Spark.platform())
       .withTargetPlatforms(context2, Java.platform())
 
-      .foreach(_.map(_.replaceAll("\\W+", "").toLowerCase))
+      .forEach(_.map(_.replaceAll("\\W+", "").toLowerCase))
       .withTargetPlatforms(Java.platform())
 
-      .foreach(_.map((_, 1)))
+      .forEach(_.map((_, 1)))
 
-      .foreach(_.reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)))
+      .forEach(_.reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)))
       .withTargetPlatforms(context1, Spark.platform())
       .execute()
   }

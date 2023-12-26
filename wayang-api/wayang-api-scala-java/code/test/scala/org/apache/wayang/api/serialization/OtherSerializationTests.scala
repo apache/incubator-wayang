@@ -50,7 +50,7 @@ class OtherSerializationTests extends SerializationTestBase {
       val deserializedBlossomContext = SerializationUtils.deserialize[BlossomContext](serializedBlossomContext)
       Assert.assertEquals(deserializedBlossomContext.getConfiguration.getStringProperty("spark.master"), "random_master_url_1")
       Assert.assertEquals(deserializedBlossomContext.getConfiguration.getStringProperty("spark.app.name"), "random_app_name_2")
-      Assert.assertEquals(deserializedBlossomContext.getSink.get.asInstanceOf[BlossomContext.TextFileSink].textFileUrl, "file:///tmp/out11")
+      Assert.assertEquals(deserializedBlossomContext.getSink.get.asInstanceOf[BlossomContext.TextFileSink].url, "file:///tmp/out11")
       Assert.assertArrayEquals(blossomContext.getConfiguration.getPlatformProvider.provideAll().toArray, deserializedBlossomContext.getConfiguration.getPlatformProvider.provideAll().toArray)
     } catch {
       case t: Throwable =>
@@ -85,7 +85,7 @@ class OtherSerializationTests extends SerializationTestBase {
         "master1"
       )
       Assert.assertEquals(
-        deserialized.wayangContext.asInstanceOf[BlossomContext].getSink.get.asInstanceOf[BlossomContext.TextFileSink].textFileUrl,
+        deserialized.wayangContext.asInstanceOf[BlossomContext].getSink.get.asInstanceOf[BlossomContext.TextFileSink].url,
         "file:///tmp/out11"
       )
     }
@@ -129,11 +129,11 @@ class OtherSerializationTests extends SerializationTestBase {
         "master2"
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.blossomContexts(0).getSink.get.asInstanceOf[BlossomContext.TextFileSink].textFileUrl,
+        multiContextPlanBuilder.blossomContexts(0).getSink.get.asInstanceOf[BlossomContext.TextFileSink].url,
         "file:///tmp/out11"
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.blossomContexts(1).getSink.get.asInstanceOf[BlossomContext.ObjectFileSink].textFileUrl,
+        multiContextPlanBuilder.blossomContexts(1).getSink.get.asInstanceOf[BlossomContext.ObjectFileSink].url,
         "file:///tmp/out12"
       )
     }
@@ -197,9 +197,9 @@ class OtherSerializationTests extends SerializationTestBase {
 
       // Build and execute plan
       multiContextPlanBuilder
-        .loadCollection(List("aaabbb", "aaabbbccc", "aaabbbcccddd", "aaabbbcccdddeee"))
-        .foreach(_.map(s => s + " Wayang out."))
-        .foreach(_.filter(s => s.length > 20))
+        .forEach(_.loadCollection(List("aaabbb", "aaabbbccc", "aaabbbcccddd", "aaabbbcccdddeee")))
+        .forEach(_.map(s => s + " Wayang out."))
+        .forEach(_.filter(s => s.length > 20))
         .execute()
 
       // Check results

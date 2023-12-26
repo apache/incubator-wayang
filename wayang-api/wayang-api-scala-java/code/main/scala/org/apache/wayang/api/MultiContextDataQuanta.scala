@@ -19,11 +19,11 @@
 
 package org.apache.wayang.api
 
-import org.apache.wayang.api.async.DataQuantaAsyncResult2
 import org.apache.wayang.api.async.DataQuantaImplicits._
 import org.apache.wayang.api.async.PlanBuilderImplicits._
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.api.exception.WayangException
+import org.apache.wayang.core.plan.wayangplan.Operator
 import org.apache.wayang.core.platform.Platform
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -31,28 +31,28 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
 
-class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQuanta[Out]])(val multiContextPlanBuilder: MultiContextPlanBuilder) {
+class MultiContextDataQuanta[Out: ClassTag](private val dataQuantaMap: Map[Long, DataQuanta[Out]])(private val multiContextPlanBuilder: MultiContextPlanBuilder) {
 
   /**
-   * Apply the specified function to each DataQuanta.
+   * Apply the specified function to each [[DataQuanta]].
    *
-   * @tparam NewOut the type of elements in the resulting MultiContextDataQuanta
+   * @tparam NewOut the type of elements in the resulting [[MultiContextDataQuanta]]
    * @param f the function to apply to each element
-   * @return a new MultiContextDataQuanta with elements transformed by the function
+   * @return a new [[MultiContextDataQuanta]] with elements transformed by the function
    */
-  def foreach[NewOut: ClassTag](f: DataQuanta[Out] => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
+  def forEach[NewOut: ClassTag](f: DataQuanta[Out] => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
     new MultiContextDataQuanta[NewOut](dataQuantaMap.mapValues(f))(this.multiContextPlanBuilder)
 
 
   /**
-   * Merges this and `that` MultiContextDataQuanta, by using the `f` function to merge the corresponding DataQuanta.
-   * Returns a new MultiContextDataQuanta containing the results.
+   * Merges this and `that` [[MultiContextDataQuanta]], by using the `f` function to merge the corresponding [[DataQuanta]].
+   * Returns a new [[MultiContextDataQuanta]] containing the results.
    *
-   * @tparam ThatOut the type of data contained in `that` MultiContextDataQuanta
-   * @tparam NewOut  the type of data contained in the resulting MultiContextDataQuanta
-   * @param that the MultiContextDataQuanta to apply the function on
+   * @tparam ThatOut the type of data contained in `that` [[MultiContextDataQuanta]]
+   * @tparam NewOut  the type of data contained in the resulting [[MultiContextDataQuanta]]
+   * @param that the [[MultiContextDataQuanta]] to apply the function on
    * @param f    the function to apply on the corresponding data quanta
-   * @return a new MultiContextDataQuanta containing the results of applying the function
+   * @return a new [[MultiContextDataQuanta]] containing the results of applying the function
    */
   def combineEach[ThatOut: ClassTag, NewOut: ClassTag](that: MultiContextDataQuanta[ThatOut],
                                                        f: (DataQuanta[Out], DataQuanta[ThatOut]) => DataQuanta[NewOut]): MultiContextDataQuanta[NewOut] =
@@ -61,143 +61,95 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
       key -> f(thisDataQuanta, thatDataQuanta)
     })(this.multiContextPlanBuilder)
 
+
+  /**
+   * Restrict the [[Operator]] of each [[BlossomContext]] to run on certain [[Platform]]s.
+   *
+   * @param platforms on that the [[Operator]] may be executed
+   * @return this instance
+   */
   def withTargetPlatforms(platforms: Platform*): MultiContextDataQuanta[Out] = {
     new MultiContextDataQuanta[Out](this.dataQuantaMap.mapValues(_.withTargetPlatforms(platforms: _*)))(multiContextPlanBuilder)
   }
 
+
+  /**
+   * Restrict the [[Operator]] of specified [[BlossomContext]] to run on certain [[Platform]]s.
+   *
+   * @param blossomContext the [[BlossomContext]] to restrict
+   * @param platforms on that the [[Operator]] may be executed
+   * @return this instance
+   */
   def withTargetPlatforms(blossomContext: BlossomContext, platforms: Platform*): MultiContextDataQuanta[Out] = {
     val updatedDataQuanta = dataQuantaMap(blossomContext.id).withTargetPlatforms(platforms: _*)
     val updatedDataQuantaMap = dataQuantaMap.updated(blossomContext.id, updatedDataQuanta)
     new MultiContextDataQuanta[Out](updatedDataQuantaMap)(this.multiContextPlanBuilder)
   }
 
-  /*def map[NewOut: ClassTag](udf: Out => NewOut): MultiContextDataQuanta[NewOut] =
-    foreach(_.map(udf))
-
-  def mapPartitions[NewOut: ClassTag](udf: Iterable[Out] => Iterable[NewOut]): MultiContextDataQuanta[NewOut] =
-    foreach(_.mapPartitions(udf))
-
-  def filter(udf: Out => Boolean): MultiContextDataQuanta[Out] =
-    foreach(_.filter(udf))
-
-  def flatMap[NewOut: ClassTag](udf: Out => Iterable[NewOut]): MultiContextDataQuanta[NewOut] =
-    foreach(_.flatMap(udf))
-
-  def sample(sampleSize: Int,
-             datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
-             seed: Option[Long] = None,
-             sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): MultiContextDataQuanta[Out] =
-    foreach(_.sample(sampleSize, datasetSize, seed, sampleMethod))
-
-  def sampleDynamic(sampleSizeFunction: Int => Int,
-                    datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
-                    seed: Option[Long] = None,
-                    sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): MultiContextDataQuanta[Out] =
-    foreach(_.sampleDynamic(sampleSizeFunction, datasetSize, seed, sampleMethod))
-
-  def reduceByKey[Key: ClassTag](keyUdf: Out => Key,
-                                 udf: (Out, Out) => Out): MultiContextDataQuanta[Out] =
-    foreach(_.reduceByKey(keyUdf, udf))
-
-  def groupByKey[Key: ClassTag](keyUdf: Out => Key): MultiContextDataQuanta[java.lang.Iterable[Out]] =
-    foreach(_.groupByKey(keyUdf))
-
-  def reduce(udf: (Out, Out) => Out): MultiContextDataQuanta[Out] =
-    foreach(_.reduce(udf))
-
-  def union(that: MultiContextDataQuanta[Out]): MultiContextDataQuanta[Out] =
-    combineEach(that, (thisDataQuanta, thatDataQuanta: DataQuanta[Out]) => thisDataQuanta.union(thatDataQuanta))
-
-  def intersect(that: MultiContextDataQuanta[Out]): MultiContextDataQuanta[Out] =
-    combineEach(that, (thisDataQuanta, thatDataQuanta: DataQuanta[Out]) => thisDataQuanta.intersect(thatDataQuanta))
-
-  import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
-
-  def join[ThatOut: ClassTag, Key: ClassTag](thisKeyUdf: Out => Key,
-                                             that: MultiContextDataQuanta[ThatOut],
-                                             thatKeyUdf: ThatOut => Key)
-  : MultiContextDataQuanta[WayangTuple2[Out, ThatOut]] =
-    combineEach(that, (thisDataQuanta, thatDataQuanta: DataQuanta[ThatOut]) => thisDataQuanta.join(thisKeyUdf, thatDataQuanta, thatKeyUdf))
-
-  def coGroup[ThatOut: ClassTag, Key: ClassTag](thisKeyUdf: Out => Key,
-                                                that: MultiContextDataQuanta[ThatOut],
-                                                thatKeyUdf: ThatOut => Key)
-  : MultiContextDataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
-    combineEach(that, (thisDataQuanta, thatDataQuanta: DataQuanta[ThatOut]) => thisDataQuanta.coGroup(thisKeyUdf, thatDataQuanta, thatKeyUdf))
-
-  def cartesian[ThatOut: ClassTag](that: MultiContextDataQuanta[ThatOut])
-  : MultiContextDataQuanta[WayangTuple2[Out, ThatOut]] =
-    combineEach(that, (thisDataQuanta, thatDataQuanta: DataQuanta[ThatOut]) => thisDataQuanta.cartesian(thatDataQuanta))
-
-  def sort[Key: ClassTag](keyUdf: Out => Key): MultiContextDataQuanta[Out] =
-    foreach(_.sort(keyUdf))
-
-  def zipWithId: MultiContextDataQuanta[WayangTuple2[java.lang.Long, Out]] =
-    foreach(_.zipWithId)
-
-  def distinct: MultiContextDataQuanta[Out] =
-    foreach(_.distinct)
-
-  def count: MultiContextDataQuanta[java.lang.Long] =
-    foreach(_.count)
-
-  def doWhile[ConvOut: ClassTag](udf: Iterable[ConvOut] => Boolean,
-                                 bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut]),
-                                 numExpectedIterations: Int = 20)
-  : MultiContextDataQuanta[Out] =
-    foreach(_.doWhile(udf, bodyBuilder, numExpectedIterations))
-
-  def repeat(n: Int, bodyBuilder: DataQuanta[Out] => DataQuanta[Out]): MultiContextDataQuanta[Out] =
-    foreach(_.repeat(n, bodyBuilder))*/
-
 
   /**
-   * Execute the plans asynchronously.
+   * Executes the plan asynchronously.
    *
-   * This method runs the plans defined in `multiContextPlanBuilder.blossomContexts` list
-   * asynchronously. Each plan is executed in parallel, using the `dataQuanta.runAsync` method.
-   *
-   * After all plans are submitted for execution, this method blocks indefinitely using
-   * `Future.sequence` and `Await.result` to wait for all the futures to finish.
-   *
-   * @throws java.util.concurrent.TimeoutException if any of the futures don't complete within `Duration.Inf`
-   * @throws java.lang.InterruptedException        if the current thread is interrupted while waiting for the futures to complete
+   * @param timeout the maximum time to wait for the execution to complete.
+   *                If not specified, the execution will block indefinitely.
    */
-  def execute(): Unit = {
+  def execute(timeout: Duration = Duration.Inf): Unit = {
 
-    // Execute plans asynchronously
-    /*val futures: List[Future[Unit]] = multiContextPlanBuilder.blossomContexts.map(blossomContext => {
-      val dataQuanta = dataQuantaMap(blossomContext.id)
-      dataQuanta.runAsync(blossomContext)
-    })*/
-
-    /*val futures: List[Future[Any]] = executeBody().map(_.future)
-
-    // Block indefinitely until all futures finish
-    val aggregateFuture: Future[List[Any]] = Future.sequence(futures)
-    Await.result(aggregateFuture, Duration.Inf)*/
-
-    executeBody()
-
-  }
-
-  private def executeBody(): List[DataQuantaAsyncResult2[Out]] = {
-
-    // Execute plans asynchronously
     val asyncResults = multiContextPlanBuilder.blossomContexts.map(blossomContext => {
 
+      // For each blossomContext get its corresponding dataQuanta
       val dataQuanta = dataQuantaMap(blossomContext.id)
 
       blossomContext.getSink match {
 
+        // Execute plan asynchronously
         case Some(textFileSink: BlossomContext.TextFileSink) =>
-          dataQuanta.runAsync2(textFileSink.textFileUrl)
+          dataQuanta.writeTextFileAsync(textFileSink.url)
 
+        // Execute plan asynchronously
         case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
-          dataQuanta.runAsync2(objectFileSink.textFileUrl)
+          dataQuanta.writeObjectFileAsync(objectFileSink.url)
 
         case None =>
           throw new WayangException("All contexts must be attached to an output sink.")
+
+        case _ =>
+          throw new WayangException("Invalid sink.")
+      }
+    })
+
+    // Block indefinitely until all futures finish
+    val aggregateFuture: Future[List[Any]] = Future.sequence(asyncResults)
+    Await.result(aggregateFuture, timeout)
+
+  }
+
+
+  /**
+   * Merge the underlying [[DataQuanta]]s asynchronously using the [[DataQuanta.union]] operator.
+   *
+   * @param mergeContext The Wayang context for merging the [[DataQuanta]]s.
+   * @param timeout      The maximum time to wait for all futures to finish. Default is [[Duration.Inf]] (indefinitely).
+   * @return A [[DataQuanta]] representing the result of merging and unioning each of the [[DataQuanta]].
+   * @throws WayangException if any of the contexts are not attached to a merge sink or if the sink is invalid.
+   */
+  def mergeUnion(mergeContext: WayangContext, timeout: Duration = Duration.Inf): DataQuanta[Out] = {
+
+    // Execute plans asynchronously
+    val asyncResults = multiContextPlanBuilder.blossomContexts.map(blossomContext => {
+
+      // For each blossomContext get its corresponding dataQuanta
+      val dataQuanta = dataQuantaMap(blossomContext.id)
+
+      // Get the sink of the blossomContext (it should be a merge sink)
+      blossomContext.getSink match {
+
+        // And execute plan asynchronously
+        case Some(mergeFileSink: BlossomContext.MergeFileSink) =>
+          dataQuanta.runAsync(mergeFileSink.url)
+
+        case None =>
+          throw new WayangException("All contexts must be attached to a merge sink.")
 
         case _ =>
           throw new WayangException("Invalid sink.")
@@ -209,23 +161,7 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
 
     // Block indefinitely until all futures finish
     val aggregateFuture: Future[List[Any]] = Future.sequence(futures)
-    Await.result(aggregateFuture, Duration.Inf)
-
-    asyncResults
-  }
-
-
-  /**
-   * Executes a multi-context job and reads the results from object files.
-   *
-   * @param mergeContext the WayangContext used for merging the contexts
-   * @return a list of DataQuanta[Out] containing the merged results
-   * @throws WayangException if any of the contexts does not have an output sink attached or if the sink is invalid
-   */
-  private def executeAndReadSources(mergeContext: WayangContext): List[DataQuanta[Out]] = {
-
-    /*// Execute multi context job
-    this.execute()
+    Await.result(aggregateFuture, timeout)
 
     // Create plan builder for the new merge context
     val planBuilder = new PlanBuilder(mergeContext).withUdfJarsOf(this.getClass)
@@ -233,54 +169,10 @@ class MultiContextDataQuanta[Out: ClassTag](val dataQuantaMap: Map[Long, DataQua
     // Sources to merge
     var sources: List[DataQuanta[Out]] = List()
 
-    // For each context, read its output from object file
-    multiContextPlanBuilder.blossomContexts.foreach(context =>
-      context.getSink match {
-
-        case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
-          sources = sources :+ planBuilder.readObjectFile[Out](objectFileSink.textFileUrl)
-
-        case None =>
-          throw new WayangException("All contexts must be attached to an output sink.")
-
-        case _ =>
-          throw new WayangException("Invalid sink.")
-      }
-    )
-
-    // Return list of DataQuanta
-    sources*/
-
-    // Create plan builder for the new merge context
-    val planBuilder = new PlanBuilder(mergeContext).withUdfJarsOf(this.getClass)
-
-    // Sources to merge
-    var sources: List[DataQuanta[Out]] = List()
-
-    val asyncResults = executeBody()
-
-    /*val futures: List[Future[Any]] = asyncResults.map(_.future)
-
-    // Block indefinitely until all futures finish
-    val aggregateFuture: Future[List[Any]] = Future.sequence(futures)
-    Await.result(aggregateFuture, Duration.Inf)*/
-
+    // Create sources by loading each one using the merge context
     asyncResults.foreach(dataQuantaAsyncResult2 => sources = sources :+ planBuilder.loadAsync(dataQuantaAsyncResult2))
 
-    sources
-
-  }
-
-
-  /**
-   * Merges all DataQuanta into a single one using the union operator.
-   *
-   * @param mergeContext The WayangContext used to execute and read the sources.
-   * @tparam Out The type of the data in the data sources.
-   * @return A DataQuanta object representing the merged ones.
-   */
-  def mergeUnion(mergeContext: WayangContext): DataQuanta[Out] = {
-    val sources: List[DataQuanta[Out]] = executeAndReadSources(mergeContext)
+    // Merge sources with union and return
     sources.reduce((dq1, dq2) => dq1.union(dq2))
   }
 

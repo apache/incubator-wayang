@@ -46,10 +46,10 @@ object Main {
     // Connect to sink and execute plan
     context.getSink match {
       case Some(textFileSink: BlossomContext.TextFileSink) =>
-        connectToSinkAndExecutePlan(new TextFileSink(textFileSink.textFileUrl, outType))
+        connectToSinkAndExecutePlan(new TextFileSink(textFileSink.url, outType))
 
       case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
-        connectToSinkAndExecutePlan(new ObjectFileSink(objectFileSink.textFileUrl, outType))
+        connectToSinkAndExecutePlan(new ObjectFileSink(objectFileSink.url, outType))
 
       case None =>
         throw new WayangException("All contexts must be attached to an output sink.")

@@ -47,20 +47,23 @@ object WordCountCombineEach {
 
     // Build and execute a word count
     val dq1 = multiContextPlanBuilder
-      .loadCollection(inputValues)
-      .foreach(_.flatMap(_.split("\\s+")))
-      .foreach(_.map(_.replaceAll("\\W+", "").toLowerCase))
-      .foreach(_.map((_, 1)))
-      .foreach(_.reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)))
+      .forEach(_.loadCollection(inputValues))
+      .forEach(_.flatMap(_.split("\\s+")))
+      .forEach(_.map(_.replaceAll("\\W+", "").toLowerCase))
+      .forEach(_.map((_, 1)))
+      .forEach(_.reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)))
 
     val dq2 = multiContextPlanBuilder
-      .loadCollection(inputValues)
-      .foreach(_.flatMap(_.split("\\s+")))
-      .foreach(_.map(_.replaceAll("\\W+", "").toLowerCase))
-      .foreach(_.map((_, 1)))
-      .foreach(_.reduceByKey(_._1, (a, _) => (a._1, 100)))
+      .forEach(_.loadCollection(inputValues))
+      .forEach(_.flatMap(_.split("\\s+")))
+      .forEach(_.map(_.replaceAll("\\W+", "").toLowerCase))
+      .forEach(_.map((_, 1)))
+      .forEach(_.reduceByKey(_._1, (a, _) => (a._1, 100)))
 
-      dq1.combineEach(dq2, (dq1: DataQuanta[(String, Int)], dq2: DataQuanta[(String, Int)]) => dq1.union(dq2))
+    dq1.combineEach(dq2, (dq1: DataQuanta[(String, Int)], dq2: DataQuanta[(String, Int)]) =>
+        dq1.union(dq2)
+      )
+      .forEach(_.map(t => (t._1 + " wayang out", t._2)))
       .execute()
   }
 

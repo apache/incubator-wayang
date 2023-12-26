@@ -65,19 +65,19 @@ object Query1 {
     multiContextPlanBuilder
 
       // Load lineitem file
-      .readTextFile(lineItemFile)
+      .forEach(_.readTextFile(lineItemFile))
 
       // Parse
-      .foreach(_.map(s => LineItem.parseCsv(s)))
+      .forEach(_.map(s => LineItem.parseCsv(s)))
 
       // Filter line items
-      .foreach(_.filter(t => t.shipDate <= CsvUtils.parseDate("1998-12-01") - delta))
+      .forEach(_.filter(t => t.shipDate <= CsvUtils.parseDate("1998-12-01") - delta))
 
       // Project line items
-      .foreach(_.map(t => (t.returnFlag, t.lineStatus, t.quantity, t.extendedPrice, t.discount, t.tax)))
+      .forEach(_.map(t => (t.returnFlag, t.lineStatus, t.quantity, t.extendedPrice, t.discount, t.tax)))
 
       // Calculate result fields
-      .foreach(_.map { case (returnFlag, lineStatus, quantity, extendedPrice, discount, tax) =>
+      .forEach(_.map { case (returnFlag, lineStatus, quantity, extendedPrice, discount, tax) =>
         Query1Utils.Result(
           returnFlag.toString,
           lineStatus.toString,
@@ -93,7 +93,7 @@ object Query1 {
       })
 
       // Aggregate line items
-      .foreach(_.reduceByKey(
+      .forEach(_.reduceByKey(
         result => (result.l_returnflag, result.l_linestatus),
         (r1, r2) => Query1Utils.Result(
           r1.l_returnflag,
@@ -110,7 +110,7 @@ object Query1 {
       ))
 
       // Post-process line items aggregates
-      .foreach(_.map(result => Query1Utils.Result(
+      .forEach(_.map(result => Query1Utils.Result(
         result.l_returnflag,
         result.l_linestatus,
         result.sum_qty,

@@ -18,15 +18,13 @@
 
 package org.apache.wayang.api
 
-import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.TableSource
 import org.apache.wayang.core.util.ReflectionUtils
 
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
-class MultiContextPlanBuilder(val blossomContexts: List[BlossomContext]) {
+class MultiContextPlanBuilder(private[api] val blossomContexts: List[BlossomContext]) {
 
   private[api] var udfJars = scala.collection.mutable.Set[String]()
 
@@ -39,46 +37,75 @@ class MultiContextPlanBuilder(val blossomContexts: List[BlossomContext]) {
   def this(blossomContexts: java.util.List[BlossomContext]) =
     this(blossomContexts.asScala.toList)
 
+
+  /**
+   * Defines user-code JAR files that might be needed to transfer to execution platforms.
+   *
+   * @param paths paths to JAR files that should be transferred
+   * @return this instance
+   */
   def withUdfJars(paths: String*): MultiContextPlanBuilder = {
     // For each planBuilder in planBuilderMap,
-    // call its `withUdfJars` method with the value of `this.udfJars`
-    // and update map with the new PlanBuilder
+    // call its `withUdfJars` method with the value of `this.udfJars` and update map with the new PlanBuilder
     planBuilderMap = planBuilderMap.mapValues(_.withUdfJars(paths.toSeq: _*))
     this
   }
 
+  /**
+   * Defines user-code JAR files that might be needed to transfer to execution platforms.
+   *
+   * @param classes whose JAR files should be transferred
+   * @return this instance
+   */
   def withUdfJarsOf(classes: Class[_]*): MultiContextPlanBuilder = {
     withUdfJars(classes.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
     this
   }
 
-  private def wrapInMultiContextDataQuanta[T: ClassTag](f: PlanBuilder => DataQuanta[T]): MultiContextDataQuanta[T] = {
+  /**
+   * Applies a function `f` to each [[PlanBuilder]] in the contexts.
+   * Returns a [[MultiContextDataQuanta]] containing the [[DataQuanta]].
+   *
+   * @param f the function to apply to each [[PlanBuilder]]
+   * @tparam Out the type parameter for the output of the `f` function
+   * @return a [[MultiContextDataQuanta]] containing the results of applying `f` to each [[PlanBuilder]]
+   */
+  def forEach[Out: ClassTag](f: PlanBuilder => DataQuanta[Out]): MultiContextDataQuanta[Out] = {
     val dataQuantaMap = blossomContexts.map(context => context.id -> f(planBuilderMap(context.id))).toMap
-    new MultiContextDataQuanta[T](dataQuantaMap)(this)
+    new MultiContextDataQuanta[Out](dataQuantaMap)(this)
   }
 
-  def readTextFile(url: String): MultiContextDataQuanta[String] =
-    wrapInMultiContextDataQuanta(_.readTextFile(url))
-
+  /**
+   * Same as [[PlanBuilder.readTextFile]], but for specified `blossomContext`
+   *
+   * @param blossomContext The Blossom context.
+   * @param url            The URL of the text file to be read.
+   * @return The ReadTextFileMultiContextPlanBuilder with the added data quanta.
+   */
   def readTextFile(blossomContext: BlossomContext, url: String): ReadTextFileMultiContextPlanBuilder = {
     dataQuantaMap += (blossomContext.id -> planBuilderMap(blossomContext.id).readTextFile(url))
     new ReadTextFileMultiContextPlanBuilder(this, blossomContextMap, dataQuantaMap.asInstanceOf[Map[Long, DataQuanta[String]]])
   }
 
-  def readObjectFile[T: ClassTag](url: String): MultiContextDataQuanta[T] =
-    wrapInMultiContextDataQuanta(_.readObjectFile(url))
-
+  /**
+   * Same as [[PlanBuilder.readObjectFile()]], but for specified `blossomContext`
+   *
+   * @param blossomContext The Blossom context.
+   * @param url            The URL of the object file to be read.
+   * @return The ReadObjectFileMultiContextPlanBuilder with the added data quanta.
+   */
   def readObjectFile[T: ClassTag](blossomContext: BlossomContext, url: String): ReadObjectFileMultiContextPlanBuilder[T] = {
     dataQuantaMap += (blossomContext.id -> planBuilderMap(blossomContext.id).readObjectFile(url))
     new ReadObjectFileMultiContextPlanBuilder[T](this, blossomContextMap, dataQuantaMap.asInstanceOf[Map[Long, DataQuanta[T]]])
   }
 
-  def readTable(source: TableSource): MultiContextDataQuanta[Record] =
-    wrapInMultiContextDataQuanta(_.readTable(source))
-
-  def loadCollection[T: ClassTag](iterable: Iterable[T]): MultiContextDataQuanta[T] =
-    wrapInMultiContextDataQuanta(_.loadCollection(iterable))
-
+  /**
+   * Same as [[PlanBuilder.loadCollection]], but for specified `blossomContext`
+   *
+   * @param blossomContext The Blossom context.
+   * @param iterable       The collection to be loaded.
+   * @return The LoadCollectionMultiContextPlanBuilder with the added data quanta.
+   */
   def loadCollection[T: ClassTag](blossomContext: BlossomContext, iterable: Iterable[T]): LoadCollectionMultiContextPlanBuilder[T] = {
     dataQuantaMap += (blossomContext.id -> planBuilderMap(blossomContext.id).loadCollection(iterable))
     new LoadCollectionMultiContextPlanBuilder[T](this, blossomContextMap, dataQuantaMap.asInstanceOf[Map[Long, DataQuanta[T]]])
@@ -87,9 +114,17 @@ class MultiContextPlanBuilder(val blossomContexts: List[BlossomContext]) {
 }
 
 
-class ReadTextFileMultiContextPlanBuilder(val multiContextPlanBuilder: MultiContextPlanBuilder,
-                                          val blossomContextMap: Map[Long, BlossomContext],
-                                          var dataQuantaMap: Map[Long, DataQuanta[String]] = Map()) {
+class ReadTextFileMultiContextPlanBuilder(private val multiContextPlanBuilder: MultiContextPlanBuilder,
+                                          private val blossomContextMap: Map[Long, BlossomContext],
+                                          private var dataQuantaMap: Map[Long, DataQuanta[String]] = Map()) {
+
+  /**
+   * Same as [[PlanBuilder.readTextFile]], but for specified `blossomContext`
+   *
+   * @param blossomContext The Blossom context.
+   * @param url            The URL of the text file to be read.
+   * @return The ReadTextFileMultiContextPlanBuilder with the added data quanta.
+   */
   def readTextFile(blossomContext: BlossomContext, url: String): ReadTextFileMultiContextPlanBuilder = {
     dataQuantaMap += (blossomContext.id -> blossomContextMap(blossomContext.id).readTextFile(url))
     this
@@ -103,9 +138,17 @@ object ReadTextFileMultiContextPlanBuilder {
 }
 
 
-class ReadObjectFileMultiContextPlanBuilder[T: ClassTag](val multiContextPlanBuilder: MultiContextPlanBuilder,
-                                                         val blossomContextMap: Map[Long, BlossomContext],
-                                                         var dataQuantaMap: Map[Long, DataQuanta[T]] = Map()) {
+class ReadObjectFileMultiContextPlanBuilder[T: ClassTag](private val multiContextPlanBuilder: MultiContextPlanBuilder,
+                                                         private val blossomContextMap: Map[Long, BlossomContext],
+                                                         private var dataQuantaMap: Map[Long, DataQuanta[T]] = Map()) {
+
+  /**
+   * Same as [[PlanBuilder.readObjectFile()]], but for specified `blossomContext`
+   *
+   * @param blossomContext The Blossom context.
+   * @param url            The URL of the object file to be read.
+   * @return The ReadObjectFileMultiContextPlanBuilder with the added data quanta.
+   */
   def readObjectFile(blossomContext: BlossomContext, url: String): ReadObjectFileMultiContextPlanBuilder[T] = {
     dataQuantaMap += (blossomContext.id -> blossomContextMap(blossomContext.id).readObjectFile(url))
     this
@@ -119,9 +162,17 @@ object ReadObjectFileMultiContextPlanBuilder {
 }
 
 
-class LoadCollectionMultiContextPlanBuilder[T: ClassTag](val multiContextPlanBuilder: MultiContextPlanBuilder,
-                                                         val blossomContextMap: Map[Long, BlossomContext],
-                                                         var dataQuantaMap: Map[Long, DataQuanta[T]] = Map()) {
+class LoadCollectionMultiContextPlanBuilder[T: ClassTag](private val multiContextPlanBuilder: MultiContextPlanBuilder,
+                                                         private val blossomContextMap: Map[Long, BlossomContext],
+                                                         private var dataQuantaMap: Map[Long, DataQuanta[T]] = Map()) {
+
+  /**
+   * Same as [[PlanBuilder.loadCollection]], but for specified `blossomContext`
+   *
+   * @param blossomContext The Blossom context.
+   * @param iterable       The collection to be loaded.
+   * @return The LoadCollectionMultiContextPlanBuilder with the added data quanta.
+   */
   def loadCollection(blossomContext: BlossomContext, iterable: Iterable[T]): LoadCollectionMultiContextPlanBuilder[T] = {
     dataQuantaMap += (blossomContext.id -> blossomContextMap(blossomContext.id).loadCollection(iterable))
     this
