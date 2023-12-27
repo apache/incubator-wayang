@@ -30,7 +30,7 @@ class WordCountWithMerge {}
 object WordCountWithMerge {
 
   def main(args: Array[String]): Unit = {
-    println("Counting words with merge in multi context wayang!")
+    println("WordCountWithMerge")
     println("Scala version:")
     println(scala.util.Properties.versionString)
 

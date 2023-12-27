@@ -28,7 +28,7 @@ class WordCount {}
 object WordCount {
 
   def main(args: Array[String]): Unit = {
-    println("Counting words in multi context wayang!")
+    println("WordCount")
     println("Scala version:")
     println(scala.util.Properties.versionString)
 

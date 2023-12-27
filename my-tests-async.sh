@@ -23,7 +23,7 @@ NC='\033[0m' # No Color
 
 # Array of Main classes
 java_mains=(
-    "org.apache.wayang.async.apps.WordCountAsync"
+    "org.apache.wayang.async.apps.WordCount"
     "org.apache.wayang.multicontext.apps.wordcount.WordCount"
     "org.apache.wayang.multicontext.apps.wordcount.WordCountCombineEach"
     "org.apache.wayang.multicontext.apps.wordcount.WordCountWithMerge"

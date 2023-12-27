@@ -23,28 +23,19 @@ import org.apache.wayang.api.async.DataQuantaImplicits._
 import org.apache.wayang.api.async.PlanBuilderImplicits._
 import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder}
 import org.apache.wayang.java.Java
-import org.apache.wayang.multicontext.apps.loadConfig
-import org.apache.wayang.spark.Spark
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-object WordCountAsync {
+object WordCount {
 
   def main(args: Array[String]): Unit = {
-    println("TestAsync2!")
+    println("WordCount")
     println("Scala version:")
     println(scala.util.Properties.versionString)
 
-    val (configuration1, configuration2) = loadConfig(args)
-
-    val context1 = new BlossomContext(configuration1)
-      .withPlugin(Java.basicPlugin())
-    val context2 = new BlossomContext(configuration2)
-      .withPlugin(Spark.basicPlugin())
-
-    val planBuilder1 = new PlanBuilder(context1).withUdfJarsOf(this.getClass)
-    val planBuilder2 = new PlanBuilder(context2).withUdfJarsOf(this.getClass)
+    val planBuilder1 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
+    val planBuilder2 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
     val planBuilder3 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
 
     val result1 = planBuilder1

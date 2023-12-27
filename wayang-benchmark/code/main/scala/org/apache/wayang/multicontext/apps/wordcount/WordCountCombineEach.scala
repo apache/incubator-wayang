@@ -26,7 +26,7 @@ import org.apache.wayang.multicontext.apps.loadConfig
 object WordCountCombineEach {
 
   def main(args: Array[String]): Unit = {
-    println("Counting words in multi context wayang!")
+    println("WordCountCombineEach")
     println("Scala version:")
     println(scala.util.Properties.versionString)
 

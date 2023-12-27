@@ -29,7 +29,7 @@ class WordCountWithTargetPlatforms {}
 object WordCountWithTargetPlatforms {
 
   def main(args: Array[String]): Unit = {
-    println("Counting words with target platforms in multi context wayang!")
+    println("WordCountWithTargetPlatforms")
     println("Scala version:")
     println(scala.util.Properties.versionString)
 
