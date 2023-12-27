@@ -239,7 +239,7 @@ class OperatorSerializationTests extends SerializationTestBase {
     // Assert output
     val expectedValues = List(("Apple juice", 10), ("Tap water", 0), ("Orange juice", 10))
       .map(s => s.toString())
-    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
 
     // Clean up: Delete the temp files
     tempFile1.delete()
@@ -435,7 +435,7 @@ class OperatorSerializationTests extends SerializationTestBase {
       .filter(n => n > 50)
 
     val expectedValues = List(96, 192).map(_.toString)
-    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
   @Test
@@ -487,7 +487,7 @@ class OperatorSerializationTests extends SerializationTestBase {
 
     // Execute and assert
     val expectedValues = List("John", "Evelyn")
-    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
 //  @Test
@@ -509,7 +509,7 @@ class OperatorSerializationTests extends SerializationTestBase {
 
     // Execute and assert
     val expectedValues = List("John", "Jane")
-    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues, log = true)
+    serializeDeserializeExecuteAssert(dq.operator, wayang, expectedValues)
   }
 
 }
