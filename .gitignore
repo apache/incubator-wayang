@@ -17,3 +17,5 @@ pom.xml.*
 
 10e*.input
 *_pb2.py
+/build/env.sh
+/conf/kafka/default.properties
