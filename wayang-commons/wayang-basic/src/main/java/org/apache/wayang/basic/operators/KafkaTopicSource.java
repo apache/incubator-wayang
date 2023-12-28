@@ -65,16 +65,12 @@ public class KafkaTopicSource extends UnarySource<String> {
 
     public KafkaTopicSource(String topicName) {
         this(topicName, "UTF-8");
-        Properties props = getDefaultProperties();
-        this.consumer = new KafkaConsumer<String, String>(props);
     }
 
     public KafkaTopicSource(String topicName, String encoding) {
         super(DataSetType.createDefault(String.class));
         this.topicName = topicName;
         this.encoding = encoding;
-        Properties props = getDefaultProperties();
-        this.consumer = new KafkaConsumer<String, String>(props);
     }
 
     /**
@@ -87,8 +83,6 @@ public class KafkaTopicSource extends UnarySource<String> {
         this.topicName = that.getTopicName();
         this.encoding = that.getEncoding();
         this.consumer = that.getConsumer();
-        Properties props = getDefaultProperties();
-        this.consumer = new KafkaConsumer<String, String>(props);
     }
 
     public String getTopicName() {
@@ -102,6 +96,8 @@ public class KafkaTopicSource extends UnarySource<String> {
     boolean isInitialized = false;
 
     public KafkaConsumer<String, String> getConsumer(){
+        Properties props = getDefaultProperties();
+        this.consumer = new KafkaConsumer<String, String>(props);
         if( !isInitialized ) {
             this.consumer.subscribe(Arrays.asList(topicName));
             isInitialized = true;

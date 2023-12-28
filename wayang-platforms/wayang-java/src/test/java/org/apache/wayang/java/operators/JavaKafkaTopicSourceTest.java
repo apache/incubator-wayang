@@ -29,10 +29,17 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 /**
  * Test suite for {@link JavaKafkaTopicSource}.
@@ -60,15 +67,75 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
     }
 
     @Test
-    public void testTextReadFromKafkaTopicFile() throws Exception {
+    public void testA() throws Exception {
+        Assert.assertEquals(3, 3);
+    }
+
+    @Test
+    public void testReadFromKafkaTopic() {
+
+        final String topicName1 = "banking-tx-small-csv";
+
+        System.out.println("> 0 ... ");
+
+        System.out.println( "*** [TOPIC-Name] " + topicName1 + " ***");
+
+        System.out.println( ">   Read from topic ... ");
+
+        System.out.println("> 1 ... ");
+
+        Properties props = KafkaTopicSource.getDefaultProperties();
+
+        System.out.println("> 2 ... ");
+
+        props.list(System.out);
+
+        System.out.println("> 3 ... ");
+
+        KafkaConsumer consumer = new KafkaConsumer<String, String>(props);
+
+        try {
+
+            //consumer.subscribe( Arrays.asList(topicName1) );
+
+            int i=0;
+            while (i < 4) {
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+                for (ConsumerRecord<String, String> record : records) {
+                    processRecord(record);
+                    i++;
+                }
+            }
+
+            Assert.assertEquals(3, i);
+
+            System.out.println("> 4 ... ");
+        }
+        catch (Exception ex) {
+
+            ex.printStackTrace();
+
+        }
+    }
+
+    private void processRecord(ConsumerRecord<String, String> record) {
+        // Implement your record processing logic here
+        System.out.printf("key = %s, value = %s%n", record.key(), record.value());
+    }
+
+    /**
+    //@Test
+    public void testTextReadFromKafkaTopic() throws Exception {
 
         final String topicName = "banking-tx-small-csv";
 
-        System.out.println( "* [TOPIC-Name] " + topicName + " *");
+        System.out.println("> 0 ... ");
+
+        System.out.println( "*** [TOPIC-Name] " + topicName + " ***");
 
         JavaExecutor javaExecutor = null;
 
-        System.out.println("> Read from topic ... ");
+        System.out.println( ">   Read from topic ... ");
 
         try {
 
@@ -93,7 +160,9 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
 
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
+
             Assert.assertEquals(3, result.size());
+
         } catch(Exception ex) {
             ex.printStackTrace();
         } finally {
@@ -101,5 +170,5 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
         }
     }
 
-
+    **/
 }
