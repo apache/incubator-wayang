@@ -19,9 +19,8 @@
 
 package org.apache.wayang.api.serialization
 
-import org.apache.wayang.api
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder, PlanBuilder}
-import org.apache.wayang.basic.operators.TextFileSink
+import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder, PlanBuilder, createPlanBuilder}
+import org.apache.wayang.basic.operators.{MapOperator, TextFileSink}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
 import org.apache.wayang.core.platform.Platform
@@ -29,6 +28,8 @@ import org.apache.wayang.core.util.ReflectionUtils
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 import org.junit.{Assert, Test}
+import org.apache.wayang.api.toLoadEstimator
+import org.apache.wayang.core.optimizer.costs._
 
 
 class OtherSerializationTests extends SerializationTestBase {
@@ -282,6 +283,61 @@ class OtherSerializationTests extends SerializationTestBase {
         t.printStackTrace()
         throw t
     }
+  }
+
+
+  @Test
+  def testLoadProfileEstimators(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    // Create LoadEstimators
+    // val loadProfileEstimator: LoadProfileEstimator = new NestableLoadProfileEstimator(LoadEstimator.createFallback(1, 1), LoadEstimator.createFallback(1, 1))
+
+    val loadProfileEstimator: LoadProfileEstimator = new NestableLoadProfileEstimator(
+      (in: Long, _: Long) => 10 * in,
+      (_: Long, _: Long) => 1000L
+    )
+
+    // Create map operator with load profile estimator
+    val dq1 = wayang.loadCollection(List(1, 2, 3))
+      .map(_ + 1, udfLoad = loadProfileEstimator)
+
+    var deserialized: Operator = null
+
+    // Serialize and then deserialize the map operator
+    try {
+      val serialized = SerializationUtils.serializeAsString(dq1.operator)
+      deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
+    }
+    catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw e
+    }
+
+    // Check if the load profile estimators are equal
+    val originalLoadProfileEstimator = dq1.operator.asInstanceOf[MapOperator[Any, Any]]
+      .getFunctionDescriptor
+      .getLoadProfileEstimator.get().asInstanceOf[NestableLoadProfileEstimator]
+    val deserializedLoadProfileEstimator = deserialized.asInstanceOf[MapOperator[Any, Any]]
+      .getFunctionDescriptor
+      .getLoadProfileEstimator.get().asInstanceOf[NestableLoadProfileEstimator]
+
+    Assert.assertEquals(originalLoadProfileEstimator.getConfigurationKeys, deserializedLoadProfileEstimator.getConfigurationKeys)
+    Assert.assertEquals(originalLoadProfileEstimator.getTemplateKeys, deserializedLoadProfileEstimator.getTemplateKeys)
+
+    /*// Print the contents of configuration keys array for both the originalLoadProfileEstimator and the deserializedLoadProfileEstimator
+    println("originalLoadProfileEstimator.getConfigurationKeys: " + originalLoadProfileEstimator.getConfigurationKeys.mkString(","))
+    println("deserializedLoadProfileEstimator.getConfigurationKeys: " + deserializedLoadProfileEstimator.getConfigurationKeys.mkString(","))
+
+    // Print the contents of template keys array for both the originalLoadProfileEstimator and the deserializedLoadProfileEstimator
+    println("originalLoadProfileEstimator.getTemplateKeys: " + originalLoadProfileEstimator.getTemplateKeys.mkString(","))
+    println("deserializedLoadProfileEstimator.getTemplateKeys: " + deserializedLoadProfileEstimator.getTemplateKeys.mkString(","))
+
+    // Print the toString representation of both the originalLoadProfileEstimator and the deserializedLoadProfileEstimator
+    println("originalLoadProfileEstimator.toString: " + originalLoadProfileEstimator.toString)
+    println("deserializedLoadProfileEstimator.toString: " + deserializedLoadProfileEstimator.toString)*/
+
   }
 
 }

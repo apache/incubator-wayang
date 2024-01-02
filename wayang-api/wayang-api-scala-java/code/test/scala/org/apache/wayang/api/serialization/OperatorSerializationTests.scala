@@ -19,14 +19,14 @@
 
 package org.apache.wayang.api.serialization
 
-import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder, createPlanBuilder}
+import org.apache.wayang.api.{BlossomContext, PlanBuilder, createPlanBuilder}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.java.Java
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.postgres.operators.PostgresTableSource
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.sqlite3.operators.Sqlite3TableSource
-import org.junit.{Assert, Test}
+import org.junit.Test
 
 import java.io.{File, PrintWriter}
 import java.sql.{Connection, Statement}

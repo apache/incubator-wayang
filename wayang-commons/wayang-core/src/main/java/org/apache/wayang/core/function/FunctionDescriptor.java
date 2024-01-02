@@ -146,4 +146,14 @@ public abstract class FunctionDescriptor {
     public interface SerializableLongUnaryOperator extends LongUnaryOperator, Serializable {
 
     }
+
+    @FunctionalInterface
+    public interface SerializableToLongBiFunction<T, U> extends ToLongBiFunction<T, U>, Serializable {
+
+    }
+
+    @FunctionalInterface
+    public interface SerializableToDoubleBiFunction<T, U> extends ToDoubleBiFunction<T, U>, Serializable {
+
+    }
 }
