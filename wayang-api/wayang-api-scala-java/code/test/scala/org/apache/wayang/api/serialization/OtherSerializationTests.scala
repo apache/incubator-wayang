@@ -19,17 +19,16 @@
 
 package org.apache.wayang.api.serialization
 
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder, PlanBuilder, createPlanBuilder}
+import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder, PlanBuilder, createPlanBuilder, toLoadEstimator}
 import org.apache.wayang.basic.operators.{MapOperator, TextFileSink}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
+import org.apache.wayang.core.optimizer.costs._
 import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.ReflectionUtils
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 import org.junit.{Assert, Test}
-import org.apache.wayang.api.toLoadEstimator
-import org.apache.wayang.core.optimizer.costs._
 
 
 class OtherSerializationTests extends SerializationTestBase {
@@ -182,7 +181,7 @@ class OtherSerializationTests extends SerializationTestBase {
   }
 
 
-  //  @Test
+  @Test
   def multiDataQuantaExecuteTest(): Unit = {
 
     try {
@@ -256,6 +255,7 @@ class OtherSerializationTests extends SerializationTestBase {
     }
   }
 
+
   @Test
   def targetPlatforms2Test(): Unit = {
     val configuration = new Configuration()
@@ -287,12 +287,10 @@ class OtherSerializationTests extends SerializationTestBase {
 
 
   @Test
-  def testLoadProfileEstimators(): Unit = {
+  def testLoadProfileEstimator(): Unit = {
     val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
-    // Create LoadEstimators
-    // val loadProfileEstimator: LoadProfileEstimator = new NestableLoadProfileEstimator(LoadEstimator.createFallback(1, 1), LoadEstimator.createFallback(1, 1))
-
+    // Create load estimator
     val loadProfileEstimator: LoadProfileEstimator = new NestableLoadProfileEstimator(
       (in: Long, _: Long) => 10 * in,
       (_: Long, _: Long) => 1000L
@@ -302,11 +300,11 @@ class OtherSerializationTests extends SerializationTestBase {
     val dq1 = wayang.loadCollection(List(1, 2, 3))
       .map(_ + 1, udfLoad = loadProfileEstimator)
 
-    var deserialized: Operator = null
-
     // Serialize and then deserialize the map operator
+    var deserialized: Operator = null
     try {
       val serialized = SerializationUtils.serializeAsString(dq1.operator)
+      SerializationTestBase.log(serialized, testName.getMethodName + ".log.json")
       deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
     }
     catch {
@@ -337,6 +335,33 @@ class OtherSerializationTests extends SerializationTestBase {
     // Print the toString representation of both the originalLoadProfileEstimator and the deserializedLoadProfileEstimator
     println("originalLoadProfileEstimator.toString: " + originalLoadProfileEstimator.toString)
     println("deserializedLoadProfileEstimator.toString: " + deserializedLoadProfileEstimator.toString)*/
+
+  }
+
+
+  @Test
+  def testCardinalityEstimator(): Unit = {
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
+
+    import org.apache.wayang.api.toCardinalityEstimator
+
+    // Create map operator with load profile estimator
+    val dq1 = wayang.loadCollection(List(1, 2, 3))
+      .map(_ + 1)
+      .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
+
+    // Serialize and then deserialize the map operator
+    var deserialized: Operator = null
+    try {
+      val serialized = SerializationUtils.serializeAsString(dq1.operator)
+      SerializationTestBase.log(serialized, testName.getMethodName + ".log.json")
+      deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
+    }
+    catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw e
+    }
 
   }
 

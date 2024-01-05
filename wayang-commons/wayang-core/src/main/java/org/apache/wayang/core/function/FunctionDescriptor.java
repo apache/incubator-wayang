@@ -156,4 +156,9 @@ public abstract class FunctionDescriptor {
     public interface SerializableToDoubleBiFunction<T, U> extends ToDoubleBiFunction<T, U>, Serializable {
 
     }
+
+    @FunctionalInterface
+    public interface SerializableToLongFunction<T> extends ToLongFunction<T>, Serializable {
+
+    }
 }

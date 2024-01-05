@@ -32,7 +32,8 @@ import org.apache.wayang.basic.types.RecordType
 import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableIntUnaryOperator, SerializableLongUnaryOperator}
 import org.apache.wayang.core.function._
-import org.apache.wayang.core.plan.wayangplan.{LoopHeadOperator, Operator}
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator
+import org.apache.wayang.core.plan.wayangplan.{LoopHeadOperator, Operator, OperatorBase}
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.types.DataSetType
 import org.apache.wayang.jdbc.operators.JdbcTableSource
@@ -123,6 +124,17 @@ class OperatorDeserializer extends JsonDeserializer[Operator] {
           platformStringNode => {
             val platform = mapper.treeToValue(platformStringNode, classOf[Platform])  // Custom Platform deserializer gets called here
             operator.addTargetPlatform(platform)  // Add to operator
+          }
+        )
+
+        // Add target platforms
+        val cardinalityEstimatorsNode: JsonNode = jsonNodeOperator.get("cardinalityEstimators")
+        cardinalityEstimatorsNode.asInstanceOf[ArrayNode].elements().asScala.foreach(   // Iterate over json array
+          cardinalityEstimatorNode => {
+            val cardinalityEstimator = mapper.treeToValue(cardinalityEstimatorNode, classOf[CardinalityEstimator])  // Custom Platform deserializer gets called here
+
+            // TODO: Check hard coded output index 0
+            operator.asInstanceOf[OperatorBase].setCardinalityEstimator(0, cardinalityEstimator)  // Add to operator
           }
         )
 

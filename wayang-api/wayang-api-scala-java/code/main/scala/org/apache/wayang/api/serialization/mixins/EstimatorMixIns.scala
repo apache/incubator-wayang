@@ -1,8 +1,10 @@
 package org.apache.wayang.api.serialization.mixins
 
 import com.fasterxml.jackson.annotation.{JsonCreator, JsonProperty, JsonSubTypes, JsonTypeInfo, JsonTypeName}
+import org.apache.wayang.core.api.Configuration
+import org.apache.wayang.core.function.FunctionDescriptor
 import org.apache.wayang.core.function.FunctionDescriptor.SerializableToDoubleBiFunction
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate
+import org.apache.wayang.core.optimizer.cardinality.{AggregatingCardinalityEstimator, CardinalityEstimate, DefaultCardinalityEstimator, FallbackCardinalityEstimator, FixedSizeCardinalityEstimator, SwitchForwardCardinalityEstimator}
 import org.apache.wayang.core.optimizer.costs.{ConstantLoadProfileEstimator, DefaultLoadEstimator, IntervalLoadEstimator, LoadEstimator, NestableLoadProfileEstimator}
 
 object EstimatorMixIns {
@@ -70,5 +72,28 @@ object EstimatorMixIns {
       this()
     }
   }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+  @JsonSubTypes(Array(
+    new JsonSubTypes.Type(value = classOf[AggregatingCardinalityEstimator], name = "AggregatingCardinalityEstimator"),
+    new JsonSubTypes.Type(value = classOf[DefaultCardinalityEstimator], name = "DefaultCardinalityEstimator"),
+    new JsonSubTypes.Type(value = classOf[FallbackCardinalityEstimator], name = "FallbackCardinalityEstimator"),
+    new JsonSubTypes.Type(value = classOf[FixedSizeCardinalityEstimator], name = "FixedSizeCardinalityEstimator"),
+    new JsonSubTypes.Type(value = classOf[SwitchForwardCardinalityEstimator], name = "SwitchForwardCardinalityEstimator"),
+  ))
+  abstract class CardinalityEstimatorMixIn {
+  }
+
+  abstract class DefaultCardinalityEstimatorMixIn {
+    @JsonCreator
+    def this(@JsonProperty("certaintyProb") certaintyProb: Double,
+             @JsonProperty("numInputs") numInputs: Int,
+             @JsonProperty("isAllowMoreInputs") isAllowMoreInputs: Boolean,
+             @JsonProperty("singlePointEstimator") singlePointEstimator: FunctionDescriptor.SerializableToLongBiFunction[Array[Long], Configuration]) = {
+      this()
+    }
+  }
+
+  // TODO: Add more estimator mixins
 
 }

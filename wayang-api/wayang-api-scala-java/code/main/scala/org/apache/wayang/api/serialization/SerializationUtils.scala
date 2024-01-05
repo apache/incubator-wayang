@@ -41,7 +41,7 @@ import org.apache.wayang.core.api.{Configuration, Job, WayangContext}
 import org.apache.wayang.core.function.FunctionDescriptor._
 import org.apache.wayang.core.function._
 import org.apache.wayang.core.mapping.{OperatorPattern, PlanTransformation}
-import org.apache.wayang.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimatorManager, CardinalityPusher}
+import org.apache.wayang.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, CardinalityEstimatorManager, CardinalityPusher, DefaultCardinalityEstimator}
 import org.apache.wayang.core.optimizer.channels.ChannelConversionGraph
 import org.apache.wayang.core.optimizer.costs._
 import org.apache.wayang.core.optimizer.enumeration._
@@ -141,6 +141,9 @@ object SerializationUtils {
       .addMixIn(classOf[BinaryToUnaryOperator[_, _, _]], classOf[BinaryToUnaryOperatorMixIn[_, _, _]])
       .addMixIn(classOf[LoopHeadOperator], classOf[LoopHeadOperatorMixIn])
       .addMixIn(classOf[SampleOperator[_]], classOf[IgnoreLoggerMixIn])
+      .addMixIn(classOf[CardinalityEstimator], classOf[CardinalityEstimatorMixIn])
+      .addMixIn(classOf[DefaultCardinalityEstimator], classOf[DefaultCardinalityEstimatorMixIn])
+
 
     // Ignore loggers
       .addMixIn(classOf[Job], classOf[IgnoreLoggerMixIn])
