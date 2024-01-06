@@ -22,6 +22,7 @@ import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.spark.mapping.graph.PageRankMapping;
 import org.apache.wayang.spark.mapping.ml.KMeansMapping;
 import org.apache.wayang.spark.mapping.ml.KMeansMappingV1;
+import org.apache.wayang.spark.mapping.ml.LinearRegressionMapping;
 import org.apache.wayang.spark.mapping.ml.ModelTransformMapping;
 
 import java.util.Arrays;
@@ -68,6 +69,7 @@ public class Mappings {
 
     public static Collection<Mapping> ML_MAPPINGS = Arrays.asList(
             new KMeansMapping(),
+            new LinearRegressionMapping(),
             new ModelTransformMapping(),
 
             new KMeansMappingV1()
