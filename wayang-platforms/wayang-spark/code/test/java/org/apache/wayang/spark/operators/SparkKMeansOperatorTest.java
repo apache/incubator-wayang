@@ -18,14 +18,12 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.KMeansModel;
 import org.apache.wayang.basic.operators.ModelTransformOperator;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
-import org.apache.wayang.spark.model.SparkMLModel;
 import org.apache.wayang.spark.operators.ml.SparkKMeansOperator;
 import org.apache.wayang.spark.operators.ml.SparkKMeansOperatorV1;
 import org.apache.wayang.spark.operators.ml.SparkModelTransformOperator;
@@ -46,8 +44,7 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
             new double[]{2, 4, 6}
     );
 
-    @Test
-    public void testTraining() {
+    public KMeansModel getModel() {
         // Prepare test data.
         RddChannel.Instance input = this.createRddChannelInstance(data);
         CollectionChannel.Instance output = this.createCollectionChannelInstance();
@@ -62,7 +59,12 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
         this.evaluate(kMeansOperator, inputs, outputs);
 
         // Verify the outcome.
-        KMeansModel model = output.<KMeansModel>provideCollection().iterator().next();
+        return output.<KMeansModel>provideCollection().iterator().next();
+    }
+
+    @Test
+    public void testTraining() {
+        final KMeansModel model = getModel();
         Assert.assertEquals(2, model.getK());
         List<double[]> centers = Arrays.stream(model.getClusterCenters())
                 .sorted(Comparator.comparingDouble(a -> a[0]))
@@ -74,15 +76,7 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
     @Test
     public void testInference() {
         // Prepare test data.
-        CollectionChannel.Instance input1 = this.createCollectionChannelInstance(Collections.singletonList(
-                // a mock model
-                new SparkMLModel<double[], Integer>() {
-                    @Override
-                    public JavaRDD<Tuple2<double[], Integer>> transform(JavaRDD<double[]> input) {
-                        return getSC().parallelize(data.stream().map(e -> new Tuple2<>(e, 1)).collect(Collectors.toList()));
-                    }
-                }
-        ));
+        CollectionChannel.Instance input1 = this.createCollectionChannelInstance(Collections.singletonList(getModel()));
         RddChannel.Instance input2 = this.createRddChannelInstance(data);
         RddChannel.Instance output = this.createRddChannelInstance();
 

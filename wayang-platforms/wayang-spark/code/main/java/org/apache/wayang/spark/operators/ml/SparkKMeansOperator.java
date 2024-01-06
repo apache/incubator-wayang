@@ -49,10 +49,9 @@ import java.util.*;
 
 public class SparkKMeansOperator extends KMeansOperator implements SparkExecutionOperator {
 
-    private static final String FEATURES = "features";
     private static final StructType schema = DataTypes.createStructType(
             new StructField[]{
-                    DataTypes.createStructField(FEATURES, new VectorUDT(), false)
+                    DataTypes.createStructField(Attr.FEATURES, new VectorUDT(), false)
             }
     );
 
@@ -96,7 +95,8 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
         final Dataset<Row> df = data2Row(inputRdd);
         final KMeansModel model = new KMeans()
                 .setK(this.k)
-                .setFeaturesCol(FEATURES)
+                .setFeaturesCol(Attr.FEATURES)
+                .setPredictionCol(Attr.PREDICTION)
                 .fit(df);
         final Model outputModel = new Model(model);
         output.accept(Collections.singletonList(outputModel));
@@ -131,7 +131,7 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
             final Dataset<Row> df = data2Row(input);
             final Dataset<Row> transform = model.transform(df);
             return transform.toJavaRDD()
-                    .map(row -> new Tuple2<>(((Vector) row.get(0)).toArray(), (Integer) row.get(1)));
+                    .map(row -> new Tuple2<>(row.<Vector>getAs(Attr.FEATURES).toArray(), row.<Integer>getAs(Attr.PREDICTION)));
         }
     }
 }

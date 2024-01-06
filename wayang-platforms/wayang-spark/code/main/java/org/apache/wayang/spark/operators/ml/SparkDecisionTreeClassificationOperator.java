@@ -19,11 +19,11 @@
 package org.apache.wayang.spark.operators.ml;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.classification.DecisionTreeClassificationModel;
+import org.apache.spark.ml.classification.DecisionTreeClassifier;
 import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.ml.linalg.Vectors;
-import org.apache.spark.ml.regression.LinearRegression;
-import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -32,7 +32,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.operators.LinearRegressionOperator;
+import org.apache.wayang.basic.operators.DecisionTreeClassificationOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -50,11 +50,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class SparkLinearRegressionOperator extends LinearRegressionOperator implements SparkExecutionOperator {
+public class SparkDecisionTreeClassificationOperator extends DecisionTreeClassificationOperator implements SparkExecutionOperator {
 
     private static final StructType schema = DataTypes.createStructType(
             new StructField[]{
-                    DataTypes.createStructField(Attr.LABEL, DataTypes.DoubleType, false),
+                    DataTypes.createStructField(Attr.LABEL, DataTypes.IntegerType, false),
                     DataTypes.createStructField(Attr.FEATURES, new VectorUDT(), false)
             }
     );
@@ -64,11 +64,11 @@ public class SparkLinearRegressionOperator extends LinearRegressionOperator impl
         return SparkSession.builder().getOrCreate().createDataFrame(rowRdd, schema);
     }
 
-    public SparkLinearRegressionOperator(boolean fitIntercept) {
-        super(fitIntercept);
+    public SparkDecisionTreeClassificationOperator() {
+        super();
     }
 
-    public SparkLinearRegressionOperator(LinearRegressionOperator that) {
+    public SparkDecisionTreeClassificationOperator(DecisionTreeClassificationOperator that) {
         super(that);
     }
 
@@ -96,14 +96,13 @@ public class SparkLinearRegressionOperator extends LinearRegressionOperator impl
 
         final JavaRDD<Tuple2<double[], Double>> inputRdd = input.provideRdd();
         final Dataset<Row> df = data2Row(inputRdd);
-        final LinearRegressionModel model = new LinearRegression()
-                .setFitIntercept(fitIntercept)
+        final DecisionTreeClassificationModel model = new DecisionTreeClassifier()
                 .setLabelCol(Attr.LABEL)
                 .setFeaturesCol(Attr.FEATURES)
                 .setPredictionCol(Attr.PREDICTION)
                 .fit(df);
 
-        final SparkLinearRegressionOperator.Model outputModel = new Model(model);
+        final SparkDecisionTreeClassificationOperator.Model outputModel = new SparkDecisionTreeClassificationOperator.Model(model);
         output.accept(Collections.singletonList(outputModel));
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
@@ -114,7 +113,7 @@ public class SparkLinearRegressionOperator extends LinearRegressionOperator impl
         return false;
     }
 
-    public static class Model implements org.apache.wayang.basic.model.LinearRegressionModel, SparkMLModel<double[], Double> {
+    public static class Model implements org.apache.wayang.basic.model.DecisionTreeClassificationModel, SparkMLModel<double[], Integer> {
 
         private static final StructType schema = DataTypes.createStructType(
                 new StructField[]{
@@ -127,28 +126,23 @@ public class SparkLinearRegressionOperator extends LinearRegressionOperator impl
             return SparkSession.builder().getOrCreate().createDataFrame(rowRdd, schema);
         }
 
-        private final LinearRegressionModel model;
+        private final DecisionTreeClassificationModel model;
 
-        public Model(LinearRegressionModel model) {
+        public Model(DecisionTreeClassificationModel model) {
             this.model = model;
         }
 
         @Override
-        public double[] getCoefficients() {
-            return model.coefficients().toArray();
-        }
-
-        @Override
-        public double getIntercept() {
-            return model.intercept();
-        }
-
-        @Override
-        public JavaRDD<Tuple2<double[], Double>> transform(JavaRDD<double[]> input) {
+        public JavaRDD<Tuple2<double[], Integer>> transform(JavaRDD<double[]> input) {
             final Dataset<Row> df = data2Row(input);
             final Dataset<Row> transform = model.transform(df);
             return transform.toJavaRDD()
-                    .map(row -> new Tuple2<>(row.<Vector>getAs(Attr.FEATURES).toArray(), row.<Double>getAs(Attr.PREDICTION)));
+                    .map(row -> new Tuple2<>(row.<Vector>getAs(Attr.FEATURES).toArray(), (row.<Double>getAs(Attr.PREDICTION)).intValue()));
+        }
+
+        @Override
+        public int getDepth() {
+            return model.depth();
         }
     }
 }

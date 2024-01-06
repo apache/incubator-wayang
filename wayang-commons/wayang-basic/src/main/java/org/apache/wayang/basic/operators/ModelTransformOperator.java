@@ -39,6 +39,10 @@ public class ModelTransformOperator<X, Y> extends BinaryToUnaryOperator<Model<X,
         return new ModelTransformOperator<>(new TypeReference<>() {}, new TypeReference<>() {});
     }
 
+    public static ModelTransformOperator<double[], Integer> decisionTreeClassification() {
+        return new ModelTransformOperator<>(new TypeReference<>() {}, new TypeReference<>() {});
+    }
+
     public ModelTransformOperator(DataSetType<X> inType, DataSetType<Tuple2<X, Y>> outType) {
         // TODO createDefaultUnchecked or createDefault?
         super(DataSetType.createDefaultUnchecked(Model.class), inType, outType, false);
