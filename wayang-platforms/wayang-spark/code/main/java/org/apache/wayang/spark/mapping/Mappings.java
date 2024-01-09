@@ -68,9 +68,7 @@ public class Mappings {
             new KMeansMapping(),
             new LinearRegressionMapping(),
             new DecisionTreeClassificationMapping(),
-            new ModelTransformMapping(),
-
-            new KMeansMappingV1()
+            new ModelTransformMapping()
     );
 
 }

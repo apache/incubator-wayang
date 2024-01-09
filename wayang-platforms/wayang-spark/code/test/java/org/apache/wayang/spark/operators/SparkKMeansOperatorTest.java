@@ -25,7 +25,6 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.operators.ml.SparkKMeansOperator;
-import org.apache.wayang.spark.operators.ml.SparkKMeansOperatorV1;
 import org.apache.wayang.spark.operators.ml.SparkModelTransformOperator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -88,30 +87,6 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
 
         // Execute.
         this.evaluate(transformOperator, inputs, outputs);
-
-        // Verify the outcome.
-        final List<Tuple2<double[], Integer>> results = output.<Tuple2<double[], Integer>>provideRdd().collect();
-        Assert.assertEquals(3, results.size());
-        Assert.assertEquals(
-                results.get(0).field1,
-                results.get(2).field1
-        );
-    }
-
-    @Test
-    public void testExecutionV1() {
-        // Prepare test data.
-        RddChannel.Instance input = this.createRddChannelInstance(data);
-        RddChannel.Instance output = this.createRddChannelInstance();
-
-        SparkKMeansOperatorV1 kMeansOperator = new SparkKMeansOperatorV1(2);
-
-        // Set up the ChannelInstances.
-        ChannelInstance[] inputs = new ChannelInstance[]{input};
-        ChannelInstance[] outputs = new ChannelInstance[]{output};
-
-        // Execute.
-        this.evaluate(kMeansOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<double[], Integer>> results = output.<Tuple2<double[], Integer>>provideRdd().collect();
