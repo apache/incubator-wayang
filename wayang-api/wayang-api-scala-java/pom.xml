@@ -110,6 +110,11 @@
           <scope>test</scope>
         </dependency>
         <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-mllib_2.12</artifactId>
+          <version>${spark.version}</version>
+        </dependency>
+        <dependency>
           <groupId>org.scala-lang</groupId>
           <artifactId>scala-library</artifactId>
           <version>${scala.version}</version>
