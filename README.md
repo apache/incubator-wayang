@@ -65,13 +65,13 @@ cd wayang-0.7.1-SNAPSHOT
 ```
 
 In linux
-```shell 
+```shell
 echo "export WAYANG_HOME=$(pwd)" >> ~/.bashrc
 echo "export PATH=${PATH}:${WAYANG_HOME}/bin" >> ~/.bashrc
 source ~/.bashrc
 ```
 In MacOS
-```shell 
+```shell
 echo "export WAYANG_HOME=$(pwd)" >> ~/.zshrc
 echo "export PATH=${PATH}:${WAYANG_HOME}/bin" >> ~/.zshrc
 source ~/.zshrc
@@ -106,12 +106,11 @@ Wayang is available via Maven Central. To use it with Maven, include the followi
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
 * `wayang-core`: provides core data structures and the optimizer (required)
 * `wayang-basic`: provides common operators and data types for your apps (recommended)
-* `wayang-api-scala-java_2.12`: provides an easy-to-use Scala and Java API to assemble Wayang plans (recommended)
+* `wayang-api-scala-java`: provides an easy-to-use Scala and Java API to assemble Wayang plans (recommended)
 * `wayang-java`, `wayang-spark`, `wayang-graphchi`, `wayang-sqlite3`, `wayang-postgres`: adapters for the various supported processing platforms
 * `wayang-profiler`: provides functionality to learn operator and UDF cost functions from historical execution data
 
-> **NOTE:** The module `wayang-api-scala-java_2.12` is intended to be used with Java 11 and Scala 2.12. If you have the Java 8 version, you need to use the `wayang-api-scala-java_2.11` module.
-
+> **NOTE:** The module `wayang-api-scala-java` is intended to be used with Java 11 and Scala 2.12.
 
 For the sake of version flexibility, you still have to include in the POM file your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
 
@@ -163,7 +162,7 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
 To activate these profiles, you need to specify them when running maven, i.e.,
 
 ```shell
-./mvnw clean install -DskipTests -P<profile name> 
+./mvnw clean install -DskipTests -P<profile name>
 ```
 
 ## Running the tests
@@ -177,7 +176,7 @@ You can see examples on how to start using Wayang [here](guides/wayang-examples.
 
 ## Built With
 
-* [Java 11](https://www.oracle.com/de/java/technologies/javase/jdk11-archive-downloads.html) 
+* [Java 11](https://www.oracle.com/de/java/technologies/javase/jdk11-archive-downloads.html)
 * [Scala 2.12](https://www.scala-lang.org/download/2.12.0.html)
 * [Maven](https://maven.apache.org/)
 

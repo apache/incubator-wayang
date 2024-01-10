@@ -21,7 +21,6 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <packaging>pom</packaging>
 
     <parent>
         <artifactId>wayang-plugins</artifactId>
@@ -52,22 +51,25 @@
             <artifactId>wayang-java</artifactId>
             <version>0.7.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+           <groupId>org.apache.wayang</groupId>
+           <artifactId>wayang-spark</artifactId>
+           <version>0.7.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_2.12</artifactId>
+          <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-graphx_2.12</artifactId>
+          <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-mllib_2.12</artifactId>
+          <version>${spark.version}</version>
+        </dependency>
     </dependencies>
-
-
-    <modules>
-        <module>wayang-iejoin_2.12</module>
-    </modules>
-
-    <profiles>
-        <profile>
-            <id>java8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <modules>
-                <module>wayang-iejoin_2.11</module>
-            </modules>
-        </profile>
-    </profiles>
 </project>

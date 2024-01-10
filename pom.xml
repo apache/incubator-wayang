@@ -711,7 +711,7 @@
             <id>scala-parent-default</id>
             <activation>
                 <file>
-                    <exists>code</exists>
+                    <exists>src</exists>
                 </file>
             </activation>
             <properties>
@@ -1231,7 +1231,7 @@
                         <exclude>**/.settings/**</exclude>
                         <exclude>**/.classpath</exclude>
                         <exclude>**/.factorypath</exclude>
-                        
+
                         <!--RAT files-->
                         <exclude>**/apache-rat-0.13/**</exclude>
 
@@ -1253,7 +1253,7 @@
                         <exclude>**/scala_1*</exclude>
 
                         <exclude>**/*pb2.py</exclude>
-                        <exclude>**/.rat-excludes</exclude>                      
+                        <exclude>**/.rat-excludes</exclude>
                         <exclude>**/*.csv</exclude>
                         <exclude>**/*.properties</exclude>
                     </excludes>
