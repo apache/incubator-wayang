@@ -18,38 +18,20 @@
 
 package org.apache.wayang.basic.operators;
 
-import org.apache.wayang.basic.model.KMeansModel;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.model.DecisionTreeClassificationModel;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
 
-import java.util.Optional;
+public class DecisionTreeClassificationOperator extends UnaryToUnaryOperator<Tuple2<double[], Integer>, DecisionTreeClassificationModel> {
 
-public class KMeansOperator extends UnaryToUnaryOperator<double[], KMeansModel> {
-
-    // TODO other parameters
-    protected int k;
-
-    public KMeansOperator(int k) {
-        super(DataSetType.createDefaultUnchecked(double[].class),
-                DataSetType.createDefaultUnchecked(KMeansModel.class),
+    public DecisionTreeClassificationOperator() {
+        super(DataSetType.createDefaultUnchecked(Tuple2.class),
+                DataSetType.createDefaultUnchecked(DecisionTreeClassificationModel.class),
                 false);
-        this.k = k;
     }
 
-    public KMeansOperator(KMeansOperator that) {
+    public DecisionTreeClassificationOperator(DecisionTreeClassificationOperator that) {
         super(that);
-        this.k = that.k;
-    }
-
-    public int getK() {
-        return k;
-    }
-
-    @Override
-    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
-        // TODO
-        return super.createCardinalityEstimator(outputIndex, configuration);
     }
 }

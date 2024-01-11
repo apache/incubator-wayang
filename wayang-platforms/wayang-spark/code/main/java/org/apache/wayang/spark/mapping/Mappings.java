@@ -20,7 +20,7 @@ package org.apache.wayang.spark.mapping;
 
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.spark.mapping.graph.PageRankMapping;
-import org.apache.wayang.spark.mapping.ml.KMeansMapping;
+import org.apache.wayang.spark.mapping.ml.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,7 +65,10 @@ public class Mappings {
     );
 
     public static Collection<Mapping> ML_MAPPINGS = Arrays.asList(
-            new KMeansMapping()
+            new KMeansMapping(),
+            new LinearRegressionMapping(),
+            new DecisionTreeClassificationMapping(),
+            new ModelTransformMapping()
     );
 
 }

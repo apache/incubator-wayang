@@ -20,10 +20,7 @@ package org.apache.wayang.tests;
 
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.operators.CollectionSource;
-import org.apache.wayang.basic.operators.FilterOperator;
-import org.apache.wayang.basic.operators.KMeansOperator;
-import org.apache.wayang.basic.operators.LocalCallbackSink;
+import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.WayangContext;
@@ -466,13 +463,17 @@ public class SparkIntegrationIT {
 
         KMeansOperator kMeansOperator = new KMeansOperator(2);
 
-        // write results to a sink
+        ModelTransformOperator<double[], Integer> transformOperator = ModelTransformOperator.kMeans();
+
+        // Write results to a sink.
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
 
         // Build Wayang plan by connecting operators
         collectionSource.connectTo(0, kMeansOperator, 0);
-        kMeansOperator.connectTo(0, sink, 0);
+        kMeansOperator.connectTo(0, transformOperator, 0);
+        collectionSource.connectTo(0, transformOperator, 1);
+        transformOperator.connectTo(0, sink, 0);
         WayangPlan wayangPlan = new WayangPlan(sink);
 
         // Have Wayang execute the plan.

@@ -19,11 +19,11 @@
 package org.apache.wayang.spark.operators.ml;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.ml.clustering.KMeans;
-import org.apache.spark.ml.clustering.KMeansModel;
 import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.ml.linalg.Vectors;
+import org.apache.spark.ml.regression.LinearRegression;
+import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -32,7 +32,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.operators.KMeansOperator;
+import org.apache.wayang.basic.operators.LinearRegressionOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -45,32 +45,35 @@ import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.model.SparkMLModel;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-public class SparkKMeansOperator extends KMeansOperator implements SparkExecutionOperator {
+public class SparkLinearRegressionOperator extends LinearRegressionOperator implements SparkExecutionOperator {
 
     private static final StructType schema = DataTypes.createStructType(
             new StructField[]{
+                    DataTypes.createStructField(Attr.LABEL, DataTypes.DoubleType, false),
                     DataTypes.createStructField(Attr.FEATURES, new VectorUDT(), false)
             }
     );
 
-    private static Dataset<Row> data2Row(JavaRDD<double[]> inputRdd) {
-        final JavaRDD<Row> rowRdd = inputRdd.map(e -> RowFactory.create(Vectors.dense(e)));
+    private static Dataset<Row> data2Row(JavaRDD<Tuple2<double[], Double>> inputRdd) {
+        final JavaRDD<Row> rowRdd = inputRdd.map(e -> RowFactory.create(e.field1, Vectors.dense(e.field0)));
         return SparkSession.builder().getOrCreate().createDataFrame(rowRdd, schema);
     }
 
-    public SparkKMeansOperator(int k) {
-        super(k);
+    public SparkLinearRegressionOperator(boolean fitIntercept) {
+        super(fitIntercept);
     }
 
-    public SparkKMeansOperator(KMeansOperator that) {
+    public SparkLinearRegressionOperator(LinearRegressionOperator that) {
         super(that);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        // TODO cached or uncached?
         return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
     }
 
@@ -91,14 +94,16 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
         final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         final CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
 
-        final JavaRDD<double[]> inputRdd = input.provideRdd();
+        final JavaRDD<Tuple2<double[], Double>> inputRdd = input.provideRdd();
         final Dataset<Row> df = data2Row(inputRdd);
-        final KMeansModel model = new KMeans()
-                .setK(this.k)
+        final LinearRegressionModel model = new LinearRegression()
+                .setFitIntercept(fitIntercept)
+                .setLabelCol(Attr.LABEL)
                 .setFeaturesCol(Attr.FEATURES)
                 .setPredictionCol(Attr.PREDICTION)
                 .fit(df);
-        final Model outputModel = new Model(model);
+
+        final SparkLinearRegressionOperator.Model outputModel = new Model(model);
         output.accept(Collections.singletonList(outputModel));
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
@@ -109,29 +114,41 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
         return false;
     }
 
-    public static class Model implements org.apache.wayang.basic.model.KMeansModel, SparkMLModel<double[], Integer> {
-        private final KMeansModel model;
+    public static class Model implements org.apache.wayang.basic.model.LinearRegressionModel, SparkMLModel<double[], Double> {
 
-        public Model(KMeansModel model) {
+        private static final StructType schema = DataTypes.createStructType(
+                new StructField[]{
+                        DataTypes.createStructField(Attr.FEATURES, new VectorUDT(), false)
+                }
+        );
+
+        private static Dataset<Row> data2Row(JavaRDD<double[]> inputRdd) {
+            final JavaRDD<Row> rowRdd = inputRdd.map(e -> RowFactory.create(Vectors.dense(e)));
+            return SparkSession.builder().getOrCreate().createDataFrame(rowRdd, schema);
+        }
+
+        private final LinearRegressionModel model;
+
+        public Model(LinearRegressionModel model) {
             this.model = model;
         }
 
         @Override
-        public int getK() {
-            return model.getK();
+        public double[] getCoefficients() {
+            return model.coefficients().toArray();
         }
 
         @Override
-        public double[][] getClusterCenters() {
-            return Arrays.stream(model.clusterCenters()).map(Vector::toArray).toArray(double[][]::new);
+        public double getIntercept() {
+            return model.intercept();
         }
 
         @Override
-        public JavaRDD<Tuple2<double[], Integer>> transform(JavaRDD<double[]> input) {
+        public JavaRDD<Tuple2<double[], Double>> transform(JavaRDD<double[]> input) {
             final Dataset<Row> df = data2Row(input);
             final Dataset<Row> transform = model.transform(df);
             return transform.toJavaRDD()
-                    .map(row -> new Tuple2<>(row.<Vector>getAs(Attr.FEATURES).toArray(), row.<Integer>getAs(Attr.PREDICTION)));
+                    .map(row -> new Tuple2<>(row.<Vector>getAs(Attr.FEATURES).toArray(), row.<Double>getAs(Attr.PREDICTION)));
         }
     }
 }

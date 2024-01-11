@@ -18,7 +18,8 @@
 
 package org.apache.wayang.basic.operators;
 
-import org.apache.wayang.basic.model.KMeansModel;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.model.LinearRegressionModel;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
@@ -26,25 +27,25 @@ import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Optional;
 
-public class KMeansOperator extends UnaryToUnaryOperator<double[], KMeansModel> {
+public class LinearRegressionOperator extends UnaryToUnaryOperator<Tuple2<double[], Double>, LinearRegressionModel> {
 
     // TODO other parameters
-    protected int k;
+    protected boolean fitIntercept;
 
-    public KMeansOperator(int k) {
-        super(DataSetType.createDefaultUnchecked(double[].class),
-                DataSetType.createDefaultUnchecked(KMeansModel.class),
+    public LinearRegressionOperator(boolean fitIntercept) {
+        super(DataSetType.createDefaultUnchecked(Tuple2.class),
+                DataSetType.createDefaultUnchecked(LinearRegressionModel.class),
                 false);
-        this.k = k;
+        this.fitIntercept = fitIntercept;
     }
 
-    public KMeansOperator(KMeansOperator that) {
+    public LinearRegressionOperator(LinearRegressionOperator that) {
         super(that);
-        this.k = that.k;
+        this.fitIntercept = that.fitIntercept;
     }
 
-    public int getK() {
-        return k;
+    public boolean getFitIntercept() {
+        return fitIntercept;
     }
 
     @Override
