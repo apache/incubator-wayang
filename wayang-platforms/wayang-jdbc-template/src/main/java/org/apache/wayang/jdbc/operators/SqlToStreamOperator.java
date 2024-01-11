@@ -144,7 +144,7 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     /**
      * Exposes a {@link ResultSet} as an {@link Iterator}.
      */
-    private static class ResultSetIterator implements Iterator<Record>, AutoCloseable {
+    public static class ResultSetIterator implements Iterator<Record>, AutoCloseable {
 
         /**
          * Keeps around the {@link ResultSet} of the SQL query.

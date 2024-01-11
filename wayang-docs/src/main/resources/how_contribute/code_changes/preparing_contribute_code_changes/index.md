@@ -43,3 +43,8 @@ git clone https://github.com/apache/incubator-wayang
 ```
 
 Once you’ve downloaded Wayang, you can find instructions for [installing]({% link getting_start/how_install/index.md %}) and [building]({% link getting_start/how_build/index.md %}) it on the [Wayang documentation](https://wayang.apache.org/documentation/).
+
+### Apache Wayang Branching Strategy
+
+[This page]({% link how_contribute/code_changes/preparing_contribute_code_changes/branching_strategy.md %}) describes the details of our branching strategy.
+

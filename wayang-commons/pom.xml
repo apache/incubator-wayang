@@ -23,11 +23,11 @@
     <parent>
         <groupId>org.apache.wayang</groupId>
         <artifactId>wayang</artifactId>
-        <version>0.6.1-SNAPSHOT</version>
+        <version>0.7.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-commons</artifactId>
-    <version>0.6.1-SNAPSHOT</version>
+    <version>0.7.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Wayang Commons</name>
@@ -183,7 +183,7 @@
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>1.26</version>
+                <version>2.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>

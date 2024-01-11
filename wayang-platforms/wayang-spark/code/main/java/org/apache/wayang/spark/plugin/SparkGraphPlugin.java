@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * This {@link Plugin} enables to use the basic Wayang {@link Operator}s on the {@link JavaPlatform}.
+ * This {@link Plugin} enables to use the basic Wayang {@link Operator}s on the {@link SparkPlatform}.
  */
 public class SparkGraphPlugin implements Plugin {
 

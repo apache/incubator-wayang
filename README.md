@@ -1,7 +1,7 @@
 # Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
-#### The first cross-platform data processing system
 
-![Travis branch](https://img.shields.io/travis/com/apache/incubator-wayang/main?style=for-the-badge)
+## The first open-source cross-platform data processing system
+
 [![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg)
 [![License](https://img.shields.io/github/license/apache/incubator-wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Last commit](https://img.shields.io/github/last-commit/apache/incubator-wayang.svg?style=for-the-badge)]()
@@ -10,11 +10,26 @@
 ![GitHub Repo stars](https://img.shields.io/github/stars/apache/incubator-wayang?style=for-the-badge)
 
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Apache%20Wayang%20enables%20cross%20platform%20data%20processing,%20star%20it%20via:%20&url=https://github.com/apache/incubator-wayang&via=apachewayang&hashtags=dataprocessing,bigdata,analytics,hybridcloud,developers) [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/ApacheWayang?style=social)](https://www.reddit.com/r/ApacheWayang/)
-
+## Table of contents
+  * [Description](#description)
+  * [Quick Guide for Running Wayang](#quick-guide-for-running-wayang)
+  * [Quick Guide for Developing with Wayang](#quick-guide-for-developing-with-wayang)
+  * [Installing Wayang](#installing-wayang)
+    + [Requirements at Runtime](#requirements-at-runtime)
+    + [Validating the installation](#validating-the-installation)
+  * [Getting Started](#getting-started)
+    + [Prerequisites](#prerequisites)
+    + [Building](#building)
+  * [Running the tests](#running-the-tests)
+  * [Example Applications](#example-applications)
+  * [Built With](#built-with)
+  * [Contributing](#contributing)
+  * [Authors](#authors)
+  * [License](#license)
 
 ## Description
 
-In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) can transparently use mutliple execution engines to perform a single task. We call this *cross-platform data processing*. In Wayang, users can specify any data processing application using one of Wayang's APIs and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
+In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) can transparently and seamlessly integrate multiple execution engines and use them to perform a single task. We call this *cross-platform data processing*. In Wayang, users can specify any data processing application using one of Wayang's APIs and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
 
 Apache Wayang (incubating) aims at freeing data engineers and software developers from the burden of learning all different data processing systems, their APIs, strengths and weaknesses; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when trying a fixed set of processing platforms. As of now, Wayang has built-in support for the following processing platforms:
 - [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
@@ -25,13 +40,28 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
 
+Apache Wayang (incubating) can be used via the following APIs:
+- Java native
+- Java scala-like
+- Scala
+- SQL (limited support of simple select-project queries for now)
+
+## Quick Guide for Running Wayang
+
+For a quick guide on how to run WordCount see [here](guides/tutorial.md).
+
+## Quick Guide for Developing with Wayang
+
+For a quick guide on how to use Wayang in your Java/Scala project see [here](guides/develop-with-Wayang.md).
+
 ## Installing Wayang
 
-You can download wayang from [here](https://github.com/apache/incubator-wayang/releases/download/wayang-0.6.1-alpha-rc/wayang-0.6.1-alpha-rc.tar.gz), and to install it you need to follow the next steps:
+You first have to build the binaries as shown [here](guides/tutorial.md).
+Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
-tar -xvf wayang-0.6.1-snapshot.tar.gz
-cd wayang-0.6.1-SNAPSHOT
+tar -xvf wayang-0.7.1-snapshot.tar.gz
+cd wayang-0.7.1-SNAPSHOT
 ```
 
 In linux
@@ -49,32 +79,28 @@ source ~/.zshrc
 
 ### Requirements at Runtime
 
-As Apache Wayang(incubating) is not at execution engine (it simply administrates the execution engines for 
-you), it is important to have installed the following requirements:
+Since Apache Wayang (incubating) is not an execution engine itself but rather manages the execution engines for you, it is important to have the necessary requirements installed.
 
-- Java version support from 8. The Wayang team recommends Java version 11: do not forget to declare
-   the variable `JAVA_HOME`
-- Apache Spark. You need to install Apache Spark from version 3: do not forget to declare
-   the variable `SPARK_HOME`
-- Apache Hadoop. You need to install Apache Hadoop from version 3: do not forget to have declare
-  the variable `HADOOP_HOME`
+- Apache Wayang supports Java versions 8 and above. However, the Wayang team recommends using Java version 11. Don’t forget to set the `JAVA_HOME` environment variable.
+- You need to install Apache Spark version 3 or higher. Don’t forget to set the `SPARK_HOME` environment variable.
+- You need to install Apache Hadoop version 3 or higher. Don’t forget to set the `HADOOP_HOME` environment variable.
 
 ### Validating the installation
 
-To execute your first program in Wayang, you need to execute your program with the 'wayang-submit' command as follows:
+To execute your first application with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
 
 ```shell
-wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
+bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
 ```
 
 ## Getting Started
 
-Wayang is available via Maven Central. To use it with Maven, include the following into your POM file:
+Wayang is available via Maven Central. To use it with Maven, include the following code snippet into your POM file:
 ```xml
-<dependency> 
+<dependency>
   <groupId>org.apache.wayang</groupId>
   <artifactId>wayang-***</artifactId>
-  <version>0.6.0</version> 
+  <version>0.7.1</version>
 </dependency>
 ```
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
@@ -101,7 +127,7 @@ In addition, you can obtain the most recent snapshot version of Wayang via Sonat
 ```
 
 ### Prerequisites
-Apache Wayang (incubating) is built with Java 1 and Scala 2.12. However, to run Wayang it is sufficient to have just Java 11 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang (incubating) is built with Java 11 and Scala 2.12. However, to run Apache Wayang it is sufficient to have just Java 11 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
 ```
 Java 11
 [Scala 2.12]
@@ -147,218 +173,7 @@ In the incubator-wayang root folder run:
 ```
 
 ## Example Applications
-### WordCount
-
-The "Hello World!" of data processing systems is the wordcount.
-
-#### Java API
-```java
-import org.apache.wayang.api.JavaPlanBuilder;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.WayangContext;
-import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.apache.wayang.java.Java;
-import org.apache.wayang.spark.Spark;
-import java.util.Collection;
-import java.util.Arrays;
-
-public class WordcountJava {
-
-    public static void main(String[] args){
-
-        // Settings
-        String inputUrl = "file:/tmp.txt";
-
-        // Get a plan builder.
-        WayangContext wayangContext = new WayangContext(new Configuration())
-                .withPlugin(Java.basicPlugin())
-                .withPlugin(Spark.basicPlugin());
-        JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
-                .withJobName(String.format("WordCount (%s)", inputUrl))
-                .withUdfJarOf(WordcountJava.class);
-
-        // Start building the WayangPlan.
-        Collection<Tuple2<String, Integer>> wordcounts = planBuilder
-                // Read the text file.
-                .readTextFile(inputUrl).withName("Load file")
-
-                // Split each line by non-word characters.
-                .flatMap(line -> Arrays.asList(line.split("\\W+")))
-                .withSelectivity(10, 100, 0.9)
-                .withName("Split words")
-
-                // Filter empty tokens.
-                .filter(token -> !token.isEmpty())
-                .withSelectivity(0.99, 0.99, 0.99)
-                .withName("Filter empty words")
-
-                // Attach counter to each word.
-                .map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
-
-                // Sum up counters for every word.
-                .reduceByKey(
-                        Tuple2::getField0,
-                        (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
-                )
-                .withCardinalityEstimator(new DefaultCardinalityEstimator(0.9, 1, false, in -> Math.round(0.01 * in[0])))
-                .withName("Add counters")
-
-                // Execute the plan and collect the results.
-                .collect();
-
-        System.out.println(wordcounts);
-    }
-}
-```
-
-#### Scala API
-
-```scala
-import org.apache.wayang.api._
-import org.apache.wayang.core.api.{Configuration, WayangContext}
-import org.apache.wayang.java.Java
-import org.apache.wayang.spark.Spark
-
-object WordcountScala {
-  def main(args: Array[String]) {
-
-    // Settings
-    val inputUrl = "file:/tmp.txt"
-
-    // Get a plan builder.
-    val wayangContext = new WayangContext(new Configuration)
-      .withPlugin(Java.basicPlugin)
-      .withPlugin(Spark.basicPlugin)
-    val planBuilder = new PlanBuilder(wayangContext)
-      .withJobName(s"WordCount ($inputUrl)")
-      .withUdfJarsOf(this.getClass)
-
-    val wordcounts = planBuilder
-      // Read the text file.
-      .readTextFile(inputUrl).withName("Load file")
-
-      // Split each line by non-word characters.
-      .flatMap(_.split("\\W+"), selectivity = 10).withName("Split words")
-
-      // Filter empty tokens.
-      .filter(_.nonEmpty, selectivity = 0.99).withName("Filter empty words")
-
-      // Attach counter to each word.
-      .map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
-
-      // Sum up counters for every word.
-      .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
-      .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
-
-      // Execute the plan and collect the results.
-      .collect()
-
-    println(wordcounts)
-  }
-}
-```
-
-### k-means
-
-Wayang is also capable of iterative processing, which is, e.g., very important for machine learning algorithms, such as k-means.
-
-#### Scala API
-
-```scala
-import org.apache.wayang.api._
-import org.apache.wayang.core.api.{Configuration, WayangContext}
-import org.apache.wayang.core.function.FunctionDescriptor.ExtendedSerializableFunction
-import org.apache.wayang.core.function.ExecutionContext
-import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators
-import org.apache.wayang.java.Java
-import org.apache.wayang.spark.Spark
-
-import scala.util.Random
-import scala.collection.JavaConversions._
-
-object kmeans {
-  def main(args: Array[String]) {
-
-    // Settings
-    val inputUrl = "file:/kmeans.txt"
-    val k = 5
-    val iterations = 100
-    val configuration = new Configuration
-
-    // Get a plan builder.
-    val wayangContext = new WayangContext(new Configuration)
-      .withPlugin(Java.basicPlugin)
-      .withPlugin(Spark.basicPlugin)
-    val planBuilder = new PlanBuilder(wayangContext)
-      .withJobName(s"k-means ($inputUrl, k=$k, $iterations iterations)")
-      .withUdfJarsOf(this.getClass)
-
-    case class Point(x: Double, y: Double)
-    case class TaggedPoint(x: Double, y: Double, cluster: Int)
-    case class TaggedPointCounter(x: Double, y: Double, cluster: Int, count: Long) {
-      def add_points(that: TaggedPointCounter) = TaggedPointCounter(this.x + that.x, this.y + that.y, this.cluster, this.count + that.count)
-      def average = TaggedPointCounter(x / count, y / count, cluster, 0)
-    }
-
-    // Read and parse the input file(s).
-    val points = planBuilder
-      .readTextFile(inputUrl).withName("Read file")
-      .map { line =>
-        val fields = line.split(",")
-        Point(fields(0).toDouble, fields(1).toDouble)
-      }.withName("Create points")
-
-
-    // Create initial centroids.
-    val random = new Random
-    val initialCentroids = planBuilder
-      .loadCollection(for (i <- 1 to k) yield TaggedPointCounter(random.nextGaussian(), random.nextGaussian(), i, 0)).withName("Load random centroids")
-
-    // Declare UDF to select centroid for each data point.
-    class SelectNearestCentroid extends ExtendedSerializableFunction[Point, TaggedPointCounter] {
-
-      /** Keeps the broadcasted centroids. */
-      var centroids: Iterable[TaggedPointCounter] = _
-
-      override def open(executionCtx: ExecutionContext) = {
-        centroids = executionCtx.getBroadcast[TaggedPointCounter]("centroids")
-      }
-
-      override def apply(point: Point): TaggedPointCounter = {
-        var minDistance = Double.PositiveInfinity
-        var nearestCentroidId = -1
-        for (centroid <- centroids) {
-          val distance = Math.pow(Math.pow(point.x - centroid.x, 2) + Math.pow(point.y - centroid.y, 2), 0.5)
-          if (distance < minDistance) {
-            minDistance = distance
-            nearestCentroidId = centroid.cluster
-          }
-        }
-        new TaggedPointCounter(point.x, point.y, nearestCentroidId, 1)
-      }
-    }
-
-    // Do the k-means loop.
-    val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
-      points
-        .mapJava(new SelectNearestCentroid,
-          udfLoad = LoadProfileEstimators.createFromSpecification(
-            "my.udf.costfunction.key", configuration
-          ))
-        .withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
-        .reduceByKey(_.cluster, _.add_points(_)).withName("Add up points")
-        .withCardinalityEstimator(k)
-        .map(_.average).withName("Average points")
-    }).withName("Loop")
-
-      // Collect the results.
-      .collect()
-
-    println(finalCentroids)
-  }
-}
-```
+You can see examples on how to start using Wayang [here](guides/wayang-examples.md)
 
 ## Built With
 
@@ -367,19 +182,16 @@ object kmeans {
 * [Maven](https://maven.apache.org/)
 
 ## Contributing
-[Contact](dev@wayang.apache.org) us if you are looking for tasks to contribute.
+Before submitting a PR, please take a look on how to contribute with Apache Wayang contributing guidelines [here](CONTRIBUTING.md).
 
-When contributing code please adhere with the [Apache code of conduct](https://www.apache.org/foundation/policies/conduct.html).
-
+There is also a guide on how to compile your code [here](guides/develop-in-Wayang.md).
 ## Authors
-
-See the list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors) who participated in this project.
+The list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors).
 
 ## License
-
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 - 2021 The Apache Software Foundation.
+Copyright 2020 - 2023 The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -394,4 +206,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ## Acknowledgements
-The [Logo](http://wayang.apache.org/assets/img/logo/Apache_Wayang/Apache_Wayang.pdf) was donated by [Brian Vera](https://www.linkedin.com/in/brian-vera-hablares-17a663b8/).
+The [Logo](http://wayang.apache.org/assets/img/logo/Apache_Wayang/Apache_Wayang.pdf) was donated by Brian Vera.

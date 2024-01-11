@@ -90,7 +90,8 @@ public class FlinkMaterializedGroupByOperator<Type, KeyType>
                             iterable.forEach(dataUnitGroup::add);
                             collector.collect(dataUnitGroup);
                         }
-                    );
+                    )
+                    .returns(this.getOutputType().getDataUnitType().getTypeClass());
 
         output.accept(dataSetOutput, flinkExecutor);
 

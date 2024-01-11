@@ -34,6 +34,7 @@ public interface JdbcExecutionOperator extends ExecutionOperator {
      * Creates a SQL clause for this instance. For {@link TableSource}s it returns an identifier for the table
      * usable in a {@code FROM} clause. For {@link JdbcProjectionOperator}s it returns a list usable in a
      * {@code SELECT} clause. For {@link JdbcFilterOperator}s it creates a condition usable in a {@code WHERE} clause.
+     * For {@link JdbcJoinOperator} it returns a INNER JOIN statement usable in a {@code JOIN} clause.
      * Also, these different clauses should be compatible for connected {@link JdbcExecutionOperator}s.
      *
      * @param compiler used to create SQL code

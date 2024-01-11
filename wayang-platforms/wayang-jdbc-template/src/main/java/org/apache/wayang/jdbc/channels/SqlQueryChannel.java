@@ -64,6 +64,8 @@ public class SqlQueryChannel extends Channel {
 
         private String sqlQuery = null;
 
+        private String jdbcName = null;
+
         /**
          * Creates a new instance and registers it with its {@link Executor}.
          *
@@ -93,6 +95,10 @@ public class SqlQueryChannel extends Channel {
         public String getSqlQuery() {
             return this.sqlQuery;
         }
+
+        public void setJdbcName(String jdbcName) {this.jdbcName = jdbcName;}
+
+        public String getJdbcName(){ return this.jdbcName;}
     }
 
     /**
