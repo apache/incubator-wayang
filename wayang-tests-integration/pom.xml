@@ -37,7 +37,6 @@
         <graphchi.version>0.2.2</graphchi.version>
         <flink.version>1.10.0</flink.version>
         <giraph.version>1.2.0-hadoop2</giraph.version>
-        <spark.version>3.1.2</spark.version>
     </properties>
 
     <dependencies>
