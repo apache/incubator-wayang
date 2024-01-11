@@ -32,15 +32,17 @@ import java.util.Optional;
 public class ModelTransformOperator<X, Y> extends BinaryToUnaryOperator<Model<X, Y>, X, Tuple2<X, Y>> {
 
     public static ModelTransformOperator<double[], Integer> kMeans() {
-        return new ModelTransformOperator<>(new TypeReference<>() {}, new TypeReference<>() {});
+        // The type of TypeReference cannot be omitted, to avoid the following error.
+        // error: cannot infer type arguments for TypeReference<T>, reason: cannot use '<>' with anonymous inner classes
+        return new ModelTransformOperator<>(new TypeReference<double[]>() {}, new TypeReference<Tuple2<double[], Integer>>() {});
     }
 
     public static ModelTransformOperator<double[], Double> linearRegression() {
-        return new ModelTransformOperator<>(new TypeReference<>() {}, new TypeReference<>() {});
+        return new ModelTransformOperator<>(new TypeReference<double[]>() {}, new TypeReference<Tuple2<double[], Double>>() {});
     }
 
     public static ModelTransformOperator<double[], Integer> decisionTreeClassification() {
-        return new ModelTransformOperator<>(new TypeReference<>() {}, new TypeReference<>() {});
+        return new ModelTransformOperator<>(new TypeReference<double[]>() {}, new TypeReference<Tuple2<double[], Integer>>() {});
     }
 
     public ModelTransformOperator(DataSetType<X> inType, DataSetType<Tuple2<X, Y>> outType) {
