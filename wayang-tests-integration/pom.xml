@@ -18,7 +18,7 @@
   under the License.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
   <packaging>pom</packaging>
 
   <parent>
@@ -67,6 +67,26 @@
         </dependency>
 
         <dependency>
+          <groupId>org.apache.wayang</groupId>
+          <artifactId>wayang-flink</artifactId>
+          <version>0.7.1-SNAPSHOT</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.wayang</groupId>
+          <artifactId>wayang-spark</artifactId>
+          <version>0.7.1-SNAPSHOT</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.wayang</groupId>
+          <artifactId>wayang-api-scala-java</artifactId>
+          <version>0.7.1-SNAPSHOT</version>
+          <scope>test</scope>
+        </dependency>
+
+        <!-- Spark is a provided dependency and thus not transitively injected via wayang-spark. -->
+        <dependency>
           <groupId>org.apache.spark</groupId>
           <artifactId>spark-core_2.12</artifactId>
           <version>${spark.version}</version>
@@ -102,6 +122,27 @@
                     <artifactId>jackson-databind</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-clients_2.12</artifactId>
+          <version>${flink.version}</version>
+          <scope>test</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>com.fasterxml.jackson.core</groupId>
+              <artifactId>jackson-annotations</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.fasterxml.jackson.core</groupId>
+              <artifactId>jackson-core</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.fasterxml.jackson.core</groupId>
+              <artifactId>jackson-databind</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
 
         <dependency>
@@ -236,9 +277,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <modules>
-        <module>wayang-tests-integration_2.12</module>
-    </modules>
 
 </project>
