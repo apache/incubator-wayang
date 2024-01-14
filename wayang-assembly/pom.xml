@@ -38,7 +38,6 @@
     <wayang.name>wayang-${project.version}</wayang.name>
   </properties>
 
-
   <dependencies>
     <dependency>
       <groupId>org.apache.wayang</groupId>
