@@ -22,7 +22,6 @@ import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.basic.WayangBasics
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.plugin.{DynamicPlugin, Plugin}
-//import org.apache.wayang.graphchi.GraphChi
 import org.apache.wayang.java.Java
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.spark.Spark
@@ -66,7 +65,6 @@ object Parameters {
     case "spark" => Spark.basicPlugin
     case "spark-graph" => Spark.graphPlugin
     case "spark-conversions" => Spark.conversionPlugin
-//    case "graphchi" => GraphChi.plugin
     case "postgres" => Postgres.plugin
     case "postgres-conversions" => Postgres.conversionPlugin
     case "sqlite3" => Sqlite3.plugin

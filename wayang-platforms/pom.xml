@@ -43,7 +43,6 @@
         <module>wayang-sqlite3</module>
         <module>wayang-giraph</module>
         <module>wayang-flink</module>
-        <module>wayang-graphchi</module>
         <module>wayang-generic-jdbc</module>
     </modules>
 

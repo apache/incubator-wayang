@@ -21,8 +21,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.apache.wayang</groupId>
         <artifactId>wayang</artifactId>
+        <groupId>org.apache.wayang</groupId>
         <version>0.7.1-SNAPSHOT</version>
     </parent>
 
@@ -78,6 +78,16 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.12</artifactId>
             <version>3.1.2</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-graphx_2.12</artifactId>
+          <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-mllib_2.12</artifactId>
+          <version>${spark.version}</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>

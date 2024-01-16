@@ -109,7 +109,6 @@ public class GeneticOptimizerApp {
         Spark.platform();
         Sqlite3.platform();
         Postgres.platform();
-        //TODO: add dinamically Graphchi, if the version of scala is 2.11
 
         // Load the ExecutionLog.
         double samplingFactor = this.configuration.getDoubleProperty("wayang.profiler.ga.sampling", 1d);

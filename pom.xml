@@ -102,6 +102,10 @@
         <!-- Timestamp for the reproducible builds -->
         <project.build.outputTimestamp>2023-09-03T17:24:31Z</project.build.outputTimestamp>
 
+        <scala.version>2.12.12</scala.version>
+        <scala.mayor.version>2.12</scala.mayor.version>
+        <spark.version>3.1.2</spark.version>
+
         <assertj.version>3.17.2</assertj.version>
         <commons-io.version>2.5</commons-io.version>
         <guava.version>19.0</guava.version>
@@ -300,42 +304,6 @@
             </build>
         </profile>
 
-        <profile>
-            <id>java8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <properties>
-                <java.version>1.8</java.version>
-                <source.level>1.8</source.level>
-                <maven.compiler.source>1.8</maven.compiler.source>
-                <maven.compiler.target>1.8</maven.compiler.target>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>enforce-maven-version</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireJavaVersion>
-                                            <version>1.8</version>
-                                        </requireJavaVersion>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <!-- Used to build Java 11+ -->
         <profile>
             <id>java11</id>
@@ -492,114 +460,6 @@
         </profile>
 
         <profile>
-            <id>scala-11</id>
-            <activation>
-                <file>
-                    <exists>scala_2.11</exists>
-                </file>
-            </activation>
-            <properties>
-                <scala.version>2.11.12</scala.version>
-                <scala.mayor.version>2.11</scala.mayor.version>
-                <spark.version>2.4.8</spark.version>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>adding-source-java-scala-2.11</id>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                    <goal>add-source</goal>
-                                </goals>
-                                <configuration>
-                                    <sources>
-                                        <source>../code/main/java</source>
-                                        <source>src/main/java</source>
-                                    </sources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>adding-resources-scala-2.11</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>add-resource</goal>
-                                </goals>
-                                <configuration>
-                                    <resources>
-                                        <resource>
-                                            <directory>
-                                                ../code/main/resources
-                                            </directory>
-                                        </resource>
-                                        <resource>
-                                            <directory>
-                                                src/main/resources
-                                            </directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>adding-test-source-java-scala-2.11</id>
-                                <phase>generate-test-sources</phase>
-                                <goals>
-                                    <goal>add-test-source</goal>
-                                </goals>
-                                <configuration>
-                                    <sources>
-                                        <source>../code/test/java</source>
-                                        <source>src/test/java</source>
-                                    </sources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>adding-test-resources-scala-2.11</id>
-                                <phase>generate-test-resources</phase>
-                                <goals>
-                                    <goal>add-test-resource</goal>
-                                </goals>
-                                <configuration>
-                                    <resources>
-                                        <resource>
-                                            <directory>
-                                                ../code/test/resources
-                                            </directory>
-                                        </resource>
-                                        <resource>
-                                            <directory>
-                                                src/test/resources
-                                            </directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>net.alchim31.maven</groupId>
-                        <artifactId>scala-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>add-source-scala</id>
-                                <goals>
-                                    <goal>add-source</goal>
-                                </goals>
-                                <configuration>
-                                    <sourceDir>../code/main/scala</sourceDir>
-                                    <testSourceDir>../code/test/scala</testSourceDir>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
             <id>scala-12</id>
             <activation>
                 <file>
@@ -618,7 +478,7 @@
                         <artifactId>build-helper-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>adding-source-java-scala-2.12</id>
+                                <id>adding-source-java-scala</id>
                                 <phase>generate-sources</phase>
                                 <goals>
                                     <goal>add-source</goal>
@@ -652,7 +512,7 @@
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>adding-test-source-java-scala-2.12</id>
+                                <id>adding-test-source-java-scala</id>
                                 <phase>generate-test-sources</phase>
                                 <goals>
                                     <goal>add-test-source</goal>
@@ -706,21 +566,6 @@
                 </plugins>
             </build>
         </profile>
-
-        <profile>
-            <id>scala-parent-default</id>
-            <activation>
-                <file>
-                    <exists>src</exists>
-                </file>
-            </activation>
-            <properties>
-                <scala.version>2.12.12</scala.version>
-                <scala.mayor.version>2.12</scala.mayor.version>
-                <spark.version>3.1.2</spark.version>
-            </properties>
-        </profile>
-
 
         <profile>
             <id>antlr</id>
