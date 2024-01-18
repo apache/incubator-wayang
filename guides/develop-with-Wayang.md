@@ -37,14 +37,14 @@ This tutorial shows users how to import Wayang in their Java project using the m
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
-            <artifactId>wayang-spark_2.12</artifactId>
+            <artifactId>wayang-spark</artifactId>
             <version>0.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
-            <artifactId>wayang-api-scala-java_2.12</artifactId>
+            <artifactId>wayang-api-scala-java</artifactId>
             <version>0.7.1</version>
-        </dependency> 
+        </dependency>
 ```
 
 # Include the Spark maven dependencies in your pom
@@ -82,7 +82,7 @@ public static void main(String[] args) {
         WayangContext wayangContext = new WayangContext(new Configuration())
                 .withPlugin(Java.basicPlugin())
                 .withPlugin(Spark.basicPlugin());
-        
+
         /* Get a plan builder */
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
                 .withJobName("WordCount")
