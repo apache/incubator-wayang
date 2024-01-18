@@ -48,7 +48,7 @@ jobs:
           export PATH="$HOME/gems/bin:$PATH"' >> $GITHUB_ENV
       - name: Install jekyll
         run: |
-          gem install jekyll bundler
+          sudo gem install jekyll bundler
       - uses: actions/cache@v2
         with:
           path: ~/.m2/repository
