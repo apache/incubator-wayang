@@ -203,7 +203,7 @@ class OtherSerializationTests extends SerializationTestBase {
         .execute()
 
       // Check results
-      val expectedLines = List("aaabbbcccddd Wayang out", "aaabbbcccdddeee Wayang out")
+      val expectedLines = List("aaabbbccc Wayang out.", "aaabbbcccddd Wayang out.", "aaabbbcccdddeee Wayang out.")
       SerializationTestBase.assertOutputFile(out1, expectedLines)
       SerializationTestBase.assertOutputFile(out2, expectedLines)
     }

@@ -4,7 +4,8 @@ import org.apache.logging.log4j.{LogManager, Logger}
 import org.apache.wayang.api.serialization.TempFileUtils
 import org.apache.wayang.core.api.exception.WayangException
 
-import java.nio.file.Files
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -85,17 +86,20 @@ package object async {
     var process: Process = null
 
     try {
-      val wayangHome = Option(System.getenv("WAYANG_HOME"))
-        .getOrElse(throw new RuntimeException("WAYANG_HOME is not set in the environment"))
-      val wayangSubmit = s"$wayangHome/bin/wayang-submit"
       val mainClass = "org.apache.wayang.api.async.Main"
+      val classpath = System.getProperty("java.class.path") // get classpath from parent JVM
+
+      Files.write(Paths.get("/tmp/classpath.log"), classpath.getBytes(StandardCharsets.UTF_8))
+      println("Just logged the classpath")
 
       // Child process
       val processBuilder = new ProcessBuilder(
-        wayangSubmit,
+        "java",
+        "-cp",
+        classpath,
         mainClass,
-        operatorPath.toString,
-        planBuilderPath.toString)
+        operatorPath.toString, planBuilderPath.toString
+      )
 
       // Redirect children output to parent output
       processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
