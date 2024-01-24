@@ -17,3 +17,7 @@ pom.xml.*
 
 10e*.input
 *_pb2.py
+
+# VSCode
+.vscode
+.vscode/*
