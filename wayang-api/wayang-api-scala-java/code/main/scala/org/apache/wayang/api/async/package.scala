@@ -89,16 +89,14 @@ package object async {
       val mainClass = "org.apache.wayang.api.async.Main"
       val classpath = System.getProperty("java.class.path") // get classpath from parent JVM
 
-      Files.write(Paths.get("/tmp/classpath.log"), classpath.getBytes(StandardCharsets.UTF_8))
-      println("Just logged the classpath")
-
       // Child process
       val processBuilder = new ProcessBuilder(
         "java",
         "-cp",
         classpath,
         mainClass,
-        operatorPath.toString, planBuilderPath.toString
+        operatorPath.toString,
+        planBuilderPath.toString
       )
 
       // Redirect children output to parent output
