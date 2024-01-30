@@ -24,11 +24,11 @@
     <parent>
         <groupId>org.apache.wayang</groupId>
         <artifactId>wayang</artifactId>
-        <version>0.7.1-SNAPSHOT</version>
+        <version>0.7.1</version>
     </parent>
 
     <artifactId>wayang-commons</artifactId>
-    <version>0.7.1-SNAPSHOT</version>
+    <version>0.7.1</version>
 
     <name>Wayang Commons</name>
     <description>

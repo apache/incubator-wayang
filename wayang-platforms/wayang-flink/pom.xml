@@ -23,11 +23,11 @@
   <parent>
         <artifactId>wayang-platforms</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>0.7.1-SNAPSHOT</version>
+        <version>0.7.1</version>
     </parent>
 
     <artifactId>wayang-flink</artifactId>
-    <version>0.7.1-SNAPSHOT</version>
+    <version>0.7.1</version>
 
     <name>Wayang Platform Apache Flink</name>
     <description>
@@ -43,17 +43,17 @@
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-core</artifactId>
-            <version>0.7.1-SNAPSHOT</version>
+            <version>0.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-basic</artifactId>
-            <version>0.7.1-SNAPSHOT</version>
+            <version>0.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-java</artifactId>
-            <version>0.7.1-SNAPSHOT</version>
+            <version>0.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
