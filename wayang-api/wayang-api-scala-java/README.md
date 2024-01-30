@@ -1,6 +1,8 @@
 # Wayang scala-java API
 
-Blossom provides two options for performing multiple asynchronous tasks - `async` API and `multicontext` API.
+Blossom provides two options for performing multiple asynchronous tasks - `async` API and `multicontext` API. 
+
+The above examples can be found in the `async.apps` package and the `multicontext.apps` package in wayang-benchmark.
 
 ## `async` API
 Our example shows how to utilize the `async` API with an example program containing several asynchronous jobs:
