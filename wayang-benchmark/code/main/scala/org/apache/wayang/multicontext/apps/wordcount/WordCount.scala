@@ -21,6 +21,7 @@ package org.apache.wayang.multicontext.apps.wordcount
 
 import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
 import org.apache.wayang.multicontext.apps.loadConfig
+import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 
 class WordCount {}
@@ -57,11 +58,11 @@ object WordCount {
       .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
     ).execute()
 
-    /*.foreach(_.loadCollection(inputValues))
-    .foreach(_.flatMap(_.split("\\s+")))
-    .foreach(_.map(_.replaceAll("\\W+", "").toLowerCase))
-    .foreach(_.map((_, 1)))
-    .foreach(_.reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)))
+    /*.forEach(_.loadCollection(inputValues))
+    .forEach(_.flatMap(_.split("\\s+")))
+    .forEach(_.map(_.replaceAll("\\W+", "").toLowerCase))
+    .forEach(_.map((_, 1)))
+    .forEach(_.reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)))
     .execute()*/
 
   }

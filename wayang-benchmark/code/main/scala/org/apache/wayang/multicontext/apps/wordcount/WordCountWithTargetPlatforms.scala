@@ -24,8 +24,6 @@ import org.apache.wayang.java.Java
 import org.apache.wayang.multicontext.apps.loadConfig
 import org.apache.wayang.spark.Spark
 
-class WordCountWithTargetPlatforms {}
-
 object WordCountWithTargetPlatforms {
 
   def main(args: Array[String]): Unit = {

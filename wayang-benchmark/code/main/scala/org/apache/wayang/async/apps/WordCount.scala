@@ -46,25 +46,25 @@ object WordCount {
     val result2 = planBuilder2
       .loadCollection(List(6, 7, 8, 9, 10))
       .filter(_ <= 8)
-      .runAsync("file:///tmp/out2.temp")
+      .runAsync(tempFileOut = "file:///tmp/out2.temp")
 
     val dq1: DataQuanta[Int] = planBuilder1.loadAsync(result1)
     val dq2: DataQuanta[Int] = planBuilder1.loadAsync(result2)
     val result3 = dq1.union(dq2)
       .map(_ * 3)
       .filter(_ < 100)
-      .runAsync("file:///tmp/out3.temp", result1, result2)
+      .runAsync(tempFileOut = "file:///tmp/out3.temp", result1, result2)
 
     val result4 = planBuilder3
       .loadCollection(List(1, 2, 3, 4, 5))
       .filter(_ >= 2)
-      .runAsync("file:///tmp/out4.temp")
+      .runAsync(tempFileOut = "file:///tmp/out4.temp")
 
     val dq3: DataQuanta[Int] = planBuilder1.loadAsync(result3)
     val dq4: DataQuanta[Int] = planBuilder1.loadAsync(result4)
     val result5 = dq3.intersect(dq4)
       .map(_ * 4)
-      .writeTextFileAsync("file:///tmp/out5.final", result3, result4)
+      .writeTextFileAsync(url = "file:///tmp/out5.final", result3, result4)
 
     Await.result(result5, Duration.Inf)
     println("DONE!")

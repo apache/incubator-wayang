@@ -60,9 +60,7 @@ object WordCountCombineEach {
       .forEach(_.map((_, 1)))
       .forEach(_.reduceByKey(_._1, (a, _) => (a._1, 100)))
 
-    dq1.combineEach(dq2, (dq1: DataQuanta[(String, Int)], dq2: DataQuanta[(String, Int)]) =>
-        dq1.union(dq2)
-      )
+    dq1.combineEach(dq2, (dq1: DataQuanta[(String, Int)], dq2: DataQuanta[(String, Int)]) => dq1.union(dq2))
       .forEach(_.map(t => (t._1 + " wayang out", t._2)))
       .execute()
   }
