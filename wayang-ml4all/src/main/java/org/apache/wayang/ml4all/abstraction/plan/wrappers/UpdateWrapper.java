@@ -20,7 +20,7 @@ package org.apache.wayang.ml4all.abstraction.plan.wrappers;
 
 import org.apache.wayang.ml4all.abstraction.api.Update;
 
-public class UpdateWrapper<R, V> extends LogicalOperatorWrapperWithContext<R, V> {
+public class UpdateWrapper<R, V> extends LogicalOperatorWrapperWithModel<R, V> {
 
     Update<R, V> logOp;
 
@@ -30,7 +30,7 @@ public class UpdateWrapper<R, V> extends LogicalOperatorWrapperWithContext<R, V>
 
     @Override
     public R apply(V o) {
-        return this.logOp.process(o, context);
+        return this.logOp.process(o, ml4allModel);
     }
 
     @Override

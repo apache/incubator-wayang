@@ -20,7 +20,7 @@ package org.apache.wayang.ml4all.abstraction.plan.wrappers;
 
 import org.apache.wayang.ml4all.abstraction.api.Loop;
 
-public class LoopCheckWrapper<V> extends LogicalOperatorWrapperWithContext<Boolean, V> {
+public class LoopCheckWrapper<V> extends LogicalOperatorWrapperWithModel<Boolean, V> {
 
     Loop<V, Boolean> logOp;
 

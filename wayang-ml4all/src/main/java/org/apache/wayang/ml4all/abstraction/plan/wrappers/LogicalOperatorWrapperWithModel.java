@@ -20,18 +20,23 @@ package org.apache.wayang.ml4all.abstraction.plan.wrappers;
 
 import org.apache.wayang.core.function.ExecutionContext;
 import org.apache.wayang.core.function.FunctionDescriptor;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 
-public abstract class LogicalOperatorWrapperWithContext<R, V> implements FunctionDescriptor.ExtendedSerializableFunction<V, R> {
+/**
+ * Logical Operator that uses the [[org.apache.wayang.ml4all.abstraction.plan.ML4allModel]]  as input besides the data flowing from its input slot.
+ * The model is broadcasted to the operator.
+ */
 
-    protected ML4allGlobalVars context;
+public abstract class LogicalOperatorWrapperWithModel<R, V> implements FunctionDescriptor.ExtendedSerializableFunction<V, R> {
+
+    protected ML4allModel ml4allModel;
     int currentIteration;
     private boolean first = true;
 
     @Override
     public void open(ExecutionContext executionContext) {
         currentIteration = executionContext.getCurrentIteration();
-        context = executionContext.<ML4allGlobalVars>getBroadcast("context").iterator().next();
+        ml4allModel = executionContext.<ML4allModel>getBroadcast("model").iterator().next();
         if (this instanceof ComputePerPartitionWrapper) {
             if (first) {
                 initialise();

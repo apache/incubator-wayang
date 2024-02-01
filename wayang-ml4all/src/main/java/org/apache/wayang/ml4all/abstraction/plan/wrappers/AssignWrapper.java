@@ -19,11 +19,11 @@
 package org.apache.wayang.ml4all.abstraction.plan.wrappers;
 
 import org.apache.wayang.ml4all.abstraction.api.Update;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 
 import java.util.List;
 
-public class AssignWrapper<R> extends LogicalOperatorWrapperWithContext<ML4allGlobalVars, List<R>> { //TODO:check why this does not work because of the List<V> generic type
+public class AssignWrapper<R> extends LogicalOperatorWrapperWithModel<ML4allModel, List<R>> { //TODO:check why this does not work because of the List<V> generic type
 
     Update<R,?> logOp;
 
@@ -32,9 +32,9 @@ public class AssignWrapper<R> extends LogicalOperatorWrapperWithContext<ML4allGl
     }
 
     @Override
-    public ML4allGlobalVars apply(List<R> o) {
-        ML4allGlobalVars newContext = context.clone();
-        return this.logOp.assign(o, newContext);
+    public ML4allModel apply(List<R> o) {
+        ML4allModel newModel = ml4allModel.clone();
+        return this.logOp.assign(o, newModel);
     }
 
     @Override

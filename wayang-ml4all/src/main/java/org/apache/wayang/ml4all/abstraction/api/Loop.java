@@ -18,14 +18,14 @@
 
 package org.apache.wayang.ml4all.abstraction.api;
 
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 
 public abstract class Loop<R, V> extends LogicalOperator {
 
     /* Prepare the convergence dataset that will be used for the termination predicate
      * eg., the difference of the L2-norm of the new weights @input and the old weights which are in the context
      */
-    public abstract R prepareConvergenceDataset(V input, ML4allGlobalVars context);
+    public abstract R prepareConvergenceDataset(V input, ML4allModel context);
 
     /* Given the output of the convergence dataset decide if you want to continue or not */
     public abstract boolean terminate(R input);
