@@ -18,10 +18,6 @@
 
 package org.apache.wayang.jdbc.operators;
 
-import org.apache.wayang.spark.execution.SparkExecutor;
-import org.apache.wayang.spark.operators.SparkExecutionOperator;
-import org.apache.wayang.spark.platform.SparkPlatform;
-import org.junit.BeforeClass;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -34,6 +30,10 @@ import org.apache.wayang.core.profiling.FullInstrumentationStrategy;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.spark.execution.SparkExecutor;
+import org.apache.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.wayang.spark.platform.SparkPlatform;
+import org.junit.BeforeClass;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

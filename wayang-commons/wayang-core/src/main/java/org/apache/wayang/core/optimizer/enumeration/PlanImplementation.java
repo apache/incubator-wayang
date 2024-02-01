@@ -24,6 +24,8 @@ import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 import org.apache.wayang.core.optimizer.costs.TimeEstimate;
 import org.apache.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.wayang.core.optimizer.costs.DefaultEstimatableCost;
+import org.apache.wayang.core.optimizer.costs.EstimatableCost;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
@@ -105,6 +107,9 @@ public class PlanImplementation {
      */
     private final OptimizationContext optimizationContext;
 
+
+    private final EstimatableCost costModel;
+
     /**
      * The squashed cost estimate to execute this instance. This will be used to select the best plan!
      */
@@ -150,6 +155,11 @@ public class PlanImplementation {
         this.settledAlternatives.putAll(original.settledAlternatives);
         this.loopImplementations.putAll(original.loopImplementations);
         this.optimizationContext = original.optimizationContext;
+        this.costModel = this.optimizationContext
+            .getConfiguration()
+            .getCostModel()
+            .getFactory()
+            .makeCost();
     }
 
     /**
@@ -163,6 +173,11 @@ public class PlanImplementation {
         this.junctions = junctions;
         this.operators = operators;
         this.optimizationContext = optimizationContext;
+        this.costModel = this.optimizationContext
+            .getConfiguration()
+            .getCostModel()
+            .getFactory()
+            .makeCost();
 
         assert this.planEnumeration != null;
     }
@@ -608,12 +623,7 @@ public class PlanImplementation {
      * @return the cost estimate
      */
     public ProbabilisticDoubleInterval getCostEstimate() {
-
-        if (this.optimizationContext.getConfiguration().getBooleanProperty("wayang.core.optimizer.enumeration.parallel-tasks")) {
-            return this.getParallelCostEstimate(true);
-        } else {
-            return this.getCostEstimate(true);
-        }
+        return this.getCostEstimate(true);
     }
 
     /**
@@ -624,27 +634,11 @@ public class PlanImplementation {
      * @return the cost estimate
      */
     ProbabilisticDoubleInterval getCostEstimate(boolean isIncludeOverhead) {
-        ProbabilisticDoubleInterval costEstimateWithoutOverheadCache, costEstimateCache;
-        final ProbabilisticDoubleInterval operatorCosts = this.operators.stream()
-                .map(op -> this.optimizationContext.getOperatorContext(op).getCostEstimate())
-                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
-        final ProbabilisticDoubleInterval junctionCosts = this.optimizationContext.getDefaultOptimizationContexts().stream()
-                .flatMap(optCtx -> this.junctions.values().stream().map(jct -> jct.getCostEstimate(optCtx)))
-                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
-        final ProbabilisticDoubleInterval loopCosts = this.loopImplementations.values().stream()
-                .map(LoopImplementation::getCostEstimate)
-                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
-        costEstimateWithoutOverheadCache = operatorCosts.plus(junctionCosts).plus(loopCosts);
-        ProbabilisticDoubleInterval overheadCosts = this.getUtilizedPlatforms().stream()
-                .map(platform -> {
-                    Configuration configuraiton = this.optimizationContext.getConfiguration();
-                    long startUpTime = configuraiton.getPlatformStartUpTimeProvider().provideFor(platform);
-                    TimeToCostConverter timeToCostConverter = configuraiton.getTimeToCostConverterProvider().provideFor(platform);
-                    return timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
-                })
-                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
-        costEstimateCache = costEstimateWithoutOverheadCache.plus(overheadCosts);
-        return isIncludeOverhead ? costEstimateCache : costEstimateWithoutOverheadCache;
+        if (this.optimizationContext.getConfiguration().getBooleanProperty("wayang.core.optimizer.enumeration.parallel-tasks")) {
+            return this.costModel.getParallelEstimate(this, isIncludeOverhead);
+        } else {
+            return this.costModel.getEstimate(this, isIncludeOverhead);
+        }
     }
 
     /**
@@ -653,12 +647,7 @@ public class PlanImplementation {
      * @return the cost estimate
      */
     public double getSquashedCostEstimate() {
-        // Check if the parallel cost calculation is enabled in the configuration file
-        if (this.optimizationContext.getConfiguration().getBooleanProperty("wayang.core.optimizer.enumeration.parallel-tasks")) {
-            return this.getSquashedParallelCostEstimate(true);
-        } else {
-            return this.getSquashedCostEstimate(true);
-        }
+        return this.getSquashedCostEstimate(true);
     }
 
     /**
@@ -669,34 +658,12 @@ public class PlanImplementation {
      * @return the squashed cost estimate
      */
     double getSquashedCostEstimate(boolean isIncludeOverhead) {
-        assert Double.isNaN(this.squashedCostEstimateCache) == Double.isNaN(this.squashedCostEstimateWithoutOverheadCache);
-        if (Double.isNaN(this.squashedCostEstimateCache)) {
-            final double operatorCosts = this.operators.stream()
-                    .mapToDouble(op -> this.optimizationContext.getOperatorContext(op).getSquashedCostEstimate())
-                    .sum();
-            final double junctionCosts = this.optimizationContext.getDefaultOptimizationContexts().stream()
-                    .flatMapToDouble(optCtx -> this.junctions.values().stream().mapToDouble(jct -> jct.getSquashedCostEstimate(optCtx)))
-                    .sum();
-            final double loopCosts = this.loopImplementations.values().stream()
-                    .mapToDouble(LoopImplementation::getSquashedCostEstimate)
-                    .sum();
-            this.squashedCostEstimateWithoutOverheadCache = operatorCosts + junctionCosts + loopCosts;
-            double overheadCosts = this.getUtilizedPlatforms().stream()
-                    .mapToDouble(platform -> {
-                        Configuration configuration = this.optimizationContext.getConfiguration();
-
-                        long startUpTime = configuration.getPlatformStartUpTimeProvider().provideFor(platform);
-
-                        TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
-                        ProbabilisticDoubleInterval costs = timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
-
-                        final ToDoubleFunction<ProbabilisticDoubleInterval> squasher = configuration.getCostSquasherProvider().provide();
-                        return squasher.applyAsDouble(costs);
-                    })
-                    .sum();
-            this.squashedCostEstimateCache = this.squashedCostEstimateWithoutOverheadCache + overheadCosts;
+        // Check if the parallel cost calculation is enabled in the configuration file
+        if (this.optimizationContext.getConfiguration().getBooleanProperty("wayang.core.optimizer.enumeration.parallel-tasks")) {
+            return this.costModel.getSquashedParallelEstimate(this, isIncludeOverhead);
+        } else {
+            return this.costModel.getSquashedEstimate(this, isIncludeOverhead);
         }
-        return isIncludeOverhead ? this.squashedCostEstimateCache : this.squashedCostEstimateWithoutOverheadCache;
     }
 
 
@@ -968,6 +935,14 @@ public class PlanImplementation {
                 iterationImplementation.getBodyImplementation().logTimeEstimates();
             }
         }
+    }
+
+    public Map<OutputSlot<?>, Junction> getJunctions() {
+        return this.junctions;
+    }
+
+    public EstimatableCost getCost() {
+        return this.costModel;
     }
 
     /**

@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * This {@link Plugin} is a subset of the {@link JavaBasicPlugin} and only ships with the {@link ChannelConversion}s.
+ * This {@link Plugin} is a subset of the {@link JavaBasicPlugin} and only ships the {@link ChannelConversion}s.
  */
 public class JavaChannelConversionPlugin implements Plugin {
 

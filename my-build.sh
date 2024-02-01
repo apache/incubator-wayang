@@ -16,13 +16,15 @@
 # limitations under the License.
 #
 
-rm -r wayang-0.6.1-SNAPSHOT 2> /dev/null
+rm -r wayang-0.7.1 2> /dev/null
 set -e
-mvn -T 1C clean install -DskipTests -pl wayang-commons/wayang-basic
-mvn -T 1C clean install -DskipTests -pl wayang-commons/wayang-core
-mvn -T 1C clean install -DskipTests -pl wayang-api/wayang-api-scala-java/wayang-api-scala-java_2.12
+#mvn -T 1C clean install -DskipTests -pl wayang-commons/wayang-basic
+#mvn -T 1C clean install -DskipTests -pl wayang-commons/wayang-core
+#mvn -T 1C clean install -DskipTests -pl wayang-api/wayang-api-scala-java/wayang-api-scala-java_2.12
 #mvn -T 1C clean install -DskipTests -pl wayang-benchmark/wayang-benchmark_2.12
-#mvn clean package -pl :wayang-assembly -Pdistribution
+mvn clean package -pl :wayang-assembly -Pdistribution
+tar -xvf wayang-assembly/target/apache-wayang-assembly-0.7.1-incubating-dist.tar.gz
+
 #tar -xvf wayang-assembly/target/wayang-assembly-0.6.1-SNAPSHOT-dist.tar.gz
 
 # cd wayang-0.6.1-SNAPSHOT

@@ -19,3 +19,8 @@ pom.xml.*
 *_pb2.py
 
 wayang-0.6.1-SNAPSHOT
+wayang-0.7.1
+
+# VSCode
+.vscode
+.vscode/*

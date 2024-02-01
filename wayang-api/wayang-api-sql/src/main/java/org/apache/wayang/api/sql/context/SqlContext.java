@@ -32,6 +32,7 @@ import org.apache.wayang.api.sql.calcite.schema.SchemaUtils;
 import org.apache.wayang.api.sql.calcite.utils.PrintUtils;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
@@ -43,12 +44,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 
-public class SqlContext {
+public class SqlContext extends WayangContext {
 
     private static final AtomicInteger jobId = new AtomicInteger(0);
-
-    private final WayangContext wayangContext;
 
     private final CalciteSchema calciteSchema;
 
@@ -57,12 +57,21 @@ public class SqlContext {
     }
 
     public SqlContext(Configuration configuration) throws SQLException {
-        Configuration configuration1 = configuration.fork(String.format("SqlContext(%s)", configuration.getName()));
+        super(configuration.fork(String.format("SqlContext(%s)", configuration.getName())));
 
-        wayangContext = new WayangContext(configuration1)
-                .withPlugin(Java.basicPlugin())
-                .withPlugin(Spark.basicPlugin())
-                .withPlugin(Postgres.plugin());
+        this.withPlugin(Java.basicPlugin());
+        this.withPlugin(Spark.basicPlugin());
+        this.withPlugin(Postgres.plugin());
+
+        calciteSchema = SchemaUtils.getSchema(configuration);
+    }
+
+    public SqlContext(Configuration configuration, List<Plugin> plugins) throws SQLException {
+        super(configuration.fork(String.format("SqlContext(%s)", configuration.getName())));
+
+        for (Plugin plugin : plugins) {
+            this.withPlugin(plugin);
+        }
 
         calciteSchema = SchemaUtils.getSchema(configuration);
     }
@@ -87,7 +96,8 @@ public class SqlContext {
                 WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
                 WayangRules.WAYANG_PROJECT_RULE,
                 WayangRules.WAYANG_FILTER_RULE,
-                WayangRules.WAYANG_JOIN_RULE
+                WayangRules.WAYANG_JOIN_RULE,
+                WayangRules.WAYANG_AGGREGATE_RULE
         );
         RelNode wayangRel = optimizer.optimize(
                 relNode,
@@ -100,7 +110,7 @@ public class SqlContext {
 
         Collection<Record> collector = new ArrayList<>();
         WayangPlan wayangPlan = optimizer.convert(wayangRel, collector);
-        wayangContext.execute(getJobName(), wayangPlan);
+        this.execute(getJobName(), wayangPlan);
 
         return collector;
     }

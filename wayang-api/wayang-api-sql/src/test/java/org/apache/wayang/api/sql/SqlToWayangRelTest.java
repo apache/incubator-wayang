@@ -84,7 +84,8 @@ public class SqlToWayangRelTest {
                 WayangRules.WAYANG_PROJECT_RULE,
                 WayangRules.WAYANG_FILTER_RULE,
                 WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
-                WayangRules.WAYANG_JOIN_RULE
+                WayangRules.WAYANG_JOIN_RULE,
+                WayangRules.WAYANG_AGGREGATE_RULE
         );
 
         RelNode wayangRel = optimizer.optimize(

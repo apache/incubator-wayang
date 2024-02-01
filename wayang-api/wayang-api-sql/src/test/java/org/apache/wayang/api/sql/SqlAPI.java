@@ -133,6 +133,28 @@ public class SqlAPI {
         printResults(10, result);
     }
 
+    public static void exampleAggregateWithPostgres() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.postgres.jdbc.url", "jdbc:postgresql://localhost:5432/dvdrental");
+        configuration.setProperty("wayang.postgres.jdbc.user", "aditya");
+        configuration.setProperty("wayang.postgres.jdbc.password", "12345678");
+
+        String calciteModel = Resources.toString(
+                SqlAPI.class.getResource("/model.json"),
+                Charset.defaultCharset());
+        configuration.setProperty("wayang.calcite.model", calciteModel);
+
+        SqlContext sqlContext = new SqlContext(configuration);
+
+
+        Collection<Record> result = sqlContext.executeSql(
+                "SELECT  staff_id, sum(amount*customer_id*2), count(*), avg(amount) FROM postgres.payment group by staff_id"
+        );
+
+
+
+        printResults(10, result);
+    }
 
     public static void main(String... args) throws Exception {
 //        BasicConfigurator.configure();
@@ -140,9 +162,10 @@ public class SqlAPI {
 //        new SqlAPI().exampleFs();
 //        new SqlAPI().exampleWithPostgres();
 //        new SqlAPI().exampleJoinWithPostgres();
+//        new SqlAPI().exampleCrossPlatform();
         long startTime = System.nanoTime();
 
-        new SqlAPI().exampleCrossPlatform();
+        new SqlAPI().exampleAggregateWithPostgres();
 
         long endTime = System.nanoTime();
         long duration = (endTime - startTime);
