@@ -47,10 +47,10 @@ Examples for KMeans clustering and stochastic gradient descent can be found in `
 - Kmeans:
 
 ```shell
-./bin/wayang-submit org.apache.wayang.ml4all.examples.RunKMeans java,spark file:///Users/zoi/Work/WAYANG/forked/incubator-wayang/wayang-ml4all/src/main/resources/input/USCensus1990-sample.input 3 68 0 1
+./bin/wayang-submit org.apache.wayang.ml4all.examples.RunKMeans java,spark <url_path_to_file>/USCensus1990-sample.input 3 68 0 1
 ```
 
 - SGD:
 ```shell
-./bin/wayang-submit org.apache.wayang.ml4all.examples.RunSGD spark file:///Users/zoi/Work/WAYANG/forked/incubator-wayang/wayang-ml4all/src/main/resources/input/adult.zeros.input 100827 123 10 0.001
+./bin/wayang-submit org.apache.wayang.ml4all.examples.RunSGD spark <url_path_to_file>/adult.zeros.input 100827 123 10 0.001
 ```

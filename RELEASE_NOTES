@@ -1,4 +1,32 @@
 ==============================================================
+Apache Wayang (incubating) 1.0.0
+==============================================================
+
+This is a major release of Apache Wayang (incubating).
+Based on this release the projects wants to continue the path towards becoming an
+Apache TLP.
+
+This release supports the following frameworks:
+- ...
+
+Previous updates that are included in this release:
+- ...
+
+NOTE: depending on the scala version the list of the supported platforms available
+could be different.
+
+
+New Features
+------------
+[WAYANG-...] ...
+
+Incompatible changes
+--------------------
+NONE
+- ...
+
+
+==============================================================
 Apache Wayang (incubating) 0.7.1
 ==============================================================
 
