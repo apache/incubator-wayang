@@ -151,86 +151,92 @@ public class LineItemTuple implements Serializable {
      */
     public static class Parser {
 
-        public LineItemTuple parse(String line) {
+        public LineItemTuple parse(String line, char delimiter) {
             LineItemTuple tuple = new LineItemTuple();
 
             int startPos = 0;
-            int endPos = line.indexOf(';', startPos);
-            tuple.L_ORDERKEY = Long.valueOf(line.substring(startPos + 1, endPos - 1));
+            int endPos = line.indexOf(delimiter, startPos);
+            tuple.L_ORDERKEY = Long.valueOf(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_PARTKEY = Long.valueOf(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_PARTKEY = Long.valueOf(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_SUPPKEY = Long.valueOf(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_SUPPKEY = Long.valueOf(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_LINENUMBER = Integer.valueOf(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_LINENUMBER = Integer.valueOf(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_QUANTITY = Double.valueOf(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_QUANTITY = Double.valueOf(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_EXTENDEDPRICE = Double.valueOf(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_EXTENDEDPRICE = Double.valueOf(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_DISCOUNT = Double.valueOf(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_DISCOUNT = Double.valueOf(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_TAX = Double.valueOf(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_TAX = Double.valueOf(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_RETURNFLAG = line.charAt(startPos + 1);
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_RETURNFLAG = line.charAt(startPos);
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_LINESTATUS = line.charAt(startPos + 1);
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_LINESTATUS = line.charAt(startPos);
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_SHIPDATE = parseDate(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_SHIPDATE = parseDate(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_COMMITDATE = parseDate(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_COMMITDATE = parseDate(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = line.indexOf(';', startPos);
-            tuple.L_RECEIPTDATE = parseDate(line.substring(startPos + 1, endPos - 1));
+            endPos = line.indexOf(delimiter, startPos);
+            tuple.L_RECEIPTDATE = parseDate(line.substring(startPos, endPos));
 
             startPos = endPos + 1;
-            endPos = startPos - 1;
+            //endPos = startPos;
+            endPos = line.indexOf(delimiter, startPos);
+            /*
             do {
                 endPos++;
-                endPos = line.indexOf(';', endPos);
-            } while (line.charAt(endPos - 1) != '"' || line.charAt(endPos + 1) != '"');
-            tuple.L_SHIPINSTRUCT = line.substring(startPos + 1, endPos - 1);
+                endPos = line.indexOf(delimiter, endPos);
+            } while (line.charAt(endPos) != '"' || line.charAt(endPos + 1) != '"');*/
+            tuple.L_SHIPINSTRUCT = line.substring(startPos, endPos);
 
             startPos = endPos + 1;
-            endPos = startPos - 1;
+            //endPos = startPos;
+            endPos = line.indexOf(delimiter, startPos);
+            /*
             do {
                 endPos++;
-                endPos = line.indexOf(';', endPos);
-            } while (line.charAt(endPos - 1) != '"' || line.charAt(endPos + 1) != '"');
-            tuple.L_SHIPMODE = line.substring(startPos + 1, endPos - 1);
+                endPos = line.indexOf(delimiter, endPos);
+            } while (line.charAt(endPos) != '"' || line.charAt(endPos + 1) != '"');*/
+            tuple.L_SHIPMODE = line.substring(startPos, endPos);
 
             startPos = endPos + 1;
-            endPos = startPos - 1;
+            //endPos = startPos;
+            endPos = line.indexOf(delimiter, startPos);
+            /*
             do {
                 endPos++;
-                endPos = line.indexOf(';', endPos);
-            } while (endPos >= 0 && (line.charAt(endPos - 1) != '"' || (endPos < line.length() - 1 && line.charAt(endPos + 1) != '"')));
+                endPos = line.indexOf(delimiter, endPos);
+            } while (endPos >= 0 && (line.charAt(endPos) != '"' || (endPos < line.length() - 1 && line.charAt(endPos + 1) != '"')));*/
             assert endPos < 0 : String.format("Parsing error: unexpected ';' at %d. Input: %s", endPos, line);
             endPos = line.length();
-            tuple.L_COMMENT = line.substring(startPos + 1, endPos - 1);
+            tuple.L_COMMENT = line.substring(startPos, endPos);
 
             return tuple;
         }
@@ -245,8 +251,5 @@ public class LineItemTuple implements Serializable {
             final int millisPerDay = 1000 * 60 * 60 * 24;
             return (int) (calendar.getTimeInMillis() / millisPerDay);
         }
-
-
     }
-
 }

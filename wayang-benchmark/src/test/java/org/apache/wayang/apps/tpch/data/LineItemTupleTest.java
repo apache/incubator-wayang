@@ -34,7 +34,7 @@ public class LineItemTupleTest {
         LineItemTuple.Parser parser = new LineItemTuple.Parser();
         final LineItemTuple tuple = parser.parse("\"3249925\";\"37271\";\"9775\";\"1\";\"9.00\";\"10874.43\";\"0.10\";" +
                 "\"0.04\";\"N\";\"O\";\"1998-04-19\";\"1998-06-17\";\"1998-04-21\";\"TAKE BACK RETURN         \";" +
-                "\"AIR       \";\"express instructions among the excuses nag\"");
+                "\"AIR       \";\"express instructions among the excuses nag\"", ';');
 
         Assert.assertEquals(3249925, tuple.L_ORDERKEY);
         Assert.assertEquals(37271, tuple.L_PARTKEY);
