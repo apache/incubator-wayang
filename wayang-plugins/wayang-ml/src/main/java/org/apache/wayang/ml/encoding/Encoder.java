@@ -1,5 +1,4 @@
 /*
- *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -8,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,21 +16,14 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.ml4all.abstraction.api;
+package org.apache.wayang.ml.encoding;
 
-import org.apache.wayang.basic.operators.SampleOperator;
+import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
 
-public abstract class Sample extends LogicalOperator {
+import java.util.Vector;
 
-    /* specify sample size */
-    public abstract int sampleSize();
-
-    /* specify which Sample method to use */
-    public abstract SampleOperator.Methods sampleMethod();
-
-    /* specify seed as a function of the current iteration */
-    public long seed(long currentIteration) {
-        return System.nanoTime();           // by default uses the nano-time in each iteration
+public interface Encoder {
+    public static long[] encode(PlanImplementation planImplementation) {
+        return new long[0];
     }
-
 }
