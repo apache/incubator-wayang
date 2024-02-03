@@ -90,6 +90,9 @@ public class OrtMLModel {
             costPrediction = unwrapFunc.apply(r, "output");
         }
 
+        this.inputMap.clear();
+        this.requestedOutputs.clear();
+
         return costPrediction;
     }
 
