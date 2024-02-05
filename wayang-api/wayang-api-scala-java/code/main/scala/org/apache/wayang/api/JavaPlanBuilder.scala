@@ -63,6 +63,17 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
   createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
 
   /**
+      * Read a remote text file and provide it as a dataset of [[String]]s, one per line.
+      *
+      * @param url the URL of the text file
+      * @return [[DataQuantaBuilder]] for the file
+      */
+  def readRemoteTextFile(url: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+    createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
+
+
+
+  /**
     * Reads a database table and provides them as a dataset of [[Record]]s.
     *
     * @param source from that the [[Record]]s should be read
@@ -112,6 +123,7 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     */
   def withUdfJar(path: String) = {
     this.planBuilder withUdfJars path
+    System.out.println("**MK** ---MARKER--- in JavaPlanBuilder" )
     this
   }
 
@@ -135,6 +147,7 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     */
   def withUdfJarOf(cls: Class[_]) = {
     this.planBuilder withUdfJarsOf cls
+    System.out.println("**MK** ---MARKER--- in JavaPlanBuilder" )
     this
   }
 
