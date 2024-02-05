@@ -23,11 +23,11 @@
     <parent>
         <artifactId>wayang-platforms</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.7.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-giraph</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.7.2-SNAPSHOT</version>
 
     <name>Wayang Platform Giraph</name>
     <description>

@@ -23,11 +23,11 @@
     <parent>
         <artifactId>wayang-api</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.7.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-api-scala-java</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.7.2-SNAPSHOT</version>
 
     <name>Wayang API Scala-Java</name>
     <description>Wayang implementation of an API of Scala-Java to be enable to work in functional style</description>
