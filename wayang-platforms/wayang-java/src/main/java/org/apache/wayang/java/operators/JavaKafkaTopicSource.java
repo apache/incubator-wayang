@@ -44,19 +44,15 @@ public class JavaKafkaTopicSource extends KafkaTopicSource implements JavaExecut
 
     public JavaKafkaTopicSource(String topicName) {
         super(topicName);
-        getConsumer();
     }
 
     public JavaKafkaTopicSource(String topicName, String encoding) {
         super(topicName, encoding);
-        getConsumer();
     }
 
     public JavaKafkaTopicSource(KafkaTopicSource that) {
         super(that);
-        getConsumer();
     }
-
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
@@ -92,7 +88,12 @@ public class JavaKafkaTopicSource extends KafkaTopicSource implements JavaExecut
         try {
 
             // Poll messages from the topic
-            ConsumerRecords<String, String> records = getConsumer().poll(Duration.ofMillis(1000));
+            System.out.println("### 7 ... ");
+            this.initConsumer( (KafkaTopicSource) this );
+
+            ConsumerRecords<String, String> records = getConsumer().poll(Duration.ofMillis(15000));
+
+            System.out.println("### 8 ... ");
 
             // Convert the records into a Stream<String>
             Stream<String> messageStream = StreamSupport.stream(records.spliterator(), false)

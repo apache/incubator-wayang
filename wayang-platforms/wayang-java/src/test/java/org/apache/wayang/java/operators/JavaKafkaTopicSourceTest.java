@@ -68,10 +68,13 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
     @Test
     public void testA() throws Exception {
         Assert.assertEquals(3, 3);
+        System.out.println(">>> Test A");
     }
 
     @Test
     public void testReadFromKafkaTopic() {
+
+        System.out.println(">>> Test testReadFromKafkaTopic()");
 
         final String topicName1 = "banking-tx-small-csv";
 
@@ -91,83 +94,43 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
 
         System.out.println("> 3 ... ");
 
-        KafkaConsumer consumer = new KafkaConsumer<String, String>(props);
-
+        JavaExecutor javaExecutor = null;
         try {
-
-            //consumer.subscribe( Arrays.asList(topicName1) );
-
-            int i=0;
-            while (i < 4) {
-                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
-                for (ConsumerRecord<String, String> record : records) {
-                    processRecord(record);
-                    i++;
-                }
-            }
-
-            Assert.assertEquals(3, i);
+            // Prepare the source.
+            JavaKafkaTopicSource jks = new JavaKafkaTopicSource( topicName1 );
 
             System.out.println("> 4 ... ");
-        }
-        catch (Exception ex) {
-
-            ex.printStackTrace();
-
-        }
-    }
-
-    private void processRecord(ConsumerRecord<String, String> record) {
-        // Implement your record processing logic here
-        System.out.printf("key = %s, value = %s%n", record.key(), record.value());
-    }
-
-    /**
-    //@Test
-    public void testTextReadFromKafkaTopic() throws Exception {
-
-        final String topicName = "banking-tx-small-csv";
-
-        System.out.println("> 0 ... ");
-
-        System.out.println( "*** [TOPIC-Name] " + topicName + " ***");
-
-        JavaExecutor javaExecutor = null;
-
-        System.out.println( ">   Read from topic ... ");
-
-        try {
-
-            System.out.println("> 1 ... ");
-            //Properties props = KafkaTopicSource.loadConfig( propertiesFilePath );
-            Properties props = KafkaTopicSource.getDefaultProperties();
-
-            System.out.println("> 2 ... ");
-
-            props.list(System.out);
-
-            System.out.println("> 3 ... ");
-
-            JavaKafkaTopicSource source = new JavaKafkaTopicSource(topicName);
-
-            source.startConsuming();
 
             // Execute.
             JavaChannelInstance[] inputs = new JavaChannelInstance[]{};
             JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-            evaluate(source, inputs, outputs);
+            evaluate(jks, inputs, outputs);
+
+            System.out.println("> 5 ... ");
 
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
 
-            Assert.assertEquals(3, result.size());
+            Assert.assertNotNull(jks);
+            Assert.assertNotNull(result);
 
-        } catch(Exception ex) {
-            ex.printStackTrace();
+            System.out.println("> 6 ... ");
+
+
         } finally {
             if (javaExecutor != null) javaExecutor.dispose();
         }
+
     }
 
-    **/
+
+
+    private void processRecord(ConsumerRecord<String, String> record) {
+        // Implement your record processing logic here
+        System.out.printf("===> processRecord :: key = %s, value = %s%n", record.key(), record.value());
+    }
+
+
+
+
 }

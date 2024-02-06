@@ -58,6 +58,7 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
         </dependency>
+
     </dependencies>
 
 </project>
