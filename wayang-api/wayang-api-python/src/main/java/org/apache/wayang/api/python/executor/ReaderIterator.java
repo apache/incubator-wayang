@@ -91,5 +91,4 @@ public class ReaderIterator <Output> implements Iterator<Output> {
 
         throw new NoSuchElementException();
     }
-
 }

@@ -455,13 +455,14 @@ public class Job extends OneTimeExecutable {
                                                      Set<Channel> openChannels,
                                                      Set<ExecutionStage> executedStages) {
 
-        final PlanImplementation bestPlanImplementation = executionPlans.stream()
-                .reduce((p1, p2) -> {
-                    final double t1 = p1.getSquashedCostEstimate();
-                    final double t2 = p2.getSquashedCostEstimate();
-                    return t1 < t2 ? p1 : p2;
-                })
-                .orElseThrow(() -> new WayangException("Could not find an execution plan."));
+        final PlanImplementation bestPlanImplementation = this.configuration
+            .getCostModel()
+            .pickBestExecutionPlan(
+                executionPlans,
+                existingPlan,
+                openChannels,
+                executedStages
+            );
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
         return this.planImplementation = bestPlanImplementation;
     }

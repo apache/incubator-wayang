@@ -58,6 +58,8 @@ import org.apache.wayang.core.util.Actions;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;
+import org.apache.wayang.core.optimizer.costs.EstimatableCost;
+import org.apache.wayang.core.optimizer.costs.DefaultEstimatableCost;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -135,6 +137,8 @@ public class Configuration {
     private ValueProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
     private KeyValueProvider<String, String> properties;
+
+    private EstimatableCost costModel = new DefaultEstimatableCost();
 
     /**
      * Creates a new top-level instance that bases directly from the default instance. Will try to load the
@@ -806,6 +810,14 @@ public class Configuration {
 
     public Configuration getParent() {
         return parent;
+    }
+
+    public EstimatableCost getCostModel() {
+        return this.costModel;
+    }
+
+    public void setCostModel(EstimatableCost costModel) {
+        this.costModel = costModel;
     }
 
     @Override

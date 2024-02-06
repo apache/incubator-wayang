@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "defaultSchema": "wayang",
+  "schemas": [
+    {
+      "name": "postgres",
+      "type": "custom",
+      "factory": "org.apache.wayang.api.sql.calcite.jdbc.JdbcSchema$Factory",
+      "operand": {
+      "jdbcDriver": "org.postgresql.Driver",
+      "jdbcUrl": "jdbc:postgresql://localhost:5432/dvdrental",
+      "jdbcUser": "aditya",
+      "jdbcPassword": "12345678"
+      }
+    },
+    {
+      "name": 'fs',
+      "type": 'custom',
+      "factory": 'org.apache.calcite.adapter.file.FileSchemaFactory',
+      "operand": {
+        "directory": 'C:/incubator-Wayang-CrossPlatform/incubator-wayang-SQL/wayang-api/wayang-api-sql/src/test/resources'
+      }
+    }
+  ]
+}
+

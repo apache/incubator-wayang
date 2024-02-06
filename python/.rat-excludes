@@ -1,0 +1,7 @@
+.gitignore
+.rat-excludes
+venv/*
+10e*.input
+README.md
+py*_pb2.py
+t*.input

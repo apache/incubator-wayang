@@ -1,10 +1,47 @@
+<!---
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+--->
+
 # Apache Wayang (incubating) Benchmarks <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
 
 This repository provides example applications and further benchmarking tools to evaluate and get started with [Apache Wayang (incubating)](https://wayang.apache.org).
 
 Below we provide detailed information on our various benchmark components, including running instructions. For the configuration of Apache Wayang (incubating) itself, please consult the [Apache Wayang (incubating) repository](https://github.com/apache/incubator-wayang) or feel free to reach out on [dev@wayang.apache.org](mailto:dev@wayang.apache.org).
 
+
 ## Apache Wayang (incubating) Example Applications
+
+### Launching the main class
+
+To run any of the following example applications, use this format:
+
+```shell
+<main class> exp(<ID>[,tags=<tag>,...][,conf=<key>:<value>,...]) <plugin>(,<plugin>)* <arg1> <arg2> ...
+```
+
+Replace `<arg1> <arg2>, ...` with the application-specific parameters that you want to use.
+
+For example, to run the `org.apache.wayang.apps.wordcount.WordCountScala` class with the `exp(123)` experiment descriptor and the `java` plugin, use:
+```bash
+./bin/wayang-submit org.apache.wayang.apps.wordcount.WordCountScala exp\(123\) java file://$(pwd)/README.md
+```
+
+**Note** that the `file://$(pwd)/example_file.txt` format should be used for dealing with files.
 
 ### WordCount
 
@@ -45,7 +82,7 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 * `wayang.apps.tpch.csv.orders`: URL to the `ORDERS` file
 * `wayang.apps.tpch.csv.lineitem`: URL to the `LINEITEM` file
 
-**Datasets.** The datasets for this app can be generated with the [TPC-H tools](http://www.tpc.org/tpch/). The generated datasets can then be either put into a database and/or a filesystem.
+**Datasets.** The datasets for this app can be generated with the [TPC-H tools](https://www.tpc.org/tpch/). The generated datasets can then be either put into a database and/or a filesystem.
 
 ### SINDY
 
@@ -58,7 +95,7 @@ org.apache.wayang.apps.sindy.Sindy
 Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters.
 
 **Datasets.** Find below a list of datasets that can be used to benchmark Apache Wayang (incubating) in combination with this app:
-* CSV files generated with the [TPC-H tools](http://www.tpc.org/tpch/)
+* CSV files generated with the [TPC-H tools](https://www.tpc.org/tpch/)
 * [other CSV files](https://hpi.de/naumann/projects/repeatability/data-profiling/metanome-ind-algorithms.html)
 
 ### SGD
