@@ -310,7 +310,6 @@ class OtherSerializationTests extends SerializationTestBase {
     var deserialized: Operator = null
     try {
       val serialized = SerializationUtils.serializeAsString(dq1.operator)
-      SerializationTestBase.log(serialized, testName.getMethodName + ".log.json")
       deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
     }
     catch {
@@ -358,7 +357,6 @@ class OtherSerializationTests extends SerializationTestBase {
     var deserialized: Operator = null
     try {
       val serialized = SerializationUtils.serializeAsString(dq1.operator)
-      SerializationTestBase.log(serialized, testName.getMethodName + ".log.json")
       deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
     }
     catch {
