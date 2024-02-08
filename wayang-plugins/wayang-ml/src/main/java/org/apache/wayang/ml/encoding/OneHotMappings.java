@@ -1,6 +1,7 @@
 package org.apache.wayang.ml.encoding;
 
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.wayang.ml.util.Operators;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
@@ -44,8 +45,7 @@ public class OneHotMappings {
     // this is deterministic - don't worry
     private static HashMap<String, Integer> createOperatorMapping() {
         HashMap<String, Integer> mappings = new HashMap<>();
-        Reflections reflections = new Reflections("org.apache.wayang.basic.operators");
-        reflections.getSubTypesOf(OperatorBase.class)
+        Operators.getOperators()
           .stream()
           .sorted(Comparator.comparing(c -> c.getName()))
           .forEach(entry -> mappings.put(entry.getName(), mappings.size()));
