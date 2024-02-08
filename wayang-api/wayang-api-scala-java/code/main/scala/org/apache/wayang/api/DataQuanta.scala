@@ -775,6 +775,45 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     writeTextFileJava(url, toSerializableFunction(formatterUdf), udfLoad)
   }
 
+ /**
+  * Write the data quanta in this instance to a text file. Triggers execution.
+  *
+  * @param topicName    topicName to write into
+  * @param formatterUdf UDF to format data quanta to [[String]]s
+  * @param udfLoad      optional [[LoadProfileEstimator]] for the `udf`
+  */
+  def writeKafkaTopic(topicName: String,
+                  formatterUdf: Out => String,
+                  udfLoad: LoadProfileEstimator = null): Unit = {
+     writeKafkaTopicJava(topicName, toSerializableFunction(formatterUdf), udfLoad)
+  }
+
+    /**
+      * Write the data quanta in this instance to a text file. Triggers execution.
+      *
+      * @param url          URL to the text file
+      * @param formatterUdf UDF to format data quanta to [[String]]s
+      * @param udfLoad      optional [[LoadProfileEstimator]] for the `udf`
+      */
+    def writeKafkaTopicJava(topicName: String,
+                          formatterUdf: SerializableFunction[Out, String],
+                          udfLoad: LoadProfileEstimator = null): Unit = {
+
+      // TODO: CHANGE TO KafkaTopicSink
+      val sink = new TextFileSink[Out](
+        topicName,
+        new TransformationDescriptor(formatterUdf, basicDataUnitType[Out], basicDataUnitType[String], udfLoad)
+      )
+      sink.setName(s"Write to KafkaTopic $topicName")
+      this.connectTo(sink, 0)
+
+      // Do the execution.
+      this.planBuilder.sinks += sink
+      this.planBuilder.buildAndExecute()
+      this.planBuilder.sinks.clear()
+    }
+
+
   /**
     * Write the data quanta in this instance to a text file. Triggers execution.
     *

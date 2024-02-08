@@ -51,6 +51,8 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 
+
+
 /**
  * This source reads messages from a Kafka topic and outputs the messages as data units.
  */
@@ -82,7 +84,10 @@ public class KafkaTopicSource extends UnarySource<String> {
         super(that);
         this.topicName = that.getTopicName();
         this.encoding = that.getEncoding();
-        this.consumer = that.getConsumer();
+    }
+
+    public void initConsumer( KafkaTopicSource kts ) {
+        this.consumer = kts.getConsumer( null );
     }
 
     public String getTopicName() {
@@ -96,11 +101,29 @@ public class KafkaTopicSource extends UnarySource<String> {
     boolean isInitialized = false;
 
     public KafkaConsumer<String, String> getConsumer(){
-        Properties props = getDefaultProperties();
+        if ( this.consumer == null ) {
+            this.consumer = getConsumer( null );
+        }
+        return this.consumer;
+    }
+
+    public KafkaConsumer<String, String> getConsumer( Properties props ){
+
+        if ( props == null ) {
+            props = getDefaultProperties();
+            System.out.println(">>> Create consumer from DEFAULT PROPERTIES.");
+        }
+        else {
+            System.out.println(">>> Create consumer from PROPERTIES: " + props);
+        }
+
+        // Continue to set up your test using the mockConsumer
         this.consumer = new KafkaConsumer<String, String>(props);
+
         if( !isInitialized ) {
             this.consumer.subscribe(Arrays.asList(topicName));
             isInitialized = true;
+            System.out.println(">>> KafkaTopicSource isInitialized=" + isInitialized);
         }
         return this.consumer;
     }
@@ -112,16 +135,15 @@ public class KafkaTopicSource extends UnarySource<String> {
      * @param propertiesFilePath -  File path or null.
      *
      * @return Properties object
-
+     */
     public static Properties loadConfig(String propertiesFilePath) {
-
+        // wayang-kafka-defaults.properties
         Properties props = new Properties();
 
         logger.info( "> use properties file in path: " + propertiesFilePath + " for Kafka client configuration.");
 
         if ( propertiesFilePath == null ) {
-
-            return getDefaultProperties(props);
+            return getDefaultProperties();
         }
         else {
             try (InputStream input = new FileInputStream(propertiesFilePath)) {
@@ -132,7 +154,6 @@ public class KafkaTopicSource extends UnarySource<String> {
             return props;
         }
     }
-     */
 
     public static Properties getDefaultProperties() {
 
@@ -145,15 +166,14 @@ public class KafkaTopicSource extends UnarySource<String> {
         String SR_API_KEY = System.getenv("SR_API_KEY");
         String SR_API_SECRET = System.getenv("SR_API_SECRET");
 
-
-
+        /*
         System.out.println( BOOTSTRAP_SERVER );
         System.out.println( CLUSTER_API_KEY );
         System.out.println( CLUSTER_API_SECRET );
         System.out.println( SR_ENDPOINT );
         System.out.println( SR_API_KEY );
         System.out.println( SR_API_SECRET );
-
+        */
 
         // Set additional properties if needed
         props.put("bootstrap.servers", BOOTSTRAP_SERVER );
@@ -170,10 +190,10 @@ public class KafkaTopicSource extends UnarySource<String> {
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "wayang-kafka-java-source-client");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "wayang-kafka-java-source-client-2");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-        props.list( System.out );
+        // props.list( System.out );
 
         return props;
     }
@@ -223,7 +243,11 @@ public class KafkaTopicSource extends UnarySource<String> {
     }
 
     public void startConsuming() {
-        consumer.subscribe(Arrays.asList(topicName));
+        System.out.println(">>> Start consuming ... " + topicName);
+        if( !isInitialized ) {
+            consumer.subscribe(Arrays.asList(topicName));
+        }
+        isInitialized = true;
         while (true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
             for (ConsumerRecord<String, String> record : records) {
