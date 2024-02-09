@@ -54,10 +54,12 @@ public class JavaKafkaTopicSource extends KafkaTopicSource implements JavaExecut
         super(that);
     }
 
+
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
         return Arrays.asList("wayang.java.kafkatopicsource.load.prepare", "wayang.java.kafkatopicsource.load.main");
     }
+
 
     @Override
     public JavaKafkaTopicSource copy() {
