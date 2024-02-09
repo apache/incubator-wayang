@@ -16,20 +16,31 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.giraph.mappings;
+package org.apache.wayang.ml.util;
 
-import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.platform.Platform;
 
-import java.util.Collection;
-import java.util.Collections;
+import org.reflections.*;
 
-/**
- * Register for {@link Mapping}s for this platform.
- */
-public class Mappings {
+import java.util.Set;
 
-    public static final Collection<Mapping> ALL = Collections.singletonList(
-            new PageRankMapping()
-    );
+public class Platforms {
+    public static Set<Class<? extends Platform>> getPlatforms() {
+        Reflections reflections = new Reflections("org.apache.wayang");
+        return reflections.getSubTypesOf(Platform.class);
+    }
+
+    public static String getNamespace(String platformName) {
+        String[] exploded = platformName.split("\\.");
+        StringBuilder strBuilder = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            strBuilder.append(exploded[i]);
+            if (i != 3)  {
+                strBuilder.append(".");
+            }
+        }
+
+        return strBuilder.toString();
+    }
 }
 

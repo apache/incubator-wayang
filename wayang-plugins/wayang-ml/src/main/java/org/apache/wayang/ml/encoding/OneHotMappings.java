@@ -1,6 +1,9 @@
 package org.apache.wayang.ml.encoding;
 
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.wayang.ml.util.Operators;
+import org.apache.wayang.ml.util.Platforms;
+import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
@@ -19,55 +22,45 @@ public class OneHotMappings {
 
     private static HashMap<String, Integer> operatorMapping = createOperatorMapping();
 
-    private static HashMap<String, Integer> conversionMapping = createConversionMapping();
+    private static HashMap<String, Integer> platformsMapping = createPlatformMapping();
 
     private OneHotMappings() {}
 
     public static OneHotMappings getInstance() {
-        /*
         if (INSTANCE == null) {
             INSTANCE = new OneHotMappings();
         }
 
-        return INSTANCE;*/
-        return new OneHotMappings();
+        return INSTANCE;
     }
 
     public HashMap<String, Integer> getOperatorMapping() {
         return operatorMapping;
     }
 
-    public HashMap<String, Integer> getConversionMapping() {
-        return conversionMapping;
+    public HashMap<String, Integer> getPlatformsMapping() {
+        return platformsMapping;
     }
 
-    // this is deterministic - don't worry
     private static HashMap<String, Integer> createOperatorMapping() {
         HashMap<String, Integer> mappings = new HashMap<>();
-        Reflections reflections = new Reflections("org.apache.wayang.basic.operators");
-        reflections.getSubTypesOf(OperatorBase.class)
+        Operators.getOperators()
           .stream()
+          .filter(operator -> operator.getName().contains("org.apache.wayang.basic.operators"))
+          .distinct()
           .sorted(Comparator.comparing(c -> c.getName()))
           .forEach(entry -> mappings.put(entry.getName(), mappings.size()));
 
-        System.out.println(mappings);
         return mappings;
     }
 
-    private static HashMap<String, Integer> createConversionMapping() {
+    private static HashMap<String, Integer> createPlatformMapping() {
         HashMap<String, Integer> mappings = new HashMap<>();
 
-        Reflections java = new Reflections("org.apache.wayang.java.operators", new SubTypesScanner());
-        java.getSubTypesOf(OperatorBase.class)
-          .stream()
-          .sorted(Comparator.comparing(c -> c.getName()))
-          .forEach(entry -> mappings.put(entry.getName(), mappings.size()));
-
-        Reflections spark = new Reflections("org.apache.wayang.spark.operators", new SubTypesScanner());
-        spark.getSubTypesOf(OperatorBase.class)
-          .stream()
-          .sorted(Comparator.comparing(c -> c.getName()))
-          .forEach(entry -> mappings.put(entry.getName(), mappings.size()));
+        Platforms.getPlatforms()
+        .stream()
+        .sorted(Comparator.comparing(c -> c.getName()))
+        .forEach(entry -> mappings.put(entry.getName(), mappings.size()));
 
         return mappings;
     }
