@@ -18,28 +18,24 @@ public class OneHotVector {
 
     public int length;
 
-    // Size of the encoding data for one operator
-    public static int OPERATOR_SIZE = 10;
-
-    // Size of the encoding data for one conversion operator
-    public static int CONVERSION_SIZE = 4;
-
     public static int TOPOLOGIES_LENGTH = 4;
 
     public static OneHotMappings oneHotMapping = OneHotMappings.getInstance();
+
+    // Size of the encoding data for one operator
+    public static int OPERATOR_SIZE = oneHotMapping.getPlatformsMapping().size() + 8;
+
+    public static int CONVERSION_SIZE = oneHotMapping.getPlatformsMapping().size() + 3;
 
     public static int operatorsLength =
         oneHotMapping.getOperatorMapping().size() * OPERATOR_SIZE;
 
     public static int conversionsLength =
-        oneHotMapping.getConversionMapping().size() * CONVERSION_SIZE;
+        oneHotMapping.getOperatorMapping().size() * CONVERSION_SIZE;
 
     public OneHotVector() {
         this.length = TOPOLOGIES_LENGTH + operatorsLength + conversionsLength + 1;
         this.entries = new long[this.length];
-        System.out.println("ONE HOT VECTOR SIZE: " + this.length);
-        System.out.println("ONE HOT OPERATOR SIZE: " + operatorsLength);
-        System.out.println("ONE HOT DM SIZE: " + conversionsLength);
     }
 
     public void addOperator(long[] encodedOperator, String operator) {
@@ -51,7 +47,7 @@ public class OneHotVector {
         }
 
         for (int i = 0; i < encodedOperator.length; i++) {
-            this.entries[4 + i + (position * OPERATOR_SIZE)] = encodedOperator[i];
+            this.entries[TOPOLOGIES_LENGTH + i + (position * OPERATOR_SIZE)] = encodedOperator[i];
         }
     }
 
@@ -73,12 +69,12 @@ public class OneHotVector {
         }
 
         for (int i = 0; i < encodedConversion.length; i++) {
-            this.entries[4 + operatorsLength + i + (position * CONVERSION_SIZE)] = encodedConversion[i];
+            this.entries[TOPOLOGIES_LENGTH + operatorsLength + i + (position * CONVERSION_SIZE)] = encodedConversion[i];
         }
     }
 
     private static int getConversionOperatorPosition(String operator) {
-        HashMap<String, Integer> conversionMapping = oneHotMapping.getConversionMapping();
+        HashMap<String, Integer> conversionMapping = oneHotMapping.getOperatorMapping();
         if (!conversionMapping.containsKey(operator)) {
             return -1;
         }

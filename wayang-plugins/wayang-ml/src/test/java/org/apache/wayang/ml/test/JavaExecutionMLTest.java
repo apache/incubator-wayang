@@ -105,7 +105,6 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
                     Assert.assertEquals(true, true);
                 }
                 previous = encoded;
-                System.out.println(Arrays.toString(OneHotEncoder.encode(plan)));
             }
         }
     }

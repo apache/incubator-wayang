@@ -32,3 +32,4 @@ public class Mappings {
             new PageRankMapping()
     );
 }
+

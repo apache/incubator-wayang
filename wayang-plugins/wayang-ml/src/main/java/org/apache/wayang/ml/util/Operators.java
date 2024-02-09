@@ -22,11 +22,23 @@ import org.apache.wayang.core.plan.wayangplan.OperatorBase;
 
 import org.reflections.*;
 
+import java.util.stream.Collectors;
 import java.util.Set;
+import java.util.Comparator;
 
 public class Operators {
-    public static Set<Class<? extends OperatorBase> getOperators() {
+    public static Set<Class<? extends OperatorBase>> getOperators() {
         Reflections reflections = new Reflections("org.apache.wayang.basic.operators");
         return reflections.getSubTypesOf(OperatorBase.class);
+    }
+
+    public static Set<Class<? extends OperatorBase>> getPlatformOperators(String namespace) {
+        Reflections reflections = new Reflections(namespace + ".operators");
+        return reflections.getSubTypesOf(OperatorBase.class)
+            .stream()
+            .filter(operator -> operator.getName().contains(namespace))
+            .distinct()
+            .sorted(Comparator.comparing(c -> c.getName()))
+            .collect(Collectors.toSet());
     }
 }

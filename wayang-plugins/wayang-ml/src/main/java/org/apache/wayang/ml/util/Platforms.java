@@ -25,9 +25,22 @@ import org.reflections.*;
 import java.util.Set;
 
 public class Platforms {
-    public static Set<Class<? extends Platform> getPlatforms() {
+    public static Set<Class<? extends Platform>> getPlatforms() {
         Reflections reflections = new Reflections("org.apache.wayang");
         return reflections.getSubTypesOf(Platform.class);
+    }
+
+    public static String getNamespace(String platformName) {
+        String[] exploded = platformName.split("\\.");
+        StringBuilder strBuilder = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            strBuilder.append(exploded[i]);
+            if (i != 3)  {
+                strBuilder.append(".");
+            }
+        }
+
+        return strBuilder.toString();
     }
 }
 

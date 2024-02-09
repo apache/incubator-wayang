@@ -12,11 +12,10 @@ import org.apache.wayang.core.util.Canonicalizer;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.platform.Junction;
-import org.apache.wayang.java.platform.JavaPlatform;
-import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.ml.encoding.OneHotVector;
+import org.apache.wayang.ml.util.Platforms;
 
 import java.util.Vector;
 import java.util.Collection;
@@ -60,6 +59,8 @@ public class OneHotEncoder implements Encoder {
          */
         OptimizationContext optimizationContext = plan.getOptimizationContext();
         Canonicalizer<ExecutionOperator> operators = plan.getOperators();
+        HashMap<String, Integer> platformMappings = OneHotMappings.getInstance().getPlatformsMapping();
+        int platformsCount = platformMappings.size();
 
         List<Object> distinctOperators = operators
             .stream()
@@ -73,7 +74,7 @@ public class OneHotEncoder implements Encoder {
 
         for (Object operator : distinctOperators) {
             // build the features
-            long encodedOperator[] = new long[10];
+            long encodedOperator[] = new long[OneHotVector.OPERATOR_SIZE];
             List<ExecutionOperator> executionOperators = operators
                 .stream()
                 .filter(op -> operator == op.getClass().getSuperclass())
@@ -82,32 +83,32 @@ public class OneHotEncoder implements Encoder {
             encodedOperator[0] = (long) executionOperators.size();
 
             for (ExecutionOperator executionOperator : executionOperators) {
-                if (executionOperator.getPlatform() instanceof JavaPlatform)  {
-                    encodedOperator[1] += 1;
+                Integer platformPosition = platformMappings.get(executionOperator.getPlatform().getClass().getName());
+
+                if (platformPosition == null) {
+                    continue;
                 }
 
-                if (executionOperator.getPlatform() instanceof SparkPlatform)  {
-                    encodedOperator[2] += 1;
-                }
+                encodedOperator[platformPosition] += 1;
 
                 if (executionOperator instanceof UnaryToUnaryOperator)  {
-                    encodedOperator[3] += 1;
+                    encodedOperator[platformsCount + 1] += 1;
                 }
 
                 if (executionOperator instanceof BinaryToUnaryOperator)  {
-                    encodedOperator[4] += 1;
+                    encodedOperator[platformsCount + 2] += 1;
                 }
 
                 if (executionOperator.isLoopSubplan() || executionOperator.isLoopHead())  {
-                    encodedOperator[6] += 1;
+                    encodedOperator[platformsCount + 3] += 1;
                 }
 
                 for (InputSlot<?> input: executionOperator.getAllInputs()) {
-                    encodedOperator[8] += optimizationContext.getOperatorContext(executionOperator).getInputCardinality(input.getIndex()).getLowerEstimate();
+                    encodedOperator[platformsCount + 4] += optimizationContext.getOperatorContext(executionOperator).getInputCardinality(input.getIndex()).getLowerEstimate();
                 }
 
                 for (OutputSlot<?> output: executionOperator.getAllOutputs()) {
-                    encodedOperator[9] += optimizationContext.getOperatorContext(executionOperator).getOutputCardinality(output.getIndex()).getLowerEstimate();
+                    encodedOperator[platformsCount + 5] += optimizationContext.getOperatorContext(executionOperator).getOutputCardinality(output.getIndex()).getLowerEstimate();
                 }
             }
 
@@ -117,7 +118,6 @@ public class OneHotEncoder implements Encoder {
 
     /*
      * Format:
-     * 0 - number of operators
      * ---- BEGIN OPERATOR ITERATION ----
      * 0 - # instances in Java
      * 1 - # instances in Spark
@@ -129,6 +129,8 @@ public class OneHotEncoder implements Encoder {
         OneHotVector vector
     ) {
         OptimizationContext optimizationContext = plan.getOptimizationContext();
+        HashMap<String, Integer> platformMappings = OneHotMappings.getInstance().getPlatformsMapping();
+        int platformsCount = platformMappings.size();
 
         List<ExecutionTask> conversionTasks = plan
             .getJunctions()
@@ -145,7 +147,7 @@ public class OneHotEncoder implements Encoder {
             .collect(Collectors.toList());
 
         for (Object operator : distinctOperators) {
-            long encodedOperator[] = new long[4];
+            long encodedOperator[] = new long[OneHotVector.CONVERSION_SIZE];
             List<ExecutionOperator> executionOperators = conversionTasks
                 .stream()
                 .map(task -> task.getOperator())
@@ -153,13 +155,13 @@ public class OneHotEncoder implements Encoder {
                 .collect(Collectors.toList());
 
             for (ExecutionOperator executionOperator : executionOperators) {
-                if (executionOperator.getPlatform() instanceof JavaPlatform)  {
-                    encodedOperator[0] += 1;
+                Integer platformPosition = platformMappings.get(executionOperator.getPlatform().getClass().getName());
+
+                if (platformPosition == null) {
+                    continue;
                 }
 
-                if (executionOperator.getPlatform() instanceof SparkPlatform)  {
-                    encodedOperator[1] += 1;
-                }
+                encodedOperator[platformPosition] += 1;
 
                 OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(executionOperator);
                 long inputCardinality = 0;
@@ -176,8 +178,8 @@ public class OneHotEncoder implements Encoder {
                     outputCardinality += optimizationContext.getOperatorContext(executionOperator).getOutputCardinality(output.getIndex()).getLowerEstimate();
                 }
 
-                encodedOperator[2] = inputCardinality;
-                encodedOperator[3] = outputCardinality;
+                encodedOperator[platformsCount] = inputCardinality;
+                encodedOperator[platformsCount + 1] = outputCardinality;
             }
 
             vector.addDataMovement(encodedOperator, ((Class) operator).getName());
