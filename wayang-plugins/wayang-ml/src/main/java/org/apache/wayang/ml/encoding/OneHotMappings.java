@@ -18,6 +18,8 @@ import java.util.Comparator;
 
 public class OneHotMappings {
 
+    private static OneHotMappings INSTANCE;
+
     private static HashMap<String, Integer> operatorMapping = createOperatorMapping();
 
     private static HashMap<String, Integer> platformsMapping = createPlatformMapping();
@@ -25,7 +27,11 @@ public class OneHotMappings {
     private OneHotMappings() {}
 
     public static OneHotMappings getInstance() {
-        return new OneHotMappings();
+        if (INSTANCE == null) {
+            INSTANCE = new OneHotMappings();
+        }
+
+        return INSTANCE;
     }
 
     public HashMap<String, Integer> getOperatorMapping() {
