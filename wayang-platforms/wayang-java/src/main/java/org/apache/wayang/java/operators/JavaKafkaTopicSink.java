@@ -18,7 +18,10 @@
 
 package org.apache.wayang.java.operators;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.wayang.basic.operators.KafkaTopicSink;
+import org.apache.wayang.basic.operators.KafkaTopicSource;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.TransformationDescriptor;
@@ -38,10 +41,7 @@ import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -55,10 +55,12 @@ public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExec
 
     public JavaKafkaTopicSink(String topicName, TransformationDescriptor<T, String> formattingDescriptor) {
         super(topicName, formattingDescriptor);
+        System.out.println("---> CREATE JavaKafkaTopicSink ... (2)");
     }
 
     public JavaKafkaTopicSink(KafkaTopicSink<T> that) {
         super(that);
+        System.out.println("---> CREATE JavaKafkaTopicSink ... (1)");
     }
 
     @Override
@@ -70,29 +72,56 @@ public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExec
         assert inputs.length == 1;
         assert outputs.length == 0;
 
+        System.out.println("---> WRITE TO KAFKA SINK...");
+
+        System.out.println("### 9 ... ");
+
         JavaChannelInstance input = (JavaChannelInstance) inputs[0];
-        final FileSystem fs = FileSystems.requireFileSystem(this.topicName);
+
+        initProducer( (KafkaTopicSink<T>) this );
+
+        // File f = new File( "./" + this.topicName + ".txt" );
+
         final Function<T, String> formatter = javaExecutor.getCompiler().compile(this.formattingDescriptor);
 
+        System.out.println("### 10 ... ");
 
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fs.create(this.topicName)))) {
+        try ( KafkaProducer<String,String> producer = getProducer() ) {
             input.<T>provideStream().forEach(
                     dataQuantum -> {
                         try {
-                            writer.write(formatter.apply(dataQuantum));
-                            writer.write('\n');
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
+                            String messageValue = formatter.apply(dataQuantum);
+                            System.out.println(messageValue);
+
+                            // Assuming you have a topic name
+                            String topicName = this.topicName;
+
+                            // Create a ProducerRecord. You can also specify a key as the second parameter if needed
+                            ProducerRecord<String, String> record = new ProducerRecord<>(topicName, messageValue);
+
+                            // Send the record to the topic
+                            producer.send(record, (metadata, exception) -> {
+                                if (exception != null) {
+                                    // Handle any exceptions thrown during send
+                                    System.err.println("Failed to send message: " + exception.getMessage());
+                                } else {
+                                    // Optionally handle successful send, log metadata, etc.
+                                    System.out.println("Message sent successfully to " + metadata.topic() + " partition " + metadata.partition());
+                                }
+                            });
+                        } catch (Exception ex) {
+                            throw new WayangException("Writing message to Kafka topic failed.", ex);
                         }
                     }
             );
-        } catch (IOException e) {
-            throw new WayangException("Writing failed.", e);
+        } catch (Exception e) {
+            throw new WayangException("Writing to Kafka topic failed.", e);
         }
+
+        System.out.println("### 11 ... ");
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
-
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {

@@ -799,8 +799,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                           formatterUdf: SerializableFunction[Out, String],
                           udfLoad: LoadProfileEstimator = null): Unit = {
 
-      // TODO: CHANGE TO KafkaTopicSink
-      val sink = new TextFileSink[Out](
+      val sink = new KafkaTopicSink[Out](
         topicName,
         new TransformationDescriptor(formatterUdf, basicDataUnitType[Out], basicDataUnitType[String], udfLoad)
       )

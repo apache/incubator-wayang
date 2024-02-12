@@ -412,11 +412,11 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @return the collected data quanta
     */
   def writeKafkaTopic(topicName: String,
-                    formatterUdf: SerializableFunction[Out, String],
+                    formatterUdf: Out => String,
                     jobName: String,
                     udfLoadProfileEstimator: LoadProfileEstimator): Unit = {
     this.javaPlanBuilder.withJobName(jobName)
-    //this.dataQuanta().writeKafkaTopic(topicName, formatterUdf, udfLoadProfileEstimator)
+    this.dataQuanta().writeKafkaTopic(topicName, formatterUdf, udfLoadProfileEstimator)
   }
 
   /**

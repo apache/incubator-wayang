@@ -129,6 +129,3 @@ public class JavaKafkaTopicSource extends KafkaTopicSource implements JavaExecut
     }
 
 }
-
-
-// source build/env.sh; mvn exec:java -pl wayang-platforms/wayang-java -Dexec.mainClass="org.apache.wayang.java.operators.JavaKafkaTopicSource"
