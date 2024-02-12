@@ -70,7 +70,6 @@ public class ProcessFeeder<Input, Output> {
             this.writeIteratorToStream(input.iterator(), dataOut);
             dataOut.writeInt(END_OF_DATA_SECTION);
             dataOut.flush();
-
         } catch (IOException e) {
             e.printStackTrace();
         }

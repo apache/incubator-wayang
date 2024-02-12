@@ -22,12 +22,12 @@ import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.executor.PythonWorkerManager;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
-public class WrappedPythonFunction<Input, Output>  implements FunctionDescriptor.SerializableFunction<Iterable<Input>, Iterable<Output>> {
+public class WrappedPythonFunction<Input, Output> implements FunctionDescriptor.SerializableFunction<Iterable<Input>, Iterable<Output>> {
 
     private PythonUdf<Input, Output> myUDF;
     private ByteString serializedUDF;
 
-    public WrappedPythonFunction(PythonUdf<Input, Output> myUDF, ByteString serializedUDF){
+     public WrappedPythonFunction(PythonUdf<Input, Output> myUDF, ByteString serializedUDF){
         this.myUDF = myUDF;
         this.serializedUDF = serializedUDF;
     }

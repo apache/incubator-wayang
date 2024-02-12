@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
@@ -45,7 +46,8 @@ public class PythonProcessCaller {
     public PythonProcessCaller(ByteString serializedUDF){
 
         //TODO create documentation to how to the configuration in the code
-        this.configuration = new Configuration("file:///Users/rodrigopardomeza/wayang/incubator-wayang/wayang-api/wayang-api-python/src/main/resources/wayang-api-python-defaults.properties");
+        URL fileUrl = Thread.currentThread().getContextClassLoader().getResource("wayang-api-python-defaults.properties");
+        this.configuration = new Configuration(fileUrl.toString());
         this.ready = false;
         byte[] addr = new byte[4];
         addr[0] = 127; addr[1] = 0; addr[2] = 0; addr[3] = 1;
@@ -55,15 +57,13 @@ public class PythonProcessCaller {
             this.serverSocket = new ServerSocket(0, 1, InetAddress.getByAddress(addr));
             ProcessBuilder pb = new ProcessBuilder(
                     Arrays.asList(
-                            "python3",
+                            this.configuration.getStringProperty("wayang.api.python.path"),
                             this.configuration.getStringProperty("wayang.api.python.worker")
                     )
             );
             Map<String, String> workerEnv = pb.environment();
             workerEnv.put("PYTHON_WORKER_FACTORY_PORT", String.valueOf(this.serverSocket.getLocalPort()));
-
-            // TODO See what is happening with ENV Python version
-            workerEnv.put("PYTHONPATH", "/Users/rodrigopardomeza/wayang/incubator-wayang/pywayang/:/Users/rodrigopardomeza/opt/anaconda3/");
+            workerEnv.put("PYTHONPATH", this.configuration.getStringProperty("wayang.api.python.env.path"));
 
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             pb.redirectError(ProcessBuilder.Redirect.INHERIT);
@@ -75,7 +75,6 @@ public class PythonProcessCaller {
 
             // Wait for it to connect to our socket
             this.serverSocket.setSoTimeout(10000);
-
             try {
                 this.socket = this.serverSocket.accept();
                 this.serverSocket.setSoTimeout(0);
