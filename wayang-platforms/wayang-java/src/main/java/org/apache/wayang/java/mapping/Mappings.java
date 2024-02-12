@@ -57,7 +57,8 @@ public class Mappings {
             new RepeatMapping(),
             new SampleMapping(),
             new ZipWithIdMapping(),
-            new KafkaTopicSourceMapping()
+            new KafkaTopicSourceMapping(),
+            new KafkaTopicSinkMapping()
     );
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
