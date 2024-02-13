@@ -87,7 +87,7 @@ public class PythonAPITest {
                 )
         );
 
-        String pythonUDF = "def hello_world():\n\tprint(\"Hello from python\")\n\nhello_world()";
+        String pythonUDF = "lambda x: (str(y) + \" Test\" for y in x)";
 
         MapPartitionsOperator<String, String> sortPython =
                 new MapPartitionsOperator<String, String>(

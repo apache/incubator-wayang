@@ -18,10 +18,13 @@
 import os
 import socket
 import struct
-import pickle
 import base64
 import re
 import sys
+import ast
+import copy
+import pickle
+import cloudpickle
 
 
 class SpecialLengths(object):
@@ -92,57 +95,17 @@ def dump_stream(iterator, stream):
             write_with_length(obj, stream)
         ## elif type(obj) is list:
         ##    write_with_length(obj, stream)
-    print("Termine")
     write_int(SpecialLengths.END_OF_DATA_SECTION, stream)
-    print("Escribi Fin")
 
 
 def process(infile, outfile):
-    """udf64 = os.environ["UDF"]
-    print("udf64")
-    print(udf64)
-    #serialized_udf = binascii.a2b_base64(udf64)
-    #serialized_udf = base64.b64decode(udf64)
-    serialized_udf = bytearray(udf64, encoding='utf-16')
-    # NOT VALID TO BE UTF8  serialized_udf = bytes(udf64, 'UTF-8')
-    print("serialized_udf")
-    print(serialized_udf)
-    # input to be ast.literal_eval(serialized_udf)
-    func = pickle.loads(serialized_udf, encoding="bytes")
-    print ("func")
-    print (func)
-    print(func([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
-    # func([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])"""
-
-
-
-    # TODO First we must receive the operator + UDF
-    """udf = lambda elem: elem.lower()
-
-    def func(it):
-        return sorted(it, key=udf)"""
     udf_length = read_int(infile)
-    print("udf_length")
-    print(udf_length)
     serialized_udf = infile.read(udf_length)
-    print("serialized_udf")
-    print(serialized_udf)
-    #base64_message = base64.b64decode(serialized_udf + "===")
-    #print("base64_message")
-    #print(base64_message)
-    func = pickle.loads(serialized_udf)
-    #func = ori.lala(serialized_udf)
-    #print (func)
-    #for x in func([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]): print(x)
-
-    """print("example")
-    for x in func("2344|234|efrf|$#|ffrf"): print(x)"""
-    # TODO Here we are temporarily assuming that the user is exclusively sending UTF8. User has several types
+    #func = pickle.loads(serialized_udf)
+    func = pickle.loads(cloudpickle.dumps(lambda x: (str(y) + "Test" for y in x)))
     iterator = UTF8Deserializer().load_stream(infile)
-    # out_iter = sorted(iterator, key=lambda elem: elem.lower())
     out_iter = func(iterator)
     dump_stream(iterator=out_iter, stream=outfile)
-
 
 def local_connect(port):
     sock = None
