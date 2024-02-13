@@ -33,15 +33,11 @@ import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * Based on Calcite's CSV enumerator.
- * TODO: handle different variants
- */
 public class CsvRowConverter {
 
     private static final Logger logger = LogManager.getLogger(CsvRowConverter.class);
 
-    private static final CSVParser parser;
+    private static CSVParser parser;
 
     private static final FastDateFormat TIME_FORMAT_DATE;
     private static final FastDateFormat TIME_FORMAT_TIME;
@@ -176,20 +172,45 @@ public class CsvRowConverter {
 
     }
 
-
+    /**
+     * Parse line with default separator.
+     *
+     * @param s - a line of data from a CSV file.
+     * @return - array of strings, representing the field's data.
+     *
+     * @throws IOException
+     */
     public static String[] parseLine(String s) throws IOException {
         return parser.parseLine(s);
     }
 
+
+
     /**
-     * Parse line with a separator
-     * @param s
-     * @param separator
-     * @return
+     * Parse line with a separator.
+     *
+     * If separator is '\0' (the null character), than we identify the separator.
+     *
+     * In case of a "null character" as separator we create a new CSVParser with the determined separator character.
+     *
+     * @param s - a line of data from a CSV file.
+     * @param separator - a character used for splitting the line into fields using a CSVParser.
+     * @return - array of strings, representing the field's data.
+     *
      * @throws IOException
      */
     public static String[] parseLine(String s, char separator) throws IOException {
-        CSVParser csvParser = new CSVParser(separator);
-        return csvParser.parseLine(s);
+
+        if ( separator == '\0'  ) {
+
+                separator = CSVDelimiterIdentifier.identifyDelimiter(s);
+                CsvRowConverter.parser = new CSVParser(separator);
+
+        }
+
+        return parser.parseLine(s);
+
     }
+
+
 }

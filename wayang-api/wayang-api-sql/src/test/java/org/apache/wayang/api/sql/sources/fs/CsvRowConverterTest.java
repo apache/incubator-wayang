@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.api.sql;
+package org.apache.wayang.api.sql.sources.fs;
 
 import org.apache.wayang.api.sql.sources.fs.CsvRowConverter;
 import org.junit.After;
