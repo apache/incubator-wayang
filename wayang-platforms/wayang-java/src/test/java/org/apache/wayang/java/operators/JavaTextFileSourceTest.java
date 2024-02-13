@@ -97,7 +97,7 @@ public class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
         }
     }
 
-    @Test
+    // @Test
     /**
      * Requires a local HTTP Server running, in the project root ...
      *

@@ -26,7 +26,17 @@ To learn more about how to get involved with the Apache Wayang project, please v
 
 
 ## Contributing Workflow
-*under progress*
+Main steps include:
+
+1. Send an email to the development list to introduce yourself and discuss what you plan to implement.
+
+2. Fork the repository and implement your changes. Make sure all builds and tests are passing before going to step 3.
+
+3. Open a Pull Request (PR).
+
+4. Work with the code reviewer to apply any recommended changes.
+
+5. Once the reviewer approves it, your PR is merged!
 
 ## Wayang Branch Strategy
 All new code is under the `main` branch. Please, use this branch when forking this repo.

@@ -40,10 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
+      - name: Set up JDK 11
         uses: actions/setup-java@v2
         with:
-          java-version:  8
+          java-version:  11
           distribution: 'adopt'
       - name: Install Protoc
         run: sudo apt install -y protobuf-compiler
@@ -54,4 +54,4 @@ jobs:
       - name: Run Unit tests
         run: ./mvnw clean verify -B -Dmaven.test.skip=false -Dwayang.configuration=file:$(pwd)/tools/test/config/wayang.properties
       - name: Build And Install
-        run: ./mvnw clean install -B -Dmaven.test.skip=true 
+        run: ./mvnw clean install -B -Dmaven.test.skip=true

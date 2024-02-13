@@ -45,11 +45,6 @@ public class WayangContext {
 
     private final Configuration configuration;
 
-
-    /**
-     * For enabling montioring for debugging using HACKIT!
-     */
-    private boolean withHackITMonitioring;
     public WayangContext() {
         this(new Configuration());
     }
@@ -69,14 +64,6 @@ public class WayangContext {
         return this;
     }
 
-    /**
-     * enable the monitoring for platform tasks
-     * @return WayangContext
-     */
-    public WayangContext withMontioringForHackIT(){
-        this.setWithHackITMonitioring(true);
-        return this;
-    }
     /**
      * Registers the given {@link Plugin} with this instance.
      *
@@ -195,21 +182,5 @@ public class WayangContext {
             this.cardinalityRepository = new CardinalityRepository(this.configuration);
         }
         return this.cardinalityRepository;
-    }
-
-    /**
-     * getter method
-     * @return boolean that depicts HACKIT enable
-     */
-    public boolean isWithHackITMonitioring() {
-        return withHackITMonitioring;
-    }
-
-    /**
-     * setter method
-     * @param withHackITMonitioring is a boolean for HACKIT
-     */
-    public void setWithHackITMonitioring(boolean withHackITMonitioring) {
-        this.withHackITMonitioring = withHackITMonitioring;
     }
 }

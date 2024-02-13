@@ -6,9 +6,9 @@ license: |
     The ASF licenses this file to You under the Apache License, Version 2.0
     (the "License"); you may not use this file except in compliance with
     the License.  You may obtain a copy of the License at
-    
+
          http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,10 @@ license: |
 layout: default
 title: "Read Me"
 menus: header
-previous: 
+previous:
     url: /
     title: previous
-next: 
+next:
     url: /
     title: next
 menus:
@@ -34,30 +34,35 @@ menus:
 [![Gitter chat](https://badges.gitter.im/wayang-ecosystem/Lobby.png)](https://gitter.im/wayang-ecosystem/Lobby)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.wayang/wayang/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.wayang/wayang)
 
-#### Turning a shadows into a show
+#### Apache Wayang (incubating) - A Federated Data Processing Engine
 
+Unlike conventional data processing systems that depend on a single execution engine, Apache Wayang (incubating) acts as a meta processing framework. It empowers you to specify your data processing application through one of its APIs, and Wayang then intelligently chooses the ideal combination of underlying processing frameworks, like Java Streams or Apache Spark, to run your application efficiently. Wayang seamlessly manages inter-platform communication, eliminating the need to grapple with various platform APIs.
+   
+Wayang has built in support for the following frameworks:
 
-Apache Wayang (incubating) in contrast to classical data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) rather is a *meta processing framework*: You can specify your data processing app via one of Wayang's API and then Wayang will pick an optimal configuration of classical processing frameworks, such as Java Streams or Apache Spark, to run your app on. Finally, Wayang will also perform the execution, thereby hiding the different specific platform APIs and coordinate inter-platform communication.
+- Apache Flink v1.7.1
+- Apache Giraph v1.2.0-hadoop2
+- GraphChi v0.2.2 (only available with scala 11.x)
+- Java Streams (version depends on the java version)
+- JDBC-Template
+- Postgres v9.4.1208 (Implementation JDBC-Template)
+- Apache Spark v3.1.2 (scala 12.x) and v2.4.8 (scala 11.x)
+- SQLite3 v3.8.11.2 (implementation JDBC-Template)
 
-This approach aims at freeing data engineers and software developers from the burden of knowing the zoo of different data processing systems, their APIs, strengths and weakness; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when tying to a fix set of processing platforms. As of now, Wayang has built in support for the following processing platforms:
-- Java 8 Streams
-- [Apache Spark](https://spark.apache.org/)
-- [GraphChi](https://github.com/GraphChi/graphchi-java)
-- [Postgres](http://www.postgresql.org)
-- [SQLite](https://www.sqlite.org/)
+Important note: depending on the scala version the list of the supported platforms available could be different.
 
 ## How to use Wayang
 
 **Requirements.**
-Apache Wayang (incubating) is built with Java 8 and Scala 2.11. However, to execute Wayang it is sufficient to have Java 8 installed. If you want to build Wayang yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang (incubating) is built upon the foundations of Java 11 and Scala 2.12, providing a robust and versatile platform for data processing applications. If you intend to build Wayang from source, you will also need to have Apache Maven, the popular build automation tool, installed on your system. Additionally, be mindful that some of the processing platforms supported by Wayang may have their own specific installation requirements.
 
 **Get Wayang.**
 Wayang is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:
 ```xml
-<dependency> 
+<dependency>
   <groupId>org.apache.wayang</groupId>
   <artifactId>wayang-***</artifactId>
-  <version>0.3.0</version> 
+  <version>0.7.1</version>
 </dependency>
 ```
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
@@ -94,12 +99,12 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
     mvn clean install -P<profile name>
     ```
 
-**Configure Wayang.** In order for Wayang to work properly, it is necessary to tell Wayang about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Wayang right away, we recommend to create a properties file to adapt the configuration where necessary. To have Wayang use that configuration transparently, just run you app via
+**Configure Wayang.** To enable Apache Wayang's smooth operation, you need to equip it with details about your processing platforms' capabilities and how to interact with them. A default configuration is available for initial testing, but creating a properties file is generally preferable for fine-tuning the configuration to suit your specific requirements. To harness this personalized configuration effortlessly, launch your application via
 ```shell
 $ java -Dwayang.configuration=url://to/my/wayang.properties ...
 ```
 
-You can find the most relevant settings in the following:
+Essential configuration settings:
 * General settings
     * `wayang.core.log.enabled (= true)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
     * `wayang.core.log.executions (= ~/.wayang/executions.json)` where to log execution times of operator groups
@@ -134,11 +139,11 @@ You can find the most relevant settings in the following:
     * `wayang.postgres.cpu.mhz (= 2700)`: clock frequency of processor PostgreSQL runs on in MHz
     * `wayang.postgres.cpu.cores (= 2)`: number of cores PostgreSQL runs on
 
-**Code with Wayang.** The recommended way to specify your apps with Wayang is via its Scala or Java API from the `wayang-api` module. You can find examples below.
+**Code with Wayang.** To effectively define your applications with Apache Wayang, utilize its Scala or Java API, conveniently found within the `wayang-api` module. For clear illustrations, refer to the provided examples below.
 
 **Learn cost functions.**
-Wayang provides a utility to learn cost functions from historical execution data.
-Specifically, Wayang can learn configurations for load profile estimators (that estimate CPU load, disk load etc.) for both operators and UDFs, as long as the configuration provides a template for those estimators.
+Wayang provides a utility to learn cost functions from historical execution data. Specifically, Wayang can learn configurations for load profile estimators (that estimate CPU load, disk load etc.) for both operators and UDFs, as long as the configuration provides a template for those estimators.
+   
 As an example, the `JavaMapOperator` draws its load profile estimator configuration via the configuration key `wayang.java.map.load`.
 Now, it is possible to specify a load profile estimator template in the configuration under the key `<original key>.template`, e.g.:
 ```xml
@@ -147,9 +152,8 @@ wayang.java.map.load.template = {\
   "cpu":"?*in0"\
 }
 ```
-This template specifies a load profile estimator that expects (at least) one input cardinality and one output cardinality.
-Further, it models a CPU load that is proportional to the input cardinality.
-However, more complex functions are possible.
+This template encapsulates a load profile estimator that requires at minimum one input cardinality and one output cardinality. Furthermore, it simulates CPU load by assuming a direct relationship with the input cardinality. However, more complex functions are possible.
+   
 In particular, you can use
 * the variables `in0`, `in1`, ... and `out0`, `out1`, ... to incorporate the input and output cardinalities, respectively;
 * operator properties, such as `numIterations` for the `PageRankOperator` implementations;
@@ -157,21 +161,18 @@ In particular, you can use
 * the functions `min(x0, x1, ...))`, `max(x0, x1, ...)`, `abs(x)`, `log(x, base)`, `ln(x)`, `ld(x)`;
 * and the constants `e` and `pi`.
 
-While Wayang specifies templates for all execution operators, you will need to specify that your UDFs are modelled by some configuration-based cost function (see the k-means example below) and create the according initial specification and template yourself.
-Once, you gathered execution data, you can run
+While Apache Wayang provides templates for all execution operators, you will need to explicitly define your user-defined functions (UDFs) by specifying their cost functions, which are based on configuration parameters. This involves creating an initial specification and template for each UDF.
+As soon as execution data has been collected, you can initiate:
 ```shell
 java ... org.apache.wayang.profiler.ga.GeneticOptimizerApp [configuration URL [execution log]]
 ```
-This app will try to find appropriate values for the question marks (`?`) in the load profile estimator templates to fit the gathered execution data and ready-made configuration entries for the load profile estimators.
-You can then copy them into your configuration.
+This tool will attempt to determine suitable values for the question marks (`?`) within the load profile estimator templates, aligning them with the collected execution data and pre-defined configuration entries for the load profile estimators. These optimized values can then be directly incorporated into your configuration.
 
 ## Examples
 
 For some executable examples, have a look at [this repository](https://github.com/sekruse/rheem-examples).
 
 ### WordCount
-
-The "Hello World!" of data processing systems is the wordcount.
 
 #### Java API
 ```java
@@ -386,7 +387,7 @@ object kmeans {
 
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 - 2023 The Apache Software Foundation.
+Copyright 2020 - 2024 The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
