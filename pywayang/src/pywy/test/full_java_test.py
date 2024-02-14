@@ -18,7 +18,6 @@ import unittest
 from orchestrator.plan import Descriptor
 from orchestrator.dataquanta import DataQuantaBuilder
 
-
 class MyTestCase(unittest.TestCase):
 
     def test_most_basic(self):
