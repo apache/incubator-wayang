@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-from orchestrator.plan import Descriptor
-from orchestrator.dataquanta import DataQuantaBuilder
+from pywy.orchestrator.plan import Descriptor
+from pywy.orchestrator.dataquanta import DataQuantaBuilder
 import datetime
 
 

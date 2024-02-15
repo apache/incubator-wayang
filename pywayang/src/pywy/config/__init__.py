@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
-#from config.config_reader import get_source_types
-#from config.config_reader import get_sink_types
-#from config.config_reader import get_boundary_types
+#from config_reader import get_source_types
+#from config_reader import get_sink_types
+#from config_reader import get_boundary_types
+

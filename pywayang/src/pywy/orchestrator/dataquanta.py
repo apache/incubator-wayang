@@ -15,15 +15,15 @@
 # limitations under the License.
 #
 
-from orchestrator.operator import Operator
-from graph.graph import Graph
-from graph.traversal import Traversal
-from protobuf.planwriter import MessageWriter
+from pywy.graph.graph import Graph
+from pywy.graph.traversal import Traversal
+from pywy.protobuf.planwriter import MessageWriter
+from pywy.orchestrator.operator import Operator
+import pywy.orchestrator.operator
 import itertools
 import collections
 import logging
 from functools import reduce
-import operator
 
 
 # Wraps a Source operation to create an iterable

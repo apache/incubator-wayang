@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-#import orchestrator.plan
-#import orchestrator.dataquanta
+#import plan
+#import dataquanta
 #import graph.graph
 
 

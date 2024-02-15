@@ -13,3 +13,4 @@ Requires-Python: >=3.6
 Description-Content-Type: text/markdown
 Requires-Dist: cloudpickle==2.0.0
 Requires-Dist: protobuf==3.19.4
+Requires-Dist: requests==2.31.0

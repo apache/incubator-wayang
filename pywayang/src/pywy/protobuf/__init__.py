@@ -15,4 +15,4 @@
 # limitations under the License.
 #
 
-#import protobuf.pywayangplan_pb2
+#import pywayangplan_pb2

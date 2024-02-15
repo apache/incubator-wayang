@@ -18,11 +18,15 @@
 import configparser
 import os
 
+path = '/var/www/html/pywayang/src/pywy'
+config_path = path + '/config/pywayang_config.ini'
 
 def get_boundary_types():
+    print(os.getcwd())
     config = configparser.ConfigParser()
     config.sections()
-    config.read('../config/pywayang_config.ini')
+    config.read(config_path)
+    #config.read('../config/pywayang_config.ini')
     boundary_types = dict(config.items('BOUNDARY_TYPES'))
     boundary_types.pop("variable_to_access")
     return boundary_types.values()
@@ -31,7 +35,7 @@ def get_boundary_types():
 def get_source_types():
     config = configparser.ConfigParser()
     #print("path: ", os.getcwd())
-    config.read("../config/pywayang_config.ini")
+    config.read(config_path)
     source_types = dict(config.items('SOURCE_TYPES'))
     source_types.pop("variable_to_access")
     return source_types.values()
@@ -45,7 +49,7 @@ def get_source_types():
 def get_sink_types():
     config = configparser.ConfigParser()
     #print("path: ", os.getcwd())
-    config.read("../config/pywayang_config.ini")
+    config.read(config_path)
     sink_types = dict(config.items('SINK_TYPES'))
     sink_types.pop("variable_to_access")
     return sink_types.values()

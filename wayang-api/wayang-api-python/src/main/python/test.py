@@ -17,65 +17,21 @@ import logging
 import os
 from typing import List, Iterable
 
-from pywy.orchestrator.dataquanta import WayangContext
-from pywy.orchestrator.plugins import JVMs
+from pywy.orchestrator.plan import Descriptor
+from pywy.orchestrator.dataquanta import DataQuantaBuilder
 
 
-def seed_small_grep(validation_file):
-    def pre(a: str) -> bool:
-        return 'six' in a
+def test_single_juncture():
+    descriptor = Descriptor()
+    descriptor.add_plugin(Descriptor.Plugin.java)
 
-    fd, path_tmp = tempfile.mkstemp()
+    plan = DataQuantaBuilder(descriptor)
+    dq_source_a = plan.source("../resources/test.input")
+    dq_source_b = plan.source("../resources/text.input")
+    sink_dataquanta = dq_source_a.union(dq_source_b) \
+        .sink("../resources/output.txt", end="")
 
-    dq = WayangContext() \
-        .register(JVMs) \
-        .textfile(validation_file) \
-        .filter(pre)
-
-    return dq, path_tmp, pre
-
-def validate_files(validation_file,
-                   outputed_file,
-                   read_and_convert_validation,
-                   read_and_convert_outputed,
-                   delete_outputed=True,
-                   print_variable=False):
-    lines_filter: List[int]
-    with open(validation_file, 'r') as f:
-        lines_filter = list(read_and_convert_validation(f))
-        selectivity = len(lines_filter)
-
-    lines_platform: List[int]
-    with open(outputed_file, 'r') as fp:
-        lines_platform = list(read_and_convert_outputed(fp))
-        elements = len(lines_platform)
-
-    if delete_outputed:
-        os.remove(outputed_file)
-
-    if print_variable:
-        logger.info(f"{lines_platform=}")
-        logger.info(f"{lines_filter=}")
-        logger.info(f"{elements=}")
-        logger.info(f"{selectivity=}")
-
-def test_grep():
-    dq, path_tmp, pre = seed_small_grep("../resources/text.input")
-
-    dq.store_textfile(path_tmp)
-
-    def convert_validation(file):
-        return filter(pre, file.readlines())
-
-    def convert_outputed(file):
-        return file.readlines()
-
-    validate_files(
-        "../resources/text.input",
-        path_tmp,
-        convert_validation,
-        convert_outputed
-    )
+    sink_dataquanta.to_wayang_plan()
 
 if __name__ == '__main__':
-    test_grep()
+    test_single_juncture()

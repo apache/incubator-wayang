@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from graph.node import Node
+from pywy.graph.node import Node
 import logging
 
 
