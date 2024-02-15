@@ -239,6 +239,8 @@ public class WayangJsonObj {
       return (k, v) ->  node.put(k, (String) v);
     }else if(value instanceof Double){
       return (k, v) ->  node.put(k, (Double) v);
+    }else if(value instanceof Boolean){
+      return (k, v) ->  node.put(k, (Boolean) v);
     }else if(value instanceof ObjectNode){
       return (k, v) -> {
         if(node.has(k)){

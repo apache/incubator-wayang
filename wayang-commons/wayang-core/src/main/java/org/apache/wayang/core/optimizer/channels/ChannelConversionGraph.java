@@ -65,7 +65,7 @@ public class ChannelConversionGraph {
     /**
      * Keeps track of the {@link ChannelConversion}s.
      */
-    private final Map<ChannelDescriptor, List<ChannelConversion>> conversions = new HashMap<>();
+    public final Map<ChannelDescriptor, List<ChannelConversion>> conversions = new HashMap<>();
 
     /**
      * Caches the {@link Comparator} for {@link ProbabilisticDoubleInterval}s.
