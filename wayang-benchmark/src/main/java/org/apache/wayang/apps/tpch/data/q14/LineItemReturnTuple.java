@@ -16,20 +16,39 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.giraph.mappings;
+package org.apache.wayang.apps.tpch.data.q14;
 
-import org.apache.wayang.core.mapping.Mapping;
-
-import java.util.Collection;
-import java.util.Collections;
+import java.io.Serializable;
 
 /**
- * Register for {@link Mapping}s for this platform.
+ * Tuple that is returned by Query 14.
  */
-public class Mappings {
+public class LineItemReturnTuple implements Serializable {
 
-    public static final Collection<Mapping> ALL = Collections.singletonList(
-            new PageRankMapping()
-    );
+    /**
+     * {@code identifier}, {@code PK}
+     */
+    public long L_PARTKEY;
+
+    /**
+     * {@code decimal}
+     */
+    public double L_EXTENDEDPRICE;
+
+
+    public LineItemReturnTuple() {
+    }
+
+    public LineItemReturnTuple(long l_PARTKEY, double l_EXTENDEDPRICE) {
+        this.L_PARTKEY = l_PARTKEY;
+        this.L_EXTENDEDPRICE = l_EXTENDEDPRICE;
+    }
+
+    @Override
+    public String toString() {
+        return "LineItemReturnTuple{" +
+                "L_PARTKEY=" + this.L_PARTKEY +
+                ", L_EXTENDEDPRICE=" + this.L_EXTENDEDPRICE +
+                '}';
+    }
 }
-

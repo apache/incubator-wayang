@@ -16,20 +16,39 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.giraph.mappings;
+package org.apache.wayang.apps.tpch.data.q3;
 
-import org.apache.wayang.core.mapping.Mapping;
-
-import java.util.Collection;
-import java.util.Collections;
+import java.io.Serializable;
 
 /**
- * Register for {@link Mapping}s for this platform.
+ * Tuple that is returned by Query 1.
  */
-public class Mappings {
+public class LineItemReturnTuple implements Serializable {
 
-    public static final Collection<Mapping> ALL = Collections.singletonList(
-            new PageRankMapping()
-    );
+    /**
+     * {@code identifier}, {@code PK}
+     */
+    public long L_ORDERKEY;
+
+    /**
+     * {@code decimal}
+     */
+    public double L_EXTENDEDPRICE;
+
+
+    public LineItemReturnTuple() {
+    }
+
+    public LineItemReturnTuple(long l_ORDERKEY, double l_EXTENDEDPRICE) {
+        this.L_ORDERKEY = l_ORDERKEY;
+        this.L_EXTENDEDPRICE = l_EXTENDEDPRICE;
+    }
+
+    @Override
+    public String toString() {
+        return "LineItemReturnTuple{" +
+                "L_ORDERKEY=" + this.L_ORDERKEY +
+                ", L_EXTENDEDPRICE=" + this.L_EXTENDEDPRICE +
+                '}';
+    }
 }
-

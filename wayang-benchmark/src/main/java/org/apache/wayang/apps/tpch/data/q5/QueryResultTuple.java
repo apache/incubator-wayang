@@ -16,20 +16,38 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.giraph.mappings;
+package org.apache.wayang.apps.tpch.data.q5;
 
-import org.apache.wayang.core.mapping.Mapping;
-
-import java.util.Collection;
-import java.util.Collections;
+import java.io.Serializable;
 
 /**
- * Register for {@link Mapping}s for this platform.
+ * Tuple that is returned by Query 3.
  */
-public class Mappings {
+public class QueryResultTuple implements Serializable {
 
-    public static final Collection<Mapping> ALL = Collections.singletonList(
-            new PageRankMapping()
-    );
+    /**
+     * {@code integer}, {@code PK}
+     */
+    public String N_NAME;
+
+    /**
+     * {@code integer}, {@code FK}
+     */
+    public double REVENUE;
+
+    public QueryResultTuple() {
+    }
+
+    public QueryResultTuple(String n_NAME, double o_REVENUE) {
+        this.N_NAME = n_NAME;
+        this.REVENUE = o_REVENUE;
+    }
+
+    @Override
+    public String toString() {
+        return "QueryResultTuple{" +
+                "N_NAME=" + this.N_NAME +
+                ", REVENUE=" + this.REVENUE +
+                '}';
+    }
 }
-

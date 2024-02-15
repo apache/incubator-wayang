@@ -31,7 +31,7 @@ import org.apache.wayang.giraph.execution.GiraphExecutor;
 /**
  * Giraph {@link Platform} for Wayang.
  */
-public class GiraphPlatform extends Platform{
+public class GiraphPlatform extends Platform {
     public static final String CPU_MHZ_PROPERTY = "wayang.giraph.cpu.mhz";
 
     public static final String CORES_PROPERTY = "wayang.giraph.cores";
@@ -41,7 +41,6 @@ public class GiraphPlatform extends Platform{
     private static final String DEFAULT_CONFIG_FILE = "wayang-giraph-defaults.properties";
 
     private static GiraphPlatform instance;
-
 
 
     protected GiraphPlatform() {

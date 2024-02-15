@@ -16,20 +16,39 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.giraph.mappings;
+package org.apache.wayang.apps.tpch.data.q14;
 
-import org.apache.wayang.core.mapping.Mapping;
-
-import java.util.Collection;
-import java.util.Collections;
+import java.io.Serializable;
 
 /**
- * Register for {@link Mapping}s for this platform.
+ * Tuple that is returned by Query 14.
  */
-public class Mappings {
+public class PromoSumTuple implements Serializable {
 
-    public static final Collection<Mapping> ALL = Collections.singletonList(
-            new PageRankMapping()
-    );
+    /**
+     * {@code identifier}, {@code PK}
+     */
+    public double L_PROMO_EXTENDEDPRICE;
+
+    /**
+     * {@code decimal}
+     */
+    public double L_EXTENDEDPRICE;
+
+
+    public PromoSumTuple() {
+    }
+
+    public PromoSumTuple(long l_PROMO_EXTENDEDPRICE, double l_EXTENDEDPRICE) {
+        this.L_PROMO_EXTENDEDPRICE = l_PROMO_EXTENDEDPRICE;
+        this.L_EXTENDEDPRICE = l_EXTENDEDPRICE;
+    }
+
+    @Override
+    public String toString() {
+        return "PromoSumTuple{" +
+                "L_PROMO_EXTENDEDPRICE=" + this.L_PROMO_EXTENDEDPRICE +
+                ", L_EXTENDEDPRICE=" + this.L_EXTENDEDPRICE +
+                '}';
+    }
 }
-
