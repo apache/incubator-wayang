@@ -100,6 +100,8 @@ public class CardinalityRepository {
                                             "It is presumably a glue operator or inside of a loop.", operator);
                                     continue;
                                 }
+                                System.out.println(operator);
+                                System.out.println(channelInstance.getMeasuredCardinality());
                                 this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext);
                             }
                         }

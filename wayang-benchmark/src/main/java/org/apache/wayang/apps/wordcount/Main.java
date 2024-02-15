@@ -18,6 +18,7 @@
 
 package org.apache.wayang.apps.wordcount;
 
+import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.core.api.WayangContext;
@@ -124,7 +125,11 @@ public class Main {
             List<Tuple2<String, Integer>> collector = new LinkedList<>();
             WayangPlan wayangPlan = createWayangPlan(args[1], collector);
 
-            WayangContext wayangContext = new WayangContext();
+            Configuration config = new Configuration();
+            config.setProperty("wayang.core.log.enabled", "true");
+            config.setProperty("wayang.core.log.cardinalities", "/var/www/html/cardinalities.json");
+            WayangContext wayangContext = new WayangContext(config);
+
             for (String platform : args[0].split(",")) {
                 switch (platform) {
                     case "java":
