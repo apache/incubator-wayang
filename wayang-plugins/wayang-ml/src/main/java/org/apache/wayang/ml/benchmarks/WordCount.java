@@ -16,8 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.apps.wordcount;
+package org.apache.wayang.ml.benchmarks;
 
+import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.core.api.WayangContext;
@@ -33,6 +34,8 @@ import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.ml.util.CardinalitySampler;
+
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -44,7 +47,7 @@ import java.util.List;
 /**
  * Example Apache Wayang (incubating) App that does a word count -- the Hello World of Map/Reduce-like systems.
  */
-public class Main {
+public class WordCount {
 
     /**
      * Creates the {@link WayangPlan} for the word count app.
@@ -124,7 +127,9 @@ public class Main {
             List<Tuple2<String, Integer>> collector = new LinkedList<>();
             WayangPlan wayangPlan = createWayangPlan(args[1], collector);
 
-            WayangContext wayangContext = new WayangContext();
+            Configuration config = new Configuration();
+            CardinalitySampler.configure(config, wayangPlan, "/var/www/html/data/");
+            WayangContext wayangContext = new WayangContext(config);
 
             for (String platform : args[0].split(",")) {
                 switch (platform) {
@@ -141,7 +146,7 @@ public class Main {
                 }
             }
 
-            wayangContext.execute(wayangPlan, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
+            wayangContext.execute(wayangPlan, ReflectionUtils.getDeclaringJar(WordCount.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
 
             collector.sort((t1, t2) -> Integer.compare(t2.field1, t1.field1));
             System.out.printf("Found %d words:\n", collector.size());

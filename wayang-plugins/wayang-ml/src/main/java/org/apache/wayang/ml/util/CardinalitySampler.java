@@ -18,5 +18,31 @@
 
 package org.apache.wayang.ml.util;
 
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.api.Configuration;
+
+import java.io.File;
+import java.io.FileWriter;
+
 public class CardinalitySampler {
+
+    public static void configure(
+            Configuration config,
+            WayangPlan plan,
+            String filePath){
+        String path = filePath + plan.hashCode() + "-cardinalities.json";
+        config.setProperty("wayang.core.log.enabled", "true");
+        config.setProperty("wayang.core.log.cardinalities", path);
+        config.setProperty("wayang.core.optimizer.instrumentation", "org.apache.wayang.core.profiling.FullInstrumentationStrategy");
+
+        // clear previous measurements from file
+        try {
+            File f = new File(path);
+            if(f.exists() && !f.isDirectory()) {
+               new FileWriter(path, false).close();
+            }
+        } catch (Exception e) {
+            return;
+        }
+    }
 }

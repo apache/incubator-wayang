@@ -81,7 +81,7 @@ public abstract class Channel {
     /**
      * Flag whether this instance should be instrumented to detect its actual cardinality.
      */
-    private boolean isMarkedForInstrumentation = true;
+    private boolean isMarkedForInstrumentation = false;
 
     /**
      * Other {@link Channel}s that represent the same {@link OutputSlot}-to-{@link InputSlot} connection from a

@@ -102,7 +102,7 @@ public class CardinalityRepository {
                                 }
                                 System.out.println(operator);
                                 System.out.println(channelInstance.getMeasuredCardinality());
-                                this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext);
+                                this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext, operator);
                             }
                         }
                     }
@@ -114,23 +114,27 @@ public class CardinalityRepository {
      * Stores the {@code cardinality} for the {@code output} together with its {@link Operator} and input
      * {@link CardinalityEstimate}s.
      */
-    public void store(OutputSlot<?> output, long cardinality, OptimizationContext.OperatorContext operatorContext) {
-        assert output.getOwner() == operatorContext.getOperator() :
+    public void store(
+            OutputSlot<?> output,
+            long cardinality,
+            OptimizationContext.OperatorContext operatorContext,
+            Operator operator) {
+        assert output.getOwner() == operator :
                 String.format("Owner of %s is not %s.", output, operatorContext.getOperator());
         if (!operatorContext.getOutputCardinality(output.getIndex()).isExactly(cardinality)) {
             this.logger.error("Expected a measured cardinality of {} for {}; found {}.",
                     cardinality, output, operatorContext.getOutputCardinality(output.getIndex()));
         }
 
-        this.write(operatorContext, output, cardinality);
+        this.write(operatorContext, output, cardinality, operator);
     }
 
     private void write(OptimizationContext.OperatorContext operatorContext,
                        OutputSlot<?> output,
-                       long outputCardinality) {
+                       long outputCardinality,
+                       Operator operator) {
 
         WayangJsonArray jsonInputCardinalities = new WayangJsonArray();
-        final Operator operator = operatorContext.getOperator();
         for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
             final InputSlot<?> input = operator.getInput(inputIndex);
             final CardinalityEstimate inputEstimate = operatorContext.getInputCardinality(inputIndex);
