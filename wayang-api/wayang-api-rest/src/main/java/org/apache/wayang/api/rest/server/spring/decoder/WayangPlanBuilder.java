@@ -227,7 +227,7 @@ public class WayangPlanBuilder {
 
         }
 
-        throw new WayangException("Operator Type not supported");
+        throw new WayangException("Operator Type " + operator.getType() +  " not supported");
     }
 
     public WayangContext getWayangContext() {

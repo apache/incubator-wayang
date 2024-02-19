@@ -89,7 +89,7 @@ WJO_T = TypeVar('WJO_T', bound=WayangJVMOperator)
 class WayangJVMMappartitionOperator(WayangJVMOperator):
 
     def __init__(self, name: str, udf: Callable = None):
-        super().__init__("MapPartitionOperator", name)
+        super().__init__("map_partition", name)
         self.udf = udf
 
     def is_operator(self):
@@ -98,7 +98,7 @@ class WayangJVMMappartitionOperator(WayangJVMOperator):
 class WayangJVMTextFileSource(WayangJVMOperator):
 
     def __init__(self, name: str, path: str):
-        super().__init__("TextFileSource", name)
+        super().__init__("source", name)
         self.path = path
 
     def is_source(self):
@@ -107,7 +107,7 @@ class WayangJVMTextFileSource(WayangJVMOperator):
 class WayangJVMTextFileSink(WayangJVMOperator):
 
     def __init__(self, name: str, path: str):
-        super().__init__("TextFileSink", name)
+        super().__init__("sink", name)
         self.path = path
 
     def is_sink(self):
