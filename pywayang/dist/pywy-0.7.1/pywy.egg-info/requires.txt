@@ -1,0 +1,2 @@
+cloudpickle==2.0.0
+protobuf==3.19.4
