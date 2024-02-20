@@ -34,6 +34,7 @@ import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.ml.costs.MLCost;
 import org.apache.wayang.ml.util.CardinalitySampler;
 
 
@@ -128,7 +129,11 @@ public class WordCount {
             WayangPlan wayangPlan = createWayangPlan(args[1], collector);
 
             Configuration config = new Configuration();
-            CardinalitySampler.configure(config, wayangPlan, "/var/www/html/data/");
+            int hashCode = wayangPlan.hashCode();
+            String path = "/var/www/html/data/" + hashCode + "-cardinalities.json";
+            //CardinalitySampler.configureWriteToFile(config, path);
+            CardinalitySampler.readFromFile(path);
+            config.setCostModel(new MLCost());
             WayangContext wayangContext = new WayangContext(config);
 
             for (String platform : args[0].split(",")) {
@@ -150,7 +155,7 @@ public class WordCount {
 
             collector.sort((t1, t2) -> Integer.compare(t2.field1, t1.field1));
             System.out.printf("Found %d words:\n", collector.size());
-            collector.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
+            //collector.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
         } catch (Exception e) {
             System.err.println("App failed.");
             e.printStackTrace();

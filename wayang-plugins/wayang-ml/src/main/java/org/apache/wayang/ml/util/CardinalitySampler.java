@@ -20,29 +20,58 @@ package org.apache.wayang.ml.util;
 
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.util.JsonSerializables;
+import org.apache.wayang.core.util.JsonSerializer;
+import org.apache.wayang.core.util.json.WayangJsonObj;
+import org.apache.wayang.core.api.exception.WayangException;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.io.FileWriter;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
+import java.util.List;
 
 public class CardinalitySampler {
 
-    public static void configure(
+    public static List<SampledCardinality> samples;
+
+    public static void configureWriteToFile(
             Configuration config,
-            WayangPlan plan,
             String filePath){
-        String path = filePath + plan.hashCode() + "-cardinalities.json";
         config.setProperty("wayang.core.log.enabled", "true");
-        config.setProperty("wayang.core.log.cardinalities", path);
+        config.setProperty("wayang.core.log.cardinalities", filePath);
         config.setProperty("wayang.core.optimizer.instrumentation", "org.apache.wayang.core.profiling.FullInstrumentationStrategy");
 
         // clear previous measurements from file
         try {
-            File f = new File(path);
+            File f = new File(filePath);
             if(f.exists() && !f.isDirectory()) {
-               new FileWriter(path, false).close();
+               new FileWriter(filePath, false).close();
             }
         } catch (Exception e) {
             return;
+        }
+    }
+
+    public static void readFromFile(String filePath) {
+        try {
+            final SampledCardinality.Serializer serializer = new SampledCardinality.Serializer();
+            samples = Files.lines(Path.of(filePath), Charset.forName("UTF-8"))
+                .map(line -> {
+                    try {
+                        return JsonSerializables.deserialize(new WayangJsonObj(line), serializer, SampledCardinality.class);
+                    } catch (Exception e) {
+                        System.out.println("Exception: " + e);
+                        throw new WayangException(String.format("Could not parse \"%s\".", new WayangJsonObj(line).getNode()), e);
+                    }
+                }).collect(Collectors.toList());
+        } catch(Exception e) {
+            System.out.println("Exception: " + e);
         }
     }
 }

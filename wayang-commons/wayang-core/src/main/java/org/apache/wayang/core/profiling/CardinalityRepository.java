@@ -81,8 +81,6 @@ public class CardinalityRepository {
     public void storeAll(ExecutionState executionState, OptimizationContext optimizationContext) {
         this.logger.info("Storing cardinalities at {}.", this.repositoryPath);
 
-        System.out.println(executionState.getCardinalityMeasurements());
-
         executionState.getCardinalityMeasurements().forEach(
                 channelInstance -> {
                     for (Slot<?> correspondingSlot : channelInstance.getChannel().getCorrespondingSlots()) {
@@ -100,8 +98,6 @@ public class CardinalityRepository {
                                             "It is presumably a glue operator or inside of a loop.", operator);
                                     continue;
                                 }
-                                System.out.println(operator);
-                                System.out.println(channelInstance.getMeasuredCardinality());
                                 this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext, operator);
                             }
                         }

@@ -112,6 +112,7 @@ public class WayangJsonObj {
     if(value == null){
       return null;
     }
+
     if(!value.isObject()) {
       throw new WayangException("the key does not exist on the component");
     }

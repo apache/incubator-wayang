@@ -43,6 +43,7 @@ public class MLCost implements EstimatableCost {
     public EstimatableCostFactory getFactory() {
         return new Factory();
     }
+
 public static class Factory implements EstimatableCostFactory {
         @Override public EstimatableCost makeCost() {
             return new MLCost();
@@ -54,10 +55,11 @@ public static class Factory implements EstimatableCostFactory {
             Configuration config = plan
                 .getOptimizationContext()
                 .getConfiguration();
-            OrtMLModel model = OrtMLModel.getInstance(config);
-            double result = model.runModel(OneHotEncoder.encode(plan));
+            //OrtMLModel model = OrtMLModel.getInstance(config);
+            //double result = model.runModel(OneHotEncoder.encode(plan));
+            OneHotEncoder.encode(plan);
 
-            return ProbabilisticDoubleInterval.ofExactly(result);
+            return ProbabilisticDoubleInterval.ofExactly(1);
         } catch(Exception e) {
             System.out.println(e);
             return ProbabilisticDoubleInterval.zero;
@@ -69,10 +71,11 @@ public static class Factory implements EstimatableCostFactory {
             Configuration config = plan
                 .getOptimizationContext()
                 .getConfiguration();
-            OrtMLModel model = OrtMLModel.getInstance(config);
-            double result = model.runModel(OneHotEncoder.encode(plan));
+            //OrtMLModel model = OrtMLModel.getInstance(config);
+            //double result = model.runModel(OneHotEncoder.encode(plan));
+            OneHotEncoder.encode(plan);
 
-            return ProbabilisticDoubleInterval.ofExactly(result);
+            return ProbabilisticDoubleInterval.ofExactly(0);
         } catch(Exception e) {
             System.out.println(e);
             return ProbabilisticDoubleInterval.zero;
@@ -85,12 +88,14 @@ public static class Factory implements EstimatableCostFactory {
             Configuration config = plan
                 .getOptimizationContext()
                 .getConfiguration();
-            OrtMLModel model = OrtMLModel.getInstance(config);
-            double result = model.runModel(OneHotEncoder.encode(plan));
+            //OrtMLModel model = OrtMLModel.getInstance(config);
+            //double result = model.runModel(OneHotEncoder.encode(plan));
+            OneHotEncoder.encode(plan);
+            double result = 1;
 
             return result;
         } catch(Exception e) {
-            System.out.println(e);
+            System.out.println("Exception: " + e);
             return 0;
         }
     }
@@ -100,12 +105,15 @@ public static class Factory implements EstimatableCostFactory {
             Configuration config = plan
                 .getOptimizationContext()
                 .getConfiguration();
-            OrtMLModel model = OrtMLModel.getInstance(config);
-            double result = model.runModel(OneHotEncoder.encode(plan));
+            //OrtMLModel model = OrtMLModel.getInstance(config);
+            //double result = model.runModel(OneHotEncoder.encode(plan));
 
-            return result;
+            //return result;
+            OneHotEncoder.encode(plan);
+
+            return 1;
         } catch(Exception e) {
-            System.out.println(e);
+            System.out.println("Exception: " + e);
             return 0;
         }
     }
