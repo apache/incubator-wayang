@@ -22,5 +22,6 @@ from pywy.platforms.jvm.operator import *
 JVM_OPERATOR_MAPPINGS = Mapping()
 
 JVM_OPERATOR_MAPPINGS.add_mapping(JVMFilterOperator())
+JVM_OPERATOR_MAPPINGS.add_mapping(JVMFlatmapOperator())
 JVM_OPERATOR_MAPPINGS.add_mapping(JVMTextFileSourceOperator())
 JVM_OPERATOR_MAPPINGS.add_mapping(JVMTextFileSinkOperator())

@@ -101,8 +101,8 @@ def dump_stream(iterator, stream):
 def process(infile, outfile):
     udf_length = read_int(infile)
     serialized_udf = infile.read(udf_length)
-    #func = pickle.loads(serialized_udf)
-    func = pickle.loads(cloudpickle.dumps(lambda x: (str(y) + "Test" for y in x)))
+    func = pickle.loads(serialized_udf)
+    #func = pickle.loads(cloudpickle.dumps(lambda x: (str(y) + "Test" for y in x)))
     iterator = UTF8Deserializer().load_stream(infile)
     out_iter = func(iterator)
     dump_stream(iterator=out_iter, stream=outfile)

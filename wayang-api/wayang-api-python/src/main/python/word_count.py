@@ -15,21 +15,23 @@
 import tempfile
 import logging
 import os
+import sys
 from typing import List, Iterable
 
 from pywy.dataquanta import WayangContext
 from pywy.plugins import JVMs
 
-def test_grep():
-    fd, path_tmp = tempfile.mkstemp()
+def test_word_count(file_path):
+    def fm_func(string: str) -> Iterable[str]:
+        return string.split("|")
 
     WayangContext() \
         .register(JVMs) \
-        .textfile("../resources/text.input") \
-        .filter(lambda a: 'six' in a) \
-        .store_textfile(path_tmp)
-
-    os.remove(path_tmp)
+        .textfile(file_path) \
+        .filter(lambda elem: len(str(elem).split("|")[0]) < 4) \
+        .flatmap(fm_func) \
+        .store_textfile("../resources/output.txt")
 
 if __name__ == '__main__':
-    test_grep()
+    file_path = sys.argv[1]
+    test_word_count(file_path)

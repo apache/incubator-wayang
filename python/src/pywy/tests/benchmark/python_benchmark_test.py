@@ -23,6 +23,7 @@ import logging
 
 from typing import List
 from pywy.dataquanta import WayangContext
+
 from pywy.plugins import PYTHON
 from pywy.config import RC_TEST_DIR as ROOT
 from pywy.config import RC_BENCHMARK_SIZE

@@ -87,8 +87,6 @@ public class PythonAPITest {
                 )
         );
 
-        String pythonUDF = "lambda x: (str(y) + \" Test\" for y in x)";
-
         MapPartitionsOperator<String, String> sortPython =
                 new MapPartitionsOperator<String, String>(
                         new MapPartitionsDescriptor<String, String>(

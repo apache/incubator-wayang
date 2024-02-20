@@ -21,6 +21,7 @@ package org.apache.wayang.api.python.executor;
 import com.google.protobuf.ByteString;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -46,8 +47,8 @@ public class PythonProcessCaller {
     public PythonProcessCaller(ByteString serializedUDF){
 
         //TODO create documentation to how to the configuration in the code
-        URL fileUrl = Thread.currentThread().getContextClassLoader().getResource("wayang-api-python-defaults.properties");
-        this.configuration = new Configuration(fileUrl.toString());
+        this.configuration = new Configuration();
+        this.configuration.load(ReflectionUtils.loadResource("wayang-api-python-defaults.properties"));
         this.ready = false;
         byte[] addr = new byte[4];
         addr[0] = 127; addr[1] = 0; addr[2] = 0; addr[3] = 1;

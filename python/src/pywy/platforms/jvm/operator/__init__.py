@@ -17,12 +17,14 @@
 
 from pywy.platforms.jvm.operator.jvm_execution_operator import JVMExecutionOperator
 from pywy.platforms.jvm.operator.jvm_unary_filter import JVMFilterOperator
+from pywy.platforms.jvm.operator.jvm_unary_flatmap import JVMFlatmapOperator
 from pywy.platforms.jvm.operator.jvm_source_textfile import JVMTextFileSourceOperator
 from pywy.platforms.jvm.operator.jvm_sink_textfile import JVMTextFileSinkOperator
 
 __ALL__ = [
     JVMExecutionOperator,
     JVMFilterOperator,
+    JVMFlatmapOperator,
     JVMTextFileSourceOperator,
     JVMTextFileSinkOperator,
 ]
