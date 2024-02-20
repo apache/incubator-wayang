@@ -35,6 +35,7 @@ import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.ml.OrtMLModel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.List;
@@ -55,11 +56,10 @@ public static class Factory implements EstimatableCostFactory {
             Configuration config = plan
                 .getOptimizationContext()
                 .getConfiguration();
-            //OrtMLModel model = OrtMLModel.getInstance(config);
-            //double result = model.runModel(OneHotEncoder.encode(plan));
-            OneHotEncoder.encode(plan);
+            OrtMLModel model = OrtMLModel.getInstance(config);
+            double result = model.runModel(OneHotEncoder.encode(plan));
 
-            return ProbabilisticDoubleInterval.ofExactly(1);
+            return ProbabilisticDoubleInterval.ofExactly(result);
         } catch(Exception e) {
             System.out.println(e);
             return ProbabilisticDoubleInterval.zero;
@@ -71,11 +71,10 @@ public static class Factory implements EstimatableCostFactory {
             Configuration config = plan
                 .getOptimizationContext()
                 .getConfiguration();
-            //OrtMLModel model = OrtMLModel.getInstance(config);
-            //double result = model.runModel(OneHotEncoder.encode(plan));
-            OneHotEncoder.encode(plan);
+            OrtMLModel model = OrtMLModel.getInstance(config);
+            double result = model.runModel(OneHotEncoder.encode(plan));
 
-            return ProbabilisticDoubleInterval.ofExactly(0);
+            return ProbabilisticDoubleInterval.ofExactly(result);
         } catch(Exception e) {
             System.out.println(e);
             return ProbabilisticDoubleInterval.zero;
@@ -88,10 +87,8 @@ public static class Factory implements EstimatableCostFactory {
             Configuration config = plan
                 .getOptimizationContext()
                 .getConfiguration();
-            //OrtMLModel model = OrtMLModel.getInstance(config);
-            //double result = model.runModel(OneHotEncoder.encode(plan));
-            OneHotEncoder.encode(plan);
-            double result = 1;
+            OrtMLModel model = OrtMLModel.getInstance(config);
+            double result = model.runModel(OneHotEncoder.encode(plan));
 
             return result;
         } catch(Exception e) {
@@ -105,13 +102,10 @@ public static class Factory implements EstimatableCostFactory {
             Configuration config = plan
                 .getOptimizationContext()
                 .getConfiguration();
-            //OrtMLModel model = OrtMLModel.getInstance(config);
-            //double result = model.runModel(OneHotEncoder.encode(plan));
+            OrtMLModel model = OrtMLModel.getInstance(config);
+            double result = model.runModel(OneHotEncoder.encode(plan));
 
-            //return result;
-            OneHotEncoder.encode(plan);
-
-            return 1;
+            return result;
         } catch(Exception e) {
             System.out.println("Exception: " + e);
             return 0;
