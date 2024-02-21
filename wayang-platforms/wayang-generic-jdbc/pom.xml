@@ -36,7 +36,7 @@
 
     <properties>
         <java-module-name>org.apache.wayang.platform.genericjdbc</java-module-name>
-        <postgres.version>42.3.8</postgres.version>
+        <postgres.version>42.7.2</postgres.version>
         <mysql.version>8.0.33</mysql.version>
     </properties>
 
