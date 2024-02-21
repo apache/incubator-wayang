@@ -45,6 +45,11 @@ import java.io.UnsupportedEncodingException;
 import org.apache.wayang.core.util.json.WayangJsonArray;
 import org.apache.wayang.core.util.json.WayangJsonObj;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Stores cardinalities that have been collected by the {@link CrossPlatformExecutor}. Current version uses
  * JSON as serialization format.
@@ -83,23 +88,28 @@ public class CardinalityRepository {
 
         executionState.getCardinalityMeasurements().forEach(
                 channelInstance -> {
-                    for (Slot<?> correspondingSlot : channelInstance.getChannel().getCorrespondingSlots()) {
-                        for (Slot<?> slot : OptimizationUtils.collectConnectedSlots(correspondingSlot)) {
-                            if (slot instanceof OutputSlot<?>) {
-                                OutputSlot<Object> outputSlot = ((OutputSlot<?>) slot).unchecked();
-                                final Operator operator = outputSlot.getOwner();
-                                if (!operator.isElementary() || operator.isSource()) {
-                                    continue;
-                                }
-                                final OptimizationContext.OperatorContext operatorContext = channelInstance.getProducerOperatorContext();
-                                if (operatorContext == null) {
-                                    // TODO: Handle cardinalities inside of loops.
-                                    this.logger.debug("Could not inject measured cardinality for {}: " +
-                                            "It is presumably a glue operator or inside of a loop.", operator);
-                                    continue;
-                                }
-                                this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext, operator);
+                    Set<Slot<?>> distinctSlots = channelInstance
+                        .getChannel()
+                        .getCorrespondingSlots()
+                        .stream()
+                        .map(slot -> OptimizationUtils.collectConnectedSlots(slot))
+                        .flatMap(Set::stream)
+                        .collect(Collectors.toSet());
+                    for (Slot<?> slot : distinctSlots) {
+                        if (slot instanceof OutputSlot<?>) {
+                            OutputSlot<Object> outputSlot = ((OutputSlot<?>) slot).unchecked();
+                            final Operator operator = outputSlot.getOwner();
+                            if (!operator.isElementary() || operator.isSource()) {
+                                continue;
                             }
+                            final OptimizationContext.OperatorContext operatorContext = channelInstance.getProducerOperatorContext();
+                            if (operatorContext == null) {
+                                // TODO: Handle cardinalities inside of loops.
+                                this.logger.debug("Could not inject measured cardinality for {}: " +
+                                        "It is presumably a glue operator or inside of a loop.", operator);
+                                continue;
+                            }
+                            this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext, operator);
                         }
                     }
                 });

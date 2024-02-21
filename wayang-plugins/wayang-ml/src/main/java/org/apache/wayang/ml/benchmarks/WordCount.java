@@ -131,9 +131,9 @@ public class WordCount {
             Configuration config = new Configuration();
             int hashCode = wayangPlan.hashCode();
             String path = "/var/www/html/data/" + hashCode + "-cardinalities.json";
-            //CardinalitySampler.configureWriteToFile(config, path);
-            CardinalitySampler.readFromFile(path);
-            config.setCostModel(new MLCost());
+            CardinalitySampler.configureWriteToFile(config, path);
+            //CardinalitySampler.readFromFile(path);
+            //config.setCostModel(new MLCost());
             WayangContext wayangContext = new WayangContext(config);
 
             for (String platform : args[0].split(",")) {
