@@ -25,6 +25,7 @@ def test_word_count(file_path):
     def fm_func(string: str) -> Iterable[str]:
         return string.split("|")
 
+    # TODO: This would have to be platform agnostic - get rid of operator mappings in python
     WayangContext() \
         .register(JVMs) \
         .textfile(file_path) \
