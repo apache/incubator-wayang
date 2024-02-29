@@ -61,7 +61,7 @@ public static class Factory implements EstimatableCostFactory {
 
             return ProbabilisticDoubleInterval.ofExactly(result);
         } catch(Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             return ProbabilisticDoubleInterval.zero;
         }
     }
@@ -76,7 +76,7 @@ public static class Factory implements EstimatableCostFactory {
 
             return ProbabilisticDoubleInterval.ofExactly(result);
         } catch(Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             return ProbabilisticDoubleInterval.zero;
         }
     }
@@ -92,7 +92,7 @@ public static class Factory implements EstimatableCostFactory {
 
             return result;
         } catch(Exception e) {
-            System.out.println("Exception: " + e);
+            e.printStackTrace();
             return 0;
         }
     }
@@ -107,7 +107,7 @@ public static class Factory implements EstimatableCostFactory {
 
             return result;
         } catch(Exception e) {
-            System.out.println("Exception: " + e);
+            e.printStackTrace();
             return 0;
         }
     }
