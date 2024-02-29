@@ -9,17 +9,21 @@ import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.util.Canonicalizer;
+import org.apache.wayang.core.util.json.WayangJsonObj;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.ml.encoding.OneHotVector;
+import org.apache.wayang.ml.util.CardinalitySampler;
 import org.apache.wayang.ml.util.Platforms;
+import org.apache.wayang.ml.util.SampledCardinality;
 
 import java.util.Vector;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.List;
@@ -72,7 +76,7 @@ public class OneHotEncoder implements Encoder {
             .distinct()
             .collect(Collectors.toList());
 
-        for (Object operator : distinctOperators) {
+        for (final Object operator : distinctOperators) {
             // build the features
             long encodedOperator[] = new long[OneHotVector.OPERATOR_SIZE];
             List<ExecutionOperator> executionOperators = operators
@@ -81,6 +85,24 @@ public class OneHotEncoder implements Encoder {
                 .collect(Collectors.toList());
 
             encodedOperator[0] = (long) executionOperators.size();
+
+            List<SampledCardinality> operatorSamples = CardinalitySampler.samples
+                .stream()
+                .filter(sample -> {
+                    return sample.getOperator().get("class").equals(((Class) operator).getName());
+                }).collect(Collectors.toList());
+
+            long inputCardinality = operatorSamples.stream()
+                .mapToLong(sample -> {
+                    long card = 0;
+                    for (Object input : sample.getInputs()) {
+                        card += ((WayangJsonObj) input).getLong("upperBound");
+                    }
+
+                    return card;
+                })
+                .sum();
+            long outputCardinality = operatorSamples.stream().mapToLong(sample -> sample.getOutput().getLong("cardinality")).sum();
 
             for (ExecutionOperator executionOperator : executionOperators) {
                 Integer platformPosition = platformMappings.get(executionOperator.getPlatform().getClass().getName());
@@ -102,15 +124,10 @@ public class OneHotEncoder implements Encoder {
                 if (executionOperator.isLoopSubplan() || executionOperator.isLoopHead())  {
                     encodedOperator[platformsCount + 3] += 1;
                 }
-
-                for (InputSlot<?> input: executionOperator.getAllInputs()) {
-                    encodedOperator[platformsCount + 4] += optimizationContext.getOperatorContext(executionOperator).getInputCardinality(input.getIndex()).getLowerEstimate();
-                }
-
-                for (OutputSlot<?> output: executionOperator.getAllOutputs()) {
-                    encodedOperator[platformsCount + 5] += optimizationContext.getOperatorContext(executionOperator).getOutputCardinality(output.getIndex()).getLowerEstimate();
-                }
             }
+
+            encodedOperator[platformsCount + 4] += inputCardinality;
+            encodedOperator[platformsCount + 5] += outputCardinality;
 
             vector.addOperator(encodedOperator, ((Class) operator).getName());
         }
@@ -154,7 +171,7 @@ public class OneHotEncoder implements Encoder {
                 .filter(op -> operator == op.getClass())
                 .collect(Collectors.toList());
 
-            for (ExecutionOperator executionOperator : executionOperators) {
+            for (final ExecutionOperator executionOperator : executionOperators) {
                 Integer platformPosition = platformMappings.get(executionOperator.getPlatform().getClass().getName());
 
                 if (platformPosition == null) {
@@ -164,19 +181,28 @@ public class OneHotEncoder implements Encoder {
                 encodedOperator[platformPosition] += 1;
 
                 OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(executionOperator);
-                long inputCardinality = 0;
-                long outputCardinality = 0;
 
                 if (operatorContext == null) {
                     continue;
                 }
 
-                for (InputSlot<?> input : executionOperator.getAllInputs()) {
-                    inputCardinality += optimizationContext.getOperatorContext(executionOperator).getInputCardinality(input.getIndex()).getLowerEstimate();
-                }
-                for (OutputSlot<?> output : executionOperator.getAllOutputs()) {
-                    outputCardinality += optimizationContext.getOperatorContext(executionOperator).getOutputCardinality(output.getIndex()).getLowerEstimate();
-                }
+                List<SampledCardinality> operatorSamples = CardinalitySampler.samples
+                    .stream()
+                    .filter(sample -> {
+                        return sample.getOperator().get("class").equals(executionOperator.getClass().getName());
+                    }).collect(Collectors.toList());
+
+                long inputCardinality = operatorSamples.stream()
+                    .mapToLong(sample -> {
+                        long card = 0;
+                        for (Object input : sample.getInputs()) {
+                            card += ((WayangJsonObj) input).getLong("upperBound");
+                        }
+
+                        return card;
+                    })
+                    .sum();
+                long outputCardinality = operatorSamples.stream().mapToLong(sample -> sample.getOutput().getLong("cardinality")).sum();
 
                 encodedOperator[platformsCount] = inputCardinality;
                 encodedOperator[platformsCount + 1] = outputCardinality;
@@ -297,6 +323,7 @@ public class OneHotEncoder implements Encoder {
 
     private static void encodeDataset(PlanImplementation plan, OneHotVector vector) {
         Configuration config = plan.getOptimizationContext().getConfiguration();
-        vector.setDataset(config.getLongProperty("wayang.ml.tuple.average-size"));
+        //vector.setDataset(config.getLongProperty("wayang.ml.tuple.average-size"));
+        vector.setDataset(100l);
     }
 }

@@ -35,6 +35,7 @@ import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.ml.OrtMLModel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.List;
@@ -43,6 +44,7 @@ public class MLCost implements EstimatableCost {
     public EstimatableCostFactory getFactory() {
         return new Factory();
     }
+
 public static class Factory implements EstimatableCostFactory {
         @Override public EstimatableCost makeCost() {
             return new MLCost();
@@ -59,7 +61,7 @@ public static class Factory implements EstimatableCostFactory {
 
             return ProbabilisticDoubleInterval.ofExactly(result);
         } catch(Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             return ProbabilisticDoubleInterval.zero;
         }
     }
@@ -74,7 +76,7 @@ public static class Factory implements EstimatableCostFactory {
 
             return ProbabilisticDoubleInterval.ofExactly(result);
         } catch(Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             return ProbabilisticDoubleInterval.zero;
         }
     }
@@ -90,7 +92,7 @@ public static class Factory implements EstimatableCostFactory {
 
             return result;
         } catch(Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             return 0;
         }
     }
@@ -105,7 +107,7 @@ public static class Factory implements EstimatableCostFactory {
 
             return result;
         } catch(Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             return 0;
         }
     }
