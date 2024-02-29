@@ -54,7 +54,7 @@ public class CardinalitySampler {
                new FileWriter(filePath, false).close();
             }
         } catch (Exception e) {
-            return;
+            e.printStackTrace();
         }
     }
 
@@ -71,7 +71,7 @@ public class CardinalitySampler {
                     }
                 }).collect(Collectors.toList());
         } catch(Exception e) {
-            System.out.println("Exception: " + e);
+            e.printStackTrace();
         }
     }
 }
