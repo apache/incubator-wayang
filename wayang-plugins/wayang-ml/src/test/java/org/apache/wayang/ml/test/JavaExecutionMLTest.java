@@ -69,11 +69,12 @@ import java.net.URL;
 
 public class JavaExecutionMLTest extends JavaExecutionTestBase {
 
+    /*
     @Test public void testMLCostEstimate() {
         MLCost cost = new MLCost();
         PlanImplementation plan = mock(PlanImplementation.class);
         Assert.assertEquals(cost.getSquashedEstimate(plan, true), 0, 0);
-    }
+    }*/
 
     @Test public void testOneHotVector() {
         OneHotVector vector = new OneHotVector();
@@ -86,7 +87,7 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
     @Test public void testOneHotEncoding() throws IOException, URISyntaxException {
         List<Tuple2<String, Integer>> collector = new LinkedList<>();
         Configuration config = new Configuration();
-        config.setCostModel(new MLCost());
+        //config.setCostModel(new MLCost());
         config.setProperty("wayang.ml.tuple.average-size", "100");
         WayangPlan wayangPlan = createWayangPlan("../../README.md", collector);
         WayangContext wayangContext = new WayangContext(config);

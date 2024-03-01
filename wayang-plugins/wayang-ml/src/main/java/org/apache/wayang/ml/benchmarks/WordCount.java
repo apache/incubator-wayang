@@ -133,7 +133,7 @@ public class WordCount {
             String path = "/var/www/html/data/" + hashCode + "-cardinalities.json";
             CardinalitySampler.configureWriteToFile(config, path);
             //CardinalitySampler.readFromFile(path);
-            //config.setCostModel(new MLCost());
+            config.setCostModel(new MLCost());
             WayangContext wayangContext = new WayangContext(config);
 
             for (String platform : args[0].split(",")) {

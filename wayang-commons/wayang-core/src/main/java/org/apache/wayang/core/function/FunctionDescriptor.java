@@ -38,6 +38,8 @@ public abstract class FunctionDescriptor {
 
     private LoadProfileEstimator loadProfileEstimator;
 
+    private UDFComplexity udfComplexity = UDFComplexity.LINEAR;
+
     public FunctionDescriptor(LoadProfileEstimator loadProfileEstimator) {
         this.setLoadProfileEstimator(loadProfileEstimator);
     }
@@ -82,6 +84,14 @@ public abstract class FunctionDescriptor {
                 cpuEstimator,
                 ramEstimator
         ));
+    }
+
+    public UDFComplexity getUDFComplexity() {
+        return this.udfComplexity;
+    }
+
+    public void setUDFComplexity(UDFComplexity complexity) {
+        this.udfComplexity = complexity;
     }
 
     /**
