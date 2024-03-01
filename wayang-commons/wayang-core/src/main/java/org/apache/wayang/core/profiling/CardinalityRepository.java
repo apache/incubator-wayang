@@ -113,7 +113,6 @@ public class CardinalityRepository {
                         }
                     }
                 });
-        //this.logger.warn("Cardinality repository currently disabled.");
     }
 
     /**
