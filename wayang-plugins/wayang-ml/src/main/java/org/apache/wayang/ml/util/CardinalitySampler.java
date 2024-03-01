@@ -34,11 +34,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CardinalitySampler {
 
-    public static List<SampledCardinality> samples;
+    public static List<SampledCardinality> samples = new ArrayList<>();
 
     public static void configureWriteToFile(
             Configuration config,

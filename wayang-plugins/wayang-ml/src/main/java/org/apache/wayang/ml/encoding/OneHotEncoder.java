@@ -19,6 +19,7 @@ import org.apache.wayang.ml.encoding.OneHotVector;
 import org.apache.wayang.ml.util.CardinalitySampler;
 import org.apache.wayang.ml.util.Platforms;
 import org.apache.wayang.ml.util.SampledCardinality;
+import org.apache.wayang.ml.util.Udf;
 
 import java.util.Vector;
 import java.util.Collection;
@@ -124,10 +125,12 @@ public class OneHotEncoder implements Encoder {
                 if (executionOperator.isLoopSubplan() || executionOperator.isLoopHead())  {
                     encodedOperator[platformsCount + 3] += 1;
                 }
+
+                encodedOperator[platformPosition + 4] += Udf.getComplexity(executionOperator).ordinal();
             }
 
-            encodedOperator[platformsCount + 4] += inputCardinality;
-            encodedOperator[platformsCount + 5] += outputCardinality;
+            encodedOperator[platformsCount + 5] += inputCardinality;
+            encodedOperator[platformsCount + 6] += outputCardinality;
 
             vector.addOperator(encodedOperator, ((Class) operator).getName());
         }
