@@ -89,6 +89,8 @@ public class WayangJsonArray implements Iterable<Object>{
       return (v) ->  node.add((String) v);
     }else if(value instanceof Double){
       return (v) ->  node.add((Double) v);
+    }else if(value instanceof Boolean){
+      return (v) ->  node.add((Boolean) v);
     }else if(value instanceof JsonNode){
       return (v) -> node.add((JsonNode) v);
     }else if(value instanceof WayangJsonArray){

@@ -123,7 +123,6 @@ public class Main {
 
             List<Tuple2<String, Integer>> collector = new LinkedList<>();
             WayangPlan wayangPlan = createWayangPlan(args[1], collector);
-
             WayangContext wayangContext = new WayangContext();
             for (String platform : args[0].split(",")) {
                 switch (platform) {

@@ -31,6 +31,9 @@ import org.apache.wayang.core.platform.CrossPlatformExecutor;
 import org.apache.wayang.core.platform.ExecutionState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.wayang.core.optimizer.OptimizationUtils;
+import org.apache.wayang.core.platform.PartialExecution;
+import org.apache.wayang.core.platform.AtomicExecutionGroup;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -41,6 +44,11 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import org.apache.wayang.core.util.json.WayangJsonArray;
 import org.apache.wayang.core.util.json.WayangJsonObj;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Stores cardinalities that have been collected by the {@link CrossPlatformExecutor}. Current version uses
@@ -78,52 +86,61 @@ public class CardinalityRepository {
     public void storeAll(ExecutionState executionState, OptimizationContext optimizationContext) {
         this.logger.info("Storing cardinalities at {}.", this.repositoryPath);
 
-//        executionState.getCardinalityMeasurements().forEach(
-//                channelInstance -> {
-//                    for (Slot<?> correspondingSlot : channelInstance.getChannel().getCorrespondingSlots()) {
-//                        for (Slot<?> slot : OptimizationUtils.collectConnectedSlots(correspondingSlot)) {
-//                            if (slot instanceof OutputSlot<?>) {
-//                                OutputSlot<Object> outputSlot = ((OutputSlot<?>) slot).unchecked();
-//                                final Operator operator = outputSlot.getOwner();
-//                                if (!operator.isElementary() || operator.isSource()) {
-//                                    continue;
-//                                }
-//                                final OptimizationContext.OperatorContext operatorContext = channelInstance.getProducerOperatorContext();
-//                                if (operatorContext == null) {
-//                                    // TODO: Handle cardinalities inside of loops.
-//                                    this.logger.debug("Could not inject measured cardinality for {}: " +
-//                                            "It is presumably a glue operator or inside of a loop.", operator);
-//                                    continue;
-//                                }
-//                                this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext);
-//                            }
-//                        }
-//                    }
-//                });
-        this.logger.warn("Cardinality repository currently disabled.");
+        executionState.getCardinalityMeasurements().forEach(
+                channelInstance -> {
+                    Set<Slot<?>> distinctSlots = channelInstance
+                        .getChannel()
+                        .getCorrespondingSlots()
+                        .stream()
+                        .map(slot -> OptimizationUtils.collectConnectedSlots(slot))
+                        .flatMap(Set::stream)
+                        .collect(Collectors.toSet());
+                    for (Slot<?> slot : distinctSlots) {
+                        if (slot instanceof OutputSlot<?>) {
+                            OutputSlot<Object> outputSlot = ((OutputSlot<?>) slot).unchecked();
+                            final Operator operator = outputSlot.getOwner();
+                            if (!operator.isElementary() || operator.isSource()) {
+                                continue;
+                            }
+                            final OptimizationContext.OperatorContext operatorContext = channelInstance.getProducerOperatorContext();
+                            if (operatorContext == null) {
+                                // TODO: Handle cardinalities inside of loops.
+                                this.logger.debug("Could not inject measured cardinality for {}: " +
+                                        "It is presumably a glue operator or inside of a loop.", operator);
+                                continue;
+                            }
+                            this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext, operator);
+                        }
+                    }
+                });
+        //this.logger.warn("Cardinality repository currently disabled.");
     }
 
     /**
      * Stores the {@code cardinality} for the {@code output} together with its {@link Operator} and input
      * {@link CardinalityEstimate}s.
      */
-    public void store(OutputSlot<?> output, long cardinality, OptimizationContext.OperatorContext operatorContext) {
-        assert output.getOwner() == operatorContext.getOperator() :
+    public void store(
+            OutputSlot<?> output,
+            long cardinality,
+            OptimizationContext.OperatorContext operatorContext,
+            Operator operator) {
+        assert output.getOwner() == operator :
                 String.format("Owner of %s is not %s.", output, operatorContext.getOperator());
         if (!operatorContext.getOutputCardinality(output.getIndex()).isExactly(cardinality)) {
             this.logger.error("Expected a measured cardinality of {} for {}; found {}.",
                     cardinality, output, operatorContext.getOutputCardinality(output.getIndex()));
         }
 
-        this.write(operatorContext, output, cardinality);
+        this.write(operatorContext, output, cardinality, operator);
     }
 
     private void write(OptimizationContext.OperatorContext operatorContext,
                        OutputSlot<?> output,
-                       long outputCardinality) {
+                       long outputCardinality,
+                       Operator operator) {
 
         WayangJsonArray jsonInputCardinalities = new WayangJsonArray();
-        final Operator operator = operatorContext.getOperator();
         for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
             final InputSlot<?> input = operator.getInput(inputIndex);
             final CardinalityEstimate inputEstimate = operatorContext.getInputCardinality(inputIndex);
@@ -131,7 +148,7 @@ public class CardinalityRepository {
             WayangJsonObj jsonInputCardinality = new WayangJsonObj();
             jsonInputCardinality.put("name", input.getName());
             jsonInputCardinality.put("index", input.getIndex());
-            jsonInputCardinality.put("isBroadcast", input.isBroadcast());
+            jsonInputCardinality.put("isBroadcast", (Boolean) input.isBroadcast());
             jsonInputCardinality.put("lowerBound", inputEstimate.getLowerEstimate());
             jsonInputCardinality.put("upperBound", inputEstimate.getUpperEstimate());
             jsonInputCardinality.put("confidence", inputEstimate.getCorrectnessProbability());
