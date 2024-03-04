@@ -21,6 +21,7 @@ package org.apache.wayang.ml.test;
 import org.apache.wayang.ml.costs.MLCost;
 import org.apache.wayang.ml.encoding.OneHotEncoder;
 import org.apache.wayang.ml.encoding.OneHotVector;
+import org.apache.wayang.ml.encoding.TreeEncoder;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.types.DataSetType;
@@ -108,6 +109,19 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
                 previous = encoded;
             }
         }
+    }
+
+    @Test public void testTreeEncoding() throws IOException, URISyntaxException {
+        List<Tuple2<String, Integer>> collector = new LinkedList<>();
+        Configuration config = new Configuration();
+        //config.setCostModel(new MLCost());
+        config.setProperty("wayang.ml.tuple.average-size", "100");
+        WayangPlan wayangPlan = createWayangPlan("../../README.md", collector);
+        WayangContext wayangContext = new WayangContext(config);
+        wayangContext.register(Java.basicPlugin());
+        wayangContext.register(Spark.basicPlugin());
+
+        Assert.assertEquals(null, TreeEncoder.encode(wayangPlan, wayangContext));
     }
 
     private Collection<PlanImplementation> buildPlanImplementations(WayangPlan wayangPlan, WayangContext wayangContext) {
