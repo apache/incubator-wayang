@@ -37,20 +37,26 @@ public class TreeEncoder implements Encoder {
         return new long[0];
     }
 
-    public static List<Node> encode(WayangPlan plan, WayangContext context) {
+    public static Node encode(WayangPlan plan, WayangContext context) {
         List<Node> result = new ArrayList<TreeEncoder.Node>();
         plan.prune();
 
         HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
-        Collection<Operator> sources = plan.collectReachableTopLevelSources();
-        for (Operator source : sources) {
-            Node sourceNode = traverse(source, tree);
-            sourceNode.isRoot = true;
-            result.add(sourceNode);
-        }
-        System.out.println(result);
+        Collection<Operator> sinks = plan.getSinks();
 
-        return null;
+        for (Operator sink : sinks) {
+            Node sinkNode = traverse(sink, tree);
+            sinkNode.isRoot = true;
+            result.add(sinkNode);
+        }
+
+        if (result.size() == 0) {
+            return null;
+        }
+
+        System.out.println(result.get(0));
+
+        return result.get(0);
     }
 
     private static Node traverse(Operator current, HashMap<Operator, Collection<Operator>> visited) {
@@ -58,12 +64,11 @@ public class TreeEncoder implements Encoder {
             return null;
         }
 
-        /*
         Collection<Operator> inputs = Stream.of(current.getAllInputs())
             .map(input -> input.getOccupant().getOwner())
             .collect(Collectors.toList());
-        */
 
+        /*
         Collection<Operator> outputs = Stream.of(current.getAllOutputs())
             .flatMap(output -> {
                 return output
@@ -71,16 +76,14 @@ public class TreeEncoder implements Encoder {
                     .stream()
                     .map(input -> input.getOwner());
             })
-            .collect(Collectors.toList());
+            .collect(Collectors.toList());*/
 
-        visited.put(current, outputs);
+        visited.put(current, inputs);
 
         Node currentNode = new Node();
         currentNode.encoded = OneHotEncoder.encodeOperator(current);
 
-        System.out.println(Arrays.toString(currentNode.encoded));
-
-        for (Operator output : outputs) {
+        for (Operator output : inputs) {
             Node next = traverse(output, visited);
 
             if (currentNode.left == null) {

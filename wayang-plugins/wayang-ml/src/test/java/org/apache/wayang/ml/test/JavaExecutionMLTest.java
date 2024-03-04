@@ -121,7 +121,8 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
         wayangContext.register(Java.basicPlugin());
         wayangContext.register(Spark.basicPlugin());
 
-        Assert.assertEquals(null, TreeEncoder.encode(wayangPlan, wayangContext));
+        // Just a sanity check for determinism
+        Assert.assertArrayEquals(TreeEncoder.encode(wayangPlan, wayangContext).encoded, TreeEncoder.encode(wayangPlan, wayangContext).encoded);
     }
 
     private Collection<PlanImplementation> buildPlanImplementations(WayangPlan wayangPlan, WayangContext wayangContext) {
