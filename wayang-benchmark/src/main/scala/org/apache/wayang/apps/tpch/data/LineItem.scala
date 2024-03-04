@@ -93,4 +93,9 @@ object LineItem {
     }
   }
 
+  def toTuple(li: LineItem): (Long, Long, Long, Int, Double, Double, Double, Double, String, String, Int, Int, Int, String, String, String) = {
+    (li.orderKey, li.partKey, li.suppKey, li.lineNumber, li.quantity, li.extendedPrice, li.discount, li.tax, li.returnFlag.toString,
+     li.lineStatus.toString, li.shipDate, li.commitDate, li.receiptDate, li.shipInstruct, li.shipMode, li.comment)
+  }
+
 }

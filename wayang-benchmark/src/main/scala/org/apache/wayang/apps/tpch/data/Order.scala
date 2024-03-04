@@ -69,4 +69,8 @@ object Order {
     )
   }
 
+  def toTuple(o: Order): (Long, Long, String, Double, Int, String, String, Int, String) = {
+    (o.orderKey, o.custKey, o.orderStatus.toString, o.totalPrice, o.orderDate, o.orderPriority, o.clerk, o.shipPrioritiy, o.comment)
+  }
+
 }
