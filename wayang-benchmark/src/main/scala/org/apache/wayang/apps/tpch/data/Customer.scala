@@ -28,11 +28,7 @@ case class Customer(custKey: Long,
                     phone: String,
                     acctbal: Double,
                     mktSegment: String,
-                    comment: String) {
-    def toTuple: (Long, String, String, Long, String, Double, String, String) = {
-      (custKey, name, address, nationKey, phone, acctbal, mktSegment, comment)
-    }
-  }
+                    comment: String) 
 
 object Customer {
 
