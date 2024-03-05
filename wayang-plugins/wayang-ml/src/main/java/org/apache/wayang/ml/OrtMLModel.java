@@ -88,7 +88,11 @@ public class OrtMLModel {
 
         try (Result r = session.run(inputMap, requestedOutputs)) {
             costPrediction = unwrapFunc.apply(r, "output");
+        } finally {
+            inputMap.clear();
+            requestedOutputs.clear();
         }
+
 
         return costPrediction;
     }
