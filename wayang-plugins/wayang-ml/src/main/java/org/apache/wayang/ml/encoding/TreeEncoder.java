@@ -27,14 +27,33 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
 import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
 
 public class TreeEncoder implements Encoder {
-    public static long[] encode(PlanImplementation plan) {
-        return new long[0];
+    public static Node encode(PlanImplementation plan) {
+        List<Node> result = new ArrayList<TreeEncoder.Node>();
+
+        HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
+        Collection<Operator> sinks = plan.getOperators().stream()
+                .filter(op -> op.isSink())
+                .collect(Collectors.toList());
+
+        for (Operator sink : sinks) {
+            Node sinkNode = traverse(sink, tree);
+            sinkNode.isRoot = true;
+            result.add(sinkNode);
+        }
+
+        if (result.size() == 0) {
+            return null;
+        }
+
+        return result.get(0);
     }
 
     public static Node encode(WayangPlan plan, WayangContext context) {
@@ -60,11 +79,18 @@ public class TreeEncoder implements Encoder {
     }
 
     private static Node traverse(Operator current, HashMap<Operator, Collection<Operator>> visited) {
+        if (current.isExecutionOperator()) {
+            Stream.of(((ExecutionOperator) current).getAllInputs())
+                .filter(input -> input.getOccupant() != null)
+                .map(input -> input.getOccupant().getOwner())
+                .forEach(System.out::println);
+        }
         if (visited.containsKey(current)) {
             return null;
         }
 
         Collection<Operator> inputs = Stream.of(current.getAllInputs())
+            .filter(input -> input.getOccupant() != null)
             .map(input -> input.getOccupant().getOwner())
             .collect(Collectors.toList());
 
@@ -78,13 +104,15 @@ public class TreeEncoder implements Encoder {
             })
             .collect(Collectors.toList());*/
 
-        visited.put(current, inputs);
-
         Node currentNode = new Node();
-        currentNode.encoded = OneHotEncoder.encodeOperator(current);
+        if (current.isExecutionOperator()) {
+            currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current);
+        } else {
+            currentNode.encoded = OneHotEncoder.encodeOperator(current);
+        }
 
-        for (Operator output : inputs) {
-            Node next = traverse(output, visited);
+        for (Operator input : inputs) {
+            Node next = traverse(input, visited);
 
             if (currentNode.left == null) {
                 currentNode.left = next;
@@ -104,12 +132,13 @@ public class TreeEncoder implements Encoder {
 
         @Override
         public String toString() {
-            return "TreeNode{" +
-            "encoded=" + Arrays.toString(encoded) +
-            ", left=" + (left != null ? left.toString() : null) +
-            ", right=" + (right != null ? right.toString() : null) +
-            ", isRoot=" + isRoot +
-            '}';
+            String encodedString = Arrays.toString(encoded).replace("[", "(").replace("]", ")");
+
+            return "(" +
+              encodedString +
+              ',' + (left != null ? left.toString() : "None") + ',' +
+              (right != null ? right.toString() : "None") +
+              ')';
         }
     }
 }

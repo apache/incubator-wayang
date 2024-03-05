@@ -125,6 +125,23 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
         Assert.assertArrayEquals(TreeEncoder.encode(wayangPlan, wayangContext).encoded, TreeEncoder.encode(wayangPlan, wayangContext).encoded);
     }
 
+    @Test public void testExecutionPlanTreeEncoding() throws IOException, URISyntaxException {
+        List<Tuple2<String, Integer>> collector = new LinkedList<>();
+        Configuration config = new Configuration();
+        //config.setCostModel(new MLCost());
+        config.setProperty("wayang.ml.tuple.average-size", "100");
+        WayangPlan wayangPlan = createWayangPlan("file:///var/www/html/README.md", collector);
+        WayangContext wayangContext = new WayangContext(config);
+        wayangContext.register(Java.basicPlugin());
+        wayangContext.register(Spark.basicPlugin());
+        //wayangContext.execute(wayangPlan);
+        Job job = wayangContext.createJob("", null, wayangPlan, "");
+        job.execute();
+        System.out.println(TreeEncoder.encode(job.getPlanImplementation()));
+
+        Assert.assertEquals(true, true);
+    }
+
     private Collection<PlanImplementation> buildPlanImplementations(WayangPlan wayangPlan, WayangContext wayangContext) {
         Job job = wayangContext.createJob("encodingTestJob", wayangPlan, "");
         ExecutionPlan baseplan = job.buildInitialExecutionPlan();
