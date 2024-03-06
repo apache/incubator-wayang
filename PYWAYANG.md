@@ -12,6 +12,7 @@ Users need to install further software:
 - Flatmap operators don't seem to work (minor problem)
 - Few platforms / operators are supported in the current state
 - Manual start of REST API needed
+- Operators are not platform agnostic in python
 
 ## Benefits
 - Concise and easy way to derive WayangPlans in Python
@@ -30,5 +31,9 @@ API is all the setup needed to get going
 - Start the Scala REST API as a stop of invoking PywyPlan.execute() in
   Python API using JPype so that users won't have to start the Wayang
   REST API in a different process.
+- Add README.MD
+- Add Tests
+- Make platform independent
+- Automate setup (pip install of dist)
 
 
