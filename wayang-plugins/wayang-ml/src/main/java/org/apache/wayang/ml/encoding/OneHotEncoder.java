@@ -412,4 +412,17 @@ public class OneHotEncoder implements Encoder {
 
         return result;
     }
+
+    public static long[] encodeNullOperator() {
+        HashMap<String, Integer> operatorMappings = OneHotMappings.getInstance().getOperatorMapping();
+        HashMap<String, Integer> platformMappings = OneHotMappings.getInstance().getPlatformsMapping();
+
+        int operatorsCount = operatorMappings.size();
+        int platformsCount = platformMappings.size();
+        long[] result = new long[operatorsCount + platformsCount + 3];
+
+        result[operatorsCount - 1] = 1;
+
+        return result;
+    }
 }

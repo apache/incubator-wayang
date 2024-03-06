@@ -188,8 +188,8 @@ public class TreeEncoder implements Encoder {
 
             return "(" +
               encodedString +
-              ',' + (left != null ? left.toString() : "None") + ',' +
-              (right != null ? right.toString() : "None") +
+              ',' + (left != null ? left.toString() : Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "(").replace("]", ")")) + ',' +
+              (right != null ? right.toString() : Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "(").replace("]", ")")) +
               ')';
         }
     }
