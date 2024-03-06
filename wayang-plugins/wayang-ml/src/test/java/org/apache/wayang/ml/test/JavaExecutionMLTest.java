@@ -134,10 +134,8 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
         WayangContext wayangContext = new WayangContext(config);
         wayangContext.register(Java.basicPlugin());
         wayangContext.register(Spark.basicPlugin());
-        //wayangContext.execute(wayangPlan);
-        Job job = wayangContext.createJob("", null, wayangPlan, "");
-        job.execute();
-        System.out.println(TreeEncoder.encode(job.getPlanImplementation()));
+
+        TreeEncoder.encode(wayangContext.buildInitialExecutionPlan("", wayangPlan, ""));
 
         Assert.assertEquals(true, true);
     }

@@ -19,6 +19,7 @@
 package org.apache.wayang.ml.encoding;
 
 import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +29,9 @@ import java.util.stream.Stream;
 
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
 import org.apache.wayang.core.plan.wayangplan.Operator;
@@ -53,6 +57,9 @@ public class TreeEncoder implements Encoder {
             return null;
         }
 
+        System.out.println("PlanImplementation");
+        System.out.println(result.get(0));
+
         return result.get(0);
     }
 
@@ -73,18 +80,38 @@ public class TreeEncoder implements Encoder {
             return null;
         }
 
+        System.out.println("WayangPlan");
+        System.out.println(result.get(0));
+
+        return result.get(0);
+    }
+
+    public static Node encode(ExecutionPlan plan) {
+        List<Node> result = new ArrayList<TreeEncoder.Node>();
+        HashMap<Operator, Collection<ExecutionTask>> tree = new HashMap<>();
+        Set<ExecutionTask> tasks = plan.collectAllTasks();
+
+        Collection<ExecutionTask> sinks = tasks.stream()
+            .filter(task -> task.getOperator().isSink())
+            .collect(Collectors.toList());
+
+        for (ExecutionTask sink : sinks) {
+            Node sinkNode = traverse(sink, tree);
+            sinkNode.isRoot = true;
+            result.add(sinkNode);
+        }
+
+        if (result.size() == 0) {
+            return null;
+        }
+
+        System.out.println("ExecutionPlan");
         System.out.println(result.get(0));
 
         return result.get(0);
     }
 
     private static Node traverse(Operator current, HashMap<Operator, Collection<Operator>> visited) {
-        if (current.isExecutionOperator()) {
-            Stream.of(((ExecutionOperator) current).getAllInputs())
-                .filter(input -> input.getOccupant() != null)
-                .map(input -> input.getOccupant().getOwner())
-                .forEach(System.out::println);
-        }
         if (visited.containsKey(current)) {
             return null;
         }
@@ -113,6 +140,31 @@ public class TreeEncoder implements Encoder {
 
         for (Operator input : inputs) {
             Node next = traverse(input, visited);
+
+            if (currentNode.left == null) {
+                currentNode.left = next;
+            } else {
+                currentNode.right = next;
+            }
+        }
+
+        return currentNode;
+    }
+
+    private static Node traverse(ExecutionTask current, HashMap<Operator, Collection<ExecutionTask>> visited) {
+        if (visited.containsKey(current)) {
+            return null;
+        }
+
+        Collection<ExecutionTask> producers = Stream.of(current.getInputChannels())
+            .map(channel -> channel.getProducer())
+            .collect(Collectors.toList());
+
+        Node currentNode = new Node();
+        currentNode.encoded = OneHotEncoder.encodeOperator(current.getOperator());
+
+        for (ExecutionTask producer : producers) {
+            Node next = traverse(producer, visited);
 
             if (currentNode.left == null) {
                 currentNode.left = next;
