@@ -19,44 +19,38 @@
 package org.apache.wayang.apps.tpch.data
 
 /**
-  * Represents elements from the TPC-H `CUSTOMER` table.
+  * Represents elements from the TPC-H `PARTSUPPLIER` table.
   */
-case class Customer(custKey: Long,
-                    name: String,
-                    address: String,
-                    nationKey: Long,
-                    phone: String,
-                    acctbal: Double,
-                    mktSegment: String,
+case class PartSupplier(partKey: Long,
+                    supplierKey: Long,
+                    availQTY: Long,
+                    supplyCost: Double,
                     comment: String)
 
-object Customer {
+object PartSupplier {
 
-  val fields = IndexedSeq("c_custkey", "c_name", "c_address", "c_nationkey", "c_phone", "c_acctbal", "c_mktsegment", "c_comment")
+  val fields = IndexedSeq("ps_partkey","ps_supplierkey", "ps_availQTY", "ps_supplycost","ps_comment")
 
   /**
-    * Parse a CSV row into a [[Customer]] instance.
+    * Parse a CSV row into a [[PartSupplier]] instance.
     *
     * @param csv the [[String]] to parse
-    * @return the [[Customer]]
+    * @return the [[PartSupplier]]
     */
-  def parseCsv(csv: String): Customer = {
+  def parseCsv(csv: String): PartSupplier = {
     val fields = csv.split("\\|")
 
-    Customer(
+    PartSupplier(
       fields(0).toLong,
-      fields(1),
-      fields(2),
-      fields(3).toLong,
+      fields(1).toLong,
+      fields(2).toLong,
+      fields(3).toDouble,
       fields(4),
-      fields(5).toDouble,
-      fields(6).trim,
-      fields(7)
     )
   }
 
-  def toTuple(c: Customer) : (Long, String, String, Long, String, Double, String, String) = {
-      (c.custKey, c.name, c.address, c.nationKey, c.phone, c.acctbal, c.mktSegment, c.comment)
+  def toTuple(ps: PartSupplier): (Long, Long, Long, Double, String) = {
+    (ps.partKey, ps.supplierKey, ps.availQTY, ps.supplyCost, ps.comment)
   }
 
 }

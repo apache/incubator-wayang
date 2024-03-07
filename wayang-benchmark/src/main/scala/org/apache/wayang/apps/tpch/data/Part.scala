@@ -19,44 +19,47 @@
 package org.apache.wayang.apps.tpch.data
 
 /**
-  * Represents elements from the TPC-H `CUSTOMER` table.
+  * Represents elements from the TPC-H `PART` table.
   */
-case class Customer(custKey: Long,
+case class Part(partKey: Long,
                     name: String,
-                    address: String,
-                    nationKey: Long,
-                    phone: String,
-                    acctbal: Double,
-                    mktSegment: String,
+                    mfgr: String,
+                    brand: String,
+                    partType: String,
+                    size: Long,
+                    container: String,
+                    retailPrice: Double,
                     comment: String)
 
-object Customer {
+object Part {
 
-  val fields = IndexedSeq("c_custkey", "c_name", "c_address", "c_nationkey", "c_phone", "c_acctbal", "c_mktsegment", "c_comment")
+  val fields = IndexedSeq("p_partkey", "p_name","p_mfgr","p_brand","p_type","p_size","p_container","p_retailprice","p_comment")
 
   /**
-    * Parse a CSV row into a [[Customer]] instance.
+    * Parse a CSV row into a [[Part]] instance.
     *
     * @param csv the [[String]] to parse
-    * @return the [[Customer]]
+    * @return the [[Part]]
     */
-  def parseCsv(csv: String): Customer = {
+  def parseCsv(csv: String): Part = {
     val fields = csv.split("\\|")
 
-    Customer(
+    Part(
       fields(0).toLong,
       fields(1),
       fields(2),
-      fields(3).toLong,
+      fields(3),
       fields(4),
-      fields(5).toDouble,
-      fields(6).trim,
-      fields(7)
+      fields(5).toLong,
+      fields(6),
+      fields(7).toDouble,
+      fields(8)
+      
     )
   }
 
-  def toTuple(c: Customer) : (Long, String, String, Long, String, Double, String, String) = {
-      (c.custKey, c.name, c.address, c.nationKey, c.phone, c.acctbal, c.mktSegment, c.comment)
+  def toTuple(p: Part): (Long, String, String, String, String, Long, String, Double, String) = {
+    (p.partKey, p.name, p.mfgr, p.brand, p.partType, p.size, p.container, p.retailPrice, p.comment)
   }
 
 }
