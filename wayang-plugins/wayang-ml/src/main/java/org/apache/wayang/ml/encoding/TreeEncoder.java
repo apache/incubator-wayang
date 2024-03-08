@@ -39,8 +39,8 @@ import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
 
 public class TreeEncoder implements Encoder {
-    public static Node encode(PlanImplementation plan) {
-        List<Node> result = new ArrayList<TreeEncoder.Node>();
+    public static TreeNode encode(PlanImplementation plan) {
+        List<TreeNode> result = new ArrayList<TreeNode>();
 
         HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
         Collection<Operator> sinks = plan.getOperators().stream()
@@ -48,7 +48,7 @@ public class TreeEncoder implements Encoder {
                 .collect(Collectors.toList());
 
         for (Operator sink : sinks) {
-            Node sinkNode = traverse(sink, tree);
+            TreeNode sinkNode = traverse(sink, tree);
             sinkNode.isRoot = true;
             result.add(sinkNode);
         }
@@ -57,21 +57,21 @@ public class TreeEncoder implements Encoder {
             return null;
         }
 
-        System.out.println("PlanImplementation");
-        System.out.println(result.get(0));
+        //System.out.println("PlanImplementation");
+        //System.out.println(result.get(0));
 
         return result.get(0);
     }
 
-    public static Node encode(WayangPlan plan, WayangContext context) {
-        List<Node> result = new ArrayList<TreeEncoder.Node>();
+    public static TreeNode encode(WayangPlan plan, WayangContext context) {
+        List<TreeNode> result = new ArrayList<TreeNode>();
         plan.prune();
 
         HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
         Collection<Operator> sinks = plan.getSinks();
 
         for (Operator sink : sinks) {
-            Node sinkNode = traverse(sink, tree);
+            TreeNode sinkNode = traverse(sink, tree);
             sinkNode.isRoot = true;
             result.add(sinkNode);
         }
@@ -80,14 +80,14 @@ public class TreeEncoder implements Encoder {
             return null;
         }
 
-        System.out.println("WayangPlan");
-        System.out.println(result.get(0));
+        //System.out.println("WayangPlan");
+        //System.out.println(result.get(0));
 
         return result.get(0);
     }
 
-    public static Node encode(ExecutionPlan plan) {
-        List<Node> result = new ArrayList<TreeEncoder.Node>();
+    public static TreeNode encode(ExecutionPlan plan) {
+        List<TreeNode> result = new ArrayList<TreeNode>();
         HashMap<Operator, Collection<ExecutionTask>> tree = new HashMap<>();
         Set<ExecutionTask> tasks = plan.collectAllTasks();
 
@@ -96,7 +96,7 @@ public class TreeEncoder implements Encoder {
             .collect(Collectors.toList());
 
         for (ExecutionTask sink : sinks) {
-            Node sinkNode = traverse(sink, tree);
+            TreeNode sinkNode = traverse(sink, tree);
             sinkNode.isRoot = true;
             result.add(sinkNode);
         }
@@ -105,13 +105,13 @@ public class TreeEncoder implements Encoder {
             return null;
         }
 
-        System.out.println("ExecutionPlan");
-        System.out.println(result.get(0));
+        //System.out.println("ExecutionPlan");
+        //System.out.println(result.get(0));
 
         return result.get(0);
     }
 
-    private static Node traverse(Operator current, HashMap<Operator, Collection<Operator>> visited) {
+    private static TreeNode traverse(Operator current, HashMap<Operator, Collection<Operator>> visited) {
         if (visited.containsKey(current)) {
             return null;
         }
@@ -131,7 +131,7 @@ public class TreeEncoder implements Encoder {
             })
             .collect(Collectors.toList());*/
 
-        Node currentNode = new Node();
+        TreeNode currentNode = new TreeNode();
         if (current.isExecutionOperator()) {
             currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current);
         } else {
@@ -139,7 +139,7 @@ public class TreeEncoder implements Encoder {
         }
 
         for (Operator input : inputs) {
-            Node next = traverse(input, visited);
+            TreeNode next = traverse(input, visited);
 
             if (currentNode.left == null) {
                 currentNode.left = next;
@@ -151,7 +151,7 @@ public class TreeEncoder implements Encoder {
         return currentNode;
     }
 
-    private static Node traverse(ExecutionTask current, HashMap<Operator, Collection<ExecutionTask>> visited) {
+    private static TreeNode traverse(ExecutionTask current, HashMap<Operator, Collection<ExecutionTask>> visited) {
         if (visited.containsKey(current)) {
             return null;
         }
@@ -160,11 +160,11 @@ public class TreeEncoder implements Encoder {
             .map(channel -> channel.getProducer())
             .collect(Collectors.toList());
 
-        Node currentNode = new Node();
+        TreeNode currentNode = new TreeNode();
         currentNode.encoded = OneHotEncoder.encodeOperator(current.getOperator());
 
         for (ExecutionTask producer : producers) {
-            Node next = traverse(producer, visited);
+            TreeNode next = traverse(producer, visited);
 
             if (currentNode.left == null) {
                 currentNode.left = next;
@@ -176,21 +176,4 @@ public class TreeEncoder implements Encoder {
         return currentNode;
     }
 
-    public static class Node {
-        public long[] encoded;
-        public Node left;
-        public Node right;
-        public boolean isRoot;
-
-        @Override
-        public String toString() {
-            String encodedString = Arrays.toString(encoded).replace("[", "(").replace("]", ")");
-
-            return "(" +
-              encodedString +
-              ',' + (left != null ? left.toString() : Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "(").replace("]", ")")) + ',' +
-              (right != null ? right.toString() : Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "(").replace("]", ")")) +
-              ')';
-        }
-    }
 }
