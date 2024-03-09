@@ -100,13 +100,11 @@ public class Job extends OneTimeExecutable {
     private final WayangContext wayangContext;
 
     /**
-     * {@link Job}-level {@link Configuration} based on the {@link WayangContext}-level configuration.
+     * {@link Job}-level {@link Configuration} based on the {@link this.planImplementationWayangContext}-level configuration.
      */
     private final Configuration configuration;
 
-    /**
-     * The {@link WayangPlan} to be executed by this instance.
-     */
+    /** * The {@link WayangPlan} to be executed by this instance. */
     private final WayangPlan wayangPlan;
 
     /**
@@ -883,5 +881,9 @@ public class Job extends OneTimeExecutable {
      */
     public Map<String, Object> getCache() {
         return this.cache;
+    }
+
+    public PlanImplementation getPlanImplementation() {
+        return this.planImplementation;
     }
 }

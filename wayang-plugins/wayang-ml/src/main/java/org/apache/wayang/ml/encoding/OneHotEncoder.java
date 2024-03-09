@@ -329,4 +329,100 @@ public class OneHotEncoder implements Encoder {
         //vector.setDataset(config.getLongProperty("wayang.ml.tuple.average-size"));
         vector.setDataset(100l);
     }
+
+    /*
+     * Format:
+     * ---- BEGIN OPERATOR ITERATION ----
+     * 1 - sum of UDF complexities
+     * 2 - sum of input cardinalities
+     * 3 - sum of output cardinalities
+     * (4 ... end) - one hot marking type of operator
+     */
+    public static long[] encodeOperator(Operator operator) {
+        List<SampledCardinality> operatorSamples = CardinalitySampler.samples
+            .stream()
+            .filter(sample -> {
+                return sample.getOperator().get("class").equals(operator.getClass().getName());
+            }).collect(Collectors.toList());
+
+        long inputCardinality = operatorSamples.stream()
+            .mapToLong(sample -> {
+                long card = 0;
+                for (Object input : sample.getInputs()) {
+                    card += ((WayangJsonObj) input).getLong("upperBound");
+                }
+
+                return card;
+            })
+            .sum();
+
+        long outputCardinality = operatorSamples.stream().mapToLong(sample -> sample.getOutput().getLong("cardinality")).sum();
+
+        HashMap<String, Integer> operatorMappings = OneHotMappings.getInstance().getOperatorMapping();
+
+        long[] result = new long[operatorMappings.size() + 3];
+        int operatorsCount = operatorMappings.size();
+
+        result[operatorsCount] = Udf.getComplexity(operator).ordinal();
+        result[operatorsCount + 1] = inputCardinality;
+        result[operatorsCount + 2] = outputCardinality;
+
+        Integer operatorPosition = operatorMappings.get(operator.getClass().getName());
+        result[operatorPosition] = 1;
+
+        return result;
+    }
+
+    public static long[] encodeOperator(ExecutionOperator operator) {
+        List<SampledCardinality> operatorSamples = CardinalitySampler.samples
+            .stream()
+            .filter(sample -> {
+                return sample.getOperator().get("class").equals(operator.getClass().getName());
+            }).collect(Collectors.toList());
+
+        long inputCardinality = operatorSamples.stream()
+            .mapToLong(sample -> {
+                long card = 0;
+                for (Object input : sample.getInputs()) {
+                    card += ((WayangJsonObj) input).getLong("upperBound");
+                }
+
+                return card;
+            })
+            .sum();
+
+        long outputCardinality = operatorSamples.stream().mapToLong(sample -> sample.getOutput().getLong("cardinality")).sum();
+
+        HashMap<String, Integer> operatorMappings = OneHotMappings.getInstance().getOperatorMapping();
+        HashMap<String, Integer> platformMappings = OneHotMappings.getInstance().getPlatformsMapping();
+
+        int operatorsCount = operatorMappings.size();
+        int platformsCount = platformMappings.size();
+        long[] result = new long[operatorsCount + platformsCount + 3];
+
+        result[operatorsCount + platformsCount] = Udf.getComplexity(operator).ordinal();
+        result[operatorsCount + platformsCount + 1] = inputCardinality;
+        result[operatorsCount + platformsCount + 2] = outputCardinality;
+
+        Integer operatorPosition = operatorMappings.get(operator.getClass().getSuperclass().getName());
+        result[operatorPosition] = 1;
+
+        Integer platformPosition = platformMappings.get(operator.getPlatform().getClass().getName());
+        result[operatorsCount + platformPosition] = 1;
+
+        return result;
+    }
+
+    public static long[] encodeNullOperator() {
+        HashMap<String, Integer> operatorMappings = OneHotMappings.getInstance().getOperatorMapping();
+        HashMap<String, Integer> platformMappings = OneHotMappings.getInstance().getPlatformsMapping();
+
+        int operatorsCount = operatorMappings.size();
+        int platformsCount = platformMappings.size();
+        long[] result = new long[operatorsCount + platformsCount + 3];
+
+        result[operatorsCount - 1] = 1;
+
+        return result;
+    }
 }

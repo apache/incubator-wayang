@@ -51,6 +51,9 @@ public class OneHotMappings {
           .sorted(Comparator.comparing(c -> c.getName()))
           .forEach(entry -> mappings.put(entry.getName(), mappings.size()));
 
+        // add a null operator for encoding
+        mappings.put(null, mappings.size());
+
         return mappings;
     }
 

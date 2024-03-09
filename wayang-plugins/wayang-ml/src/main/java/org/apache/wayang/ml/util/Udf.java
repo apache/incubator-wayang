@@ -19,12 +19,12 @@
 package org.apache.wayang.ml.util;
 
 import org.apache.wayang.core.function.UDFComplexity;
-import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.basic.operators.*;
 
 public class Udf {
 
-    public static UDFComplexity getComplexity(ExecutionOperator operator) {
+    public static UDFComplexity getComplexity(Operator operator) {
         if (operator instanceof ReduceByOperator) {
             return ((ReduceByOperator) operator).getReduceDescriptor().getUDFComplexity();
         }
