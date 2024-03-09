@@ -93,7 +93,7 @@ public class TreeEncoder implements Encoder {
         Set<ExecutionTask> tasks = plan.collectAllTasks();
 
         Collection<ExecutionTask> sinks = tasks.stream()
-                .filter(task -> task.getOperator().isSink()).toList();
+                .filter(task -> task.getOperator().isSink()).collect(Collectors.toList());
 
         for (ExecutionTask sink : sinks) {
             TreeNode sinkNode = traverse(sink, tree);
@@ -118,7 +118,7 @@ public class TreeEncoder implements Encoder {
 
         Collection<Operator> inputs = Stream.of(current.getAllInputs())
                 .filter(input -> input.getOccupant() != null)
-                .map(input -> input.getOccupant().getOwner()).toList();
+                .map(input -> input.getOccupant().getOwner()).collect(Collectors.toList());
 
         /*
         Collection<Operator> outputs = Stream.of(current.getAllOutputs())
@@ -156,7 +156,7 @@ public class TreeEncoder implements Encoder {
         }
 
         Collection<ExecutionTask> producers = Stream.of(current.getInputChannels())
-                .map(Channel::getProducer).toList();
+                .map(Channel::getProducer).collect(Collectors.toList());
 
         TreeNode currentNode = new TreeNode();
         currentNode.encoded = OneHotEncoder.encodeOperator(current.getOperator());
