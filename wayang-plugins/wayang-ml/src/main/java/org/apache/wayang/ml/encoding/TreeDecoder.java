@@ -18,13 +18,34 @@
 
 package org.apache.wayang.ml.encoding;
 
+import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
+import org.apache.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.optimizer.enumeration.StageAssignmentTraversal;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class TreeDecoder {
+
+    /**
+     * <i>Currently not used.</i>
+     */
+    private static final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
+            (producerTask, channel, consumerTask) -> false;
 
     public static ExecutionPlan decode(String encoded) {
         TreeNode node = TreeNode.fromString(encoded);
         System.out.println(node);
-        return new ExecutionPlan();
+
+        final ExecutionTaskFlow executionTaskFlow = new ExecutionTaskFlow(reconstructSinkTasks(node));
+        final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, stageSplittingCriterion);
+
+        return executionPlan;
+    }
+
+    public static Collection<ExecutionTask> reconstructSinkTasks(TreeNode node) {
+        return Collections.emptySet();
     }
 }
