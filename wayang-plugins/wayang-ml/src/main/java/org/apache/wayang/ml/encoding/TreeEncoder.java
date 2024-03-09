@@ -44,8 +44,7 @@ public class TreeEncoder implements Encoder {
 
         HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
         Collection<Operator> sinks = plan.getOperators().stream()
-                .filter(op -> op.isSink())
-                .collect(Collectors.toList());
+                .filter(Operator::isSink).toList();
 
         for (Operator sink : sinks) {
             TreeNode sinkNode = traverse(sink, tree);
@@ -157,7 +156,7 @@ public class TreeEncoder implements Encoder {
         }
 
         Collection<ExecutionTask> producers = Stream.of(current.getInputChannels())
-            .map(channel -> channel.getProducer())
+            .map(Channel::getProducer)
             .collect(Collectors.toList());
 
         TreeNode currentNode = new TreeNode();
