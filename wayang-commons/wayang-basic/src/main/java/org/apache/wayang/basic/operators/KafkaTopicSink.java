@@ -32,6 +32,7 @@ import org.apache.wayang.core.types.DataSetType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
@@ -39,15 +40,19 @@ import java.util.Properties;
 /**
  * This {@link UnarySink} writes all incoming data quanta to a single Kafka topic.
  */
-public class KafkaTopicSink<T> extends UnarySink<T> {
+public class KafkaTopicSink<T> extends UnarySink<T> implements Serializable {
 
-    protected final String topicName;
+    protected String topicName;
 
-    protected final TransformationDescriptor<T, String> formattingDescriptor;
+    protected TransformationDescriptor<T, String> formattingDescriptor;
 
     private final static Logger logger = LogManager.getLogger(KafkaTopicSink.class);
 
-    KafkaProducer<String, String> producer = null;
+    transient KafkaProducer<String, String> producer = null;
+
+    public KafkaTopicSink() {
+        super();
+    }
 
     /**
      * Creates a new instance with default formatting.

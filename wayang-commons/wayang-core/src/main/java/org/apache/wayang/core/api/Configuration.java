@@ -64,6 +64,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -82,7 +83,7 @@ import static org.apache.wayang.core.util.ReflectionUtils.instantiateDefault;
 /**
  * Describes both the configuration of a {@link WayangContext} and {@link Job}s.
  */
-public class Configuration {
+public class Configuration implements Serializable {
 
     private static final Logger logger = LogManager.getLogger(Configuration.class);
 

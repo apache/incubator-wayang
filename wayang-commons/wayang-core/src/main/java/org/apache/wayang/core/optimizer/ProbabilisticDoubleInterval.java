@@ -18,13 +18,16 @@
 
 package org.apache.wayang.core.optimizer;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /***
  * An value representation that is capable of expressing uncertainty.
  * It addresses uncertainty by expressing estimates as intervals and assigning a probability of correctness (in [0, 1]).
  */
-public class ProbabilisticDoubleInterval {
+public class ProbabilisticDoubleInterval implements Serializable {
+
+    public ProbabilisticDoubleInterval() {}
 
     /**
      * Instance that basically represents the value {@code 0d}.
@@ -35,18 +38,18 @@ public class ProbabilisticDoubleInterval {
      * Probability of correctness between in the interval [0, 1]. This helps
      * Wayang in situations with many estimates to pick the best one.
      */
-    private final double correctnessProb;
+    private double correctnessProb;
 
     /**
      * Lower and upper estimate. Not that this is not a bounding box, i.e., there is no guarantee that the finally
      * observed value will be within the estimated interval.
      */
-    private final double lowerEstimate, upperEstimate;
+    private double lowerEstimate, upperEstimate;
 
     /**
      * When merging instances somehow, overriding instance should be chosen over the others.
      */
-    private final boolean isOverride;
+    private boolean isOverride;
 
     /**
      * Creates a new instance with a zero-width interval and a confidence of {@code 1}.

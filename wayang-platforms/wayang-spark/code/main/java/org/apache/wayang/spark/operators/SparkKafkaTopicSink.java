@@ -37,13 +37,17 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * Implementation of the {@link KafkaTopicSink} operator for the Spark platform.
  */
-public class SparkKafkaTopicSink<T> extends KafkaTopicSink<T> implements SparkExecutionOperator {
+public class SparkKafkaTopicSink<T> extends KafkaTopicSink<T> implements SparkExecutionOperator, Serializable {
 
+    public SparkKafkaTopicSink() {
+        super();
+    }
 
     public SparkKafkaTopicSink(String textFileUrl, TransformationDescriptor<T, String> formattingDescriptor) {
         super(textFileUrl, formattingDescriptor);
@@ -65,8 +69,8 @@ public class SparkKafkaTopicSink<T> extends KafkaTopicSink<T> implements SparkEx
 
                 // Send each record of the partition to Kafka
                 while (partition.hasNext()) {
-                    AbstractMap.SimpleEntry<String,String> kvp = (AbstractMap.SimpleEntry<String,String>) partition.next(); // Apply formatting function if necessary
-                    producer.send(new ProducerRecord<>(topicName, kvp.getKey(), kvp.getValue()));
+                    String kvp = (String) partition.next(); // Apply formatting function if necessary
+                    producer.send(new ProducerRecord<>(topicName, "-", kvp));
                 }
 
                 // Close the producer

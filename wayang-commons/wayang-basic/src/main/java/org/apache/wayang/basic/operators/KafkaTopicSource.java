@@ -63,7 +63,7 @@ public class KafkaTopicSource extends UnarySource<String> {
     String topicName = null;
     String encoding;
 
-    KafkaConsumer<String, String> consumer = null;
+    transient KafkaConsumer<String, String> consumer = null;
 
     public KafkaTopicSource(String topicName) {
         this(topicName, "UTF-8");

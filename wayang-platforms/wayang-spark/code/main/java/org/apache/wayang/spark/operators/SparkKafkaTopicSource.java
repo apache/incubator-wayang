@@ -72,16 +72,16 @@ public class SparkKafkaTopicSource extends KafkaTopicSource implements SparkExec
 
         ConsumerRecords<String, String> records = this.getConsumer().poll(Duration.ofMillis(15000));
 
-        List<AbstractMap.SimpleEntry<String,String>> collectedRecords = new ArrayList<>();
+        List<String> collectedRecords = new ArrayList<>();
         for (ConsumerRecord<String, String> record : records) {
-            collectedRecords.add(new AbstractMap.SimpleEntry<>(record.key(), record.value()));
+            collectedRecords.add( record.value() );
         }
 
         System.out.println("### 8 ... ");
 
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
-        final JavaRDD<AbstractMap.SimpleEntry<String, String>> rdd = sparkExecutor.sc.parallelize( collectedRecords );
+        final JavaRDD<String> rdd = sparkExecutor.sc.parallelize( collectedRecords );
 
         this.name(rdd);
         output.accept(rdd, sparkExecutor);

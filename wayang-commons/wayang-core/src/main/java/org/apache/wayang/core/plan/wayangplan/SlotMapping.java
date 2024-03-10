@@ -18,6 +18,7 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
+import java.io.Serializable;
 import java.util.Map.Entry;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.logging.log4j.LogManager;
@@ -35,7 +36,9 @@ import java.util.stream.Collectors;
  * This mapping can be used to encapsulate subplans by connecting slots (usually <b>against</b> the data flow direction,
  * i.e., outer output slot to inner output slot, inner input slot to outer input slot).
  */
-public class SlotMapping {
+public class SlotMapping implements Serializable {
+
+    public SlotMapping() { }
 
     private final Logger logger = LogManager.getLogger(this.getClass());
 
