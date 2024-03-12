@@ -6,7 +6,7 @@
     "output": [2],
     "operatorName": "textFileInput",
     "data": {
-      "filename": "file:///home/mike/json-api-examples/in1.txt"
+      "filename": "file:///var/www/html/data/in.txt"
     }
   },
   {
@@ -46,7 +46,7 @@
     "output": [],
     "operatorName": "textFileOutput",
     "data": {
-      "filename": "file:///home/mike/json-api-examples/out1.txt"
+      "filename": "file:///var/www/html/data/out.txt"
     }
   }
 ]

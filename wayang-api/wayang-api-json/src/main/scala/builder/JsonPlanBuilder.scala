@@ -31,6 +31,7 @@ import org.apache.wayang.basic.operators.TableSource
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.function.ExecutionContext
 import org.apache.wayang.core.function.FunctionDescriptor.ExtendedSerializableFunction
+import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.Java
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.postgres.operators.PostgresTableSource
@@ -38,7 +39,7 @@ import org.apache.wayang.spark.Spark
 
 import scala.collection.JavaConverters._
 
-class JsonPlanBuilder() {
+class JsonPlanBuilder {
 
   var planBuilder: PlanBuilder = _
   var operators: Map[Long, OperatorFromJson] = Map()
@@ -46,7 +47,7 @@ class JsonPlanBuilder() {
   def setOperators(operators: List[OperatorFromJson]): JsonPlanBuilder = {
     setOperatorsRec(operators)
 
-    val configuration = new Configuration("file:///wayang.properties")
+    val configuration = new Configuration
 
     val wayangContext = new WayangContext(configuration)
       .withPlugin(Java.basicPlugin)
