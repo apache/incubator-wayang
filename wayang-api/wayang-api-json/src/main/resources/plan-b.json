@@ -1,0 +1,53 @@
+[
+  {
+    "id": 2,
+    "cat": "input",
+    "input": [],
+    "output": [3],
+    "operatorName": "textFileInput",
+    "data": {
+      "filename": "file:///home/mike/json-api-examples/in2.txt"
+    }
+  },
+  {
+    "id": 3,
+    "cat": "unary",
+    "input": [2],
+    "output": [4],
+    "operatorName": "filter",
+    "data": {
+      "udf": "(s: String) => s.nonEmpty"
+    }
+  },
+  {
+    "id": 4,
+    "cat": "unary",
+    "input": [3],
+    "output": [5],
+    "operatorName": "map",
+    "data": {
+      "udf": "(word: String) => (word.toLowerCase, 1)"
+    }
+  },
+  {
+    "id": 5,
+    "cat": "unary",
+    "input": [4],
+    "output": [6],
+    "operatorName": "reduceBy",
+    "data": {
+      "keyUdf": "(t: (String, Int)) => t._1",
+      "udf": "(t1: (String, Int), t2: (String, Int)) => (t1._1, t1._2 + t2._2)"
+    }
+  },
+  {
+    "id": 6,
+    "cat": "output",
+    "input": [5],
+    "output": [],
+    "operatorName": "textFileOutput",
+    "data": {
+      "filename": "file:///home/mike/json-api-examples/out2.txt"
+    }
+  }
+]

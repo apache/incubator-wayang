@@ -39,6 +39,7 @@
         <module>wayang-api-scala-java</module>
         <module>wayang-api-python</module>
         <module>wayang-api-sql</module>
+        <module>wayang-api-json</module>
     </modules>
 
 </project>
