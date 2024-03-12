@@ -40,6 +40,7 @@
         <module>wayang-api-python</module>
         <module>wayang-api-rest</module>
         <module>wayang-api-sql</module>
+        <module>wayang-api-json</module>
     </modules>
 
 </project>

@@ -1,0 +1,117 @@
+{
+  "pipeline" : {
+    "data" : {
+      "286" : {
+        "typenode" : "vue",
+        "outputs" : { },
+        "pos_y" : 495.5,
+        "pos_x" : 1025,
+        "data" : {
+          "outputFileName" : "tes",
+          "outputFileURL" : "fds",
+          "cat" : "output",
+          "operatorName" : "oTextFile"
+        },
+        "inputs" : {
+          "input_1" : {
+            "connections" : [ {
+              "node" : "284",
+              "input" : "output_1"
+            } ]
+          }
+        },
+        "name" : "Operator17",
+        "html" : "Operator17",
+        "id" : 286,
+        "class" : "Operator17"
+      },
+      "284" : {
+        "typenode" : "vue",
+        "outputs" : {
+          "output_1" : {
+            "connections" : [ {
+              "output" : "input_1",
+              "node" : "286"
+            } ]
+          }
+        },
+        "pos_y" : 296.5,
+        "pos_x" : 724,
+        "data" : {
+          "cat" : "composed",
+          "operatorName" : "parComposed",
+          "pipeline" : {
+            "data" : {
+              "283" : {
+                "typenode" : "vue",
+                "outputs" : {
+                  "output_1" : {
+                    "connections" : [ ]
+                  }
+                },
+                "pos_y" : 212.5,
+                "pos_x" : 643,
+                "data" : {
+                  "cat" : "unary",
+                  "mapFunction" : "map",
+                  "operatorName" : "map"
+                },
+                "inputs" : {
+                  "input_1" : {
+                    "connections" : [ ]
+                  }
+                },
+                "name" : "Operator8",
+                "html" : "Operator8",
+                "id" : 283,
+                "class" : "Operator8"
+              }
+            },
+            "name" : "par",
+            "description" : "Description par plan",
+            "type" : "plan"
+          }
+        },
+        "inputs" : {
+          "input_1" : {
+            "connections" : [ {
+              "node" : "285",
+              "input" : "output_1"
+            } ]
+          }
+        },
+        "name" : "Operator_parComposed",
+        "html" : "Operator_parComposed",
+        "id" : 284,
+        "class" : "Operator_parComposed"
+      },
+      "285" : {
+        "typenode" : "vue",
+        "outputs" : {
+          "output_1" : {
+            "connections" : [ {
+              "output" : "input_1",
+              "node" : "284"
+            } ]
+          }
+        },
+        "pos_y" : 132.5,
+        "pos_x" : 354,
+        "data" : {
+          "collectionGeneratorFunction" : "load coll",
+          "cat" : "input",
+          "operatorName" : "iBinary"
+        },
+        "inputs" : { },
+        "name" : "Operator4",
+        "html" : "Operator4",
+        "id" : 285,
+        "class" : "Operator4"
+      }
+    },
+    "name" : "fff",
+    "description" : "Description fff plan",
+    "type" : "plan"
+  },
+  "_id" : "64a80c7a7de9c95a2e0683b8"
+}
