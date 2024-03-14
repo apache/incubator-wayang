@@ -3,7 +3,7 @@ import json
 import requests
 
 # Specify the API URL we want to send our JSON to
-url = 'http://localhost:8080/wayang-api-json/submit-plan'
+url = 'http://localhost:8080/wayang-api-json/submit-plan/drawflow-format'
 # Specify the appropriate header for the POST request
 headers = {'Content-type': 'application/json'}
 

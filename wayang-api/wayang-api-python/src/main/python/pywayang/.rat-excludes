@@ -1,0 +1,4 @@
+.gitignore
+.rat-excludes
+venv/*
+README.md
