@@ -88,7 +88,7 @@ public class ProcessFeeder<Input, Output> {
         System.out.println("iterator being send");
         for (Iterator<Input> it = iter; it.hasNext(); ) {
             Input elem = it.next();
-            //System.out.println(elem.toString());
+            System.out.println(elem.toString());
             write(elem, dataOut);
         }
     }
@@ -110,19 +110,30 @@ public class ProcessFeeder<Input, Output> {
             /**
              * String case
              * */
-            else if (obj instanceof String)
+            else if (obj instanceof String) {
+                System.out.println("Writing String");
                 writeUTF((String) obj, dataOut);
+            }
+
+            // This is as cursed as it gets
+            else if (obj instanceof Object) {
+                System.out.println("Writing String");
+                writeUTF(String.valueOf(obj), dataOut);
+            }
 
             /**
              * Key, Value case
              * */
-            else if (obj instanceof Map.Entry)
+            else if (obj instanceof Map.Entry) {
+                System.out.println("Writing Key Value");
                 writeKeyValue((Map.Entry) obj, dataOut);
-
-            else{
-                throw new WayangException("Unexpected element type " + obj.getClass());
             }
 
+            else{
+                System.out.println("Unexpected element");
+                System.out.println(obj);
+                throw new WayangException("Unexpected element type " + obj.getClass());
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -162,12 +173,9 @@ public class ProcessFeeder<Input, Output> {
         byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
 
         try {
-
             dataOut.writeInt(bytes.length);
             dataOut.write(bytes);
-        } catch (SocketException e){
-
-        } catch (IOException e) {
+        } catch (Exception e){
             e.printStackTrace();
         }
     }

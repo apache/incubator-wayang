@@ -37,7 +37,7 @@ public class ProcessReceiver<Output> {
             DataInputStream stream = new DataInputStream(new BufferedInputStream(socket.getInputStream(), BUFFER_SIZE));
             this.iterator = new ReaderIterator<>(stream);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -48,6 +48,5 @@ public class ProcessReceiver<Output> {
 
     public void print(){
         iterator.forEachRemaining(x -> System.out.println(x.toString()));
-
     }
 }

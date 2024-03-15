@@ -69,8 +69,10 @@ public class ReaderIterator <Output> implements Iterator<Output> {
             nextObj = read();
             System.out.println(nextObj + " " + !this.eos);
 
-            /*To work with null values it is suppose to use -5
+            //To work with null values it is suppose to use -5
+            /*
             if(this.nextObj == null){
+                System.out.println("HAS NEXT IS NULL");
                 return false;
             }*/
 
