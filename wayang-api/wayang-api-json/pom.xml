@@ -282,7 +282,7 @@
         </configuration>
       </plugin>
 
-      <plugin>
+      <!--plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.5.0</version>
@@ -299,7 +299,6 @@
                   <resource>reference.conf</resource>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <!--<mainClass>Main</mainClass>-->
                   <manifestEntries>
                     <Multi-Release>true</Multi-Release>
                   </manifestEntries>
@@ -318,7 +317,7 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
+      </plugin-->
 
     </plugins>
 
