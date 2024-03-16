@@ -93,7 +93,6 @@ public class PythonAPITest {
                 new MapPartitionsOperator<String, String>(
                         new MapPartitionsDescriptor<String, String>(
                                 new WrappedPythonFunction<String, String>(
-                                        l -> l,
                                         ByteString.copyFromUtf8(pythonUDF)
                                 ),
                                 String.class,

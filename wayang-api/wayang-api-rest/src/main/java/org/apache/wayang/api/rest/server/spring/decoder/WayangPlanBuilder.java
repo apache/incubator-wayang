@@ -212,7 +212,6 @@ public class WayangPlanBuilder {
                 return new MapPartitionsOperator<>(
                         new MapPartitionsDescriptor<String, String>(
                                 new WrappedPythonFunction<String, String>(
-                                        l -> l,
                                         operator.getUdf()
                                 ),
                                 String.class,

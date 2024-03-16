@@ -89,21 +89,38 @@ def write_with_length(obj, stream):
 
 
 def dump_stream(iterator, stream):
-
     for obj in iterator:
         if type(obj) is str:
             write_with_length(obj, stream)
+        else:
+            write_with_length(str(obj), stream)
         ## elif type(obj) is list:
         ##    write_with_length(obj, stream)
     write_int(SpecialLengths.END_OF_DATA_SECTION, stream)
 
+def m1_func(iterator):
+    return map(lambda x: int(x), iterator)
+
+def m2_func(iterator):
+    return map(lambda x: int(x) + 1, iterator)
+
+def filter_func(iterator):
+    return filter(lambda x: int(x) < 12, iterator)
 
 def process(infile, outfile):
     udf_length = read_int(infile)
     serialized_udf = infile.read(udf_length)
-    func = pickle.loads(serialized_udf)
-    #func = pickle.loads(cloudpickle.dumps(lambda x: (str(y) + "Test" for y in x)))
+    decoded_udf = base64.b64decode(serialized_udf)
+    func = pickle.loads(decoded_udf)
+    """
+    bfunc = cloudpickle.dumps(lambda x: int(x) < 12)
+    decoded_func = base64.b64encode(bfunc)
+    print(decoded_func)
+    decoded_udf = base64.b64decode(decoded_func)
+    func = pickle.loads(decoded_udf)
+    """
     iterator = UTF8Deserializer().load_stream(infile)
+    #out_iter = filter(func, iterator)
     out_iter = func(iterator)
     dump_stream(iterator=out_iter, stream=outfile)
 
@@ -133,7 +150,20 @@ def local_connect(port):
 
 if __name__ == '__main__':
     print("Python version")
-    print (sys.version)
+    print(sys.version)
+    """
+    bfunc = cloudpickle.dumps(m1_func)
+    decoded_func = base64.b64encode(bfunc)
+    print(decoded_func)
+    """
+    bfunc = cloudpickle.dumps(m2_func)
+    decoded_func = base64.b64encode(bfunc)
+    print(decoded_func)
+    """
+    bfunc = cloudpickle.dumps(filter_func)
+    decoded_func = base64.b64encode(bfunc)
+    print(decoded_func)
+    """
     java_port = int(os.environ["PYTHON_WORKER_FACTORY_PORT"])
     sock_file, sock = local_connect(java_port)
     process(sock_file, sock_file)

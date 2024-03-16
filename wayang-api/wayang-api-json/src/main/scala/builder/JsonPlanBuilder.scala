@@ -26,6 +26,7 @@ import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJso
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.output.TextFileOutputFromJson
 import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOpeartorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, ReduceOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.PlanFromJson
 import org.apache.wayang.api._
 import org.apache.wayang.basic.operators.TableSource
 import org.apache.wayang.core.api.exception.WayangException
@@ -37,6 +38,11 @@ import org.apache.wayang.java.Java
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.postgres.operators.PostgresTableSource
 import org.apache.wayang.spark.Spark
+import org.apache.wayang.flink.Flink
+import org.apache.wayang.genericjdbc.GenericJdbc
+import org.apache.wayang.sqlite3.Sqlite3
+import org.apache.wayang.postgres.Postgres
+import org.apache.wayang.core.plugin.Plugin
 
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
@@ -46,6 +52,29 @@ class JsonPlanBuilder() {
 
   var planBuilder: PlanBuilder = _
   var operators: Map[Long, OperatorFromJson] = Map()
+  var plugins: List[Plugin] = List(
+    Java.basicPlugin,
+    Spark.basicPlugin
+  )
+  var origin: String = null
+
+  def setPlatforms(platforms: List[String]): JsonPlanBuilder = {
+    plugins = platforms.map(pl => getPlatformPlugin(pl))
+    this
+  }
+
+  def setOrigin(contextOrigin: String): JsonPlanBuilder = {
+    origin = contextOrigin
+    this
+  }
+
+  def fromPlan(plan: PlanFromJson): JsonPlanBuilder = {
+    setPlatforms(plan.context.platforms)
+    setOrigin(plan.context.origin)
+    setOperators(plan.operators)
+
+    this
+  }
 
   def setOperators(operators: List[OperatorFromJson]): JsonPlanBuilder = {
     setOperatorsRec(operators)
@@ -75,8 +104,7 @@ class JsonPlanBuilder() {
 
     // Create context with plugins
     val wayangContext = new WayangContext(configuration)
-      .withPlugin(Java.basicPlugin)
-      .withPlugin(Spark.basicPlugin)
+    plugins.foreach(plugin => wayangContext.withPlugin(plugin))
 
     // Check if there is a jdbc remote input. If yes, set configuration appropriately
     operators.foreach {
@@ -192,6 +220,7 @@ class JsonPlanBuilder() {
   //
 
   private def visit(operator: TextFileOutputFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
+    println("Executing TextFileOutputFromJson");
     dataQuanta.writeTextFile(operator.data.filename, (x: Any) => x.toString)
     dataQuanta
   }
@@ -201,27 +230,48 @@ class JsonPlanBuilder() {
   //
 
   private def visit(operator: MapOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    val lambda = SerializableLambda.createLambda[Any, Any](operator.data.udf)
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta.map(lambda)
-    else
-      dataQuanta.map(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    if (this.origin == "python") {
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf)
+      else
+        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    } else {
+      val lambda = SerializableLambda.createLambda[Any, Any](operator.data.udf)
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.map(lambda)
+      else
+        dataQuanta.map(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    }
   }
 
   private def visit(operator: FilterOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    val lambda = SerializableLambda.createLambda[Any, Boolean](operator.data.udf)
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta.filter(lambda)
-    else
-      dataQuanta.filter(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    if (this.origin == "python") {
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf)
+      else
+        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    } else {
+      val lambda = SerializableLambda.createLambda[Any, Boolean](operator.data.udf)
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.filter(lambda)
+      else
+        dataQuanta.filter(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    }
   }
 
   private def visit(operator: FlatMapOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    val lambda = SerializableLambda.createLambda[Any, Iterable[Any]](operator.data.udf)
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta.flatMap(lambda)
-    else
-      dataQuanta.flatMap(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    if (this.origin == "python") {
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf)
+      else
+        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    } else {
+      val lambda = SerializableLambda.createLambda[Any, Iterable[Any]](operator.data.udf)
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.flatMap(lambda)
+      else
+        dataQuanta.flatMap(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    }
   }
 
   private def visit(operator: ReduceByOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
@@ -265,11 +315,18 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: ReduceOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    val lambda = SerializableLambda2.createLambda[Any, Any, Any](operator.data.udf)
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta.reduce(lambda)
-    else
-      dataQuanta.reduce(lambda)
+    if (this.origin == "python") {
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf)
+      else
+        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    } else {
+      val lambda = SerializableLambda2.createLambda[Any, Any, Any](operator.data.udf)
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.reduce(lambda)
+      else
+        dataQuanta.reduce(lambda)
+    }
   }
 
   private def visit(operator: SampleOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
@@ -280,11 +337,19 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: MapPartitionsOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    val lambda = SerializableLambda.createLambda[Iterable[Any], Iterable[Any]](operator.data.udf)
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta.mapPartitions(lambda)
-    else
-      dataQuanta.mapPartitions(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    /*
+    if (this.origin == "python") {
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf)
+      else
+        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    } else {*/
+      val lambda = SerializableLambda.createLambda[Iterable[Any], Iterable[Any]](operator.data.udf)
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.mapPartitions(lambda)
+      else
+        dataQuanta.mapPartitions(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    //}
   }
 
   //
@@ -426,9 +491,10 @@ class JsonPlanBuilder() {
     finalCentroids.asInstanceOf[DataQuanta[Any]]
   }
 
-  //
-  // Execution platforms
-  //
+
+  /*
+  * Execution platforms
+  */
   private def getExecutionPlatform(executionPlatform: String): Platform = {
     executionPlatform match {
       case OperatorFromJson.ExecutionPlatforms.Java => Java.platform()
@@ -437,4 +503,15 @@ class JsonPlanBuilder() {
     }
   }
 
+  private def getPlatformPlugin(executionPlatform: String): Plugin = {
+    executionPlatform match {
+      case OperatorFromJson.ExecutionPlatforms.Java => Java.basicPlugin
+      case OperatorFromJson.ExecutionPlatforms.Spark => Spark.basicPlugin
+      case OperatorFromJson.ExecutionPlatforms.Flink => Flink.basicPlugin
+      case OperatorFromJson.ExecutionPlatforms.JDBC => GenericJdbc.plugin
+      case OperatorFromJson.ExecutionPlatforms.Postgres => Postgres.plugin
+      case OperatorFromJson.ExecutionPlatforms.SQLite3 => Sqlite3.plugin
+      case _ => null
+    }
+  }
 }

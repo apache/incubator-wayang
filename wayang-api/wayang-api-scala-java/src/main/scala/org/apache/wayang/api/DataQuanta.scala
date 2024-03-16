@@ -38,6 +38,8 @@ import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
+import com.google.protobuf.ByteString;
+import org.apache.wayang.api.python.function.WrappedPythonFunction;
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -118,6 +120,40 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     this.connectTo(mapOperator, 0)
     mapOperator
   }
+
+  /**
+    * Feed this instance into a [[MapPartitionsOperator]].
+    *
+    * @return a new instance representing the [[MapOperator]]'s output
+    */
+  def mapPartitionsPython[NewOut: ClassTag](udf: String): DataQuanta[NewOut] = {
+    /*
+      return new MapPartitionsOperator<>(
+              new MapPartitionsDescriptor<String, String>(
+                      new WrappedPythonFunction<String, String>(
+                              l -> l,
+                              operator.getUdf()
+                      ),
+                      String.class,
+                      String.class
+              )*/
+    val mapOperator = new MapPartitionsOperator(
+      new MapPartitionsDescriptor[Object, Object](
+        new WrappedPythonFunction[Object, Object](
+          ByteString.copyFromUtf8(udf)
+        ),
+        classOf[Object],
+        classOf[Object],
+      )
+    )
+    /*
+    val mapOperator = new MapPartitionsOperator(
+      new MapPartitionsDescriptor(udf, basicDataUnitType[Out], basicDataUnitType[NewOut], selectivity, udfLoad)
+    )*/
+    this.connectTo(mapOperator, 0)
+    mapOperator
+  }
+
 
   /**
     * Feed this instance into a [[MapOperator]] with a [[ProjectionDescriptor]].

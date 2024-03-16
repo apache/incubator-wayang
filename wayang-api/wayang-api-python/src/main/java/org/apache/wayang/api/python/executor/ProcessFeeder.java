@@ -19,7 +19,6 @@
 package org.apache.wayang.api.python.executor;
 
 import com.google.protobuf.ByteString;
-import org.apache.wayang.api.python.function.PythonUdf;
 import org.apache.wayang.core.api.exception.WayangException;
 
 import java.io.BufferedOutputStream;
@@ -34,7 +33,6 @@ import java.util.Map;
 public class ProcessFeeder<Input, Output> {
 
     private Socket socket;
-    private PythonUdf<Input, Output> udf;
     private ByteString serializedUDF;
     private Iterable<Input> input;
 
@@ -44,14 +42,12 @@ public class ProcessFeeder<Input, Output> {
 
     public ProcessFeeder(
             Socket socket,
-            PythonUdf<Input, Output> udf,
             ByteString serializedUDF,
             Iterable<Input> input){
 
         if(input == null) throw new WayangException("Nothing to process with Python API");
 
         this.socket = socket;
-        this.udf = udf;
         this.serializedUDF = serializedUDF;
         this.input = input;
 

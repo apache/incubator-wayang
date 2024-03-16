@@ -24,19 +24,16 @@ import org.apache.wayang.core.function.FunctionDescriptor;
 
 public class WrappedPythonFunction<Input, Output> implements FunctionDescriptor.SerializableFunction<Iterable<Input>, Iterable<Output>> {
 
-    private PythonUdf<Input, Output> myUDF;
     private ByteString serializedUDF;
 
-     public WrappedPythonFunction(PythonUdf<Input, Output> myUDF, ByteString serializedUDF){
-        this.myUDF = myUDF;
+    public WrappedPythonFunction(ByteString serializedUDF){
         this.serializedUDF = serializedUDF;
     }
 
     @Override
     public Iterable<Output> apply(Iterable<Input> input) {
-
-        PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(myUDF, serializedUDF, input);
-        Iterable<Output> output = manager.execute();
+        final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
+        final Iterable<Output> output = manager.execute();
         return output;
     }
 

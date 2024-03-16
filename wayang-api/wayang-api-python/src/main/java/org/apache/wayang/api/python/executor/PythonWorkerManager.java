@@ -19,21 +19,17 @@
 package org.apache.wayang.api.python.executor;
 
 import com.google.protobuf.ByteString;
-import org.apache.wayang.api.python.function.PythonUdf;
 import org.apache.wayang.core.api.exception.WayangException;
 
 public class PythonWorkerManager<Input, Output> {
 
-    private PythonUdf<Input, Output> udf;
     private ByteString serializedUDF;
     private Iterable<Input> inputIterator;
 
     public PythonWorkerManager(
-            PythonUdf<Input, Output> udf,
             ByteString serializedUDF,
             Iterable<Input> input
     ){
-        this.udf = udf;
         this.serializedUDF = serializedUDF;
         this.inputIterator = input;
     }
@@ -45,7 +41,6 @@ public class PythonWorkerManager<Input, Output> {
 
             ProcessFeeder<Input, Output> feed = new ProcessFeeder<>(
                     worker.getSocket(),
-                    this.udf,
                     this.serializedUDF,
                     this.inputIterator
             );

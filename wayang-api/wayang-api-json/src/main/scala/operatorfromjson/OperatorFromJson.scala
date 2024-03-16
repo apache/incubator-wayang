@@ -178,6 +178,10 @@ object OperatorFromJson {
   object ExecutionPlatforms {
     final val Java = "java"
     final val Spark = "spark"
-    final val All = List(Java, Spark)
+    final val Flink = "flink"
+    final val JDBC = "jdbc"
+    final val Postgres = "postgres"
+    final val SQLite3 = "sqlite3"
+    final val All = List(Java, Spark, Flink, JDBC, Postgres, SQLite3)
   }
 }
