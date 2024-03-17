@@ -15,13 +15,17 @@
 #  limitations under the License.
 #
 
-from pywy.core.platform import Platform
-from pywy.core import Plugin
+from pywy.operators.base import PywyOperator
+from pywy.operators.sink import TextFileSink, SinkOperator
+from pywy.operators.source import TextFileSource
+from pywy.operators.unary import FilterOperator, MapOperator, FlatmapOperator
 
-
-class SparkPlatform(Platform):
-
-    def __init__(self):
-        super(SparkPlatform, self).__init__("Spark")
-
-SparkPlugin = Plugin({Platform('spark')})
+__ALL__ = [
+     PywyOperator,
+     TextFileSink,
+     TextFileSource,
+     FilterOperator,
+     SinkOperator,
+     MapOperator,
+     FlatmapOperator
+]

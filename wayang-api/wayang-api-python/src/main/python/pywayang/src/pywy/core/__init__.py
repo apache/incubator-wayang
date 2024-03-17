@@ -15,13 +15,10 @@
 #  limitations under the License.
 #
 
-#from pywy.core.channel import Channel, ChannelDescriptor
 from pywy.core.core import PywyPlan, Plugin
 from pywy.core.platform import Platform
 
 __ALL__ = [
-    #Channel,
-    #ChannelDescriptor,
     PywyPlan,
     Platform,
     Plugin

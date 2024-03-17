@@ -38,7 +38,7 @@ class WayangContext:
 
     def register(self, *plugins: Plugin):
         for p in plugins:
-            self.plugins.add(p)
+            self.plugins.update(p)
         return self
 
     """
@@ -79,19 +79,18 @@ class DataQuanta(GenericTco):
     def flatmap(self: "DataQuanta[In]", f: FlatmapFunction) -> "DataQuanta[IterableOut]":
         return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
 
-    def store_textfile(self: "DataQuanta[In]", path: str, end_line: str = None):
+    def store_textfile(self: "DataQuanta[In]", path: str):
         last: List[SinkOperator] = [
             cast(
                 SinkOperator,
                 self._connect(
                     TextFileSink(
-                        path,
-                        self.operator.outputSlot[0],
-                        end_line
+                        path
                     )
                 )
             )
         ]
+        #print(PywyPlan(self.context.plugins, last))
         PywyPlan(self.context.plugins, last).execute()
 
     def _connect(self, op: PO_T, port_op: int = 0) -> PywyOperator:

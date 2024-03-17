@@ -14,14 +14,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from pywy.core.platform import Platform
-from pywy.core import Plugin
-
-
-class SparkPlatform(Platform):
-
-    def __init__(self):
-        super(SparkPlatform, self).__init__("Spark")
-
-SparkPlugin = Plugin({Platform('spark')})

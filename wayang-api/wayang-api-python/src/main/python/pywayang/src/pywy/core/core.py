@@ -16,6 +16,7 @@
 #
 
 from typing import Set, Iterable
+import json
 
 from pywy.core.platform import Platform
 from pywy.graph.graph import WayangGraph
@@ -33,11 +34,10 @@ class Plugin:
     """
 
     platforms: Set[Platform]
-    mappings: Mapping
 
     def __init__(
             self,
-            platforms: Set[Platform],
+            platforms: Set[Platform]):
         self.platforms = platforms
 
     def __str__(self):
@@ -90,8 +90,40 @@ class PywyPlan:
         self.graph = WGraphOfVec(self.sinks)
 
     def execute(self):
-        """ Execute the plan with the plugin provided at the moment of creation
+        """ Transform the plan into json objects to send it to Wayang
         """
-        plug = next(iter(self.plugins))
-        new_plan = trs.translate()
-        plug.get_executor().execute(new_plan)
+        json_data = {}
+        context = {}
+        context["origin"] = "python"
+        context["platforms"] = {}
+
+        if len(self.plugins) > 0:
+            context["platforms"] = list(map(lambda pl: next(iter(pl.platforms)).name, self.plugins))
+
+        json_data["context"] = context
+        json_data["operators"] = []
+
+        nodes = []
+        self.graph.traversal(self.graph.starting_nodes, lambda x, parent: nodes.append(x))
+        id_table = {(obj.current[0]): index + 1 for index, obj in enumerate(nodes)}
+
+        for node in nodes:
+            operator = node.current[0]
+            json_operator = {}
+            json_operator["id"] = id_table[operator]
+            json_operator["operatorName"] = operator.name
+            json_operator["cat"] = operator.cat
+            if operator.cat != "input":
+                json_operator["input"] = list(map(lambda x: id_table[x], operator.inputOperator))
+            else:
+                json_operator["input"] = []
+
+            if operator.cat != "output":
+                json_operator["output"] = list(map(lambda x: id_table[x], operator.outputOperator))
+            else:
+                json_operator["output"] = []
+            json_data["operators"].append(json_operator)
+
+        print(json_data)
+        """Now send the json_data to the running REST API process
+        """

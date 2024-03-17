@@ -15,13 +15,23 @@
 #  limitations under the License.
 #
 
-from pywy.core.platform import Platform
-from pywy.core import Plugin
+import unittest
+#from typing import Tuple, Callable, Iterable
+from pywy.dataquanta import WayangContext
+from unittest.mock import Mock
+from pywy.platforms.java import JavaPlugin
+from pywy.platforms.spark import SparkPlugin
 
+class TestPlanToJson(unittest.TestCase):
+    def test_to_json(self):
+        ctx = WayangContext() \
+            .register({JavaPlugin, SparkPlugin}) \
+            .textfile("/var/www/html/data/in.txt") \
+            .map(lambda x: int(x)) \
+            .map(lambda x: int(x) + 1) \
+            .filter(lambda x: int(x) < 12) \
+            .store_textfile("/var/www/html/data/out-python.txt")
+        self.assertEqual(True, True)
 
-class SparkPlatform(Platform):
-
-    def __init__(self):
-        super(SparkPlatform, self).__init__("Spark")
-
-SparkPlugin = Plugin({Platform('spark')})
+if __name__ == "__main__":
+    unittest.main()

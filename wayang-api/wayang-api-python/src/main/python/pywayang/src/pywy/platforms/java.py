@@ -18,10 +18,9 @@
 from pywy.core.platform import Platform
 from pywy.core import Plugin
 
-
-class SparkPlatform(Platform):
+class JavaPlatform(Platform):
 
     def __init__(self):
-        super(SparkPlatform, self).__init__("Spark")
+        super(JavaPlatform, self).__init__("Java")
 
-SparkPlugin = Plugin({Platform('spark')})
+JavaPlugin = Plugin({Platform('java')})

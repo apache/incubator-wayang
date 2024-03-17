@@ -15,13 +15,39 @@
 #  limitations under the License.
 #
 
-from pywy.core.platform import Platform
-from pywy.core import Plugin
+from pywy.operators.base import PywyOperator
 
 
-class SparkPlatform(Platform):
+class SourceUnaryOperator(PywyOperator):
 
-    def __init__(self):
-        super(SparkPlatform, self).__init__("Spark")
+    def __init__(self, name: str):
+        super(SourceUnaryOperator, self).__init__(
+            name=name,
+            cat="input",
+            input_length=0,
+            output_length=1
+        )
 
-SparkPlugin = Plugin({Platform('spark')})
+    def postfix(self) -> str:
+        return 'Source'
+
+    def __str__(self):
+        return super().__str__()
+
+    def __repr__(self):
+        return super().__repr__()
+
+
+class TextFileSource(SourceUnaryOperator):
+    path: str
+
+    def __init__(self, path: str):
+        super(TextFileSource, self).__init__('TextFile')
+        self.path = path
+
+    def __str__(self):
+        return super().__str__()
+
+    def __repr__(self):
+        return super().__repr__()
+

@@ -16,9 +16,12 @@
 #
 
 from pywy.core.platform import Platform
+from pywy.core import Plugin
 
 
 class PythonPlatform(Platform):
 
     def __init__(self):
         super(PythonPlatform, self).__init__("Python")
+
+PythonPlugin = Plugin({Platform('python')})
