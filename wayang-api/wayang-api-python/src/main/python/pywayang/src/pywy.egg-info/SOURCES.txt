@@ -29,3 +29,4 @@ src/pywy/platforms/spark.py
 src/pywy/tests/__init__.py
 src/pywy/tests/builder_test.py
 src/pywy/tests/json_test.py
+src/pywy/tests/word_count.py

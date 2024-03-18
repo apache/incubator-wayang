@@ -275,12 +275,19 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: ReduceByOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    val lambda1 = SerializableLambda.createLambda[Any, Any](operator.data.keyUdf)
-    val lambda2 = SerializableLambda2.createLambda[Any, Any, Any](operator.data.udf)
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta.reduceByKey(lambda1, lambda2)
-    else
-      dataQuanta.reduceByKey(lambda1, lambda2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    if (this.origin == "python") {
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf)
+      else
+        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    } else {
+      val lambda1 = SerializableLambda.createLambda[Any, Any](operator.data.keyUdf)
+      val lambda2 = SerializableLambda2.createLambda[Any, Any, Any](operator.data.udf)
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta.reduceByKey(lambda1, lambda2)
+      else
+        dataQuanta.reduceByKey(lambda1, lambda2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+    }
   }
 
   private def visit(operator: CountOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {

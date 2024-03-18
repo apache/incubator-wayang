@@ -19,7 +19,7 @@ from typing import Set, List, cast
 
 from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
-from pywy.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableOut, T, In, Out)
+from pywy.types import (GenericTco, Predicate, Function, BiFunction, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
 
 
@@ -78,6 +78,11 @@ class DataQuanta(GenericTco):
 
     def flatmap(self: "DataQuanta[In]", f: FlatmapFunction) -> "DataQuanta[IterableOut]":
         return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
+
+    def reduce_by_key(self: "DataQuanta[In]",
+                      f: BiFunction) -> "DataQuanta[IterableOut]":
+
+        return DataQuanta(self.context, self._connect(ReduceByKeyOperator(f)))
 
     def store_textfile(self: "DataQuanta[In]", path: str):
         last: List[SinkOperator] = [
