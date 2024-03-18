@@ -15,6 +15,8 @@
 #  limitations under the License.
 #
 
+from itertools import chain
+
 from pywy.operators.base import PywyOperator
 from pywy.types import (
                             GenericTco,
@@ -46,10 +48,15 @@ class UnaryToUnaryOperator(PywyOperator):
 class FilterOperator(UnaryToUnaryOperator):
 
     predicate: Predicate
+    json_name: str
 
     def __init__(self, predicate: Predicate):
         super().__init__("Filter")
         self.predicate = predicate
+        self.json_name = "filter"
+
+    def get_udf(self, iterator):
+        return filter(self.predicate, iterator)
 
     def __str__(self):
         return super().__str__()
@@ -61,10 +68,15 @@ class FilterOperator(UnaryToUnaryOperator):
 class MapOperator(UnaryToUnaryOperator):
 
     function: Function
+    json_name: str
 
     def __init__(self, function: Function):
         super().__init__("Map")
         self.function = function
+        self.json_name = "map"
+
+    def get_udf(self, iterator):
+        return map(self.function, iterator)
 
     def __str__(self):
         return super().__str__()
@@ -76,10 +88,15 @@ class MapOperator(UnaryToUnaryOperator):
 class FlatmapOperator(UnaryToUnaryOperator):
 
     fm_function: FlatmapFunction
+    json_name: str
 
     def __init__(self, fm_function: FlatmapFunction):
         super().__init__("Flatmap")
         self.fm_function = fm_function
+        self.json_name = "flatMap"
+
+    def get_udf(self, iterator):
+        return chain.from_iterable(map(fm_function, iterator))
 
     def __str__(self):
         return super().__str__()

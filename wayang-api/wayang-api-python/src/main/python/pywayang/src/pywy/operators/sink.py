@@ -38,10 +38,12 @@ class SinkUnaryOperator(SinkOperator):
 
 class TextFileSink(SinkUnaryOperator):
     path: str
+    json_name: str
 
     def __init__(self, path: str):
         super().__init__('TextFile')
         self.path = path
+        self.json_name = "textFileOutput"
 
     def __str__(self):
         return super().__str__()

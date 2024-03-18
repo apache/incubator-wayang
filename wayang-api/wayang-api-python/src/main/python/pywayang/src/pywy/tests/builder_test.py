@@ -26,11 +26,11 @@ class TestPlanToJson(unittest.TestCase):
     def test_to_json(self):
         ctx = WayangContext() \
             .register({JavaPlugin, SparkPlugin}) \
-            .textfile("/var/www/html/data/in.txt") \
+            .textfile("file:///var/www/html/data/in.txt") \
             .map(lambda x: int(x)) \
             .map(lambda x: int(x) + 1) \
             .filter(lambda x: int(x) < 12) \
-            .store_textfile("/var/www/html/data/out-python.txt")
+            .store_textfile("file:///var/www/html/data/out-python.txt")
         self.assertEqual(True, True)
 
 if __name__ == "__main__":

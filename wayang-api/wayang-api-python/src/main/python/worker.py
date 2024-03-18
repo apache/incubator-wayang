@@ -120,6 +120,7 @@ def process(infile, outfile):
     func = pickle.loads(decoded_udf)
     """
     iterator = UTF8Deserializer().load_stream(infile)
+    print(iterator)
     #out_iter = filter(func, iterator)
     out_iter = func(iterator)
     dump_stream(iterator=out_iter, stream=outfile)
@@ -155,11 +156,9 @@ if __name__ == '__main__':
     bfunc = cloudpickle.dumps(m1_func)
     decoded_func = base64.b64encode(bfunc)
     print(decoded_func)
-    """
     bfunc = cloudpickle.dumps(m2_func)
     decoded_func = base64.b64encode(bfunc)
     print(decoded_func)
-    """
     bfunc = cloudpickle.dumps(filter_func)
     decoded_func = base64.b64encode(bfunc)
     print(decoded_func)

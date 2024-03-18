@@ -40,10 +40,12 @@ class SourceUnaryOperator(PywyOperator):
 
 class TextFileSource(SourceUnaryOperator):
     path: str
+    json_name: str
 
     def __init__(self, path: str):
         super(TextFileSource, self).__init__('TextFile')
         self.path = path
+        self.json_name = "textFileInput"
 
     def __str__(self):
         return super().__str__()

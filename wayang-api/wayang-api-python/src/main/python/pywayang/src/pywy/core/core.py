@@ -17,6 +17,9 @@
 
 from typing import Set, Iterable
 import json
+import base64
+import cloudpickle
+import requests
 
 from pywy.core.platform import Platform
 from pywy.graph.graph import WayangGraph
@@ -111,7 +114,7 @@ class PywyPlan:
             operator = node.current[0]
             json_operator = {}
             json_operator["id"] = id_table[operator]
-            json_operator["operatorName"] = operator.name
+            json_operator["operatorName"] = operator.json_name
             json_operator["cat"] = operator.cat
             if operator.cat != "input":
                 json_operator["input"] = list(map(lambda x: id_table[x], operator.inputOperator))
@@ -122,8 +125,23 @@ class PywyPlan:
                 json_operator["output"] = list(map(lambda x: id_table[x], operator.outputOperator))
             else:
                 json_operator["output"] = []
+
+            json_operator["data"] = {}
+
+            if hasattr(operator, "get_udf"):
+                json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.get_udf)).decode('utf-8')
+
+            if hasattr(operator, "path"):
+                json_operator["data"]["filename"] =  operator.path
+
             json_data["operators"].append(json_operator)
 
-        print(json_data)
+        url = 'http://localhost:8080/wayang-api-json/submit-plan/json'
+        headers = {'Content-type': 'application/json'}
+        json_body = json.dumps(json_data)
+        print(json_body)
+
         """Now send the json_data to the running REST API process
         """
+        response = requests.post(url, headers=headers, json=json_data)
+        print(response)
