@@ -80,9 +80,10 @@ class DataQuanta(GenericTco):
         return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
 
     def reduce_by_key(self: "DataQuanta[In]",
+                      key_f: Function,
                       f: BiFunction) -> "DataQuanta[IterableOut]":
 
-        return DataQuanta(self.context, self._connect(ReduceByKeyOperator(f)))
+        return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f)))
 
     def store_textfile(self: "DataQuanta[In]", path: str):
         last: List[SinkOperator] = [

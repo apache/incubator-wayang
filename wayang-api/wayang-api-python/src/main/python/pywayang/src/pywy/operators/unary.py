@@ -108,11 +108,13 @@ class FlatmapOperator(UnaryToUnaryOperator):
         return super().__repr__()
 
 class ReduceByKeyOperator(UnaryToUnaryOperator):
+    key_function: Function
     reduce_function: BiFunction
     json_name: str
 
-    def __init__(self, reduce_function: BiFunction):
+    def __init__(self, key_function: Function, reduce_function: BiFunction):
         super().__init__("ReduceByKey")
+        self.key_function = key_function
         self.reduce_function = reduce_function
         self.json_name = "reduceBy"
 
@@ -122,14 +124,13 @@ class ReduceByKeyOperator(UnaryToUnaryOperator):
 
         tuples = [(str(item[0]), str(item[1])) for item in list_of_tuples]
         print(list(tuples))
-        grouped_data = groupby(sorted(tuples, key=lambda x: x[0]), key=lambda x: x[0])
+        grouped_data = groupby(sorted(tuples, key=self.key_function), key=self.key_function)
 
         # Create a defaultdict to store the sums
         sums = {}
 
         for key, group in grouped_data:
             sums[key] = (key, 1)
-            print(sums[key])
             for item in group:
                 sums[key] = self.reduce_function(sums[key], item)
 
