@@ -35,13 +35,17 @@ import java.util.List;
 
 public class SparkDecisionTreeClassificationOperatorTest extends SparkOperatorTestBase {
 
-    public static List<Tuple2<double[], Integer>> trainingData = Arrays.asList(
-            new Tuple2<>(new double[]{1, 1}, 0),
-            new Tuple2<>(new double[]{2, 2}, 0),
-            new Tuple2<>(new double[]{-1, -1}, 1),
-            new Tuple2<>(new double[]{-2, -2}, 1),
-            new Tuple2<>(new double[]{1, -1}, 2),
-            new Tuple2<>(new double[]{-2, 2}, 2)
+    public static List<double[]> trainingX = Arrays.asList(
+            new double[]{1, 1},
+            new double[]{2, 2},
+            new double[]{-1, -1},
+            new double[]{-2, -2},
+            new double[]{1, -1},
+            new double[]{-2, 2}
+    );
+
+    public static List<Integer> trainingY = Arrays.asList(
+            0, 0, 1, 1, 2, 2
     );
 
     public static List<double[]> inferenceData = Arrays.asList(
@@ -52,13 +56,14 @@ public class SparkDecisionTreeClassificationOperatorTest extends SparkOperatorTe
 
     public DecisionTreeClassificationModel getModel() {
         // Prepare test data.
-        RddChannel.Instance input = this.createRddChannelInstance(trainingData);
+        RddChannel.Instance x = this.createRddChannelInstance(trainingX);
+        RddChannel.Instance y = this.createRddChannelInstance(trainingY);
         CollectionChannel.Instance output = this.createCollectionChannelInstance();
 
         SparkDecisionTreeClassificationOperator decisionTreeClassificationOperator = new SparkDecisionTreeClassificationOperator();
 
         // Set up the ChannelInstances.
-        ChannelInstance[] inputs = new ChannelInstance[]{input};
+        ChannelInstance[] inputs = new ChannelInstance[]{x, y};
         ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.

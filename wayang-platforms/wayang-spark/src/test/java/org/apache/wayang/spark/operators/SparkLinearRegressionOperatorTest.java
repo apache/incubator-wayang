@@ -36,10 +36,14 @@ import java.util.List;
 public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
 
     // y = x1 + x2 + 1
-    public static List<Tuple2<double[], Double>> trainingData = Arrays.asList(
-            new Tuple2<>(new double[]{1, 1}, 3D),
-            new Tuple2<>(new double[]{1, -1}, 1D),
-            new Tuple2<>(new double[]{3, 2}, 6D)
+    public static List<double[]> trainingX = Arrays.asList(
+            new double[]{1, 1},
+            new double[]{1, -1},
+            new double[]{3, 2}
+    );
+
+    public static List<Double> trainingY = Arrays.asList(
+            3D, 1D, 6D
     );
 
     public static List<double[]> inferenceData = Arrays.asList(
@@ -49,13 +53,14 @@ public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
 
     public LinearRegressionModel getModel() {
         // Prepare test data.
-        RddChannel.Instance input = this.createRddChannelInstance(trainingData);
+        RddChannel.Instance x = this.createRddChannelInstance(trainingX);
+        RddChannel.Instance y = this.createRddChannelInstance(trainingY);
         CollectionChannel.Instance output = this.createCollectionChannelInstance();
 
         SparkLinearRegressionOperator linearRegressionOperator = new SparkLinearRegressionOperator(true);
 
         // Set up the ChannelInstances.
-        ChannelInstance[] inputs = new ChannelInstance[]{input};
+        ChannelInstance[] inputs = new ChannelInstance[]{x, y};
         ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.

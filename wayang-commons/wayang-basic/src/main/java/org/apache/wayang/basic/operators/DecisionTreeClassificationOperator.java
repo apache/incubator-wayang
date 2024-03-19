@@ -18,15 +18,15 @@
 
 package org.apache.wayang.basic.operators;
 
-import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.DecisionTreeClassificationModel;
-import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
 
-public class DecisionTreeClassificationOperator extends UnaryToUnaryOperator<Tuple2<double[], Integer>, DecisionTreeClassificationModel> {
+public class DecisionTreeClassificationOperator extends BinaryToUnaryOperator<double[], Integer, DecisionTreeClassificationModel> {
 
     public DecisionTreeClassificationOperator() {
-        super(DataSetType.createDefaultUnchecked(Tuple2.class),
+        super(DataSetType.createDefaultUnchecked(double[].class),
+                DataSetType.createDefaultUnchecked(Integer.class),
                 DataSetType.createDefaultUnchecked(DecisionTreeClassificationModel.class),
                 false);
     }
