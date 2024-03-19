@@ -29,6 +29,7 @@ import org.apache.wayang.core.util.TypeConverter;
 
 import java.util.Optional;
 
+@Deprecated
 public class ModelTransformOperator<X, Y> extends BinaryToUnaryOperator<Model<X, Y>, X, Tuple2<X, Y>> {
 
     public static ModelTransformOperator<double[], Integer> kMeans() {
@@ -46,7 +47,6 @@ public class ModelTransformOperator<X, Y> extends BinaryToUnaryOperator<Model<X,
     }
 
     public ModelTransformOperator(DataSetType<X> inType, DataSetType<Tuple2<X, Y>> outType) {
-        // TODO createDefaultUnchecked or createDefault?
         super(DataSetType.createDefaultUnchecked(Model.class), inType, outType, false);
     }
 

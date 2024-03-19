@@ -154,5 +154,13 @@ public class SparkLinearRegressionOperator extends LinearRegressionOperator impl
             return transform.toJavaRDD()
                     .map(row -> new Tuple2<>(row.<Vector>getAs(Attr.FEATURES).toArray(), row.<Double>getAs(Attr.PREDICTION)));
         }
+
+        @Override
+        public JavaRDD<Double> predict(JavaRDD<double[]> input) {
+            final Dataset<Row> df = data2Row(input);
+            final Dataset<Row> transform = model.transform(df);
+            return transform.toJavaRDD()
+                    .map(row -> row.<Double>getAs(Attr.PREDICTION));
+        }
     }
 }

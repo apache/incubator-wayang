@@ -19,8 +19,7 @@
 package org.apache.wayang.spark.operators.ml;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.operators.ModelTransformOperator;
+import org.apache.wayang.basic.operators.PredictOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -39,14 +38,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@Deprecated
-public class SparkModelTransformOperator<X, Y> extends ModelTransformOperator<X, Y> implements SparkExecutionOperator {
+public class SparkPredictOperator<X, Y> extends PredictOperator<X, Y> implements SparkExecutionOperator {
 
-    public SparkModelTransformOperator(DataSetType<X> inType, DataSetType<Tuple2<X, Y>> outType) {
+    public SparkPredictOperator(DataSetType<X> inType, DataSetType<Y> outType) {
         super(inType, outType);
     }
 
-    public SparkModelTransformOperator(ModelTransformOperator<X, Y> that) {
+    public SparkPredictOperator(PredictOperator<X, Y> that) {
         super(that);
     }
 
@@ -78,7 +76,7 @@ public class SparkModelTransformOperator<X, Y> extends ModelTransformOperator<X,
 
         final SparkMLModel<X, Y> model = inputModel.<SparkMLModel<X, Y>>provideCollection().iterator().next();
         final JavaRDD<X> inputRdd = inputData.provideRdd();
-        final JavaRDD<Tuple2<X, Y>> outputRdd = model.transform(inputRdd);
+        final JavaRDD<Y> outputRdd = model.predict(inputRdd);
 
         this.name(outputRdd);
         output.accept(outputRdd, sparkExecutor);

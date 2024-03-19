@@ -70,7 +70,6 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        // TODO cached or uncached?
         return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
     }
 
@@ -132,6 +131,14 @@ public class SparkKMeansOperator extends KMeansOperator implements SparkExecutio
             final Dataset<Row> transform = model.transform(df);
             return transform.toJavaRDD()
                     .map(row -> new Tuple2<>(row.<Vector>getAs(Attr.FEATURES).toArray(), row.<Integer>getAs(Attr.PREDICTION)));
+        }
+
+        @Override
+        public JavaRDD<Integer> predict(JavaRDD<double[]> input) {
+            final Dataset<Row> df = data2Row(input);
+            final Dataset<Row> transform = model.transform(df);
+            return transform.toJavaRDD()
+                    .map(row -> row.<Integer>getAs(Attr.PREDICTION));
         }
     }
 }

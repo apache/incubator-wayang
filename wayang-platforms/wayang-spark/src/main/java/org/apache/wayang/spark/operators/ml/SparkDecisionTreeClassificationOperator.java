@@ -145,6 +145,14 @@ public class SparkDecisionTreeClassificationOperator extends DecisionTreeClassif
         }
 
         @Override
+        public JavaRDD<Integer> predict(JavaRDD<double[]> input) {
+            final Dataset<Row> df = data2Row(input);
+            final Dataset<Row> transform = model.transform(df);
+            return transform.toJavaRDD()
+                    .map(row -> row.<Double>getAs(Attr.PREDICTION).intValue());
+        }
+
+        @Override
         public int getDepth() {
             return model.depth();
         }

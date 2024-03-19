@@ -18,14 +18,13 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.LinearRegressionModel;
-import org.apache.wayang.basic.operators.ModelTransformOperator;
+import org.apache.wayang.basic.operators.PredictOperators;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.operators.ml.SparkLinearRegressionOperator;
-import org.apache.wayang.spark.operators.ml.SparkModelTransformOperator;
+import org.apache.wayang.spark.operators.ml.SparkPredictOperator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -84,19 +83,19 @@ public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
         RddChannel.Instance input2 = this.createRddChannelInstance(inferenceData);
         RddChannel.Instance output = this.createRddChannelInstance();
 
-        SparkModelTransformOperator<double[], Double> transformOperator = new SparkModelTransformOperator<>(ModelTransformOperator.linearRegression());
+        SparkPredictOperator<double[], Double> predictOperator = new SparkPredictOperator<>(PredictOperators.linearRegression());
 
         // Set up the ChannelInstances.
         ChannelInstance[] inputs = new ChannelInstance[]{input1, input2};
         ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        this.evaluate(transformOperator, inputs, outputs);
+        this.evaluate(predictOperator, inputs, outputs);
 
         // Verify the outcome.
-        final List<Tuple2<double[], Double>> results = output.<Tuple2<double[], Double>>provideRdd().collect();
+        final List<Double> results = output.<Double>provideRdd().collect();
         Assert.assertEquals(2, results.size());
-        Assert.assertEquals(4, results.get(0).field1, 1e-6);
-        Assert.assertEquals(0, results.get(1).field1, 1e-6);
+        Assert.assertEquals(4, results.get(0), 1e-6);
+        Assert.assertEquals(0, results.get(1), 1e-6);
     }
 }
