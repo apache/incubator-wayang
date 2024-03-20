@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "cat": "input",
+    "input": [],
+    "output": [2],
+    "operatorName": "textFileInput",
+    "data": {
+      "filename": "file:///home/mike/json-api-examples/in1.txt"
+    }
+  },
+  {
+    "id": 2,
+    "cat": "unary",
+    "input": [1],
+    "output": [3],
+    "operatorName": "map",
+    "data": {
+      "udf": "(s: String) => s.toInt"
+    }
+  },
+  {
+    "cat": "composed",
+    "operatorName": "composed",
+    "operators": [
+      {
+        "id": 3,
+        "cat": "unary",
+        "input": [2],
+        "output": [4],
+        "operatorName": "map",
+        "data": {
+          "udf": "(x: Int) => x + 1"
+        }
+      },
+      {
+        "id": 4,
+        "cat": "unary",
+        "input": [3],
+        "output": [5],
+        "operatorName": "map",
+        "data": {
+          "udf": "(x: Int) => x + 2"
+        }
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "cat": "unary",
+    "input": [4],
+    "output": [6],
+    "operatorName": "filter",
+    "data": {
+      "udf": "(x: Int) => x >= 5"
+    }
+  },
+  {
+    "id": 6,
+    "cat": "output",
+    "input": [5],
+    "output": [],
+    "operatorName": "textFileOutput",
+    "data": {
+      "filename": "file:///home/mike/json-api-examples/out1.txt"
+    }
+  }
+]
