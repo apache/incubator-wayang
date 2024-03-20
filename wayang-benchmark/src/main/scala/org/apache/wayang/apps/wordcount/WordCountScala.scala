@@ -30,7 +30,7 @@ import org.apache.wayang.core.util.fs.FileSystems
 /**
   * This is app counts words in a file.
   *
-  * @see [[Main]]
+  * @see [[WordCountWithJavaNativeAPI]]
   */
 class WordCountScala(plugin: Plugin*) {
 

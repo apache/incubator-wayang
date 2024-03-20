@@ -28,12 +28,11 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
-import org.apache.wayang.spark.platform.SparkPlatform;
 
 /**
  * Main class for the TPC-H app based on Apache Wayang (incubating).
  */
-public class Main {
+public class TPCHQ1WithJavaNative {
 
     /**
      * Creates TPC-H Query 1, which is as follows:
@@ -174,6 +173,6 @@ public class Main {
             }
         }
 
-        wayangContext.execute(wayangPlan, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
+        wayangContext.execute(wayangPlan, ReflectionUtils.getDeclaringJar(TPCHQ1WithJavaNative.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
     }
 }

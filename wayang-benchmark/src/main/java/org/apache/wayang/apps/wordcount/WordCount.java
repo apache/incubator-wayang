@@ -1,4 +1,4 @@
-package test;
+package org.apache.wayang.apps.wordcount;
 
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Tuple2;
@@ -7,17 +7,23 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
 
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.Collection;
 
 public class WordCount {
 
     public static void main(String[] args){
 
+        if (args.length == 0) {
+            System.err.print("Usage: <input file URL>");
+            System.exit(1);
+        }
+
         /* Get a plan builder */
         WayangContext wayangContext = new WayangContext(new Configuration())
-//                .withPlugin(Java.basicPlugin())
+                .withPlugin(Java.basicPlugin())
                 .withPlugin(Spark.basicPlugin());
+
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
                 .withJobName("WordCount")
                 .withUdfJarOf(WordCount.class);
@@ -25,7 +31,7 @@ public class WordCount {
         /* Start building the Apache WayangPlan */
         Collection<Tuple2<String, Integer>> wordcounts = planBuilder
                 /* Read the text file */
-                .readTextFile("file:/Users/zoi/Work/wayang-test/src/main/resources/input/test.txt").withName("Load file")
+                .readTextFile(args[0]).withName("Load file")
 
                 /* Split each line by non-word characters */
                 .flatMap(line -> Arrays.asList(line.split("\\W+")))

@@ -32,7 +32,6 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
-import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -44,7 +43,7 @@ import java.util.List;
 /**
  * Example Apache Wayang (incubating) App that does a word count -- the Hello World of Map/Reduce-like systems.
  */
-public class Main {
+public class WordCountWithJavaNativeAPI {
 
     /**
      * Creates the {@link WayangPlan} for the word count app.
@@ -140,7 +139,7 @@ public class Main {
                 }
             }
 
-            wayangContext.execute(wayangPlan, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
+            wayangContext.execute(wayangPlan, ReflectionUtils.getDeclaringJar(WordCountWithJavaNativeAPI.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
 
             collector.sort((t1, t2) -> Integer.compare(t2.field1, t1.field1));
             System.out.printf("Found %d words:\n", collector.size());
