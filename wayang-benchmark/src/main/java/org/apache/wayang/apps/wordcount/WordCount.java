@@ -22,6 +22,7 @@ import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.flink.Flink;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
 
@@ -39,8 +40,9 @@ public class WordCount {
 
         /* Get a plan builder */
         WayangContext wayangContext = new WayangContext(new Configuration())
-                .withPlugin(Java.basicPlugin())
-                .withPlugin(Spark.basicPlugin());
+//                .withPlugin(Java.basicPlugin())
+//                .withPlugin(Spark.basicPlugin());
+                .withPlugin(Flink.basicPlugin());
 
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
                 .withJobName("WordCount")
@@ -53,7 +55,7 @@ public class WordCount {
 
                 /* Split each line by non-word characters */
                 .flatMap(line -> Arrays.asList(line.split("\\W+")))
-                .withSelectivity(1, 100, 0.9)
+//                .withSelectivity(1, 100, 0.9)
                 .withName("Split words")
 
                 /* Filter empty tokens */

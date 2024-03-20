@@ -29,6 +29,7 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.flink.Flink;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
@@ -131,6 +132,9 @@ public class WordCountWithJavaNativeAPI {
                         break;
                     case "spark":
                         wayangContext.register(Spark.basicPlugin());
+                        break;
+                    case "flink":
+                        wayangContext.register(Flink.basicPlugin());
                         break;
                     default:
                         System.err.format("Unknown platform: \"%s\"\n", platform);
