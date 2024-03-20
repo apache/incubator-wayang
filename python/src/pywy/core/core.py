@@ -16,19 +16,17 @@
 #
 
 from typing import Set, Iterable
+import json
+import base64
+import cloudpickle
+import requests
+import subprocess
+import time
 
-from pywy.core.executor import Executor
 from pywy.core.platform import Platform
-from pywy.core.mapping import Mapping
 from pywy.graph.graph import WayangGraph
 from pywy.graph.types import WGraphOfVec, NodeOperator, NodeVec
 from pywy.operators import SinkOperator
-
-
-class TranslateContext:
-    """TranslateContext contextual variables a parameters for the translation
-    """
-    pass
 
 
 class Plugin:
@@ -41,26 +39,14 @@ class Plugin:
     """
 
     platforms: Set[Platform]
-    mappings: Mapping
-    translate_context: TranslateContext
 
     def __init__(
             self,
-            platforms: Set[Platform],
-            mappings: Mapping = Mapping(),
-            translate_context: TranslateContext = None):
+            platforms: Set[Platform]):
         self.platforms = platforms
-        self.mappings = mappings
-        self.translate_context = translate_context
-
-    def get_mappings(self) -> Mapping:
-        return self.mappings
-
-    def get_executor(self) -> Executor:
-        pass
 
     def __str__(self):
-        return "Platforms: {}, Mappings: {}".format(str(self.platforms), str(self.mappings))
+        return "Platforms: {}".format(str(self.platforms))
 
     def __repr__(self):
         return self.__str__()
@@ -109,66 +95,55 @@ class PywyPlan:
         self.graph = WGraphOfVec(self.sinks)
 
     def execute(self):
-        """ Execute the plan with the plugin provided at the moment of creation
+        """ Transform the plan into json objects to send it to Wayang
         """
-        plug = next(iter(self.plugins))
-        trs: Translator = Translator(plug, self)
-        new_plan = trs.translate()
-        plug.get_executor().execute(new_plan)
+        json_data = {}
+        context = {}
+        context["origin"] = "python"
+        context["platforms"] = {}
 
+        if len(self.plugins) > 0:
+            context["platforms"] = list(map(lambda pl: next(iter(pl.platforms)).name, self.plugins))
 
-class Translator:
-    """Translator use the :py:class:`pywy.core.Mapping` to convert the :py:class:`pywy.operators.base.PywyOperator`
+        json_data["context"] = context
+        json_data["operators"] = []
 
-    Translator take a plan a produce the executable version of the plan using as tool
-    the :py:class:`pywy.core.Mapping` of the :py:class:`pywy.core.core.Plugin` and convert
-    the :py:class:`pywy.operators.base.PywyOperator` into an executable version inside
-    the :py:class:`pywy.core.Platform`
+        nodes = []
+        self.graph.traversal(self.graph.starting_nodes, lambda x, parent: nodes.append(x))
+        id_table = {(obj.current[0]): index + 1 for index, obj in enumerate(nodes)}
 
-    Attributes
-    ----------
-    plugin : :py:class:`pywy.core.core.Plugin`
-        plugin use in the translation
-    plan : :py:class:`pywy.core.core.PywyPlan`
-        Plan to be translated by the translator
-    translate_context: :py:class:`pywy.core.core.TranslateContext`
-        context used by the translates at runtime in some case is not needed
-    """
+        for node in nodes:
+            operator = node.current[0]
+            json_operator = {}
+            json_operator["id"] = id_table[operator]
+            json_operator["operatorName"] = operator.json_name
+            json_operator["cat"] = operator.cat
+            if operator.cat != "input":
+                json_operator["input"] = list(map(lambda x: id_table[x], operator.inputOperator))
+            else:
+                json_operator["input"] = []
 
-    plugin: Plugin
-    plan: PywyPlan
-    translate_context: TranslateContext
+            if operator.cat != "output":
+                json_operator["output"] = list(map(lambda x: id_table[x], operator.outputOperator))
+            else:
+                json_operator["output"] = []
 
-    def __init__(self, plugin: Plugin, plan: PywyPlan):
-        self.plugin = plugin
-        self.plan = plan
-        self.translate_context = plugin.translate_context
+            json_operator["data"] = {}
 
-    def translate(self):
-        mappings: Mapping = self.plugin.get_mappings()
-        graph = WGraphOfVec(self.plan.sinks)
+            if hasattr(operator, "get_udf"):
+                json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.get_udf)).decode('utf-8')
 
-        translate = self.translate_context
+            if hasattr(operator, "path"):
+                json_operator["data"]["filename"] =  operator.path
 
-        def translate2plugin(current_op: NodeVec, next_op: NodeVec):
-            if current_op is None:
-                return
+            json_data["operators"].append(json_operator)
 
-            if current_op.current[1] is None:
-                current_op.current[1] = mappings.get_instanceof(current_op.current[0], **{'translate_context': translate})
+        url = 'http://localhost:8080/wayang-api-json/submit-plan/json'
+        headers = {'Content-type': 'application/json'}
+        json_body = json.dumps(json_data)
+        print(json_body)
 
-            if next_op is None:
-                return
-            if next_op.current[1] is None:
-                next_op.current[1] = mappings.get_instanceof(next_op.current[0], **{'translate_context': translate})
-
-            # TODO not necesary it it 0
-            current_op.current[1].connect(0, next_op.current[1], 0)
-
-        graph.traversal(graph.starting_nodes, translate2plugin)
-
-        node = []
-        for elem in graph.starting_nodes:
-            node.append(elem.current[1])
-
-        return PywyPlan({self.plugin}, node)
+        """Now send the json_data to the running REST API process
+        """
+        response = requests.post(url, headers=headers, json=json_data)
+        print(response)

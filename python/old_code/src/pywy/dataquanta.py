@@ -19,7 +19,7 @@ from typing import Set, List, cast
 
 from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
-from pywy.types import (GenericTco, Predicate, Function, BiFunction, FlatmapFunction, IterableOut, T, In, Out)
+from pywy.types import (GenericTco, Predicate, Function, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
 
 
@@ -38,7 +38,7 @@ class WayangContext:
 
     def register(self, *plugins: Plugin):
         for p in plugins:
-            self.plugins.update(p)
+            self.plugins.add(p)
         return self
 
     """
@@ -79,24 +79,19 @@ class DataQuanta(GenericTco):
     def flatmap(self: "DataQuanta[In]", f: FlatmapFunction) -> "DataQuanta[IterableOut]":
         return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
 
-    def reduce_by_key(self: "DataQuanta[In]",
-                      key_f: Function,
-                      f: BiFunction) -> "DataQuanta[IterableOut]":
-
-        return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f)))
-
-    def store_textfile(self: "DataQuanta[In]", path: str):
+    def store_textfile(self: "DataQuanta[In]", path: str, end_line: str = None):
         last: List[SinkOperator] = [
             cast(
                 SinkOperator,
                 self._connect(
                     TextFileSink(
-                        path
+                        path,
+                        self.operator.outputSlot[0],
+                        end_line
                     )
                 )
             )
         ]
-        #print(PywyPlan(self.context.plugins, last))
         PywyPlan(self.context.plugins, last).execute()
 
     def _connect(self, op: PO_T, port_op: int = 0) -> PywyOperator:

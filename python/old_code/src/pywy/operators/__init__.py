@@ -16,40 +16,16 @@
 #
 
 from pywy.operators.base import PywyOperator
+from pywy.operators.sink import TextFileSink, SinkOperator
+from pywy.operators.source import TextFileSource
+from pywy.operators.unary import FilterOperator, MapOperator, FlatmapOperator
 
-
-class SourceUnaryOperator(PywyOperator):
-
-    def __init__(self, name: str):
-        super(SourceUnaryOperator, self).__init__(
-            name=name,
-            cat="input",
-            input_length=0,
-            output_length=1
-        )
-
-    def postfix(self) -> str:
-        return 'Source'
-
-    def __str__(self):
-        return super().__str__()
-
-    def __repr__(self):
-        return super().__repr__()
-
-
-class TextFileSource(SourceUnaryOperator):
-    path: str
-    json_name: str
-
-    def __init__(self, path: str):
-        super(TextFileSource, self).__init__('TextFile')
-        self.path = path
-        self.json_name = "textFileInput"
-
-    def __str__(self):
-        return super().__str__()
-
-    def __repr__(self):
-        return super().__repr__()
-
+__ALL__ = [
+     PywyOperator,
+     TextFileSink,
+     TextFileSource,
+     FilterOperator,
+     SinkOperator,
+     MapOperator,
+     FlatmapOperator
+]

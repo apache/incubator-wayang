@@ -15,21 +15,22 @@
 #  limitations under the License.
 #
 
+from typing import Any
+
+from pywy.types import GenericTco
 from pywy.operators.base import PywyOperator
 
 
-class SourceUnaryOperator(PywyOperator):
-
-    def __init__(self, name: str):
-        super(SourceUnaryOperator, self).__init__(
-            name=name,
-            cat="input",
-            input_length=0,
-            output_length=1
-        )
+class SinkOperator(PywyOperator):
 
     def postfix(self) -> str:
-        return 'Source'
+        return 'Sink'
+
+
+class SinkUnaryOperator(SinkOperator):
+
+    def __init__(self, name: str, input_type: GenericTco = Any):
+        super().__init__(name, input_type, None, 1, 0)
 
     def __str__(self):
         return super().__str__()
@@ -38,18 +39,20 @@ class SourceUnaryOperator(PywyOperator):
         return super().__repr__()
 
 
-class TextFileSource(SourceUnaryOperator):
+class TextFileSink(SinkUnaryOperator):
     path: str
-    json_name: str
+    end_line: str
 
-    def __init__(self, path: str):
-        super(TextFileSource, self).__init__('TextFile')
+    def __init__(self, path: str, input_type: GenericTco, end_line: str = None):
+        super().__init__('TextFile', input_type)
         self.path = path
-        self.json_name = "textFileInput"
+        if input_type != str and end_line is None:
+            self.end_line = '\n'
+        else:
+            self.end_line = end_line
 
     def __str__(self):
         return super().__str__()
 
     def __repr__(self):
         return super().__repr__()
-

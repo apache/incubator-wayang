@@ -72,19 +72,13 @@ public class ProcessFeeder<Input, Output> {
     }
 
     public void writeUDF(ByteString serializedUDF, DataOutputStream dataOut){
-
-        //write(serializedUDF.toByteArray(), dataOut);
         writeBytes(serializedUDF.toByteArray(), dataOut);
-        System.out.println("UDF written");
-
     }
 
     public void writeIteratorToStream(Iterator<Input> iter, DataOutputStream dataOut){
 
-        System.out.println("iterator being send");
         for (Iterator<Input> it = iter; it.hasNext(); ) {
             Input elem = it.next();
-            System.out.println(elem.toString());
             write(elem, dataOut);
         }
     }
@@ -100,20 +94,17 @@ public class ProcessFeeder<Input, Output> {
              * Byte Array cases
              */
             else if (obj instanceof Byte[] || obj instanceof byte[]) {
-                System.out.println("Writing Bytes");
                 writeBytes(obj, dataOut);
             }
             /**
              * String case
              * */
             else if (obj instanceof String) {
-                System.out.println("Writing String");
                 writeUTF((String) obj, dataOut);
             }
 
-            // This is as cursed as it gets
+            // TODO: Properly type this in the future
             else if (obj instanceof Object) {
-                System.out.println("Writing String");
                 writeUTF(String.valueOf(obj), dataOut);
             }
 
@@ -121,13 +112,10 @@ public class ProcessFeeder<Input, Output> {
              * Key, Value case
              * */
             else if (obj instanceof Map.Entry) {
-                System.out.println("Writing Key Value");
                 writeKeyValue((Map.Entry) obj, dataOut);
             }
 
             else{
-                System.out.println("Unexpected element");
-                System.out.println(obj);
                 throw new WayangException("Unexpected element type " + obj.getClass());
             }
 

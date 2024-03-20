@@ -41,6 +41,7 @@ BiFunction = Callable[[In, In2], Out]
 
 FlatmapFunction = Callable[[T], IterableOut]
 
+
 def get_type_predicate(call: Predicate) -> type:
     sig = signature(call)
     if len(sig.parameters) != 1:

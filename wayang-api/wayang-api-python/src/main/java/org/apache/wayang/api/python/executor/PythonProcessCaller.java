@@ -110,7 +110,6 @@ public class PythonProcessCaller {
             this.process.destroy();
             this.socket.close();
             this.serverSocket.close();
-            System.out.println("Everything closed");
         } catch (IOException e) {
             e.printStackTrace();
         }
