@@ -20,7 +20,6 @@ package org.apache.wayang.core.api;
 
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
-import org.apache.commons.lang.StringUtils;
 import org.apache.wayang.core.monitor.Monitor;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
@@ -140,36 +139,17 @@ public class WayangContext {
         Job job = this.createJob(null, null, wayangPlan, udfJars);
         ExecutionPlan executionPlan = job.buildInitialExecutionPlan();
 
-        ExplainUtils.parsePlan(wayangPlan, (op, level) -> {
-            if (op instanceof OperatorAlternative) {
-                OperatorAlternative alts = (OperatorAlternative) op;
-                System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + alts.getAlternatives());
-            } else {
-                System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + op);
-            }
-        });
+        ExplainUtils.parsePlan(wayangPlan, false);
         System.out.println();
-        ExplainUtils.parsePlan(executionPlan, (task, level) -> {
-            System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + task.getOperator());
-        });
+        ExplainUtils.parsePlan(executionPlan, false);
     }
 
     public void explain(WayangPlan wayangPlan, boolean toJson, String... udfJars) {
         Job job = this.createJob(null, null, wayangPlan, udfJars);
         ExecutionPlan executionPlan = job.buildInitialExecutionPlan();
 
-        ExplainUtils.parsePlan(wayangPlan, (op, level) -> {
-            if (op instanceof OperatorAlternative) {
-                OperatorAlternative alts = (OperatorAlternative) op;
-                System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + alts.getAlternatives());
-            } else {
-                System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + op);
-            }
-        });
-
-        ExplainUtils.parsePlan(executionPlan, (task, level) -> {
-            System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + task.getOperator());
-        });
+        ExplainUtils.parsePlan(wayangPlan, true);
+        ExplainUtils.parsePlan(executionPlan, true);
     }
 
 
