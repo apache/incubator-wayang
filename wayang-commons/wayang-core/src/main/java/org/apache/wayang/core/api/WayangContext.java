@@ -20,6 +20,7 @@ package org.apache.wayang.core.api;
 
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
+import org.apache.commons.lang.StringUtils;
 import org.apache.wayang.core.monitor.Monitor;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
@@ -28,6 +29,7 @@ import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.core.profiling.CardinalityRepository;
 import org.apache.wayang.core.util.ExplainUtils;
 import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -138,8 +140,36 @@ public class WayangContext {
         Job job = this.createJob(null, null, wayangPlan, udfJars);
         ExecutionPlan executionPlan = job.buildInitialExecutionPlan();
 
-        ExplainUtils.parsePlan(wayangPlan);
-        ExplainUtils.parsePlan(executionPlan);
+        ExplainUtils.parsePlan(wayangPlan, (op, level) -> {
+            if (op instanceof OperatorAlternative) {
+                OperatorAlternative alts = (OperatorAlternative) op;
+                System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + alts.getAlternatives());
+            } else {
+                System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + op);
+            }
+        });
+        System.out.println();
+        ExplainUtils.parsePlan(executionPlan, (task, level) -> {
+            System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + task.getOperator());
+        });
+    }
+
+    public void explain(WayangPlan wayangPlan, boolean toJson, String... udfJars) {
+        Job job = this.createJob(null, null, wayangPlan, udfJars);
+        ExecutionPlan executionPlan = job.buildInitialExecutionPlan();
+
+        ExplainUtils.parsePlan(wayangPlan, (op, level) -> {
+            if (op instanceof OperatorAlternative) {
+                OperatorAlternative alts = (OperatorAlternative) op;
+                System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + alts.getAlternatives());
+            } else {
+                System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + op);
+            }
+        });
+
+        ExplainUtils.parsePlan(executionPlan, (task, level) -> {
+            System.out.println(StringUtils.repeat(ExplainUtils.INDENT, level) + "-+ " + task.getOperator());
+        });
     }
 
 
