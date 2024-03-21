@@ -56,7 +56,6 @@ public class ExplainUtils {
         Collection<ExecutionTask> sources = tasks.stream()
             .filter(task -> task.getOperator().isSource())
             .collect(Collectors.toList());
-        System.out.println(sources);
 
         for (ExecutionTask source : sources) {
             traverse(source, tree, 0);
@@ -64,15 +63,15 @@ public class ExplainUtils {
     }
 
     private static void traverse(Operator current, HashMap<Operator, Collection<Operator>> visited, int level) {
-        if (visited.containsKey(current)) {
-            return;
-        }
-
         if (current instanceof OperatorAlternative) {
             OperatorAlternative alts = (OperatorAlternative) current;
             System.out.println(StringUtils.repeat(INDENT, level) + "-+ " + alts.getAlternatives());
         } else {
             System.out.println(StringUtils.repeat(INDENT, level) + "-+ " + current);
+        }
+
+        if (visited.containsKey(current)) {
+            return;
         }
 
         Collection<Operator> outputs = Stream.of(current.getAllOutputs())
@@ -90,6 +89,8 @@ public class ExplainUtils {
     }
 
     private static void traverse(ExecutionTask current, HashMap<Operator, Collection<ExecutionTask>> visited, int level) {
+        System.out.println(StringUtils.repeat(INDENT, level) + "-+ " + current.getOperator());
+
         if (visited.containsKey(current)) {
             return;
         }
@@ -97,8 +98,6 @@ public class ExplainUtils {
         Collection<ExecutionTask> consumers = Stream.of(current.getOutputChannels())
             .flatMap(output -> output.getConsumers().stream())
             .collect(Collectors.toList());
-
-        System.out.println(StringUtils.repeat(INDENT, level) + "-+ " + current.getOperator());
 
         for (ExecutionTask consumer : consumers) {
             traverse(consumer, visited, level + 1);
