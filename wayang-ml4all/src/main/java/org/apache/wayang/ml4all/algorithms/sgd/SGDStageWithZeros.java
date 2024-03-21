@@ -19,7 +19,7 @@
 package org.apache.wayang.ml4all.algorithms.sgd;
 
 import org.apache.wayang.ml4all.abstraction.api.LocalStage;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 
 public class SGDStageWithZeros extends LocalStage {
 
@@ -30,9 +30,9 @@ public class SGDStageWithZeros extends LocalStage {
     }
 
     @Override
-    public void staging (ML4allGlobalVars context) {
+    public void staging (ML4allModel model) {
         double[] weights = new double[dimension];
-        context.put("weights", weights);
-        context.put("iter", 1);
+        model.put("weights", weights);
+        model.put("iter", 1);
     }
 }

@@ -20,7 +20,7 @@ package org.apache.wayang.ml4all.algorithms.kmeans;
 
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.ml4all.abstraction.api.Loop;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 
 import java.util.ArrayList;
 
@@ -37,8 +37,8 @@ public class KMeansConvergeOrMaxIterationsLoop extends Loop<Double, ArrayList<Tu
     }
 
     @Override
-    public Double prepareConvergenceDataset(ArrayList<Tuple2<Integer, double[]>> newCenters, ML4allGlobalVars context) {
-        double[][] centers = (double[][]) context.getByKey("centers");
+    public Double prepareConvergenceDataset(ArrayList<Tuple2<Integer, double[]>> newCenters, ML4allModel model) {
+        double[][] centers = (double[][]) model.getByKey("centers");
         double delta = 0.0;
         int dimension = centers[0].length;
         for (int i = 0; i < newCenters.size(); i++) {

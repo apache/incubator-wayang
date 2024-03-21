@@ -19,7 +19,7 @@
 package org.apache.wayang.ml4all.algorithms.sgd;
 
 import org.apache.wayang.ml4all.abstraction.api.Loop;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 
 public class SGDLoop extends Loop<Double, double[]> {
 
@@ -33,8 +33,8 @@ public class SGDLoop extends Loop<Double, double[]> {
     }
 
     @Override
-    public Double prepareConvergenceDataset(double[] input, ML4allGlobalVars context) {
-        double[] weights = (double[]) context.getByKey("weights");
+    public Double prepareConvergenceDataset(double[] input, ML4allModel model) {
+        double[] weights = (double[]) model.getByKey("weights");
         double delta = 0.0;
         for (int j = 0; j < weights.length; j++) {
             delta += Math.abs(weights[j] - input[j]);
