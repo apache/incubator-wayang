@@ -28,7 +28,6 @@ import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.core.profiling.CardinalityRepository;
 import org.apache.wayang.core.util.ExplainUtils;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -148,8 +147,14 @@ public class WayangContext {
         Job job = this.createJob(null, null, wayangPlan, udfJars);
         ExecutionPlan executionPlan = job.buildInitialExecutionPlan();
 
-        ExplainUtils.parsePlan(wayangPlan, true);
-        ExplainUtils.parsePlan(executionPlan, true);
+        ExplainUtils.write(
+            ExplainUtils.parsePlan(wayangPlan, true),
+            this.configuration.getStringProperty("wayang.core.explain.logical.file")
+        );
+        ExplainUtils.write(
+            ExplainUtils.parsePlan(executionPlan, true),
+            this.configuration.getStringProperty("wayang.core.explain.execution.file")
+        );
     }
 
 
