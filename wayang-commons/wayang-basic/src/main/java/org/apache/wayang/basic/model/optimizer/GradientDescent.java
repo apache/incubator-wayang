@@ -16,18 +16,15 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.model;
+package org.apache.wayang.basic.model.optimizer;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.model.Model;
+public class GradientDescent extends Optimizer {
 
-public interface SparkMLModel<X, Y> extends Model {
-
-    @Deprecated
-    default JavaRDD<Tuple2<X, Y>> transform(JavaRDD<X> input) {
-        throw new UnsupportedOperationException("This method has been deprecated. Please use predict instead.");
+    public GradientDescent(float learningRate) {
+        super(learningRate);
     }
 
-    JavaRDD<Y> predict(JavaRDD<X> input);
+    public GradientDescent(float learningRate, String name) {
+        super(learningRate, name);
+    }
 }

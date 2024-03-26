@@ -16,18 +16,31 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.model;
+package org.apache.wayang.basic.model.optimizer;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.model.Model;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public interface SparkMLModel<X, Y> extends Model {
+public abstract class Optimizer {
+    protected final AtomicInteger CNT = new AtomicInteger(0);
+    protected final float learningRate;
 
-    @Deprecated
-    default JavaRDD<Tuple2<X, Y>> transform(JavaRDD<X> input) {
-        throw new UnsupportedOperationException("This method has been deprecated. Please use predict instead.");
+    protected final String name;
+
+    protected Optimizer(float learningRate, String name) {
+        this.learningRate = learningRate;
+        this.name = name;
     }
 
-    JavaRDD<Y> predict(JavaRDD<X> input);
+    protected Optimizer(float learningRate) {
+        this.learningRate = learningRate;
+        this.name = this.getClass().getSimpleName() + CNT.getAndIncrement();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public float getLearningRate() {
+        return learningRate;
+    }
 }

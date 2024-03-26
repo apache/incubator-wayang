@@ -16,18 +16,20 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.model;
+package org.apache.wayang.basic.model.op;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.model.Model;
+public class Eq extends Op {
 
-public interface SparkMLModel<X, Y> extends Model {
-
-    @Deprecated
-    default JavaRDD<Tuple2<X, Y>> transform(JavaRDD<X> input) {
-        throw new UnsupportedOperationException("This method has been deprecated. Please use predict instead.");
+    public Eq() {
+        super(DType.BOOL);
     }
 
-    JavaRDD<Y> predict(JavaRDD<X> input);
+    public Eq(String name) {
+        super(name, DType.BOOL);
+    }
+
+    @Override
+    public int inputsRequired() {
+        return 2;
+    }
 }

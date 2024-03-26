@@ -16,18 +16,21 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.model;
+package org.apache.wayang.tensorflow.mapping;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.model.Model;
+import org.apache.wayang.core.mapping.Mapping;
 
-public interface SparkMLModel<X, Y> extends Model {
+import java.util.Arrays;
+import java.util.Collection;
 
-    @Deprecated
-    default JavaRDD<Tuple2<X, Y>> transform(JavaRDD<X> input) {
-        throw new UnsupportedOperationException("This method has been deprecated. Please use predict instead.");
-    }
+/**
+ * Register for {@link Mapping}s for this platform.
+ */
+public class Mappings {
 
-    JavaRDD<Y> predict(JavaRDD<X> input);
+    public static Collection<Mapping> MAPPINGS = Arrays.asList(
+            new CollectionSourceMapping(),
+            new DLTrainingOperatorMapping(),
+            new PredictMapping()
+    );
 }

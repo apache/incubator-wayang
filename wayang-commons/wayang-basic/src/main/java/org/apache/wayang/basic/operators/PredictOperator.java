@@ -24,7 +24,7 @@ import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.TypeConverter;
 
-public class PredictOperator<X, Y> extends BinaryToUnaryOperator<Model<X, Y>, X, Y> {
+public class PredictOperator<X, Y> extends BinaryToUnaryOperator<Model, X, Y> {
 
     public PredictOperator(DataSetType<X> inType, DataSetType<Y> outType) {
         super(DataSetType.createDefaultUnchecked(Model.class), inType, outType, false);

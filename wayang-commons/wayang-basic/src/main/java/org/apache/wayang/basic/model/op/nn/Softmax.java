@@ -16,18 +16,30 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.spark.model;
+package org.apache.wayang.basic.model.op.nn;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.model.Model;
+import org.apache.wayang.basic.model.op.Op;
 
-public interface SparkMLModel<X, Y> extends Model {
+public class Softmax extends Op {
 
-    @Deprecated
-    default JavaRDD<Tuple2<X, Y>> transform(JavaRDD<X> input) {
-        throw new UnsupportedOperationException("This method has been deprecated. Please use predict instead.");
+    public Softmax() {
+        super(DType.FLOAT32);
     }
 
-    JavaRDD<Y> predict(JavaRDD<X> input);
+    public Softmax(String name) {
+        super(name, DType.FLOAT32);
+    }
+
+    @Override
+    public DType getDType() {
+        if (!fromList.isEmpty() && fromList.get(0).getDType() == DType.FLOAT64) {
+            return DType.FLOAT64;
+        }
+        return DType.FLOAT32;
+    }
+
+    @Override
+    public int inputsRequired() {
+        return 1;
+    }
 }
