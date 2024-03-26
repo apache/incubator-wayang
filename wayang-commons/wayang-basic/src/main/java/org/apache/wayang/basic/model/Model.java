@@ -23,6 +23,6 @@ import java.io.Serializable;
 /**
  * A Type that represents a ML model
  */
-public interface Model<X, Y> extends Serializable {
+public interface Model extends Serializable {
 
 }

@@ -463,11 +463,11 @@ public class SparkIntegrationIT {
 
         KMeansOperator kMeansOperator = new KMeansOperator(2);
 
-        ModelTransformOperator<double[], Integer> transformOperator = ModelTransformOperator.kMeans();
+        PredictOperator<double[], Integer> transformOperator = PredictOperators.kMeans();
 
         // Write results to a sink.
-        List<Tuple2> results = new ArrayList<>();
-        LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
+        List<Integer> results = new ArrayList<>();
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Integer.class));
 
         // Build Wayang plan by connecting operators
         collectionSource.connectTo(0, kMeansOperator, 0);
@@ -486,8 +486,8 @@ public class SparkIntegrationIT {
         // Verify the outcome.
         Assert.assertEquals(3, results.size());
         Assert.assertEquals(
-                ((Tuple2<double[], Integer>) results.get(0)).field1,
-                ((Tuple2<double[], Integer>) results.get(2)).field1
+                results.get(0),
+                results.get(2)
         );
     }
 

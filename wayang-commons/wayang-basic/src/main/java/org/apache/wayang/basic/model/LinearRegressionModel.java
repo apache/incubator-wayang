@@ -18,7 +18,7 @@
 
 package org.apache.wayang.basic.model;
 
-public interface LinearRegressionModel extends Model<double[], Double> {
+public interface LinearRegressionModel extends Model {
 
     public double[] getCoefficients();
 

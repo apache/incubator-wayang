@@ -18,14 +18,13 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.DecisionTreeClassificationModel;
-import org.apache.wayang.basic.operators.ModelTransformOperator;
+import org.apache.wayang.basic.operators.PredictOperators;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.operators.ml.SparkDecisionTreeClassificationOperator;
-import org.apache.wayang.spark.operators.ml.SparkModelTransformOperator;
+import org.apache.wayang.spark.operators.ml.SparkPredictOperator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,13 +34,17 @@ import java.util.List;
 
 public class SparkDecisionTreeClassificationOperatorTest extends SparkOperatorTestBase {
 
-    public static List<Tuple2<double[], Integer>> trainingData = Arrays.asList(
-            new Tuple2<>(new double[]{1, 1}, 0),
-            new Tuple2<>(new double[]{2, 2}, 0),
-            new Tuple2<>(new double[]{-1, -1}, 1),
-            new Tuple2<>(new double[]{-2, -2}, 1),
-            new Tuple2<>(new double[]{1, -1}, 2),
-            new Tuple2<>(new double[]{-2, 2}, 2)
+    public static List<double[]> trainingX = Arrays.asList(
+            new double[]{1, 1},
+            new double[]{2, 2},
+            new double[]{-1, -1},
+            new double[]{-2, -2},
+            new double[]{1, -1},
+            new double[]{-2, 2}
+    );
+
+    public static List<Integer> trainingY = Arrays.asList(
+            0, 0, 1, 1, 2, 2
     );
 
     public static List<double[]> inferenceData = Arrays.asList(
@@ -52,13 +55,14 @@ public class SparkDecisionTreeClassificationOperatorTest extends SparkOperatorTe
 
     public DecisionTreeClassificationModel getModel() {
         // Prepare test data.
-        RddChannel.Instance input = this.createRddChannelInstance(trainingData);
+        RddChannel.Instance x = this.createRddChannelInstance(trainingX);
+        RddChannel.Instance y = this.createRddChannelInstance(trainingY);
         CollectionChannel.Instance output = this.createCollectionChannelInstance();
 
         SparkDecisionTreeClassificationOperator decisionTreeClassificationOperator = new SparkDecisionTreeClassificationOperator();
 
         // Set up the ChannelInstances.
-        ChannelInstance[] inputs = new ChannelInstance[]{input};
+        ChannelInstance[] inputs = new ChannelInstance[]{x, y};
         ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
@@ -81,20 +85,20 @@ public class SparkDecisionTreeClassificationOperatorTest extends SparkOperatorTe
         RddChannel.Instance input2 = this.createRddChannelInstance(inferenceData);
         RddChannel.Instance output = this.createRddChannelInstance();
 
-        SparkModelTransformOperator<double[], Integer> transformOperator = new SparkModelTransformOperator<>(ModelTransformOperator.decisionTreeClassification());
+        SparkPredictOperator<double[], Integer> predictOperator = new SparkPredictOperator<>(PredictOperators.decisionTreeClassification());
 
         // Set up the ChannelInstances.
         ChannelInstance[] inputs = new ChannelInstance[]{input1, input2};
         ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        this.evaluate(transformOperator, inputs, outputs);
+        this.evaluate(predictOperator, inputs, outputs);
 
         // Verify the outcome.
-        final List<Tuple2<double[], Integer>> results = output.<Tuple2<double[], Integer>>provideRdd().collect();
+        final List<Integer> results = output.<Integer>provideRdd().collect();
         Assert.assertEquals(3, results.size());
-        Assert.assertEquals(0, results.get(0).field1.intValue());
-        Assert.assertEquals(1, results.get(1).field1.intValue());
-        Assert.assertEquals(2, results.get(2).field1.intValue());
+        Assert.assertEquals(0, results.get(0).intValue());
+        Assert.assertEquals(1, results.get(1).intValue());
+        Assert.assertEquals(2, results.get(2).intValue());
     }
 }
