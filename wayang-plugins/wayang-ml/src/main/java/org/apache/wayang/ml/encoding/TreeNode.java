@@ -31,7 +31,7 @@ public class TreeNode {
     public TreeNode left;
     public TreeNode right;
     public boolean isRoot;
-    private static Pattern pattern = Pattern.compile("\\((?<value>\\d+(?:,\\s*\\d+)*)\\),(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))", Pattern.CASE_INSENSITIVE);
+    private static Pattern pattern = Pattern.compile("\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))", Pattern.CASE_INSENSITIVE);
 
     @Override
     public String toString() {
@@ -63,4 +63,19 @@ public class TreeNode {
 
         return result;
     }
+
+    public TreeNode withIdsFrom(TreeNode node) {
+        this.encoded[0] = node.encoded[0];
+
+        if (this.left != null && node.left != null) {
+            this.left = left.withIdsFrom(node.left);
+        }
+
+        if (this.right != null && node.right != null) {
+            this.right = right.withIdsFrom(node.right);
+        }
+
+        return this;
+    }
+
 }

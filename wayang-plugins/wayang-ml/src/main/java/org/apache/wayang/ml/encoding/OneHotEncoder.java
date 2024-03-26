@@ -1,5 +1,6 @@
 package org.apache.wayang.ml.encoding;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
@@ -333,6 +334,7 @@ public class OneHotEncoder implements Encoder {
     /*
      * Format:
      * ---- BEGIN OPERATOR ITERATION ----
+     * 0 - operator hashCode as long
      * 1 - sum of UDF complexities
      * 2 - sum of input cardinalities
      * 3 - sum of output cardinalities
@@ -360,9 +362,10 @@ public class OneHotEncoder implements Encoder {
 
         HashMap<String, Integer> operatorMappings = OneHotMappings.getInstance().getOperatorMapping();
 
-        long[] result = new long[operatorMappings.size() + 3];
+        long[] result = new long[operatorMappings.size() + 4];
         int operatorsCount = operatorMappings.size();
 
+        result[0] = (long) new HashCodeBuilder(17, 37).append(operator.toString()).toHashCode();
         result[operatorsCount] = Udf.getComplexity(operator).ordinal();
         result[operatorsCount + 1] = inputCardinality;
         result[operatorsCount + 2] = outputCardinality;

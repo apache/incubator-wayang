@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,9 +82,6 @@ public class TreeEncoder implements Encoder {
             return null;
         }
 
-        //System.out.println("WayangPlan");
-        //System.out.println(result.get(0));
-
         return result.get(0);
     }
 
@@ -115,6 +113,9 @@ public class TreeEncoder implements Encoder {
         if (visited.containsKey(current)) {
             return null;
         }
+
+        // Add for later reconstruction in TreeDecoder
+        OneHotMappings.addOriginalOperator(current);
 
         Collection<Operator> inputs = Stream.of(current.getAllInputs())
                 .filter(input -> input.getOccupant() != null)
@@ -159,7 +160,7 @@ public class TreeEncoder implements Encoder {
                 .map(Channel::getProducer).collect(Collectors.toList());
 
         TreeNode currentNode = new TreeNode();
-        currentNode.encoded = OneHotEncoder.encodeOperator(current.getOperator());
+        currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current.getOperator());
 
         for (ExecutionTask producer : producers) {
             TreeNode next = traverse(producer, visited);
