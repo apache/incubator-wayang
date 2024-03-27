@@ -769,7 +769,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     sink.setName("explain()")
     this.connectTo(sink, 0)
 
-    // Do the execution.
+    // Do the explanation.
     this.planBuilder.sinks += sink
     this.planBuilder.buildAndExplain()
   }
