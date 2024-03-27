@@ -762,6 +762,19 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     collector
   }
 
+  def explain(): Unit = {
+    // Set up the sink.
+    val collector = new java.util.LinkedList[Out]()
+    val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
+    sink.setName("explain()")
+    this.connectTo(sink, 0)
+
+    // Do the execution.
+    this.planBuilder.sinks += sink
+    this.planBuilder.buildAndExplain()
+  }
+
+
   /**
     * Write the data quanta in this instance to a text file. Triggers execution.
     *
