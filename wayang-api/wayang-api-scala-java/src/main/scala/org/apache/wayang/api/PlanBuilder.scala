@@ -107,6 +107,14 @@ class PlanBuilder(wayangContext: WayangContext, private var jobName: String = nu
   }
 
   /**
+    * Build the [[org.apache.wayang.core.api.Job]] and explain it.
+    */
+  def buildAndExplain(): Unit = {
+    val plan: WayangPlan = new WayangPlan(this.sinks.toArray: _*)
+    this.wayangContext.explain(plan, this.udfJars.toArray: _*)
+  }
+
+  /**
     * Read a text file and provide it as a dataset of [[String]]s, one per line.
     *
     * @param url the URL of the text file
