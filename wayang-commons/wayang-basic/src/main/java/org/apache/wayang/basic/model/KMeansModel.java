@@ -18,7 +18,7 @@
 
 package org.apache.wayang.basic.model;
 
-public interface KMeansModel extends Model<double[], Integer> {
+public interface KMeansModel extends Model {
 
     public int getK();
 

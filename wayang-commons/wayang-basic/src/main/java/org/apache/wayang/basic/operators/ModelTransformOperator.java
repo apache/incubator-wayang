@@ -29,7 +29,8 @@ import org.apache.wayang.core.util.TypeConverter;
 
 import java.util.Optional;
 
-public class ModelTransformOperator<X, Y> extends BinaryToUnaryOperator<Model<X, Y>, X, Tuple2<X, Y>> {
+@Deprecated
+public class ModelTransformOperator<X, Y> extends BinaryToUnaryOperator<Model, X, Tuple2<X, Y>> {
 
     public static ModelTransformOperator<double[], Integer> kMeans() {
         // The type of TypeReference cannot be omitted, to avoid the following error.
@@ -46,7 +47,6 @@ public class ModelTransformOperator<X, Y> extends BinaryToUnaryOperator<Model<X,
     }
 
     public ModelTransformOperator(DataSetType<X> inType, DataSetType<Tuple2<X, Y>> outType) {
-        // TODO createDefaultUnchecked or createDefault?
         super(DataSetType.createDefaultUnchecked(Model.class), inType, outType, false);
     }
 
