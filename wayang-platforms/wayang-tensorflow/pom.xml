@@ -28,7 +28,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>wayang-tensorflow</artifactId>
-    <version>${wayang.version}</version>
+    <version>0.7.1</version>
 
     <name>Wayang Platform Tensorflow</name>
     <description>
