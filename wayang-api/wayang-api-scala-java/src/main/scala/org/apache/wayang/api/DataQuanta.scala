@@ -38,6 +38,7 @@ import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
+import org.apache.wayang.basic.util.Udf;
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -867,6 +868,11 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def withUdfJars(paths: String*) = {
     this.planBuilder withUdfJars (paths: _*)
+    this
+  }
+
+  def withUdfComplexity(complexity: UDFComplexity) = {
+    Udf.setComplexity(this.operator, complexity)
     this
   }
 

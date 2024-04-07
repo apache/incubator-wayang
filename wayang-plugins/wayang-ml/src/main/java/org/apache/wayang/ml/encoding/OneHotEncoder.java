@@ -20,7 +20,7 @@ import org.apache.wayang.ml.encoding.OneHotVector;
 import org.apache.wayang.ml.util.CardinalitySampler;
 import org.apache.wayang.ml.util.Platforms;
 import org.apache.wayang.ml.util.SampledCardinality;
-import org.apache.wayang.ml.util.Udf;
+import org.apache.wayang.basic.util.Udf;
 
 import java.util.Vector;
 import java.util.Collection;
