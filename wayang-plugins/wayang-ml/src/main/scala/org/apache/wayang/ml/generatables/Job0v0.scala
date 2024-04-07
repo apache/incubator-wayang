@@ -29,6 +29,7 @@
  import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
  import org.apache.wayang.apps.tpch.CsvUtils
  import org.apache.wayang.ml.training.GeneratableJob
+ import org.apache.wayang.core.function.UDFComplexity
 
  class Job0v0 extends GeneratableJob {
 
@@ -54,16 +55,18 @@ def buildPlan(args: Array[String]): DataQuanta[_] = {
  .withName("Parse LineItem to tuple")
     
 
-val map1 = source0.map(x=>x)
+val map1 = source0.map(x=>x).withUdfComplexity(UDFComplexity.LINEAR)
                 
 
 val map2 = map1.map(x=> {var count = 0; for (v <- x.productIterator) count+=1; x})
+                  .withUdfComplexity(UDFComplexity.QUADRATIC)
                 
 
 val map3 = map2.map(x=> {var count = 0; for (v1 <- x.productIterator; v2 <- x.productIterator) count+=1; x})
+                  .withUdfComplexity(UDFComplexity.SUPERQUADRATIC)
        
 
-val map4 = map3.map(x=>x)
+val map4 = map3.map(x=>x).withUdfComplexity(UDFComplexity.LINEAR)
                 
 
  val source9 = planBuilder
@@ -75,12 +78,14 @@ val map4 = map3.map(x=>x)
     
 
 val map8 = source9.map(x=> {var count = 0; for (v <- x.productIterator) count+=1; x})
+                  .withUdfComplexity(UDFComplexity.QUADRATIC)
                 
 
 val group7 = map8.reduceByKey(_._1, (t1,t2) => t1)
           
 
 val map6 = group7.map(x=> {var count = 0; for (v1 <- x.productIterator; v2 <- x.productIterator) count+=1; x})
+                  .withUdfComplexity(UDFComplexity.SUPERQUADRATIC)
        
 
 val join5 = map4.keyBy[Long](_._3).join(map6.keyBy[Long](_._2)).map(x => x.field1)

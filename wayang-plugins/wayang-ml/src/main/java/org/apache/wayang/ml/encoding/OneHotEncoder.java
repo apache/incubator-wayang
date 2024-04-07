@@ -366,9 +366,9 @@ public class OneHotEncoder implements Encoder {
         int operatorsCount = operatorMappings.size();
 
         result[0] = (long) new HashCodeBuilder(17, 37).append(operator.toString()).toHashCode();
-        result[operatorsCount] = Udf.getComplexity(operator).ordinal();
-        result[operatorsCount + 1] = inputCardinality;
-        result[operatorsCount + 2] = outputCardinality;
+        result[operatorsCount + 1] = Udf.getComplexity(operator).ordinal();
+        result[operatorsCount + 2] = inputCardinality;
+        result[operatorsCount + 3] = outputCardinality;
 
         Integer operatorPosition = operatorMappings.get(operator.getClass().getName());
         result[operatorPosition] = 1;
