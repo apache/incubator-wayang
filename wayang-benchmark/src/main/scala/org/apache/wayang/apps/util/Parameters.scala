@@ -23,6 +23,7 @@ import org.apache.wayang.basic.WayangBasics
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.plugin.{DynamicPlugin, Plugin}
 import org.apache.wayang.flink.Flink
+import org.apache.wayang.giraph.Giraph
 import org.apache.wayang.java.Java
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.spark.Spark
@@ -61,6 +62,7 @@ object Parameters {
   def loadPlugin(id: String): Plugin = id match {
     case "basic-graph" => WayangBasics.graphPlugin
     case "flink" => Flink.basicPlugin
+    case "giraph" => Giraph.plugin
     case "java" => Java.basicPlugin
     case "java-graph" => Java.graphPlugin
     case "java-conversions" => Java.channelConversionPlugin
