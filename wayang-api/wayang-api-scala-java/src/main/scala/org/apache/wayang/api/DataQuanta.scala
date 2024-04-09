@@ -215,6 +215,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @param sampleSize   absolute size of the sample
     * @param datasetSize  optional size of the dataset to be sampled
+    * @param seed         the seed for the random sample
     * @param sampleMethod the [[SampleOperator.Methods]] to use for sampling
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */

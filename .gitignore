@@ -21,3 +21,6 @@ pom.xml.*
 # VSCode
 .vscode
 .vscode/*
+
+# Scala Plugin for VSCode
+.metals

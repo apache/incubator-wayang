@@ -34,7 +34,7 @@ import org.apache.wayang.core.profiling.InstrumentationStrategy;
 import org.apache.wayang.core.util.AbstractReferenceCountable;
 import org.apache.wayang.core.util.Formats;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
