@@ -763,6 +763,22 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     collector
   }
 
+  def collectNoExecute(): DataQuanta[Out] = {
+    // Set up the sink.
+    val collector = new java.util.LinkedList[Out]()
+    val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
+    sink.setName("collect()")
+    this.connectTo(sink, 0)
+
+    // Do the execution.
+    this.planBuilder.sinks += sink
+    this
+  }
+
+  def getPlanBuilder(): PlanBuilder = {
+    this.planBuilder
+  }
+
   /**
     * Write the data quanta in this instance to a text file. Triggers execution.
     *

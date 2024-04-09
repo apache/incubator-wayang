@@ -20,7 +20,7 @@ package org.apache.wayang.ml.training;
 
 import org.apache.wayang.api.DataQuanta;
 
-public interface GeneratableJob {
+public abstract class GeneratableJob {
 
-    public DataQuanta<?> buildPlan(String[] args);
+    public abstract DataQuanta<?> buildPlan(String[] args);
 }

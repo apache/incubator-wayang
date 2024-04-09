@@ -29,6 +29,7 @@ import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.util.ReflectionUtils
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -104,6 +105,15 @@ class PlanBuilder(wayangContext: WayangContext, private var jobName: String = nu
     val plan: WayangPlan = new WayangPlan(this.sinks.toArray: _*)
     if (this.experiment == null) this.wayangContext.execute(jobName, plan, this.udfJars.toArray: _*)
     else this.wayangContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
+  }
+
+  def build(): WayangPlan = {
+    new WayangPlan(this.sinks.toArray: _*)
+  }
+
+
+  def getWayangContext(): WayangContext = {
+    this.wayangContext
   }
 
   /**

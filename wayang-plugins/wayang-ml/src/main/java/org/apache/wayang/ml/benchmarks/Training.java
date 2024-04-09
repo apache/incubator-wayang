@@ -1,3 +1,6 @@
+package org.apache.wayang.ml.benchmarks;
+
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -15,40 +18,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.apache.wayang.apps.tpch.data
-
-/**
-  * Represents elements from the TPC-H `NATION` table.
-  */
-case class Nation(nationKey: Long,
-                    name: String,
-                    regionKey: Long,
-                    comment: String)
-
-object Nation {
-
-  val fields = IndexedSeq("n_nationkey", "n_name", "n_regionkey","n_comment")
-
-  /**
-    * Parse a CSV row into a [[Nation]] instance.
-    *
-    * @param csv the [[String]] to parse
-    * @return the [[Nation]]
-    */
-  def parseCsv(csv: String): Nation = {
-    val fields = csv.split("\\|")
-
-    Nation(
-      fields(0).toLong,
-      fields(1),
-      fields(2).toLong,
-      fields(3)
-    )
-  }
-
-  def toTuple(n: Nation): (Long, String, Long, String) = {
-    (n.nationKey, n.name, n.regionKey, n.comment)
-  }
-
-}

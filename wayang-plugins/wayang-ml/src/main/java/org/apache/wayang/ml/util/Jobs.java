@@ -16,39 +16,17 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.apps.tpch.data
+package org.apache.wayang.ml.util;
 
-/**
-  * Represents elements from the TPC-H `NATION` table.
-  */
-case class Nation(nationKey: Long,
-                    name: String,
-                    regionKey: Long,
-                    comment: String)
+import org.apache.wayang.ml.training.GeneratableJob;
+import org.reflections.*;
 
-object Nation {
+import java.util.Set;
 
-  val fields = IndexedSeq("n_nationkey", "n_name", "n_regionkey","n_comment")
-
-  /**
-    * Parse a CSV row into a [[Nation]] instance.
-    *
-    * @param csv the [[String]] to parse
-    * @return the [[Nation]]
-    */
-  def parseCsv(csv: String): Nation = {
-    val fields = csv.split("\\|")
-
-    Nation(
-      fields(0).toLong,
-      fields(1),
-      fields(2).toLong,
-      fields(3)
-    )
-  }
-
-  def toTuple(n: Nation): (Long, String, Long, String) = {
-    (n.nationKey, n.name, n.regionKey, n.comment)
-  }
-
+public class Jobs {
+    public static Set<Class<? extends GeneratableJob>> getJobs() {
+        Reflections reflections = new Reflections("org.apache.wayang.ml.generatables");
+        return reflections.getSubTypesOf(GeneratableJob.class);
+    }
 }
+

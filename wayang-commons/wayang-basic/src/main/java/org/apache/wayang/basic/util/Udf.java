@@ -26,8 +26,7 @@ public class Udf {
 
     public static UDFComplexity getComplexity(Operator operator) {
         if (operator instanceof ReduceByOperator) {
-            return ((ReduceByOperator) operator).getReduceDescriptor().getUDFComplexity();
-        }
+            return ((ReduceByOperator) operator).getReduceDescriptor().getUDFComplexity(); }
 
         if (operator instanceof ReduceOperator) {
             return ((ReduceOperator) operator).getReduceDescriptor().getUDFComplexity();
