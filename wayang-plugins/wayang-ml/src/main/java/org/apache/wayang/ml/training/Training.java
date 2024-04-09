@@ -39,8 +39,9 @@ public class Training {
     /*
      * args format:
      * 1: platforms, comma sep. (string)
-     * 2: encode to file path (string)
-     * 3: overwrite cardinalities (boolean)
+     * 2: tpch file path
+     * 3: encode to file path (string)
+     * 4: overwrite cardinalities (boolean)
      **/
     public static void main(String[] args) {
         Set<Class<? extends GeneratableJob>> jobs = Jobs.getJobs();
@@ -49,15 +50,15 @@ public class Training {
             try {
                 Constructor<?> cnstr = job.getDeclaredConstructors()[0];
                 GeneratableJob createdJob = (GeneratableJob) cnstr.newInstance();
-                String[] jobArgs = {args[0]};
-                FileWriter fw = new FileWriter(args[1], false);
+                String[] jobArgs = {args[0], args[1]};
+                FileWriter fw = new FileWriter(args[2], false);
                 BufferedWriter writer = new BufferedWriter(fw);
 
 
                 boolean overwriteCardinalities = true;
 
                 if (args.length == 3) {
-                    overwriteCardinalities = Boolean.valueOf(args[2]);
+                    overwriteCardinalities = Boolean.valueOf(args[3]);
                 }
                 /*
                  * TODO:
