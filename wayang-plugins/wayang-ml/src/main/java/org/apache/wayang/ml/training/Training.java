@@ -39,6 +39,8 @@ import java.lang.reflect.Constructor;
 import java.util.Set;
 import java.time.Instant;
 import java.time.Duration;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 public class Training {
 
@@ -47,10 +49,18 @@ public class Training {
      * 1: platforms, comma sep. (string)
      * 2: tpch file path
      * 3: encode to file path (string)
-     * 4: overwrite cardinalities (boolean)
+     * 4: iteration index for picking jobs
+     * 5: iteration limit for picking jobs
+     * 6: overwrite cardinalities (boolean)
      **/
     public static void main(String[] args) {
         Set<Class<? extends GeneratableJob>> jobs = Jobs.getJobs();
+        jobs = jobs.stream()
+            .sorted(Comparator.comparing(c -> c.getName()))
+            .skip(Integer.parseInt(args[3]) * 1000)
+            .limit(Integer.parseInt(args[4]))
+            .collect(Collectors.toSet());
+
         for (Class<? extends GeneratableJob> job : jobs) {
             System.out.println(job);
             try {
@@ -60,11 +70,10 @@ public class Training {
                 FileWriter fw = new FileWriter(args[2], true);
                 BufferedWriter writer = new BufferedWriter(fw);
 
-
                 boolean overwriteCardinalities = true;
 
-                if (args.length == 4) {
-                    overwriteCardinalities = Boolean.valueOf(args[3]);
+                if (args.length == 6) {
+                    overwriteCardinalities = Boolean.valueOf(args[5]);
                 }
                 /*
                  * TODO:
