@@ -38,16 +38,17 @@ import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
+import org.apache.wayang.core.api.exception.WayangException;
 
 public class TreeEncoder implements Encoder {
     public static TreeNode encode(PlanImplementation plan) {
         List<TreeNode> result = new ArrayList<TreeNode>();
 
+        OneHotMappings.setOptimizationContext(plan.getOptimizationContext());
+
         HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
         Collection<Operator> sinks = plan.getOperators().stream()
                 .filter(Operator::isSink).collect(Collectors.toList());
-
-
 
         for (Operator sink : sinks) {
             TreeNode sinkNode = traverse(sink, tree);
@@ -114,8 +115,30 @@ public class TreeEncoder implements Encoder {
             return null;
         }
 
+        TreeNode currentNode = new TreeNode();
+
+        if (current.isAlternative()) {
+            Operator original = ((OperatorAlternative) current)
+                .getAlternatives()
+                .get(0)
+                .getContainedOperators()
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new WayangException("Operator could not be retrieved from Alternatives"));
+            OneHotMappings.addOriginalOperator(original);
+
+            currentNode.encoded = OneHotEncoder.encodeOperator(original);
+        } else {
+            OneHotMappings.addOriginalOperator(current);
+
+            if (current.isExecutionOperator()) {
+                currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current);
+            } else {
+                currentNode.encoded = OneHotEncoder.encodeOperator(current);
+            }
+        }
+
         // Add for later reconstruction in TreeDecoder
-        OneHotMappings.addOriginalOperator(current);
 
         Collection<Operator> inputs = Stream.of(current.getAllInputs())
                 .filter(input -> input.getOccupant() != null)
@@ -130,13 +153,6 @@ public class TreeEncoder implements Encoder {
                     .map(input -> input.getOwner());
             })
             .collect(Collectors.toList());*/
-
-        TreeNode currentNode = new TreeNode();
-        if (current.isExecutionOperator()) {
-            currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current);
-        } else {
-            currentNode.encoded = OneHotEncoder.encodeOperator(current);
-        }
 
         for (Operator input : inputs) {
             TreeNode next = traverse(input, visited);

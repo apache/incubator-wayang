@@ -29,7 +29,13 @@ import java.util.Comparator;
 public class Operators {
     public static Set<Class<? extends OperatorBase>> getOperators() {
         Reflections reflections = new Reflections("org.apache.wayang.basic.operators");
-        return reflections.getSubTypesOf(OperatorBase.class);
+        Set<Class<? extends OperatorBase>> basics = reflections.getSubTypesOf(OperatorBase.class);
+
+        Reflections coreReflections = new Reflections("org.apache.wayang.core.plan.wayangplan");
+        Set<Class<? extends OperatorBase>> core = reflections.getSubTypesOf(OperatorBase.class);
+
+        basics.addAll(core);
+        return basics;
     }
 
     public static Set<Class<? extends OperatorBase>> getPlatformOperators(String namespace) {

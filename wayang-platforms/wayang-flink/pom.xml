@@ -36,7 +36,7 @@
 
     <properties>
         <java-module-name>org.apache.wayang.platform.flink</java-module-name>
-        <flink.version>1.10.0</flink.version>
+        <flink.version>1.17.2</flink.version>
     </properties>
 
     <dependencies>
@@ -63,6 +63,11 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-core</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
         <!-- depencies of flink -->
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -85,7 +90,7 @@
         </dependency>
         <dependency>
           <groupId>org.apache.flink</groupId>
-          <artifactId>flink-clients_2.12</artifactId>
+          <artifactId>flink-clients</artifactId>
           <version>${flink.version}</version>
           <exclusions>
             <exclusion>

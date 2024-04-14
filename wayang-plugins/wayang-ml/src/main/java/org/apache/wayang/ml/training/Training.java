@@ -18,14 +18,18 @@
 
 package org.apache.wayang.ml.training;
 
+import org.apache.wayang.ml.encoding.OneHotMappings;
 import org.apache.wayang.ml.encoding.TreeEncoder;
 import org.apache.wayang.ml.encoding.TreeNode;
 import org.apache.wayang.ml.util.Jobs;
 import org.apache.wayang.api.DataQuanta;
 import org.apache.wayang.api.PlanBuilder;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.ml.util.CardinalitySampler;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -33,6 +37,8 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.lang.reflect.Constructor;
 import java.util.Set;
+import java.time.Instant;
+import java.time.Duration;
 
 public class Training {
 
@@ -51,13 +57,13 @@ public class Training {
                 Constructor<?> cnstr = job.getDeclaredConstructors()[0];
                 GeneratableJob createdJob = (GeneratableJob) cnstr.newInstance();
                 String[] jobArgs = {args[0], args[1]};
-                FileWriter fw = new FileWriter(args[2], false);
+                FileWriter fw = new FileWriter(args[2], true);
                 BufferedWriter writer = new BufferedWriter(fw);
 
 
                 boolean overwriteCardinalities = true;
 
-                if (args.length == 3) {
+                if (args.length == 4) {
                     overwriteCardinalities = Boolean.valueOf(args[3]);
                 }
                 /*
@@ -76,12 +82,16 @@ public class Training {
                 Configuration config = context.getConfiguration();
                 WayangPlan plan = builder.build();
 
-                int hashCode = new HashCodeBuilder(17, 37).append(plan).toHashCode();
-                String path = "/var/www/html/data/" + hashCode + "-cardinalities.json";
+                /*int hashCode = new HashCodeBuilder(17, 37).append(plan).toHashCode();
+                String path = "/var/www/html/data/" + hashCode + "-cardinalities.json";*/
+                long execTime = 0;
 
                 if (overwriteCardinalities) {
-                    CardinalitySampler.configureWriteToFile(config, path);
+                    //CardinalitySampler.configureWriteToFile(config, path);
+                    Instant start = Instant.now();
                     context.execute(plan, "");
+                    Instant end = Instant.now();
+                    execTime = Duration.between(start, end).toMillis();
 
                     quanta = createdJob.buildPlan(jobArgs);
                     builder = quanta.getPlanBuilder();
@@ -89,22 +99,19 @@ public class Training {
                     plan = builder.build();
                 }
 
-                CardinalitySampler.readFromFile(path);
+                //CardinalitySampler.readFromFile(path);
+                Job wayangJob = context.createJob("", plan, "");
+                ExecutionPlan exPlan = wayangJob.buildInitialExecutionPlan();
+                OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
                 TreeNode wayangNode = TreeEncoder.encode(plan, context);
-                TreeNode execNode = TreeEncoder.encode(context.buildInitialExecutionPlan("", plan, "")).withIdsFrom(wayangNode);
+                TreeNode execNode = TreeEncoder.encode(exPlan).withIdsFrom(wayangNode);
 
-                System.out.println(wayangNode);
-                System.out.println(execNode);
-
-                writer.write(String.format("%s:%s", wayangNode.toString(), execNode.toString()));
+                writer.write(String.format("%s:%s:%d", wayangNode.toString(), execNode.toString(), execTime));
                 writer.newLine();
                 writer.flush();
-                /*
-                 * TODO: (LATER)
-                 *  - Randomize platform usage as args
-                 */
             } catch(Exception e) {
                 e.printStackTrace();
+                continue;
             }
         }
     }

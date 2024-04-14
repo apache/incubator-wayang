@@ -7,6 +7,7 @@ import org.apache.wayang.ml.util.Platforms;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.wayang.core.optimizer.OptimizationContext;
 
 import org.reflections.*;
 import org.reflections.scanners.SubTypesScanner;
@@ -30,6 +31,8 @@ public class OneHotMappings {
 
     private static HashSet<Operator> originalOperators = new HashSet<>();
 
+    private static OptimizationContext optimizationContext;
+
     private OneHotMappings() {}
 
     public static OneHotMappings getInstance() {
@@ -52,7 +55,7 @@ public class OneHotMappings {
         HashMap<String, Integer> mappings = new HashMap<>();
         Operators.getOperators()
           .stream()
-          .filter(operator -> operator.getName().contains("org.apache.wayang.basic.operators"))
+          .filter(operator -> operator.getName().contains("org.apache.wayang.basic.operators") || operator.getName().contains("org.apache.wayang.core.plan.wayangplan"))
           .distinct()
           .sorted(Comparator.comparing(c -> c.getName()))
           .forEach(entry -> mappings.put(entry.getName(), mappings.size()));
@@ -80,6 +83,14 @@ public class OneHotMappings {
 
     public static HashSet<Operator> getOriginalOperators() {
         return originalOperators;
+    }
+
+    public static void setOptimizationContext(OptimizationContext context) {
+        optimizationContext = context;
+    }
+
+    public static OptimizationContext getOptimizationContext() {
+        return optimizationContext;
     }
 
     public static Optional<Platform> getOperatorPlatformFromEncoding(long[] encoded) {

@@ -82,7 +82,7 @@
         <exclude>org.apache.wayang:*:jar</exclude>
         <exclude>org.apache.hadoop:*:jar</exclude>
         <exclude>org.apache.spark:*:jar</exclude>
-        <exclude>org.apache.flink:*:jar</exclude>
+        <!--exclude>org.apache.flink:*:jar</exclude-->
         <exclude>org.apache.zookeeper:*:jar</exclude>
         <exclude>org.apache.avro:*:jar</exclude>
       </excludes>
