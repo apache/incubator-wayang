@@ -35,6 +35,7 @@
     <build.testJarPhase>none</build.testJarPhase>
     <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
     <wayang.name>wayang-${project.version}</wayang.name>
+    <flink.version>1.20-SNAPSHOT</flink.version>
   </properties>
 
   <dependencies>

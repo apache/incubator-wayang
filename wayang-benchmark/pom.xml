@@ -102,7 +102,7 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-java</artifactId>
-      <version>1.7.1</version>
+      <version>1.17.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.wayang</groupId>

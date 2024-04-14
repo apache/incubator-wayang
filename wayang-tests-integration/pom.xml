@@ -34,7 +34,7 @@
 
     <properties>
         <java-module-name>org.apache.wayang.test.integration</java-module-name>
-        <flink.version>1.10.0</flink.version>
+        <flink.version>1.17.2</flink.version>
         <giraph.version>1.2.0-hadoop2</giraph.version>
     </properties>
 
@@ -124,7 +124,7 @@
 
         <dependency>
           <groupId>org.apache.flink</groupId>
-          <artifactId>flink-clients_2.12</artifactId>
+          <artifactId>flink-clients</artifactId>
           <version>${flink.version}</version>
           <scope>test</scope>
           <exclusions>

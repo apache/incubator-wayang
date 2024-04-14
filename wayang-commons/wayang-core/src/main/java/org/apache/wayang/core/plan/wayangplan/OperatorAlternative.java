@@ -98,7 +98,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     /**
-     * Adds an {@link Alternative} to this instance.
+     * Adds an {@link Alternative} to).
      *
      * @param alternativeOperator either an {@link ElementaryOperator} or a {@link Subplan}; in the latter case, the
      *                            {@link Subplan} will be "unpacked" into the new {@link Alternative}
