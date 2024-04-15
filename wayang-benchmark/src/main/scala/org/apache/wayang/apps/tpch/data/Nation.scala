@@ -37,7 +37,7 @@ object Nation {
     * @return the [[Nation]]
     */
   def parseCsv(csv: String): Nation = {
-    val fields = csv.split("\\|")
+    val fields = csv.split('|').map(_.trim)
 
     Nation(
       fields(0).toLong,

@@ -38,7 +38,7 @@ object PartSupplier {
     * @return the [[PartSupplier]]
     */
   def parseCsv(csv: String): PartSupplier = {
-    val fields = csv.split("\\|")
+    val fields = csv.split('|').map(_.trim)
 
     PartSupplier(
       fields(0).toLong,

@@ -41,7 +41,7 @@ object Customer {
     * @return the [[Customer]]
     */
   def parseCsv(csv: String): Customer = {
-    val fields = csv.split("\\|")
+    val fields = csv.split('|').map(_.trim)
 
     Customer(
       fields(0).toLong,
