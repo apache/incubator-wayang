@@ -54,7 +54,7 @@ object Order {
     * @return the [[Order]]
     */
   def parseCsv(csv: String): Order = {
-    val fields = csv.split("\\|")
+    val fields = csv.split('|').map(_.trim)
 
     Order(
       fields(0).toLong,

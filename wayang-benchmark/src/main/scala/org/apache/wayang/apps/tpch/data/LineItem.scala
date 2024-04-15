@@ -67,7 +67,7 @@ object LineItem {
     * @return the [[LineItem]]
     */
   def parseCsv(csv: String): LineItem = {
-    val fields = csv.split("\\|")
+    val fields = csv.split('|').map(_.trim).map(_.trim)
 
     try {
       LineItem(

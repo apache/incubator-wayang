@@ -42,7 +42,7 @@ object Part {
     * @return the [[Part]]
     */
   def parseCsv(csv: String): Part = {
-    val fields = csv.split("\\|")
+    val fields = csv.split('|').map(_.trim)
 
     Part(
       fields(0).toLong,
@@ -54,7 +54,7 @@ object Part {
       fields(6),
       fields(7).toDouble,
       fields(8)
-      
+
     )
   }
 
