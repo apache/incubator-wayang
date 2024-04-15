@@ -95,25 +95,28 @@ public class Training {
                 String path = "/var/www/html/data/" + hashCode + "-cardinalities.json";*/
                 long execTime = 0;
 
-                if (overwriteCardinalities) {
+                //if (overwriteCardinalities) {
                     //CardinalitySampler.configureWriteToFile(config, path);
-                    Instant start = Instant.now();
-                    context.execute(plan, "");
-                    Instant end = Instant.now();
-                    execTime = Duration.between(start, end).toMillis();
-
-                    quanta = createdJob.buildPlan(jobArgs);
-                    builder = quanta.getPlanBuilder();
-                    context = builder.getWayangContext();
-                    plan = builder.build();
-                }
-
-                //CardinalitySampler.readFromFile(path);
+                    //
                 Job wayangJob = context.createJob("", plan, "");
                 ExecutionPlan exPlan = wayangJob.buildInitialExecutionPlan();
                 OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
                 TreeNode wayangNode = TreeEncoder.encode(plan, context);
                 TreeNode execNode = TreeEncoder.encode(exPlan).withIdsFrom(wayangNode);
+                System.out.println(exPlan.toExtensiveString());
+                Instant start = Instant.now();
+                context.execute(plan, "");
+                Instant end = Instant.now();
+                execTime = Duration.between(start, end).toMillis();
+
+                /*
+                quanta = createdJob.buildPlan(jobArgs);
+                builder = quanta.getPlanBuilder();
+                context = builder.getWayangContext();
+                plan = builder.build();
+                }
+
+                CardinalitySampler.readFromFile(path);*/
 
                 writer.write(String.format("%s:%s:%d", wayangNode.toString(), execNode.toString(), execTime));
                 writer.newLine();

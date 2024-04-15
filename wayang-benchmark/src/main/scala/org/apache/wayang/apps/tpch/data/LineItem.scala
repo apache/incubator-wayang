@@ -67,7 +67,7 @@ object LineItem {
     * @return the [[LineItem]]
     */
   def parseCsv(csv: String): LineItem = {
-    val fields = csv.split('|').map(_.trim).map(_.trim)
+    val fields = csv.split('|').map(_.trim)
 
     try {
       LineItem(
@@ -88,6 +88,39 @@ object LineItem {
         fields(14),
         fields(15)
       )
+    } catch {
+      case e: Exception => throw new WayangException(s"Could not parse '$csv' (${fields.mkString(", ")}.", e)
+    }
+  }
+
+  def parseCsvTuple(csv: String): (Long, Long, Long, Int, Double, Double, Double, Double, Char, Char, Int, Int, Int, String, String, String) = {
+    val fields = csv.split('|').map(_.trim)
+
+    try {
+      (
+        fields(0).toLong,
+        fields(1).toLong,
+        fields(2).toLong,
+        fields(3).toInt,
+        fields(4).toDouble,
+        fields(5).toDouble,
+        fields(6).toDouble,
+        fields(7).toDouble,
+        fields(8).charAt(0),
+        fields(9).charAt(0),
+        CsvUtils.parseDate(fields(10)),
+        CsvUtils.parseDate(fields(11)),
+        CsvUtils.parseDate(fields(12)),
+        fields(13),
+        fields(14),
+        fields(15)
+      )
+      /*
+      (
+        0,
+        0,
+        0,
+      )*/
     } catch {
       case e: Exception => throw new WayangException(s"Could not parse '$csv' (${fields.mkString(", ")}.", e)
     }
