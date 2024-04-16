@@ -21,5 +21,5 @@ from pywy.core.platform import Platform
 __ALL__ = [
     PywyPlan,
     Platform,
-    Plugin
+    Plugin,
 ]

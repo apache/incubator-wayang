@@ -13,7 +13,9 @@ src/pywy.egg-info/requires.txt
 src/pywy.egg-info/top_level.txt
 src/pywy/core/__init__.py
 src/pywy/core/core.py
+src/pywy/core/functions.py
 src/pywy/core/platform.py
+src/pywy/core/serializer.py
 src/pywy/execution/__init__.py
 src/pywy/execution/worker.py
 src/pywy/graph/__init__.py

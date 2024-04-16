@@ -14,21 +14,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+class ChainedFunctions:
+    def __init__(self):
+        self.functions = []
 
-from pywy.operators.base import PywyOperator
-from pywy.operators.sink import TextFileSink, SinkOperator
-from pywy.operators.source import TextFileSource, SourceUnaryOperator
-from pywy.operators.unary import UnaryToUnaryOperator, FilterOperator, MapOperator, FlatmapOperator, ReduceByKeyOperator
+    def add_function(self, function):
+        self.functions.append(function)
+        return self
 
-__ALL__ = [
-     PywyOperator,
-     UnaryToUnaryOperator,
-     TextFileSink,
-     TextFileSource,
-     FilterOperator,
-     SinkOperator,
-     SourceUnaryOperator,
-     MapOperator,
-     ReduceByKeyOperator,
-     FlatmapOperator
-]
+    def execute(self, input_data):
+        result = input_data
+        for function in self.functions:
+            result = function(result)
+        return result

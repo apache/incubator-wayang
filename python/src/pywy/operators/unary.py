@@ -87,6 +87,25 @@ class MapOperator(UnaryToUnaryOperator):
     def __repr__(self):
         return super().__repr__()
 
+class MapPartitionsOperator(UnaryToUnaryOperator):
+
+    function: Function
+    json_name: str
+
+    def __init__(self, function: Function):
+        super().__init__("MapPartitions")
+        self.function = function
+        self.json_name = "mapPartitions"
+
+    def get_udf(self, iterator):
+        return map(self.function, iterator)
+
+    def __str__(self):
+        return super().__str__()
+
+    def __repr__(self):
+        return super().__repr__()
+
 
 class FlatmapOperator(UnaryToUnaryOperator):
 

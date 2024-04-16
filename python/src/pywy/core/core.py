@@ -1,4 +1,4 @@
-#
+
 #  Licensed to the Apache Software Foundation (ASF) under one or more
 #  contributor license agreements.  See the NOTICE file distributed with
 #  this work for additional information regarding copyright ownership.
@@ -24,9 +24,10 @@ import subprocess
 import time
 
 from pywy.core.platform import Platform
+from pywy.core.serializer import JSONSerializer
 from pywy.graph.graph import WayangGraph
 from pywy.graph.types import WGraphOfVec, NodeOperator, NodeVec
-from pywy.operators import SinkOperator
+from pywy.operators import SinkOperator, UnaryToUnaryOperator, SourceUnaryOperator
 
 
 class Plugin:
@@ -71,6 +72,7 @@ class PywyPlan:
         they are used to build the `graph`
     """
     graph: WayangGraph
+    topology_graph: WayangGraph
 
     def __init__(self, plugins: Set[Plugin], sinks: Iterable[SinkOperator]):
         """basic Constructor of PywyPlan
@@ -88,14 +90,31 @@ class PywyPlan:
         self.plugins = plugins
         self.sinks = sinks
         self.set_graph()
+        self.set_topology_graph()
 
     def set_graph(self):
         """ it builds the :py:class:`pywy.graph.graph.WayangGraph` of the current PywyPlan
         """
         self.graph = WGraphOfVec(self.sinks)
 
+    def set_topology_graph(self):
+        """ it builds the :py:class:`pywy.graph.graph.WayangGraph` of the current PywyPlan
+        however, it will group pipelines into one WayangOperator
+        """
+
+        """Plan:
+            - Traverse self.graph from the sinks upwards
+            - Chain operator udfs until a junction is hit
+            - Save the chained operator into a MapPartition operator
+              and store it in the Topology graph
+            - Continue traversing from the junction and repeat until no
+              more none visited operators exist
+        """
+
     def execute(self):
-        """ Transform the plan into json objects to send it to Wayang
+        """ Transform the plan into topologies to group pipelines into one
+        MapPartition operator
+        Transform the plan into json objects to send it to Wayang
         """
         json_data = {}
         context = {}
@@ -109,34 +128,24 @@ class PywyPlan:
         json_data["operators"] = []
 
         nodes = []
+        pipeline = list()
         self.graph.traversal(self.graph.starting_nodes, lambda x, parent: nodes.append(x))
         id_table = {(obj.current[0]): index + 1 for index, obj in enumerate(nodes)}
+        serializer = JSONSerializer(id_table)
 
         for node in nodes:
             operator = node.current[0]
-            json_operator = {}
-            json_operator["id"] = id_table[operator]
-            json_operator["operatorName"] = operator.json_name
-            json_operator["cat"] = operator.cat
-            if operator.cat != "input":
-                json_operator["input"] = list(map(lambda x: id_table[x], operator.inputOperator))
+
+            if isinstance(operator, UnaryToUnaryOperator):
+                print(f"Operator unary: {isinstance(operator, UnaryToUnaryOperator)}")
+                pipeline.append(operator)
             else:
-                json_operator["input"] = []
+                if len(pipeline) > 0:
+                    print("Pipeline ended")
+                    json_data["operators"].append(serializer.serialize_pipeline(pipeline))
 
-            if operator.cat != "output":
-                json_operator["output"] = list(map(lambda x: id_table[x], operator.outputOperator))
-            else:
-                json_operator["output"] = []
-
-            json_operator["data"] = {}
-
-            if hasattr(operator, "get_udf"):
-                json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.get_udf)).decode('utf-8')
-
-            if hasattr(operator, "path"):
-                json_operator["data"]["filename"] =  operator.path
-
-            json_data["operators"].append(json_operator)
+                json_data["operators"].append(serializer.serialize(operator))
+                pipeline = list()
 
         url = 'http://localhost:8080/wayang-api-json/submit-plan/json'
         headers = {'Content-type': 'application/json'}
