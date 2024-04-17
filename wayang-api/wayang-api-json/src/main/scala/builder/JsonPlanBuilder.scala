@@ -28,7 +28,7 @@ import org.apache.wayang.api.json.operatorfromjson.output.TextFileOutputFromJson
 import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOpeartorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, ReduceOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.PlanFromJson
 import org.apache.wayang.api._
-import org.apache.wayang.basic.operators.TableSource
+import org.apache.wayang.basic.operators._
 import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.function.ExecutionContext
@@ -344,19 +344,18 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: MapPartitionsOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    /*
     if (this.origin == "python") {
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
         dataQuanta.mapPartitionsPython(operator.data.udf)
       else
         dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
-    } else {*/
+    } else {
       val lambda = SerializableLambda.createLambda[Iterable[Any], Iterable[Any]](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
         dataQuanta.mapPartitions(lambda)
       else
         dataQuanta.mapPartitions(lambda).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
-    //}
+    }
   }
 
   //

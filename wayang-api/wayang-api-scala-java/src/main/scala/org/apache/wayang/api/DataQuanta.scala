@@ -127,16 +127,6 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the [[MapOperator]]'s output
     */
   def mapPartitionsPython[NewOut: ClassTag](udf: String): DataQuanta[NewOut] = {
-    /*
-      return new MapPartitionsOperator<>(
-              new MapPartitionsDescriptor<String, String>(
-                      new WrappedPythonFunction<String, String>(
-                              l -> l,
-                              operator.getUdf()
-                      ),
-                      String.class,
-                      String.class
-              )*/
     val mapOperator = new MapPartitionsOperator(
       new MapPartitionsDescriptor[Object, Object](
         new WrappedPythonFunction[Object, Object](
@@ -146,10 +136,6 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
         classOf[Object],
       )
     )
-    /*
-    val mapOperator = new MapPartitionsOperator(
-      new MapPartitionsDescriptor(udf, basicDataUnitType[Out], basicDataUnitType[NewOut], selectivity, udfLoad)
-    )*/
     this.connectTo(mapOperator, 0)
     mapOperator
   }

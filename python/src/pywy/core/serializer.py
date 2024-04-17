@@ -65,7 +65,7 @@ class JSONSerializer:
 
         json_operator = {}
         json_operator["id"] = self.id_table[pipeline[0]]
-        json_operator["operatorName"] = "mapParitions"
+        json_operator["operatorName"] = "mapPartitions"
         json_operator["cat"] = "unary"
         json_operator["data"] = {}
         json_operator["input"] = list(map(lambda x: self.id_table[x], pipeline[0].inputOperator))
@@ -77,6 +77,7 @@ class JSONSerializer:
         chainedUdfs = ChainedFunctions()
 
         for operator in pipeline:
+            self.id_table[operator] = json_operator["id"]
             if hasattr(operator, "get_udf"):
                 chainedUdfs.add_function(operator.get_udf)
 

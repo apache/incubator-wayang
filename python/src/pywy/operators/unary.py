@@ -139,10 +139,10 @@ class ReduceByKeyOperator(UnaryToUnaryOperator):
 
     def get_udf(self, iterator):
         # Use ast.literal_eval() to safely evaluate the string as a Python literal
-        list_of_tuples = ast.literal_eval("[" + ", ".join(iterator)  + "]")
+        #print(", ".join(iterator))
+        #list_of_tuples = ast.literal_eval("[" + ", ".join(iterator)  + "]")
 
-        tuples = [(str(item[0]), str(item[1])) for item in list_of_tuples]
-        print(list(tuples))
+        tuples = [(str(item[0]), str(item[1])) for item in iterator]
         grouped_data = groupby(sorted(tuples, key=self.key_function), key=self.key_function)
 
         # Create a defaultdict to store the sums
