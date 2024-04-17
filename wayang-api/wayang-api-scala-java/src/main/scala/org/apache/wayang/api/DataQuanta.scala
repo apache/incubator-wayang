@@ -766,8 +766,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def collectNoExecute(): DataQuanta[Out] = {
     // Set up the sink.
     val collector = new java.util.LinkedList[Out]()
-    val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
-    sink.setName("collect()")
+    val sink = LocalCallbackSink.createNoOutSink(dataSetType[Out])
+    sink.setName("collect to stdout")
     this.connectTo(sink, 0)
 
     // Do the execution.
