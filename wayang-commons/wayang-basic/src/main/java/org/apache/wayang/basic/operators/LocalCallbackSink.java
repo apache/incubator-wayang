@@ -59,6 +59,21 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
     }
 
     /**
+     * Provides a sink that swallows items and does nothing
+     */
+    public static <T> LocalCallbackSink<T> createNoOutSink(DataSetType<T> type) {
+        return new LocalCallbackSink<>((ConsumerDescriptor.SerializableConsumer<T>)item -> {}, type);
+    }
+
+    /**
+     * Provides a sink that swallows items and does nothing
+     */
+    public static <T> LocalCallbackSink<T> createNoOutSink(Class<T> typeClass) {
+        return new LocalCallbackSink<>((ConsumerDescriptor.SerializableConsumer<T>)item -> {}, typeClass);
+    }
+
+
+    /**
      * Creates a new instance.
      *
      * @param callback callback that is executed locally for each incoming data unit
