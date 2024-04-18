@@ -137,11 +137,9 @@ class PywyPlan:
             operator = node.current[0]
 
             if isinstance(operator, UnaryToUnaryOperator):
-                print(f"Operator unary: {isinstance(operator, UnaryToUnaryOperator)}")
                 pipeline.append(operator)
             else:
                 if len(pipeline) > 0:
-                    print("Pipeline ended")
                     json_data["operators"].append(serializer.serialize_pipeline(pipeline))
 
                 json_data["operators"].append(serializer.serialize(operator))

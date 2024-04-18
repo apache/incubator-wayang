@@ -38,18 +38,16 @@ public class PythonWorkerManager<Input, Output> {
         PythonProcessCaller worker = new PythonProcessCaller(this.serializedUDF);
 
         if(worker.isReady()){
-
             ProcessFeeder<Input, Output> feed = new ProcessFeeder<>(
-                    worker.getSocket(),
-                    this.serializedUDF,
-                    this.inputIterator
+                worker.getSocket(),
+                this.serializedUDF,
+                this.inputIterator
             );
             feed.send();
             ProcessReceiver<Output> r = new ProcessReceiver<>(worker.getSocket());
 
             return r.getIterable();
         } else{
-
             int port = worker.getSocket().getLocalPort();
             worker.close();
             throw new WayangException("Not possible to work with the Socket provided on port: " + port);

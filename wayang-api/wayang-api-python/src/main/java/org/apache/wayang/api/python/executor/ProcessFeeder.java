@@ -54,10 +54,9 @@ public class ProcessFeeder<Input, Output> {
     }
 
     public void send(){
-
-        try{
+        try {
             //TODO use config buffer size
-            int BUFFER_SIZE = 8192;
+            int BUFFER_SIZE = 65536;
 
             BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), BUFFER_SIZE);
             DataOutputStream dataOut = new DataOutputStream(stream);
@@ -76,7 +75,6 @@ public class ProcessFeeder<Input, Output> {
     }
 
     public void writeIteratorToStream(Iterator<Input> iter, DataOutputStream dataOut){
-
         for (Iterator<Input> it = iter; it.hasNext(); ) {
             Input elem = it.next();
             write(elem, dataOut);
@@ -165,7 +163,6 @@ public class ProcessFeeder<Input, Output> {
     }
 
     public void writeKeyValue(Map.Entry obj, DataOutputStream dataOut){
-
         write(obj.getKey(), dataOut);
         write(obj.getValue(), dataOut);
     }

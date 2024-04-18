@@ -18,8 +18,29 @@
 
 package org.apache.wayang.api.python.function;
 
+import org.apache.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.wayang.api.python.executor.PythonWorkerManager;
 import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 
-public interface PythonUdf<Input, Output> extends FunctionDescriptor.SerializableFunction<Iterable<Input>, Iterable<Output>>{
+import com.google.protobuf.ByteString;
 
+public class WrappedMapPartitionsDescriptor<Input, Output> extends MapPartitionsDescriptor<Input, Output> {
+
+    public WrappedMapPartitionsDescriptor(
+        final ByteString serializedUDF,
+        Class<Input> inputTypeClass,
+        Class<Output> outputTypeClass
+    ) {
+        super(
+            input -> {
+                final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
+                final Iterable<Output> output = manager.execute();
+                return output;
+            },
+            inputTypeClass,
+            outputTypeClass,
+            (ProbabilisticDoubleInterval) null
+        );
+    }
 }

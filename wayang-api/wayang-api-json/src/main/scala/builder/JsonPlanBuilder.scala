@@ -247,9 +247,9 @@ class JsonPlanBuilder() {
   private def visit(operator: FilterOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.filterPython(operator.data.udf)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.filterPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda.createLambda[Any, Boolean](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -277,9 +277,9 @@ class JsonPlanBuilder() {
   private def visit(operator: ReduceByOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.reduceByKeyPython(operator.data.keyUdf, operator.data.udf)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.reduceByKeyPython(operator.data.keyUdf, operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda1 = SerializableLambda.createLambda[Any, Any](operator.data.keyUdf)
       val lambda2 = SerializableLambda2.createLambda[Any, Any, Any](operator.data.udf)
@@ -370,14 +370,23 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: JoinOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
-    val lambda1 = SerializableLambda.createLambda[Any, Any](operator.data.thisKeyUdf)
-    val lambda2 = SerializableLambda.createLambda[Any, Any](operator.data.thatKeyUdf)
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta1.join(lambda1, dataQuanta2, lambda2)
-        .map(tuple2 => (tuple2.field0, tuple2.field1))
-    else
-      dataQuanta1.join(lambda1, dataQuanta2, lambda2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
-        .map(tuple2 => (tuple2.field0, tuple2.field1)).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
+    if (this.origin == "python") {
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta1.joinPython(operator.data.thisKeyUdf, dataQuanta2, operator.data.thatKeyUdf)
+          .map(tuple2 => (tuple2.field0, tuple2.field1))
+      else
+        dataQuanta1.joinPython(operator.data.thisKeyUdf, dataQuanta2, operator.data.thatKeyUdf)
+          .map(tuple2 => (tuple2.field0, tuple2.field1)).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
+    } else {
+      val lambda1 = SerializableLambda.createLambda[Any, Any](operator.data.thisKeyUdf)
+      val lambda2 = SerializableLambda.createLambda[Any, Any](operator.data.thatKeyUdf)
+      if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+        dataQuanta1.join(lambda1, dataQuanta2, lambda2)
+          .map(tuple2 => (tuple2.field0, tuple2.field1))
+      else
+        dataQuanta1.join(lambda1, dataQuanta2, lambda2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+          .map(tuple2 => (tuple2.field0, tuple2.field1)).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
+    }
   }
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {

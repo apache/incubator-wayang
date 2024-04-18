@@ -23,6 +23,7 @@ src/pywy/graph/graph.py
 src/pywy/graph/types.py
 src/pywy/operators/__init__.py
 src/pywy/operators/base.py
+src/pywy/operators/binary.py
 src/pywy/operators/sink.py
 src/pywy/operators/source.py
 src/pywy/operators/unary.py

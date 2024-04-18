@@ -52,11 +52,20 @@ class JSONSerializer:
 
         json_operator["data"] = {}
 
-        if hasattr(operator, "get_udf"):
-            json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.get_udf)).decode('utf-8')
+        if operator.json_name == "filter":
+            json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.predicate)).decode('utf-8')
+        if operator.json_name == "reduceBy":
+            json_operator["data"]["keyUdf"] = base64.b64encode(cloudpickle.dumps(operator.key_function)).decode('utf-8')
+            json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.reduce_function)).decode('utf-8')
+        elif operator.json_name == "join":
+            json_operator["data"]["thisKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.this_key_function)).decode('utf-8')
+            json_operator["data"]["thatKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.that_key_function)).decode('utf-8')
+        else:
+            if hasattr(operator, "get_udf"):
+                json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.get_udf)).decode('utf-8')
 
-        if hasattr(operator, "path"):
-            json_operator["data"]["filename"] =  operator.path
+            if hasattr(operator, "path"):
+                json_operator["data"]["filename"] =  operator.path
 
         return json_operator
 

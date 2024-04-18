@@ -85,6 +85,25 @@ class DataQuanta(GenericTco):
 
         return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f)))
 
+    def join(
+        self: "DataQuanta[In]",
+        this_key_f: Function,
+        that: "DataQuanta[In]",
+        that_key_f: Function) -> "DataQuanta[Out]":
+
+        op = JoinOperator(
+            this_key_f,
+            that,
+            that_key_f,
+        )
+
+
+        op = self._connect(op),
+        return DataQuanta(
+            self.context,
+            that._connect(op,1)
+        )
+
     def store_textfile(self: "DataQuanta[In]", path: str):
         last: List[SinkOperator] = [
             cast(
