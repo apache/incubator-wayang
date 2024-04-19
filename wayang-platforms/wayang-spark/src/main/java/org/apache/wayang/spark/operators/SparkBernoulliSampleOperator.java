@@ -20,6 +20,7 @@ package org.apache.wayang.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.operators.SampleOperator;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -49,7 +50,7 @@ public class SparkBernoulliSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkBernoulliSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seedFunction) {
+    public SparkBernoulliSampleOperator(FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction, DataSetType<Type> type, FunctionDescriptor.SerializableLongUnaryOperator seedFunction) {
         super(sampleSizeFunction, type, Methods.BERNOULLI, seedFunction);
     }
 

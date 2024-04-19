@@ -19,6 +19,7 @@
 package org.apache.wayang.java.operators;
 
 import org.apache.wayang.basic.operators.SampleOperator;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -54,7 +55,7 @@ public class JavaReservoirSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public JavaReservoirSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seed) {
+    public JavaReservoirSampleOperator(FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction, DataSetType<Type> type, FunctionDescriptor.SerializableLongUnaryOperator seed) {
         super(sampleSizeFunction, type, Methods.RESERVOIR, seed);
     }
 

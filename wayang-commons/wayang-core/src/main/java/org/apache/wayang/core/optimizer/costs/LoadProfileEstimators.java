@@ -198,7 +198,7 @@ public class LoadProfileEstimators {
         );
 
         long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
-        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
+        FunctionDescriptor.SerializableToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
                 parseResourceUsageJuel(spec.getString("ru"), numInputs, numOutputs) :
                 DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR;
         return new NestableLoadProfileEstimator(
@@ -273,7 +273,7 @@ public class LoadProfileEstimators {
         );
 
         long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
-        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
+        FunctionDescriptor.SerializableToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
                 compileResourceUsage(spec.getString("ru")) :
                 DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR;
         return new NestableLoadProfileEstimator(
@@ -318,7 +318,7 @@ public class LoadProfileEstimators {
      * @param numOutputs the number of outputs of the estimated operator, reflected as JUEL variables {@code out0}, {@code out1}, ...
      * @return a {@link ToLongBiFunction} wrapping the JUEL expression
      */
-    private static ToDoubleBiFunction<long[], long[]> parseResourceUsageJuel(String juel, int numInputs, int numOutputs) {
+    private static FunctionDescriptor.SerializableToDoubleBiFunction<long[], long[]> parseResourceUsageJuel(String juel, int numInputs, int numOutputs) {
         final Map<String, Class<?>> parameterClasses = createJuelParameterClasses(numInputs, numOutputs);
         final JuelUtils.JuelFunction<Double> juelFunction = new JuelUtils.JuelFunction<>(juel, Double.class, parameterClasses);
         return (inCards, outCards) -> applyJuelFunction(juelFunction, null, inCards, outCards, Collections.emptyList());
@@ -391,7 +391,7 @@ public class LoadProfileEstimators {
      * @param expression a mathematical expression
      * @return a {@link ToLongBiFunction} wrapping the expression
      */
-    private static ToDoubleBiFunction<long[], long[]> compileResourceUsage(String expression) {
+    private static FunctionDescriptor.SerializableToDoubleBiFunction<long[], long[]> compileResourceUsage(String expression) {
         final Expression expr = ExpressionBuilder.parse(expression).specify(baseContext);
         return (inCards, outCards) -> {
             Context mathContext = createMathContext(null, inCards, outCards);
@@ -484,6 +484,6 @@ public class LoadProfileEstimators {
     }
 
 
-    private static final ToDoubleBiFunction<long[], long[]> DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR = (in, out) -> 1d;
+    private static final FunctionDescriptor.SerializableToDoubleBiFunction<long[], long[]> DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR = (in, out) -> 1d;
 
 }

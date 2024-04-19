@@ -20,6 +20,7 @@ package org.apache.wayang.basic.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
@@ -29,8 +30,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Optional;
-import java.util.function.IntUnaryOperator;
-import java.util.function.LongUnaryOperator;
 
 /**
  * A random sample operator randomly selects its inputs from the input slot and pushes that element to the output slot.
@@ -78,12 +77,12 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * This function determines the sample size by the number of iterations.
      */
-    protected IntUnaryOperator sampleSizeFunction;
+    protected FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction;
 
     /**
      * This function optionally determines the seed by the number of iterations.
      */
-    protected LongUnaryOperator seedFunction;
+    protected FunctionDescriptor.SerializableLongUnaryOperator seedFunction;
 
     /**
      * Size of the dataset to be sampled or {@value #UNKNOWN_DATASET_SIZE} if a dataset size is not known.
@@ -108,7 +107,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param sampleSizeFunction user-specified size of the sample in dependence of the current iteration number
      * @param type               {@link DataSetType} of the sampled dataset
      */
-    public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type) {
+    public SampleOperator(FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction, DataSetType<Type> type) {
         this(sampleSizeFunction, type, Methods.ANY, iterationNumber -> randomSeed());
     }
 
@@ -122,21 +121,21 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * Creates a new instance given the sample size and the method.
      */
-    public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod) {
+    public SampleOperator(FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod) {
         this(sampleSizeFunction, type, sampleMethod, iterationNumber -> randomSeed());
     }
 
     /**
      * Creates a new instance given a user-defined sample size.
      */
-    public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod, long seed) {
+    public SampleOperator(FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod, long seed) {
         this(sampleSizeFunction, type, sampleMethod, iterationNumber -> seed);
     }
 
     /**
      * Creates a new instance given user-defined sample size and seed methods.
      */
-    public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod, LongUnaryOperator seedFunction) {
+    public SampleOperator(FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod, FunctionDescriptor.SerializableLongUnaryOperator seedFunction) {
         super(type, type, true);
         this.sampleSizeFunction = sampleSizeFunction;
         this.sampleMethod = sampleMethod;
@@ -186,7 +185,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this.sampleMethod = sampleMethod;
     }
 
-    public void setSeedFunction(LongUnaryOperator seedFunction) {
+    public void setSeedFunction(FunctionDescriptor.SerializableLongUnaryOperator seedFunction) {
         this.seedFunction = seedFunction;
     }
 

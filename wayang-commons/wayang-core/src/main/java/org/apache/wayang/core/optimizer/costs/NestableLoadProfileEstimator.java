@@ -20,6 +20,7 @@ package org.apache.wayang.core.optimizer.costs;
 
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 
 import java.util.Collection;
@@ -40,7 +41,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
     /**
      * The degree to which the load profile can utilize available resources.
      */
-    private final ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator;
+    private final FunctionDescriptor.SerializableToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator;
 
     /**
      * Milliseconds overhead that this load profile incurs.
@@ -98,7 +99,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                                         LoadEstimator ramLoadEstimator,
                                         LoadEstimator diskLoadEstimator,
                                         LoadEstimator networkLoadEstimator,
-                                        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
+                                        FunctionDescriptor.SerializableToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
                                         long overheadMillis) {
         this(
                 cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator,
@@ -121,7 +122,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                                         LoadEstimator ramLoadEstimator,
                                         LoadEstimator diskLoadEstimator,
                                         LoadEstimator networkLoadEstimator,
-                                        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
+                                        FunctionDescriptor.SerializableToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
                                         long overheadMillis,
                                         String configurationKey) {
         this.cpuLoadEstimator = cpuLoadEstimator;
