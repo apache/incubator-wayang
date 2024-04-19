@@ -54,6 +54,7 @@ public class Training {
      * 6: overwrite cardinalities (boolean)
      **/
     public static void main(String[] args) {
+        int counter = 0;
         Set<Class<? extends GeneratableJob>> jobs = Jobs.getJobs();
         jobs = jobs.stream()
             .sorted(Comparator.comparing(c -> c.getName()))
@@ -62,6 +63,7 @@ public class Training {
             .collect(Collectors.toSet());
 
         for (Class<? extends GeneratableJob> job : jobs) {
+            System.out.println("Running job " + (++counter) + "/" + jobs.size());
             System.out.println(job);
             try {
                 Constructor<?> cnstr = job.getDeclaredConstructors()[0];
@@ -104,19 +106,17 @@ public class Training {
                 TreeNode wayangNode = TreeEncoder.encode(plan, context);
                 TreeNode execNode = TreeEncoder.encode(exPlan).withIdsFrom(wayangNode);
                 System.out.println(exPlan.toExtensiveString());
+
+                quanta = createdJob.buildPlan(jobArgs);
+                builder = quanta.getPlanBuilder();
+                context = builder.getWayangContext();
+                plan = builder.build();
                 Instant start = Instant.now();
                 context.execute(plan, "");
                 Instant end = Instant.now();
                 execTime = Duration.between(start, end).toMillis();
 
-                /*
-                quanta = createdJob.buildPlan(jobArgs);
-                builder = quanta.getPlanBuilder();
-                context = builder.getWayangContext();
-                plan = builder.build();
-                }
-
-                CardinalitySampler.readFromFile(path);*/
+                //CardinalitySampler.readFromFile(path);
 
                 writer.write(String.format("%s:%s:%d", wayangNode.toString(), execNode.toString(), execTime));
                 writer.newLine();
