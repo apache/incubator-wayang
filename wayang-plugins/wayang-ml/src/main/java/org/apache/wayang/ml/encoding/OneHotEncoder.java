@@ -377,14 +377,16 @@ public class OneHotEncoder implements Encoder {
         }
 
         HashMap<String, Integer> operatorMappings = OneHotMappings.getInstance().getOperatorMapping();
+        HashMap<String, Integer> platformMappings = OneHotMappings.getInstance().getPlatformsMapping();
 
-        long[] result = new long[operatorMappings.size() + 4];
         int operatorsCount = operatorMappings.size();
+        int platformsCount = platformMappings.size();
+        long[] result = new long[operatorsCount + platformsCount + 3];
 
         result[0] = (long) new HashCodeBuilder(17, 37).append(operator.toString()).toHashCode();
-        result[operatorsCount + 1] = Udf.getComplexity(operator).ordinal();
-        result[operatorsCount + 2] = inputCardinality;
-        result[operatorsCount + 3] = outputCardinality;
+        result[operatorsCount + platformsCount] = Udf.getComplexity(operator).ordinal();
+        result[operatorsCount + platformsCount + 1] = inputCardinality;
+        result[operatorsCount + platformsCount + 2] = outputCardinality;
 
         Integer operatorPosition = operatorMappings.get(operator.getClass().getName());
         result[operatorPosition] = 1;

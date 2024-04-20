@@ -31,17 +31,33 @@ public class TreeNode {
     public TreeNode left;
     public TreeNode right;
     public boolean isRoot;
-    private static Pattern pattern = Pattern.compile("\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))", Pattern.CASE_INSENSITIVE);
+    //private static Pattern pattern = Pattern.compile("\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))", Pattern.CASE_INSENSITIVE);
+    private static Pattern pattern = Pattern.compile("\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<children>(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))|\\)*)", Pattern.CASE_INSENSITIVE);
 
     @Override
     public String toString() {
-        String encodedString = Arrays.toString(encoded).replace("[", "(").replace("]", ")");
+        String encodedString = Arrays.toString(encoded).replace("[", "(").replace("]", ")").replaceAll("\\s+", "");
 
-        return "(" +
-          encodedString +
-          ',' + (left != null ? left.toString() : Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "(").replace("]", ")")) + ',' +
-          (right != null ? right.toString() : Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "(").replace("]", ")")) +
-          ')';
+        if (left == null && right == null) {
+            return '(' + encodedString + ",)";
+        }
+
+        String leftString = "";
+        String rightString = "";
+
+        if (left == null) {
+            leftString = Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "((").replace("]", "),)").replaceAll("\\s+", "");
+        } else {
+            leftString = left.toString();
+        }
+
+        if (right == null) {
+            rightString = Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "((").replace("]", "),)").replaceAll("\\s+", "");
+        } else {
+            rightString = right.toString();
+        }
+
+        return "(" + encodedString + "," + leftString + "," + rightString + ")";
     }
 
     public static TreeNode fromString(String encoded) {
@@ -54,12 +70,20 @@ public class TreeNode {
         }
 
         value = matcher.group("value");
+        String left = matcher.group("left");
+        String right = matcher.group("right");
         Long[] encodedLongs = Stream.of(value.split(","))
-            .map(val -> Long.valueOf(val.replaceAll("\\s","")))
+            .map(val -> Long.valueOf(val.replaceAll("\\s+","")))
             .collect(Collectors.toList()).toArray(Long[]::new);
         result.encoded = ArrayUtils.toPrimitive(encodedLongs);
-        result.left = TreeNode.fromString(matcher.group("left"));
-        result.right = TreeNode.fromString(matcher.group("right"));
+
+        if (left != null) {
+            result.left = TreeNode.fromString(left);
+        }
+
+        if (right != null) {
+            result.right = TreeNode.fromString(right);
+        }
 
         return result;
     }

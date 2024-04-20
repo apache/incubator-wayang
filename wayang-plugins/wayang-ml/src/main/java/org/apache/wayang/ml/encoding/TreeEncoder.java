@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
@@ -59,9 +61,6 @@ public class TreeEncoder implements Encoder {
         if (result.size() == 0) {
             return null;
         }
-
-        //System.out.println("PlanImplementation");
-        //System.out.println(result.get(0));
 
         return result.get(0);
     }
@@ -103,9 +102,6 @@ public class TreeEncoder implements Encoder {
         if (result.size() == 0) {
             return null;
         }
-
-        //System.out.println("ExecutionPlan");
-        //System.out.println(result.get(0));
 
         return result.get(0);
     }

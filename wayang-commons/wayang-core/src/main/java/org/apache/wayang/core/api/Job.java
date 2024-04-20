@@ -339,7 +339,7 @@ public class Job extends OneTimeExecutable {
      * Prepares the {@link #wayangPlan}: prunes unused {@link Operator}s, isolates loops, and applies all available
      * {@link PlanTransformation}s.
      */
-    private void prepareWayangPlan() {
+    public void prepareWayangPlan() {
         this.logger.info("Preparing plan...");
 
         // Prepare the WayangPlan for the optimization.
@@ -376,7 +376,7 @@ public class Job extends OneTimeExecutable {
      * Go over the given {@link WayangPlan} and estimate the cardinalities of data being passed between its
      * {@link Operator}s and the execution profile and time of {@link ExecutionOperator}s.
      */
-    private void estimateKeyFigures() {
+    public void estimateKeyFigures() {
         this.logger.info("Estimating cardinalities and execution load...");
 
         this.optimizationRound.start("Cardinality&Load Estimation");
