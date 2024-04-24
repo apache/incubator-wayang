@@ -40,9 +40,15 @@ public class WrappedPredicateDescriptor<Input> extends PredicateDescriptor<Input
             (item) -> {
                 final ArrayList<Input> input = new ArrayList<>();
                 input.add(item);
-                final PythonWorkerManager<Input, Boolean> manager = new PythonWorkerManager<>(serializedUDF, input);
-                final Iterable<Boolean> output = manager.execute();
-                return output.iterator().next();
+                final PythonWorkerManager<Input, String> manager = new PythonWorkerManager<>(serializedUDF, input);
+                final Iterable<String> output = manager.execute();
+                if (output.iterator().hasNext()) {
+                    String next = output.iterator().next();
+                    System.out.println(Integer.valueOf(next) == 1);
+                    return Integer.valueOf(next) == 1;
+                }
+
+                return false;
             },
             inputTypeClass,
             selectivity,

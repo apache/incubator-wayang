@@ -97,8 +97,7 @@ class DataQuanta(GenericTco):
             that_key_f,
         )
 
-
-        op = self._connect(op),
+        self._connect(op),
         return DataQuanta(
             self.context,
             that._connect(op,1)

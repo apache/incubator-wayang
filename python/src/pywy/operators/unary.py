@@ -58,6 +58,9 @@ class FilterOperator(UnaryToUnaryOperator):
         self.predicate = predicate
         self.json_name = "filter"
 
+    def use_predicate(self, iterator) -> bool:
+        return self.predicate(next(iterator))
+
     def get_udf(self, iterator):
         return filter(self.predicate, iterator)
 

@@ -17,6 +17,7 @@
 
 from typing import (TypeVar, Optional, List)
 
+
 class PywyOperator:
     cat: str
     inputs: int

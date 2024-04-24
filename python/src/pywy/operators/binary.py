@@ -54,8 +54,8 @@ class JoinOperator(BinaryToUnaryOperator):
 
     def __init__(self, this_key_function: Function, that: PywyOperator, that_key_function: Function):
         super().__init__("Join")
-        self.this_key_function = this_key_function
+        self.this_key_function = lambda g: this_key_function(next(g))
         self.that = that
-        self.that_key_function = that_key_function
+        self.that_key_function = lambda g: that_key_function(next(g))
         self.json_name = "join"
 

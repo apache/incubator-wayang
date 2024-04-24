@@ -26,15 +26,7 @@ import copy
 import pickle
 import cloudpickle
 
-
-class SpecialLengths(object):
-    END_OF_DATA_SECTION = -1
-    PYTHON_EXCEPTION_THROWN = -2
-    TIMING_DATA = -3
-    END_OF_STREAM = -4
-    NULL = -5
-    START_ARROW_STREAM = -6
-
+from pywy.execution.util import SpecialLengths
 
 def read_int(stream):
     length = stream.read(4)
@@ -89,38 +81,26 @@ def write_with_length(obj, stream):
 
 
 def dump_stream(iterator, stream):
-    for obj in iterator:
-        if type(obj) is str:
-            write_with_length(obj, stream)
-        else:
-            write_with_length(str(obj), stream)
-        ## elif type(obj) is list:
-        ##    write_with_length(obj, stream)
+    if type(iterator) is bool:
+        write_with_length(str(int(iterator == True)), stream)
+    else:
+        for obj in iterator:
+            if type(obj) is str:
+                write_with_length(obj, stream)
+            if type(obj) is bool:
+                write_with_length(int(obj == True), stream)
+            else:
+                write_with_length(str(obj), stream)
+            ## elif type(obj) is list:
+            ##    write_with_length(obj, stream)
     write_int(SpecialLengths.END_OF_DATA_SECTION, stream)
-
-def m1_func(iterator):
-    return map(lambda x: int(x), iterator)
-
-def m2_func(iterator):
-    return map(lambda x: int(x) + 1, iterator)
-
-def filter_func(iterator):
-    return filter(lambda x: int(x) < 12, iterator)
 
 def process(infile, outfile):
     udf_length = read_int(infile)
     serialized_udf = infile.read(udf_length)
     decoded_udf = base64.b64decode(serialized_udf)
     func = pickle.loads(decoded_udf)
-    """
-    bfunc = cloudpickle.dumps(lambda x: int(x) < 12)
-    decoded_func = base64.b64encode(bfunc)
-    print(decoded_func)
-    decoded_udf = base64.b64decode(decoded_func)
-    func = pickle.loads(decoded_udf)
-    """
     iterator = UTF8Deserializer().load_stream(infile)
-    print(iterator)
     out_iter = func(iterator)
     dump_stream(iterator=out_iter, stream=outfile)
 
@@ -133,12 +113,9 @@ def local_connect(port):
         af, socktype, proto, _, sa = res
         try:
             sock = socket.socket(af, socktype, proto)
-            # sock.settimeout(int(os.environ.get("SPARK_AUTH_SOCKET_TIMEOUT", 15)))
             sock.settimeout(30)
             sock.connect(sa)
-            # sockfile = sock.makefile("rwb", int(os.environ.get("SPARK_BUFFER_SIZE", 65536)))
             sockfile = sock.makefile("rwb", 65536)
-            # _do_server_auth(sockfile, auth_secret)
             return (sockfile, sock)
         except socket.error as e:
             emsg = str(e)
@@ -149,19 +126,6 @@ def local_connect(port):
 
 
 if __name__ == '__main__':
-    print("Python version")
-    print(sys.version)
-    """
-    bfunc = cloudpickle.dumps(m1_func)
-    decoded_func = base64.b64encode(bfunc)
-    print(decoded_func)
-    bfunc = cloudpickle.dumps(m2_func)
-    decoded_func = base64.b64encode(bfunc)
-    print(decoded_func)
-    bfunc = cloudpickle.dumps(filter_func)
-    decoded_func = base64.b64encode(bfunc)
-    print(decoded_func)
-    """
     java_port = int(os.environ["PYTHON_WORKER_FACTORY_PORT"])
     sock_file, sock = local_connect(java_port)
     process(sock_file, sock_file)

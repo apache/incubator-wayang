@@ -17,6 +17,7 @@ src/pywy/core/functions.py
 src/pywy/core/platform.py
 src/pywy/core/serializer.py
 src/pywy/execution/__init__.py
+src/pywy/execution/util.py
 src/pywy/execution/worker.py
 src/pywy/graph/__init__.py
 src/pywy/graph/graph.py
@@ -33,5 +34,6 @@ src/pywy/platforms/python.py
 src/pywy/platforms/spark.py
 src/pywy/tests/__init__.py
 src/pywy/tests/builder_test.py
+src/pywy/tests/filter_test.py
 src/pywy/tests/json_test.py
 src/pywy/tests/word_count.py
