@@ -22,6 +22,7 @@ import cloudpickle
 import requests
 import subprocess
 import time
+import os
 
 from pywy.core.platform import Platform
 from pywy.core.serializer import JSONSerializer
@@ -72,7 +73,6 @@ class PywyPlan:
         they are used to build the `graph`
     """
     graph: WayangGraph
-    topology_graph: WayangGraph
 
     def __init__(self, plugins: Set[Plugin], sinks: Iterable[SinkOperator]):
         """basic Constructor of PywyPlan
@@ -90,26 +90,11 @@ class PywyPlan:
         self.plugins = plugins
         self.sinks = sinks
         self.set_graph()
-        self.set_topology_graph()
 
     def set_graph(self):
         """ it builds the :py:class:`pywy.graph.graph.WayangGraph` of the current PywyPlan
         """
         self.graph = WGraphOfVec(self.sinks)
-
-    def set_topology_graph(self):
-        """ it builds the :py:class:`pywy.graph.graph.WayangGraph` of the current PywyPlan
-        however, it will group pipelines into one WayangOperator
-        """
-
-        """Plan:
-            - Traverse self.graph from the sinks upwards
-            - Chain operator udfs until a junction is hit
-            - Save the chained operator into a MapPartition operator
-              and store it in the Topology graph
-            - Continue traversing from the junction and repeat until no
-              more none visited operators exist
-        """
 
     def execute(self):
         """ Transform the plan into topologies to group pipelines into one
@@ -145,10 +130,8 @@ class PywyPlan:
                 json_data["operators"].append(serializer.serialize(operator))
                 pipeline = list()
 
+        # This should either be configurable on the WayangContext or env
         url = 'http://localhost:8080/wayang-api-json/submit-plan/json'
         headers = {'Content-type': 'application/json'}
         json_body = json.dumps(json_data)
-
-        """Now send the json_data to the running REST API process
-        """
         response = requests.post(url, headers=headers, json=json_data)
