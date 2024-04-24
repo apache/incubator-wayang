@@ -19,7 +19,7 @@
 
 package org.apache.wayang.multicontext.apps.tpch
 
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
+import org.apache.wayang.api.{MultiContext, MultiContextPlanBuilder}
 import org.apache.wayang.apps.tpch.CsvUtils
 import org.apache.wayang.apps.tpch.data.LineItem
 import org.apache.wayang.java.Java
@@ -44,11 +44,11 @@ object Query1 {
 
     val (configuration1, configuration2) = loadConfig(args.drop(2))
 
-    val context1 = new BlossomContext(configuration1)
+    val context1 = new MultiContext(configuration1)
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out11")
-    val context2 = new BlossomContext(configuration2)
+    val context2 = new MultiContext(configuration2)
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out12")

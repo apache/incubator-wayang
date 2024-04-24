@@ -19,7 +19,7 @@
 
 package org.apache.wayang.multicontext.apps.wordcount
 
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
+import org.apache.wayang.api.{MultiContext, MultiContextPlanBuilder}
 import org.apache.wayang.java.Java
 import org.apache.wayang.multicontext.apps.loadConfig
 import org.apache.wayang.spark.Spark
@@ -33,11 +33,11 @@ object WordCountWithTargetPlatforms {
 
     val (configuration1, configuration2) = loadConfig(args)
 
-    val context1 = new BlossomContext(configuration1)
+    val context1 = new MultiContext(configuration1)
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out11")
-    val context2 = new BlossomContext(configuration2)
+    val context2 = new MultiContext(configuration2)
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out12")

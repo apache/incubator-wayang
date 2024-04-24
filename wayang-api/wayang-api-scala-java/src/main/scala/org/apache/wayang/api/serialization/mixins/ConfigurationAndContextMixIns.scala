@@ -20,7 +20,7 @@ package org.apache.wayang.api.serialization.mixins
 
 import com.fasterxml.jackson.annotation.{JsonIdentityInfo, JsonIgnore, JsonSubTypes, JsonTypeInfo, ObjectIdGenerators}
 import org.apache.logging.log4j.Logger
-import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder}
+import org.apache.wayang.api.{MultiContext, DataQuanta, PlanBuilder}
 import org.apache.wayang.core.api.configuration.{CollectionProvider, ExplicitCollectionProvider, KeyValueProvider, MapBasedKeyValueProvider, ValueProvider}
 import org.apache.wayang.core.function.FunctionDescriptor
 import org.apache.wayang.core.mapping.Mapping
@@ -40,7 +40,7 @@ object ConfigurationAndContextMixIns {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[BlossomContext], name = "BlossomContext"),
+    new JsonSubTypes.Type(value = classOf[MultiContext], name = "MultiContext"),
   ))
   abstract class WayangContextMixIn {
     @JsonIgnore
@@ -101,16 +101,16 @@ object ConfigurationAndContextMixIns {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@type")
   @JsonSubTypes(Array(
-    new JsonSubTypes.Type(value = classOf[BlossomContext.TextFileSink], name = "BlossomContextTextFileSink"),
-    new JsonSubTypes.Type(value = classOf[BlossomContext.ObjectFileSink], name = "BlossomContextObjectFileSink"
+    new JsonSubTypes.Type(value = classOf[MultiContext.TextFileSink], name = "MultiContextTextFileSink"),
+    new JsonSubTypes.Type(value = classOf[MultiContext.ObjectFileSink], name = "MultiContextObjectFileSink"
     ))
   )
-  abstract class BlossomContextUnarySinkMixIn {
+  abstract class MultiContextUnarySinkMixIn {
   }
 
   abstract class MultiContextPlanBuilderMixIn {
     @JsonIgnore
-    private var blossomContextMap: Map[Long, BlossomContext] = _
+    private var multiContextMap: Map[Long, MultiContext] = _
 
     @JsonIgnore
     private var dataQuantaMap: Map[Long, DataQuanta[_]] = _

@@ -19,7 +19,7 @@
 package org.apache.wayang.api.async
 
 import org.apache.wayang.api
-import org.apache.wayang.api.{BlossomContext, DataQuanta, async}
+import org.apache.wayang.api.{MultiContext, DataQuanta, async}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

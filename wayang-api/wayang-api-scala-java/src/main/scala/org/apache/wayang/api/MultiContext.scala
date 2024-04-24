@@ -21,43 +21,43 @@ package org.apache.wayang.api
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.plugin.Plugin
 
-class BlossomContext(configuration: Configuration) extends WayangContext(configuration) {
+class MultiContext(configuration: Configuration) extends WayangContext(configuration) {
 
-  val id: Long = BlossomContext.nextId()
+  val id: Long = MultiContext.nextId()
 
-  private var sink: Option[BlossomContext.UnarySink] = None
+  private var sink: Option[MultiContext.UnarySink] = None
   private var plugins: List[String] = List()
 
   def this() = {
     this(new Configuration())
   }
 
-  override def withPlugin(plugin: Plugin): BlossomContext = {
+  override def withPlugin(plugin: Plugin): MultiContext = {
     this.plugins = this.plugins :+ plugin.getClass.getName
     super.withPlugin(plugin)
     this
   }
 
-  def withTextFileSink(url: String): BlossomContext = {
-    this.sink = Some(BlossomContext.TextFileSink(url))
+  def withTextFileSink(url: String): MultiContext = {
+    this.sink = Some(MultiContext.TextFileSink(url))
     this
   }
 
-  def withObjectFileSink(url: String): BlossomContext = {
-    this.sink = Some(BlossomContext.ObjectFileSink(url))
+  def withObjectFileSink(url: String): MultiContext = {
+    this.sink = Some(MultiContext.ObjectFileSink(url))
     this
   }
 
-  def withMergeFileSink(url: String): BlossomContext = {
-    this.sink = Some(BlossomContext.MergeFileSink(url))
+  def withMergeFileSink(url: String): MultiContext = {
+    this.sink = Some(MultiContext.MergeFileSink(url))
     this
   }
 
-  def getSink: Option[BlossomContext.UnarySink] = sink
+  def getSink: Option[MultiContext.UnarySink] = sink
   def getPlugins: List[String] = plugins
 }
 
-object BlossomContext {
+object MultiContext {
 
   private var lastId = 0L
 

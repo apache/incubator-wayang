@@ -32,7 +32,7 @@ import org.apache.wayang.api.serialization.mixins.IgnoreLoggerMixIn
 import org.apache.wayang.api.serialization.mixins.OperatorMixIns._
 import org.apache.wayang.api.serialization.mixins.ProviderMixIns._
 import org.apache.wayang.api.serialization.mixins.SlotMixIns._
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
+import org.apache.wayang.api.{MultiContext, MultiContextPlanBuilder}
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators._
 import org.apache.wayang.basic.types.RecordType
@@ -68,8 +68,8 @@ object SerializationUtils {
       .registerModule(DefaultScalaModule)
 
       // Custom serializers
-      .registerModule(new SimpleModule().addSerializer(classOf[BlossomContext], new BlossomContextSerializer()))
-      .registerModule(new SimpleModule().addDeserializer(classOf[BlossomContext], new BlossomContextDeserializer()))
+      .registerModule(new SimpleModule().addSerializer(classOf[MultiContext], new MultiContextSerializer()))
+      .registerModule(new SimpleModule().addDeserializer(classOf[MultiContext], new MultiContextDeserializer()))
       .registerModule(new SimpleModule().addSerializer(classOf[Platform], new PlatformSerializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[Platform], new PlatformDeserializer()))
       .registerModule(new SimpleModule().addDeserializer(classOf[Operator], new OperatorDeserializer()))
@@ -112,7 +112,7 @@ object SerializationUtils {
       .addMixIn(classOf[Slot[_]], classOf[SlotMixIn[_]])
       .addMixIn(classOf[OutputSlot[_]], classOf[OutputSlotMixIn[_]])
       .addMixIn(classOf[OperatorBase], classOf[OperatorBaseMixIn])
-      .addMixIn(classOf[BlossomContext.UnarySink], classOf[BlossomContextUnarySinkMixIn])
+      .addMixIn(classOf[MultiContext.UnarySink], classOf[MultiContextUnarySinkMixIn])
       .addMixIn(classOf[ElementaryOperator], classOf[ElementaryOperatorMixIn])
       .addMixIn(classOf[ActualOperator], classOf[ActualOperatorMixIn])
       .addMixIn(classOf[Operator], classOf[OperatorMixIn])

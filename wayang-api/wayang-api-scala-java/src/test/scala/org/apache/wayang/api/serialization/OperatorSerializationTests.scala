@@ -19,7 +19,7 @@
 
 package org.apache.wayang.api.serialization
 
-import org.apache.wayang.api.{BlossomContext, PlanBuilder, createPlanBuilder}
+import org.apache.wayang.api.{MultiContext, PlanBuilder, createPlanBuilder}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.java.Java
 import org.apache.wayang.postgres.Postgres
@@ -477,7 +477,7 @@ class OperatorSerializationTests extends SerializationTestBase {
     }
 
     // Set up WayangContext.
-    val wayang = new BlossomContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
+    val wayang = new MultiContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
 
     // Build plan
     val dq = wayang
@@ -500,7 +500,7 @@ class OperatorSerializationTests extends SerializationTestBase {
     configuration.setProperty("wayang.postgres.jdbc.password", "1234")
 
     // Set up WayangContext.
-    val wayang = new BlossomContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Postgres.plugin)
+    val wayang = new MultiContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Postgres.plugin)
 
     // Build plan
     val dq = wayang

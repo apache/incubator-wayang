@@ -19,7 +19,7 @@
 package org.apache.wayang.api.async
 
 import org.apache.wayang.api.serialization.TempFileUtils
-import org.apache.wayang.api.{BlossomContext, PlanBuilder}
+import org.apache.wayang.api.{MultiContext, PlanBuilder}
 import org.apache.wayang.basic.operators.{ObjectFileSink, TextFileSink}
 import org.apache.wayang.core.api.exception.WayangException
 import org.apache.wayang.core.plan.wayangplan.{Operator, WayangPlan}
@@ -52,7 +52,7 @@ object Main {
     val planBuilder = TempFileUtils.readFromTempFileFromString[PlanBuilder](planBuilderPath)
 
     // Get context
-    val context = planBuilder.wayangContext.asInstanceOf[BlossomContext]
+    val context = planBuilder.wayangContext.asInstanceOf[MultiContext]
 
     // Get udf jars
     val udfJars = planBuilder.udfJars
@@ -63,10 +63,10 @@ object Main {
 
     // Connect to sink and execute plan
     context.getSink match {
-      case Some(textFileSink: BlossomContext.TextFileSink) =>
+      case Some(textFileSink: MultiContext.TextFileSink) =>
         connectToSinkAndExecutePlan(new TextFileSink(textFileSink.url, outType))
 
-      case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
+      case Some(objectFileSink: MultiContext.ObjectFileSink) =>
         connectToSinkAndExecutePlan(new ObjectFileSink(objectFileSink.url, outType))
 
       case None =>

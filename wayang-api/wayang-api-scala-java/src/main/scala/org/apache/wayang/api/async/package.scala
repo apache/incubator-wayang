@@ -54,17 +54,17 @@ package object async {
    * @param url        the URL of the text file to write the output to
    * @tparam Out the type of the output DataQuanta
    * @return a Future representing the completion of the execution
-   * @throws WayangException if the WayangContext is not of type BlossomContext
+   * @throws WayangException if the WayangContext is not of type MultiContext
    */
   def runAsyncWithTextFileOut[Out: ClassTag](dataQuanta: DataQuanta[Out], url: String): Future[Unit] = {
-    // Add sink to blossom context and then pass to runAsyncBody
+    // Add sink to multi context and then pass to runAsyncBody
     val wayangContext = dataQuanta.planBuilder.wayangContext
     wayangContext match {
-      case context: BlossomContext =>
+      case context: MultiContext =>
         val updatedContext = context.withTextFileSink(url)
         runAsyncBody(dataQuanta, updatedContext)
       case _ =>
-        throw new WayangException("WayangContext is not of type BlossomContext")
+        throw new WayangException("WayangContext is not of type MultiContext")
     }
   }
 
@@ -76,22 +76,22 @@ package object async {
    * @param url        the URL of the object file to write the output to
    * @tparam Out the type parameter for the output DataQuanta
    * @return a Future that represents the execution of the DataQuanta
-   * @throws WayangException if the WayangContext is not of type BlossomContext
+   * @throws WayangException if the WayangContext is not of type MultiContext
    */
   def runAsyncWithObjectFileOut[Out: ClassTag](dataQuanta: DataQuanta[Out], url: String): Future[Unit] = {
-    // Add sink to blossom context and then pass to runAsyncBody
+    // Add sink to multi context and then pass to runAsyncBody
     val wayangContext = dataQuanta.planBuilder.wayangContext
     wayangContext match {
-      case context: BlossomContext =>
+      case context: MultiContext =>
         val updatedContext = context.withObjectFileSink(url)
         runAsyncBody(dataQuanta, updatedContext)
       case _ =>
-        throw new WayangException("WayangContext is not of type BlossomContext")
+        throw new WayangException("WayangContext is not of type MultiContext")
     }
   }
 
 
-  def runAsyncBody[Out: ClassTag](dataQuanta: DataQuanta[Out], blossomContext: BlossomContext): Future[Unit] = Future {
+  def runAsyncBody[Out: ClassTag](dataQuanta: DataQuanta[Out], multiContext: MultiContext): Future[Unit] = Future {
 
     import scala.concurrent.blocking
 

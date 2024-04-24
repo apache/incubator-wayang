@@ -23,40 +23,40 @@ import com.fasterxml.jackson.core.{JsonGenerator, JsonProcessingException}
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import org.apache.wayang.api.BlossomContext
+import org.apache.wayang.api.MultiContext
 
 import java.io.IOException
 
 
-class BlossomContextSerializer extends StdSerializer[BlossomContext](classOf[BlossomContext]) {
+class MultiContextSerializer extends StdSerializer[MultiContext](classOf[MultiContext]) {
 
-  override def serializeWithType(value: BlossomContext, gen: JsonGenerator, serializers: SerializerProvider, typeSer: TypeSerializer): Unit = {
+  override def serializeWithType(value: MultiContext, gen: JsonGenerator, serializers: SerializerProvider, typeSer: TypeSerializer): Unit = {
     this.serialize(value, gen, serializers)
   }
 
   @throws[IOException]
   @throws[JsonProcessingException]
-  def serialize(blossomContext: BlossomContext, jsonGenerator: JsonGenerator, serializerProvider: SerializerProvider): Unit = {
+  def serialize(multiContext: MultiContext, jsonGenerator: JsonGenerator, serializerProvider: SerializerProvider): Unit = {
     jsonGenerator.writeStartObject()
 
     // Use default serialization for the 'configuration' field
     jsonGenerator.writeFieldName("configuration")
-    serializerProvider.defaultSerializeValue(blossomContext.getConfiguration, jsonGenerator)
+    serializerProvider.defaultSerializeValue(multiContext.getConfiguration, jsonGenerator)
 
     // Use default serialization for the 'sink' field
     jsonGenerator.writeFieldName("sink")
-    blossomContext.getSink match {
+    multiContext.getSink match {
       case Some(sink) => serializerProvider.defaultSerializeValue(sink, jsonGenerator)
       case None => jsonGenerator.writeNull()
     }
 
     // Serialize the plugins list as an array of strings
     jsonGenerator.writeArrayFieldStart("plugins")
-    blossomContext.getPlugins.foreach(plugin => jsonGenerator.writeString(plugin))
+    multiContext.getPlugins.foreach(plugin => jsonGenerator.writeString(plugin))
     jsonGenerator.writeEndArray()
 
     // Write the type of the context
-    jsonGenerator.writeStringField("@type", "BlossomContext")
+    jsonGenerator.writeStringField("@type", "MultiContext")
 
     jsonGenerator.writeEndObject()
   }

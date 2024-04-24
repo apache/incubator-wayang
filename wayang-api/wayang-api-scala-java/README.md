@@ -1,6 +1,6 @@
 # Wayang scala-java API
 
-Blossom provides two options for performing multiple asynchronous tasks - `async` API and `multicontext` API. 
+Wayang provides two options for performing multiple asynchronous tasks - `async` API and `multicontext` API. 
 
 The above examples can be found in the `async.apps` package and the `multicontext.apps` package in wayang-benchmark.
 
@@ -10,7 +10,7 @@ Our example shows how to utilize the `async` API with an example program contain
 ```scala
 import org.apache.wayang.api.async.DataQuantaImplicits._
 import org.apache.wayang.api.async.PlanBuilderImplicits._
-import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder}
+import org.apache.wayang.api.{MultiContext, DataQuanta, PlanBuilder}
 import org.apache.wayang.java.Java
 
 import scala.concurrent.Await
@@ -19,9 +19,9 @@ import scala.concurrent.duration.Duration
 object Example {
 
   def main(args: Array[String]): Unit = {
-    val planBuilder1 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
-    val planBuilder2 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
-    val planBuilder3 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
+    val planBuilder1 = new PlanBuilder(new MultiContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
+    val planBuilder2 = new PlanBuilder(new MultiContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
+    val planBuilder3 = new PlanBuilder(new MultiContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
 
     // Async job 1
     val result1 = planBuilder1
@@ -34,7 +34,7 @@ object Example {
       .loadCollection(List(6, 7, 8, 9, 10))
       .filter(_ <= 8)
       .runAsync(tempFileOut = "file:///tmp/out2.temp")
-    
+
     // Async job 3 which merges 1 and 2
     val dq1: DataQuanta[Int] = planBuilder1.loadAsync(result1)
     val dq2: DataQuanta[Int] = planBuilder1.loadAsync(result2)
@@ -82,7 +82,7 @@ The examples below demonstrate the capabilities of the multi context api.
 ### Basic usage
 
 ```scala
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
+import org.apache.wayang.api.{MultiContext, MultiContextPlanBuilder}
 import org.apache.wayang.core.api.Configuration
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
@@ -99,12 +99,12 @@ object WordCount {
     val configuration1 = new Configuration()
     val configuration2 = new Configuration()
 
-    val context1 = new BlossomContext(configuration1)
-       .withPlugin(Java.basicPlugin())
-       .withTextFileSink("file:///tmp/out11")
-    val context2 = new BlossomContext(configuration2)
-       .withPlugin(Spark.basicPlugin())
-       .withTextFileSink("file:///tmp/out12")
+    val context1 = new MultiContext(configuration1)
+      .withPlugin(Java.basicPlugin())
+      .withTextFileSink("file:///tmp/out11")
+    val context2 = new MultiContext(configuration2)
+      .withPlugin(Spark.basicPlugin())
+      .withTextFileSink("file:///tmp/out12")
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(this.getClass)
@@ -142,7 +142,7 @@ multiContextPlanBuilder
 ### Target platforms
 
 ```scala
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
+import org.apache.wayang.api.{MultiContext, MultiContextPlanBuilder}
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 
@@ -152,16 +152,16 @@ object WordCountWithTargetPlatforms {
     val configuration1 = new Configuration()
     val configuration2 = new Configuration()
 
-    val context1 = new BlossomContext(configuration1)
+    val context1 = new MultiContext(configuration1)
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out11")
-    val context2 = new BlossomContext(configuration2)
+    val context2 = new MultiContext(configuration2)
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out12")
 
-     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
+    val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(this.getClass)
 
     // Generate some test data
@@ -221,7 +221,7 @@ the `reduceByKey` operator will be executed on spark for `context1` and on the d
 ### Merge
 
 ```scala
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder}
+import org.apache.wayang.api.{MultiContext, MultiContextPlanBuilder}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
@@ -232,12 +232,12 @@ object WordCountWithMerge {
     val configuration1 = new Configuration()
     val configuration2 = new Configuration()
 
-    val context1 = new BlossomContext(configuration1)
+    val context1 = new MultiContext(configuration1)
       .withPlugin(Java.basicPlugin())
-      .withMergeFileSink("file:///tmp/out11")   // The mergeContext will read the output of context 1 from here
-    val context2 = new BlossomContext(configuration2)
+      .withMergeFileSink("file:///tmp/out11") // The mergeContext will read the output of context 1 from here
+    val context2 = new MultiContext(configuration2)
       .withPlugin(Java.basicPlugin())
-      .withMergeFileSink("file:///tmp/out12")   // The mergeContext will read the output of context 2 from here
+      .withMergeFileSink("file:///tmp/out12") // The mergeContext will read the output of context 2 from here
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(this.getClass)
@@ -299,7 +299,7 @@ The rest of the execution happens at the merge context and is a now single job.
 ### Combine each
 
 ```scala
-import org.apache.wayang.api.{BlossomContext, DataQuanta, MultiContextPlanBuilder}
+import org.apache.wayang.api.{MultiContext, DataQuanta, MultiContextPlanBuilder}
 import org.apache.wayang.java.Java
 
 object WordCountCombineEach {
@@ -308,10 +308,10 @@ object WordCountCombineEach {
     val configuration1 = new Configuration()
     val configuration2 = new Configuration()
 
-    val context1 = new BlossomContext(configuration1)
+    val context1 = new MultiContext(configuration1)
       .withPlugin(Java.basicPlugin())
       .withTextFileSink("file:///tmp/out11")
-    val context2 = new BlossomContext(configuration2)
+    val context2 = new MultiContext(configuration2)
       .withPlugin(Java.basicPlugin())
       .withTextFileSink("file:///tmp/out12")
 

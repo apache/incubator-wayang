@@ -21,7 +21,7 @@ package org.apache.wayang.async.apps
 
 import org.apache.wayang.api.async.DataQuantaImplicits._
 import org.apache.wayang.api.async.PlanBuilderImplicits._
-import org.apache.wayang.api.{BlossomContext, DataQuanta, PlanBuilder}
+import org.apache.wayang.api.{MultiContext, DataQuanta, PlanBuilder}
 import org.apache.wayang.java.Java
 
 import scala.concurrent.Await
@@ -34,9 +34,9 @@ object WordCount {
     println("Scala version:")
     println(scala.util.Properties.versionString)
 
-    val planBuilder1 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
-    val planBuilder2 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
-    val planBuilder3 = new PlanBuilder(new BlossomContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
+    val planBuilder1 = new PlanBuilder(new MultiContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
+    val planBuilder2 = new PlanBuilder(new MultiContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
+    val planBuilder3 = new PlanBuilder(new MultiContext().withPlugin(Java.basicPlugin())).withUdfJarsOf(this.getClass)
 
     val result1 = planBuilder1
       .loadCollection(List(1, 2, 3, 4, 5))

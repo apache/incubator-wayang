@@ -63,7 +63,7 @@ class MultiContextDataQuanta[Out: ClassTag](private val dataQuantaMap: Map[Long,
 
 
   /**
-   * Restrict the [[Operator]] of each [[BlossomContext]] to run on certain [[Platform]]s.
+   * Restrict the [[Operator]] of each [[MultiContext]] to run on certain [[Platform]]s.
    *
    * @param platforms on that the [[Operator]] may be executed
    * @return this instance
@@ -74,15 +74,15 @@ class MultiContextDataQuanta[Out: ClassTag](private val dataQuantaMap: Map[Long,
 
 
   /**
-   * Restrict the [[Operator]] of specified [[BlossomContext]] to run on certain [[Platform]]s.
+   * Restrict the [[Operator]] of specified [[MultiContext]] to run on certain [[Platform]]s.
    *
-   * @param blossomContext the [[BlossomContext]] to restrict
-   * @param platforms on that the [[Operator]] may be executed
+   * @param multiContext the [[MultiContext]] to restrict
+   * @param platforms      on that the [[Operator]] may be executed
    * @return this instance
    */
-  def withTargetPlatforms(blossomContext: BlossomContext, platforms: Platform*): MultiContextDataQuanta[Out] = {
-    val updatedDataQuanta = dataQuantaMap(blossomContext.id).withTargetPlatforms(platforms: _*)
-    val updatedDataQuantaMap = dataQuantaMap.updated(blossomContext.id, updatedDataQuanta)
+  def withTargetPlatforms(multiContext: MultiContext, platforms: Platform*): MultiContextDataQuanta[Out] = {
+    val updatedDataQuanta = dataQuantaMap(multiContext.id).withTargetPlatforms(platforms: _*)
+    val updatedDataQuantaMap = dataQuantaMap.updated(multiContext.id, updatedDataQuanta)
     new MultiContextDataQuanta[Out](updatedDataQuantaMap)(this.multiContextPlanBuilder)
   }
 
@@ -95,19 +95,19 @@ class MultiContextDataQuanta[Out: ClassTag](private val dataQuantaMap: Map[Long,
    */
   def execute(timeout: Duration = Duration.Inf): Unit = {
 
-    val asyncResults = multiContextPlanBuilder.blossomContexts.map(blossomContext => {
+    val asyncResults = multiContextPlanBuilder.multiContexts.map(multiContext => {
 
-      // For each blossomContext get its corresponding dataQuanta
-      val dataQuanta = dataQuantaMap(blossomContext.id)
+      // For each multiContext get its corresponding dataQuanta
+      val dataQuanta = dataQuantaMap(multiContext.id)
 
-      blossomContext.getSink match {
+      multiContext.getSink match {
 
         // Execute plan asynchronously
-        case Some(textFileSink: BlossomContext.TextFileSink) =>
+        case Some(textFileSink: MultiContext.TextFileSink) =>
           dataQuanta.writeTextFileAsync(textFileSink.url)
 
         // Execute plan asynchronously
-        case Some(objectFileSink: BlossomContext.ObjectFileSink) =>
+        case Some(objectFileSink: MultiContext.ObjectFileSink) =>
           dataQuanta.writeObjectFileAsync(objectFileSink.url)
 
         case None =>
@@ -136,16 +136,16 @@ class MultiContextDataQuanta[Out: ClassTag](private val dataQuantaMap: Map[Long,
   def mergeUnion(mergeContext: WayangContext, timeout: Duration = Duration.Inf): DataQuanta[Out] = {
 
     // Execute plans asynchronously
-    val asyncResults = multiContextPlanBuilder.blossomContexts.map(blossomContext => {
+    val asyncResults = multiContextPlanBuilder.multiContexts.map(multiContext => {
 
-      // For each blossomContext get its corresponding dataQuanta
-      val dataQuanta = dataQuantaMap(blossomContext.id)
+      // For each multiContext get its corresponding dataQuanta
+      val dataQuanta = dataQuantaMap(multiContext.id)
 
-      // Get the sink of the blossomContext (it should be a merge sink)
-      blossomContext.getSink match {
+      // Get the sink of the multiContext (it should be a merge sink)
+      multiContext.getSink match {
 
         // And execute plan asynchronously
-        case Some(mergeFileSink: BlossomContext.MergeFileSink) =>
+        case Some(mergeFileSink: MultiContext.MergeFileSink) =>
           dataQuanta.runAsync(mergeFileSink.url)
 
         case None =>

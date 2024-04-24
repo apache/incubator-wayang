@@ -19,7 +19,7 @@
 
 package org.apache.wayang.api.serialization
 
-import org.apache.wayang.api.{BlossomContext, MultiContextPlanBuilder, PlanBuilder, createPlanBuilder, toCardinalityEstimator, toLoadEstimator}
+import org.apache.wayang.api.{MultiContext, MultiContextPlanBuilder, PlanBuilder, createPlanBuilder, toCardinalityEstimator, toLoadEstimator}
 import org.apache.wayang.basic.operators.{MapOperator, TextFileSink}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.optimizer.costs._
@@ -36,11 +36,11 @@ import java.nio.file.{Files, Paths}
 class OtherSerializationTests extends SerializationTestBase {
 
   @Test
-  def blossomContextSerializationTest(): Unit = {
+  def multiContextSerializationTest(): Unit = {
     val configuration = new Configuration()
     configuration.setProperty("spark.master", "random_master_url_1")
     configuration.setProperty("spark.app.name", "random_app_name_2")
-    val blossomContext = new BlossomContext(configuration).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
+    val multiContext = new MultiContext(configuration).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
 
     try {
       val serializedConfiguration = SerializationUtils.serialize(configuration)
@@ -48,12 +48,12 @@ class OtherSerializationTests extends SerializationTestBase {
       Assert.assertEquals(deserializedConfiguration.getStringProperty("spark.master"), "random_master_url_1")
       Assert.assertEquals(deserializedConfiguration.getStringProperty("spark.app.name"), "random_app_name_2")
 
-      val serializedBlossomContext = SerializationUtils.serialize(blossomContext)
-      val deserializedBlossomContext = SerializationUtils.deserialize[BlossomContext](serializedBlossomContext)
-      Assert.assertEquals(deserializedBlossomContext.getConfiguration.getStringProperty("spark.master"), "random_master_url_1")
-      Assert.assertEquals(deserializedBlossomContext.getConfiguration.getStringProperty("spark.app.name"), "random_app_name_2")
-      Assert.assertEquals(deserializedBlossomContext.getSink.get.asInstanceOf[BlossomContext.TextFileSink].url, "file:///tmp/out11")
-      Assert.assertArrayEquals(blossomContext.getConfiguration.getPlatformProvider.provideAll().toArray, deserializedBlossomContext.getConfiguration.getPlatformProvider.provideAll().toArray)
+      val serializedMultiContext = SerializationUtils.serialize(multiContext)
+      val deserializedMultiContext = SerializationUtils.deserialize[MultiContext](serializedMultiContext)
+      Assert.assertEquals(deserializedMultiContext.getConfiguration.getStringProperty("spark.master"), "random_master_url_1")
+      Assert.assertEquals(deserializedMultiContext.getConfiguration.getStringProperty("spark.app.name"), "random_app_name_2")
+      Assert.assertEquals(deserializedMultiContext.getSink.get.asInstanceOf[MultiContext.TextFileSink].url, "file:///tmp/out11")
+      Assert.assertArrayEquals(multiContext.getConfiguration.getPlatformProvider.provideAll().toArray, deserializedMultiContext.getConfiguration.getPlatformProvider.provideAll().toArray)
     } catch {
       case t: Throwable =>
         t.printStackTrace()
@@ -67,7 +67,7 @@ class OtherSerializationTests extends SerializationTestBase {
     val configuration1 = new Configuration()
     configuration1.setProperty("spark.master", "master1")
 
-    val context1 = new BlossomContext(configuration1).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
+    val context1 = new MultiContext(configuration1).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
 
     val planBuilder = new PlanBuilder(context1)
       .withUdfJarsOf(classOf[OtherSerializationTests])
@@ -83,11 +83,11 @@ class OtherSerializationTests extends SerializationTestBase {
         deserialized.udfJars
       )
       Assert.assertEquals(
-        deserialized.wayangContext.asInstanceOf[BlossomContext].getConfiguration.getStringProperty("spark.master"),
+        deserialized.wayangContext.asInstanceOf[MultiContext].getConfiguration.getStringProperty("spark.master"),
         "master1"
       )
       Assert.assertEquals(
-        deserialized.wayangContext.asInstanceOf[BlossomContext].getSink.get.asInstanceOf[BlossomContext.TextFileSink].url,
+        deserialized.wayangContext.asInstanceOf[MultiContext].getSink.get.asInstanceOf[MultiContext.TextFileSink].url,
         "file:///tmp/out11"
       )
     }
@@ -106,8 +106,8 @@ class OtherSerializationTests extends SerializationTestBase {
     val configuration2 = new Configuration()
     configuration2.setProperty("spark.master", "master2")
 
-    val context1 = new BlossomContext(configuration1).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
-    val context2 = new BlossomContext(configuration2).withPlugin(Spark.basicPlugin()).withObjectFileSink("file:///tmp/out12")
+    val context1 = new MultiContext(configuration1).withPlugin(Spark.basicPlugin()).withTextFileSink("file:///tmp/out11")
+    val context2 = new MultiContext(configuration2).withPlugin(Spark.basicPlugin()).withObjectFileSink("file:///tmp/out12")
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(classOf[OtherSerializationTests])
@@ -123,19 +123,19 @@ class OtherSerializationTests extends SerializationTestBase {
         deserialized.udfJars
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.blossomContexts(0).getConfiguration.getStringProperty("spark.master"),
+        multiContextPlanBuilder.multiContexts(0).getConfiguration.getStringProperty("spark.master"),
         "master1"
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.blossomContexts(1).getConfiguration.getStringProperty("spark.master"),
+        multiContextPlanBuilder.multiContexts(1).getConfiguration.getStringProperty("spark.master"),
         "master2"
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.blossomContexts(0).getSink.get.asInstanceOf[BlossomContext.TextFileSink].url,
+        multiContextPlanBuilder.multiContexts(0).getSink.get.asInstanceOf[MultiContext.TextFileSink].url,
         "file:///tmp/out11"
       )
       Assert.assertEquals(
-        multiContextPlanBuilder.blossomContexts(1).getSink.get.asInstanceOf[BlossomContext.ObjectFileSink].url,
+        multiContextPlanBuilder.multiContexts(1).getSink.get.asInstanceOf[MultiContext.ObjectFileSink].url,
         "file:///tmp/out12"
       )
     }
@@ -187,11 +187,11 @@ class OtherSerializationTests extends SerializationTestBase {
   def multiDataQuantaExecuteTest(): Unit = {
 
     try {
-      // Create blossom contexts
+      // Create multi contexts
       val out1 = Files.createTempFile("out1", "tmp").toString
       val out2 = Files.createTempFile("out2", "tmp").toString
-      val context1 = new BlossomContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink(s"file://$out1")
-      val context2 = new BlossomContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink(s"file://$out2")
+      val context1 = new MultiContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink(s"file://$out1")
+      val context2 = new MultiContext(new Configuration()).withPlugin(Java.basicPlugin()).withTextFileSink(s"file://$out2")
 
       // Create multiContextPlanBuilder
       val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
