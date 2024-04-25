@@ -28,7 +28,7 @@ import _root_.java.util.{Collection => JavaCollection}
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators._
-import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.function._
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator
@@ -239,7 +239,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                     seed: Option[Long] = None,
                     sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
     this.sampleDynamicJava(
-      new IntUnaryOperator {
+      new SerializableIntUnaryOperator {
         override def applyAsInt(operand: Int): Int = sampleSizeFunction(operand)
       },
       datasetSize,
@@ -256,7 +256,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param sampleMethod       the [[SampleOperator.Methods]] to use for sampling
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */
-  def sampleDynamicJava(sampleSizeFunction: IntUnaryOperator,
+  def sampleDynamicJava(sampleSizeFunction: SerializableIntUnaryOperator,
                         datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
                         seed: Option[Long] = None,
                         sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {

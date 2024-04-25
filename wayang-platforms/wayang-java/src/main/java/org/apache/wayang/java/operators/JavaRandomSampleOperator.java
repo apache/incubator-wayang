@@ -19,6 +19,7 @@
 package org.apache.wayang.java.operators;
 
 import org.apache.wayang.basic.operators.SampleOperator;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -55,7 +56,7 @@ public class JavaRandomSampleOperator<Type>
      *
      * @param sampleSizeFunction udf-based size of sample
      */
-    public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seedFunction) {
+    public JavaRandomSampleOperator(FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction, DataSetType<Type> type, FunctionDescriptor.SerializableLongUnaryOperator seedFunction) {
         super(sampleSizeFunction, type, Methods.RANDOM, seedFunction);
     }
 

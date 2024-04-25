@@ -19,6 +19,7 @@
 package org.apache.wayang.core.optimizer.costs;
 
 import org.apache.commons.lang3.Validate;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 
@@ -41,7 +42,7 @@ public class DefaultLoadEstimator extends LoadEstimator {
     public DefaultLoadEstimator(int numInputs,
                                 int numOutputs,
                                 double correctnessProbability,
-                                ToLongBiFunction<long[], long[]> singlePointFunction) {
+                                FunctionDescriptor.SerializableToLongBiFunction<long[], long[]> singlePointFunction) {
         this(numInputs, numOutputs, correctnessProbability, null, singlePointFunction);
     }
 
@@ -49,7 +50,7 @@ public class DefaultLoadEstimator extends LoadEstimator {
                                 int numOutputs,
                                 double correctnessProbability,
                                 CardinalityEstimate nullCardinalityReplacement,
-                                ToLongBiFunction<long[], long[]> singlePointFunction) {
+                                FunctionDescriptor.SerializableToLongBiFunction<long[], long[]> singlePointFunction) {
         this(
                 numInputs, numOutputs, correctnessProbability, nullCardinalityReplacement,
                 (context, inputEstimates, outputEstimates) -> singlePointFunction.applyAsLong(inputEstimates, outputEstimates)

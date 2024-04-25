@@ -29,7 +29,7 @@ import org.apache.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.apache.wayang.basic.data.{Record, Tuple2 => RT2}
 import org.apache.wayang.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
-import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator
 import org.apache.wayang.core.optimizer.costs.{LoadEstimator, LoadProfile, LoadProfileEstimator}
@@ -187,7 +187,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @param sampleSize the absolute size of the sample
     * @return a [[SampleDataQuantaBuilder]]
     */
-  def sample(sampleSize: Int): SampleDataQuantaBuilder[Out] = this.sample(new IntUnaryOperator {
+  def sample(sampleSize: Int): SampleDataQuantaBuilder[Out] = this.sample(new SerializableIntUnaryOperator {
     override def applyAsInt(operand: Int): Int = sampleSize
   })
 
@@ -198,7 +198,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
     * @return a [[SampleDataQuantaBuilder]]
     */
-  def sample(sampleSizeFunction: IntUnaryOperator) = new SampleDataQuantaBuilder[Out](this, sampleSizeFunction)
+  def sample(sampleSizeFunction: SerializableIntUnaryOperator) = new SampleDataQuantaBuilder[Out](this, sampleSizeFunction)
 
   /**
     * Annotates a key to this instance.
@@ -936,7 +936,7 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
   * @param inputDataQuanta    [[DataQuantaBuilder]] for the input [[DataQuanta]]
   * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
   */
-class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampleSizeFunction: IntUnaryOperator)
+class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampleSizeFunction: SerializableIntUnaryOperator)
                                 (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[SampleDataQuantaBuilder[T], T] {
 
