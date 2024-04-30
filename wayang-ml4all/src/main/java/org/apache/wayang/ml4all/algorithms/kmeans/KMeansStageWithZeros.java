@@ -19,7 +19,7 @@
 package org.apache.wayang.ml4all.algorithms.kmeans;
 
 import org.apache.wayang.ml4all.abstraction.api.LocalStage;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 
 public class KMeansStageWithZeros extends LocalStage {
 
@@ -31,11 +31,11 @@ public class KMeansStageWithZeros extends LocalStage {
     }
 
     @Override
-    public void staging (ML4allGlobalVars context) {
+    public void staging (ML4allModel model) {
         double[][] centers = new double[k][];
         for (int i = 0; i < k; i++) {
             centers[i] = new double[dimension];
         }
-        context.put("centers", centers);
+        model.put("centers", centers);
     }
 }

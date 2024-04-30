@@ -19,7 +19,7 @@
 package org.apache.wayang.ml4all.algorithms.sgd;
 
 import org.apache.wayang.ml4all.abstraction.api.UpdateLocal;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 
 public class WeightsUpdate extends UpdateLocal<double[], double[]> {
 
@@ -37,10 +37,10 @@ public class WeightsUpdate extends UpdateLocal<double[], double[]> {
     }
 
     @Override
-    public double[] process(double[] input, ML4allGlobalVars context) {
-        double[] weights = (double[]) context.getByKey("weights");
+    public double[] process(double[] input, ML4allModel model) {
+        double[] weights = (double[]) model.getByKey("weights");
         double count = input[0];
-        int current_iteration = (int) context.getByKey("iter");
+        int current_iteration = (int) model.getByKey("iter");
         double alpha = stepSize / current_iteration;
         double[] newWeights = new double[weights.length];
         for (int j = 0; j < weights.length; j++) {
@@ -50,11 +50,11 @@ public class WeightsUpdate extends UpdateLocal<double[], double[]> {
     }
 
     @Override
-    public ML4allGlobalVars assign(double[] input, ML4allGlobalVars context) {
-        context.put("weights", input);
-        int iteration = (int) context.getByKey("iter");
-        context.put("iter", ++iteration);
-        return context;
+    public ML4allModel assign(double[] input, ML4allModel model) {
+        model.put("weights", input);
+        int iteration = (int) model.getByKey("iter");
+        model.put("iter", ++iteration);
+        return model;
     }
 
 

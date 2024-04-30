@@ -21,17 +21,13 @@ package org.apache.wayang.ml4all.examples;
 
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.java.Java;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 import org.apache.wayang.ml4all.abstraction.plan.ML4allPlan;
-import org.apache.wayang.ml4all.abstraction.plan.Platforms;
 import org.apache.wayang.ml4all.algorithms.kmeans.*;
 import org.apache.wayang.spark.Spark;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Arrays;
-
-import static org.apache.wayang.ml4all.abstraction.plan.Platforms.*;
 
 public class RunKMeans {
 
@@ -78,8 +74,8 @@ public class RunKMeans {
         plan.setUpdateOp(new KMeansUpdate());
         plan.setLoopOp(new KMeansConvergeOrMaxIterationsLoop(accuracy, maxIterations));
 
-        ML4allGlobalVars context = plan.execute(file, wayangContext);
-        System.out.println("Centers:" + Arrays.deepToString((double [][])context.getByKey("centers")));
+        ML4allModel ml4allModel = plan.execute(file, wayangContext);
+        System.out.println("Centers:" + Arrays.deepToString((double [][])ml4allModel.getByKey("centers")));
 
         System.out.println("Total time: " + (System.currentTimeMillis() - start_time));
     }

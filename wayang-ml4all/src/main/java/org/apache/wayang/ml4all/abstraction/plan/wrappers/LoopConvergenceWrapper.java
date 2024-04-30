@@ -20,7 +20,7 @@ package org.apache.wayang.ml4all.abstraction.plan.wrappers;
 
 import org.apache.wayang.ml4all.abstraction.api.Loop;
 
-public class LoopConvergenceWrapper<R, V> extends LogicalOperatorWrapperWithContext<R, V> {
+public class LoopConvergenceWrapper<R, V> extends LogicalOperatorWrapperWithModel<R, V> {
 
     Loop<R, V> logOp;
 
@@ -30,7 +30,7 @@ public class LoopConvergenceWrapper<R, V> extends LogicalOperatorWrapperWithCont
 
     @Override
     public R apply(V o) {
-        return this.logOp.prepareConvergenceDataset(o, context);
+        return this.logOp.prepareConvergenceDataset(o, ml4allModel);
     }
 
     @Override

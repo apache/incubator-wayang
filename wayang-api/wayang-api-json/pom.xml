@@ -122,88 +122,6 @@
       <version>2.13.1</version>
     </dependency>
 
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <version>2.13.1</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.13.1</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.http4s/http4s-dsl -->
-    <dependency>
-      <groupId>org.http4s</groupId>
-      <artifactId>http4s-dsl_2.12</artifactId>
-      <version>1.0.0-M30</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.typelevel</groupId>
-          <artifactId>cats-core_2.12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.typelevel</groupId>
-          <artifactId>cats-kernel_2.12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.typelevel</groupId>
-          <artifactId>cats-effect-std_2.12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.typelevel</groupId>
-          <artifactId>cats-effect_2.12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.typelevel</groupId>
-          <artifactId>cats-effect-kernel_2.12</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.http4s/http4s-blaze-server -->
-    <dependency>
-      <groupId>org.http4s</groupId>
-      <artifactId>http4s-blaze-server_2.12</artifactId>
-      <version>1.0.0-M30</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.http4s/http4s-ember-client -->
-    <dependency>
-      <groupId>org.http4s</groupId>
-      <artifactId>http4s-ember-client_2.12</artifactId>
-      <version>1.0.0-M30</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.http4s/http4s-ember-server -->
-    <dependency>
-      <groupId>org.http4s</groupId>
-      <artifactId>http4s-ember-server_2.12</artifactId>
-      <version>1.0.0-M30</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.http4s/http4s-circe -->
-    <dependency>
-      <groupId>org.http4s</groupId>
-      <artifactId>http4s-circe_2.12</artifactId>
-      <version>1.0.0-M30</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/io.circe/circe-generic -->
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-generic_2.12</artifactId>
-      <version>0.14.3</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.typelevel/cats-core -->
-    <!--dependency>
-        <groupId>org.typelevel</groupId>
-        <artifactId>cats-core_2.12</artifactId>
-        <version>2.7.0</version>
-    </dependency-->
 
     <!-- https://mvnrepository.com/artifact/dev.zio/zio-http -->
     <dependency>
@@ -241,7 +159,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <version>4.13.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -298,45 +216,6 @@
           </archive>
         </configuration>
       </plugin>
-
-      <!--plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.0</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <transformers>
-                <transformer
-                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                  <resource>reference.conf</resource>
-                </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <manifestEntries>
-                    <Multi-Release>true</Multi-Release>
-                  </manifestEntries>
-                </transformer>
-              </transformers>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                  </excludes>
-                </filter>
-              </filters>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin-->
-
     </plugins>
-
   </build>
 </project>

@@ -23,7 +23,7 @@ import org.apache.wayang.ml4all.abstraction.api.Compute;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ComputePerPartitionWrapper<R, V> extends LogicalOperatorWrapperWithContext<Iterable<R>, Iterable<V>> {
+public class ComputePerPartitionWrapper<R, V> extends LogicalOperatorWrapperWithModel<Iterable<R>, Iterable<V>> {
 
     Compute<R, V> logOp;
 
@@ -36,7 +36,7 @@ public class ComputePerPartitionWrapper<R, V> extends LogicalOperatorWrapperWith
     @Override
     public Iterable<R> apply(Iterable<V> o) {
         List<R> list = new ArrayList<>(1);
-        o.forEach(p -> sumOfPartition = this.logOp.process(p, context));
+        o.forEach(p -> sumOfPartition = this.logOp.process(p, ml4allModel));
         list.add(sumOfPartition);
         return list;
     }
