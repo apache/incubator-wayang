@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@Deprecated
 public class SparkModelTransformOperator<X, Y> extends ModelTransformOperator<X, Y> implements SparkExecutionOperator {
 
     public SparkModelTransformOperator(DataSetType<X> inType, DataSetType<Tuple2<X, Y>> outType) {

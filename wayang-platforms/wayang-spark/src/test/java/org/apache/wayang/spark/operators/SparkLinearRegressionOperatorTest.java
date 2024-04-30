@@ -18,14 +18,13 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.LinearRegressionModel;
-import org.apache.wayang.basic.operators.ModelTransformOperator;
+import org.apache.wayang.basic.operators.PredictOperators;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.operators.ml.SparkLinearRegressionOperator;
-import org.apache.wayang.spark.operators.ml.SparkModelTransformOperator;
+import org.apache.wayang.spark.operators.ml.SparkPredictOperator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,10 +35,14 @@ import java.util.List;
 public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
 
     // y = x1 + x2 + 1
-    public static List<Tuple2<double[], Double>> trainingData = Arrays.asList(
-            new Tuple2<>(new double[]{1, 1}, 3D),
-            new Tuple2<>(new double[]{1, -1}, 1D),
-            new Tuple2<>(new double[]{3, 2}, 6D)
+    public static List<double[]> trainingX = Arrays.asList(
+            new double[]{1, 1},
+            new double[]{1, -1},
+            new double[]{3, 2}
+    );
+
+    public static List<Double> trainingY = Arrays.asList(
+            3D, 1D, 6D
     );
 
     public static List<double[]> inferenceData = Arrays.asList(
@@ -49,13 +52,14 @@ public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
 
     public LinearRegressionModel getModel() {
         // Prepare test data.
-        RddChannel.Instance input = this.createRddChannelInstance(trainingData);
+        RddChannel.Instance x = this.createRddChannelInstance(trainingX);
+        RddChannel.Instance y = this.createRddChannelInstance(trainingY);
         CollectionChannel.Instance output = this.createCollectionChannelInstance();
 
         SparkLinearRegressionOperator linearRegressionOperator = new SparkLinearRegressionOperator(true);
 
         // Set up the ChannelInstances.
-        ChannelInstance[] inputs = new ChannelInstance[]{input};
+        ChannelInstance[] inputs = new ChannelInstance[]{x, y};
         ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
@@ -79,19 +83,19 @@ public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
         RddChannel.Instance input2 = this.createRddChannelInstance(inferenceData);
         RddChannel.Instance output = this.createRddChannelInstance();
 
-        SparkModelTransformOperator<double[], Double> transformOperator = new SparkModelTransformOperator<>(ModelTransformOperator.linearRegression());
+        SparkPredictOperator<double[], Double> predictOperator = new SparkPredictOperator<>(PredictOperators.linearRegression());
 
         // Set up the ChannelInstances.
         ChannelInstance[] inputs = new ChannelInstance[]{input1, input2};
         ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        this.evaluate(transformOperator, inputs, outputs);
+        this.evaluate(predictOperator, inputs, outputs);
 
         // Verify the outcome.
-        final List<Tuple2<double[], Double>> results = output.<Tuple2<double[], Double>>provideRdd().collect();
+        final List<Double> results = output.<Double>provideRdd().collect();
         Assert.assertEquals(2, results.size());
-        Assert.assertEquals(4, results.get(0).field1, 1e-6);
-        Assert.assertEquals(0, results.get(1).field1, 1e-6);
+        Assert.assertEquals(4, results.get(0), 1e-6);
+        Assert.assertEquals(0, results.get(1), 1e-6);
     }
 }

@@ -22,6 +22,7 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.utils.DataSetUtils;
 import org.apache.wayang.basic.operators.SampleOperator;
 import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -52,7 +53,7 @@ public class FlinkSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public FlinkSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seedFunction) {
+    public FlinkSampleOperator(FunctionDescriptor.SerializableIntUnaryOperator sampleSizeFunction, DataSetType<Type> type, FunctionDescriptor.SerializableLongUnaryOperator seedFunction) {
         super(sampleSizeFunction, type, Methods.RANDOM, seedFunction);
     }
 

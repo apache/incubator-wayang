@@ -44,6 +44,7 @@
         <module>wayang-giraph</module>
         <module>wayang-flink</module>
         <module>wayang-generic-jdbc</module>
+        <module>wayang-tensorflow</module>
     </modules>
 
     <dependencyManagement>

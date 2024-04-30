@@ -18,6 +18,7 @@
 
 package org.apache.wayang.spark.operators.ml;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.classification.DecisionTreeClassificationModel;
 import org.apache.spark.ml.classification.DecisionTreeClassifier;
@@ -59,8 +60,9 @@ public class SparkDecisionTreeClassificationOperator extends DecisionTreeClassif
             }
     );
 
-    private static Dataset<Row> data2Row(JavaRDD<Tuple2<double[], Double>> inputRdd) {
-        final JavaRDD<Row> rowRdd = inputRdd.map(e -> RowFactory.create(e.field1, Vectors.dense(e.field0)));
+    private static Dataset<Row> data2Row(JavaRDD<double[]> xRdd, JavaRDD<Integer> yRdd) {
+        final JavaPairRDD<double[], Integer> xyRdd = xRdd.zip(yRdd);
+        final JavaRDD<Row> rowRdd = xyRdd.map(e -> RowFactory.create(e._2, Vectors.dense(e._1)));
         return SparkSession.builder().getOrCreate().createDataFrame(rowRdd, schema);
     }
 
@@ -91,11 +93,13 @@ public class SparkDecisionTreeClassificationOperator extends DecisionTreeClassif
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
+        final RddChannel.Instance x = (RddChannel.Instance) inputs[0];
+        final RddChannel.Instance y = (RddChannel.Instance) inputs[1];
         final CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
 
-        final JavaRDD<Tuple2<double[], Double>> inputRdd = input.provideRdd();
-        final Dataset<Row> df = data2Row(inputRdd);
+        final JavaRDD<double[]> xRdd = x.provideRdd();
+        final JavaRDD<Integer> yRdd = y.provideRdd();
+        final Dataset<Row> df = data2Row(xRdd, yRdd);
         final DecisionTreeClassificationModel model = new DecisionTreeClassifier()
                 .setLabelCol(Attr.LABEL)
                 .setFeaturesCol(Attr.FEATURES)
@@ -138,6 +142,14 @@ public class SparkDecisionTreeClassificationOperator extends DecisionTreeClassif
             final Dataset<Row> transform = model.transform(df);
             return transform.toJavaRDD()
                     .map(row -> new Tuple2<>(row.<Vector>getAs(Attr.FEATURES).toArray(), (row.<Double>getAs(Attr.PREDICTION)).intValue()));
+        }
+
+        @Override
+        public JavaRDD<Integer> predict(JavaRDD<double[]> input) {
+            final Dataset<Row> df = data2Row(input);
+            final Dataset<Row> transform = model.transform(df);
+            return transform.toJavaRDD()
+                    .map(row -> row.<Double>getAs(Attr.PREDICTION).intValue());
         }
 
         @Override

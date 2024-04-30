@@ -1,4 +1,4 @@
-# Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
+# Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang logo">
 
 ## The first open-source cross-platform data processing system
 

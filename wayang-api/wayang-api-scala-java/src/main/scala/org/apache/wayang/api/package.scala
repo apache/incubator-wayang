@@ -20,10 +20,10 @@ package org.apache.wayang
 
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
-
 import org.apache.wayang.basic.data.{Record, Tuple2 => WayangTuple2}
 import org.apache.wayang.core.api.WayangContext
-import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.apache.wayang.core.function.FunctionDescriptor
+import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate, SerializableToLongBiFunction}
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
 import org.apache.wayang.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator, LoadProfileEstimator, NestableLoadProfileEstimator}
@@ -103,12 +103,12 @@ package object api {
     new FixedSizeCardinalityEstimator(fixCardinality, true)
 
   implicit def toCardinalityEstimator(f: Long => Long): CardinalityEstimator =
-    new DefaultCardinalityEstimator(.99d, 1, true, new ToLongFunction[Array[Long]] {
+    new DefaultCardinalityEstimator(.99d, 1, true, new FunctionDescriptor.SerializableToLongFunction[Array[Long]] {
       override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0))
     })
 
   implicit def toCardinalityEstimator(f: (Long, Long) => Long): CardinalityEstimator =
-    new DefaultCardinalityEstimator(.99d, 1, true, new ToLongFunction[Array[Long]] {
+    new DefaultCardinalityEstimator(.99d, 1, true, new FunctionDescriptor.SerializableToLongFunction[Array[Long]] {
       override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0), inCards(1))
     })
 
@@ -118,7 +118,7 @@ package object api {
       1,
       .99d,
       CardinalityEstimate.EMPTY_ESTIMATE,
-      new ToLongBiFunction[Array[Long], Array[Long]] {
+      new SerializableToLongBiFunction[Array[Long], Array[Long]] {
         override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), u(0))
       }
     )
@@ -129,7 +129,7 @@ package object api {
       1,
       .99d,
       CardinalityEstimate.EMPTY_ESTIMATE,
-      new ToLongBiFunction[Array[Long], Array[Long]] {
+      new SerializableToLongBiFunction[Array[Long], Array[Long]] {
         override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), t(1), u(0))
       }
     )

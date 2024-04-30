@@ -22,7 +22,12 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.Model;
 
-public interface SparkMLModel<X, Y> extends Model<X, Y> {
+public interface SparkMLModel<X, Y> extends Model {
 
-    JavaRDD<Tuple2<X, Y>> transform(JavaRDD<X> input);
+    @Deprecated
+    default JavaRDD<Tuple2<X, Y>> transform(JavaRDD<X> input) {
+        throw new UnsupportedOperationException("This method has been deprecated. Please use predict instead.");
+    }
+
+    JavaRDD<Y> predict(JavaRDD<X> input);
 }

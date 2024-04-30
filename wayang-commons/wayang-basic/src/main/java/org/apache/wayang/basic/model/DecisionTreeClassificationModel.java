@@ -18,7 +18,7 @@
 
 package org.apache.wayang.basic.model;
 
-public interface DecisionTreeClassificationModel extends Model<double[], Integer> {
+public interface DecisionTreeClassificationModel extends Model {
 
     int getDepth();
 }

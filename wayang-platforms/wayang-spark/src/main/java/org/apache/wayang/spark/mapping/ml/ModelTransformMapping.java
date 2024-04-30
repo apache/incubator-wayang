@@ -30,6 +30,7 @@ import java.util.Collections;
 /**
  * Mapping from {@link ModelTransformOperator} to {@link SparkModelTransformOperator}.
  */
+@Deprecated
 @SuppressWarnings("unchecked")
 public class ModelTransformMapping implements Mapping {
 
