@@ -135,4 +135,8 @@ public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implemen
     public boolean containsAction() {
         return true;
     }
+
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

@@ -109,4 +109,7 @@ public class SparkObjectFileSink<T> extends ObjectFileSink<T> implements SparkEx
         return true;
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

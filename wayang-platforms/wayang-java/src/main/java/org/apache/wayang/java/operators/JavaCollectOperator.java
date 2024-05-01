@@ -88,4 +88,7 @@ public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> 
         return "wayang.java.collect.load";
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

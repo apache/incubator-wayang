@@ -26,13 +26,20 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.java.Java;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Level;
+
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class TreeDecoder {
 
+    @SuppressWarnings("unused")
+    private static final Logger logger = LogManager.getLogger(TreeDecoder.class);
 
     /**
      * Plan:
@@ -48,7 +55,7 @@ public class TreeDecoder {
         updateOperatorPlatforms(node);
 
         final Operator sink = OneHotMappings.getOperatorFromEncoding(node.encoded).orElseThrow(
-            () -> new WayangException("Couldnt recover operator during decoding")
+            () -> new WayangException("Couldnt recover sink operator during decoding")
         );
 
         Operator definitiveSink = sink;
@@ -65,14 +72,17 @@ public class TreeDecoder {
             return;
         }
 
-        final Operator operator = OneHotMappings.getOperatorFromEncoding(node.encoded).orElseThrow(
-            () -> new WayangException("Couldnt recover operator during decoding")
-        );
-        Platform platform = OneHotMappings.getOperatorPlatformFromEncoding(node.encoded).orElseThrow(
-            () -> new WayangException(String.format("Couldnt recover platform for operator: %s", operator))
-        );
+        final Optional<Operator> operator = OneHotMappings.getOperatorFromEncoding(node.encoded);
 
-        operator.addTargetPlatform(platform);
+        if (operator.isPresent()) {
+            Platform platform = OneHotMappings.getOperatorPlatformFromEncoding(node.encoded).orElseThrow(
+                () -> new WayangException(String.format("Couldnt recover platform for operator: %s", operator.get()))
+            );
+
+            operator.get().addTargetPlatform(platform);
+        } else {
+            logger.info("Operator couldn't be recovered, potentially conversion operator: {}", node);
+        }
 
         if (node.left != null) {
             updateOperatorPlatforms(node.left);

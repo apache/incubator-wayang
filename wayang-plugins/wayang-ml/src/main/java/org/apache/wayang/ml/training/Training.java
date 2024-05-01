@@ -32,6 +32,7 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.ml.util.CardinalitySampler;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.logging.log4j.Level;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -103,13 +104,14 @@ public class Training {
                 Job wayangJob = context.createJob("", plan, "");
                 ExecutionPlan exPlan = wayangJob.buildInitialExecutionPlan();
                 OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
-                TreeNode wayangNode = TreeEncoder.encode(plan, context);
-                TreeNode execNode = TreeEncoder.encode(exPlan).withIdsFrom(wayangNode);
+                TreeNode wayangNode = TreeEncoder.encode(plan);
+                TreeNode execNode = TreeEncoder.encode(exPlan, false).withIdsFrom(wayangNode);
                 System.out.println(exPlan.toExtensiveString());
 
                 quanta = createdJob.buildPlan(jobArgs);
                 builder = quanta.getPlanBuilder();
                 context = builder.getWayangContext();
+                context.setLogLevel(Level.INFO);
                 plan = builder.build();
                 Instant start = Instant.now();
                 context.execute(plan, "");

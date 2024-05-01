@@ -235,4 +235,8 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
         JdbcPlatformTemplate jdbcPlatform = ReflectionUtils.evaluate(platformClassName + ".getInstance()");
         return new SqlToStreamOperator(jdbcPlatform);
     }
+
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

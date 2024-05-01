@@ -97,4 +97,7 @@ public class SparkCacheOperator<Type>
         return "wayang.spark.cache.load";
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

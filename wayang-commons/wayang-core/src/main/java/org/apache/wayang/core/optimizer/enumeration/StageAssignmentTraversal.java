@@ -559,18 +559,20 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         boolean isCurrentStageAdded = requiredStages.add(currentStage);
 
         // Try to update the #requiredStages of our task.
-        final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
-        if (currentlyRequiredStages.addAll(requiredStages)) {
-            // If there is a new required stage, mark the stage.
-            logger.debug("Updated required stages of {} to {}.", task, currentlyRequiredStages);
-            currentStage.markDependenciesUpdated();
+        if (this.requiredStages.containsKey(task)) {
+            final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
+            if (currentlyRequiredStages.addAll(requiredStages)) {
+                // If there is a new required stage, mark the stage.
+                logger.debug("Updated required stages of {} to {}.", task, currentlyRequiredStages);
+                currentStage.markDependenciesUpdated();
 
-            // And propagate the dependencies downstream. We assume all downstream dependencies to be supersets of
-            // the current requiredStage, which should be true by construction.
-            for (Channel channel : task.getOutputChannels()) {
-                for (ExecutionTask consumingTask : channel.getConsumers()) {
-                    if (!consumingTask.isFeedbackInput(channel)) {
-                        this.updateRequiredStages(consumingTask, requiredStages);
+                // And propagate the dependencies downstream. We assume all downstream dependencies to be supersets of
+                // the current requiredStage, which should be true by construction.
+                for (Channel channel : task.getOutputChannels()) {
+                    for (ExecutionTask consumingTask : channel.getConsumers()) {
+                        if (!consumingTask.isFeedbackInput(channel)) {
+                            this.updateRequiredStages(consumingTask, requiredStages);
+                        }
                     }
                 }
             }

@@ -99,4 +99,7 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         return Collections.singletonList(BroadcastChannel.DESCRIPTOR);
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

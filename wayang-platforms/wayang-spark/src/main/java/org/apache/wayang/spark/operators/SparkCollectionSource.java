@@ -121,4 +121,7 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
         return false;
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

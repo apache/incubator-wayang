@@ -95,4 +95,8 @@ public class FlinkCollectionSink<Type> extends UnaryToUnaryOperator<Type, Type>
     public String getLoadProfileEstimatorConfigurationKey() {
         return "wayang.flink.collect.load";
     }
+
+    @Override public boolean isConversion() {
+        return true;
+    }
 }
