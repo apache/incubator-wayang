@@ -128,7 +128,7 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
         OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
 
         // Just a sanity check for determinism
-        TreeNode encoded = TreeEncoder.encode(wayangPlan, wayangContext);
+        TreeNode encoded = TreeEncoder.encode(wayangPlan);
         Assert.assertArrayEquals(encoded.encoded, encoded.encoded);
     }
 
@@ -145,7 +145,7 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
         ExecutionPlan exPlan = wayangJob.buildInitialExecutionPlan();
         OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
 
-        TreeEncoder.encode(exPlan);
+        TreeEncoder.encode(exPlan, false);
         Assert.assertEquals(true, true);
     }
 
@@ -164,9 +164,9 @@ public class JavaExecutionMLTest extends JavaExecutionTestBase {
         OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
 
         // Also encode wayang plan to set OneHotMappings.originalOperators
-        TreeNode wayangNode = TreeEncoder.encode(wayangPlan, wayangContext);
+        TreeNode wayangNode = TreeEncoder.encode(wayangPlan);
         ExecutionPlan executionPlan = wayangContext.buildInitialExecutionPlan("", wayangPlan, "");
-        TreeNode executionNode = TreeEncoder.encode(exPlan).withIdsFrom(wayangNode);
+        TreeNode executionNode = TreeEncoder.encode(exPlan, false).withIdsFrom(wayangNode);
         System.out.println(wayangNode);
         System.out.println(executionNode);
         //TreeNode encoded = TreeNode.fromString("((495670503, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0),((-559793122, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0),((615554814, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0),((-1512350111, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0),((-1562004761, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0),((763497331, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0),(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0),(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)),(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)),(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)),(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)),(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)),(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0))");

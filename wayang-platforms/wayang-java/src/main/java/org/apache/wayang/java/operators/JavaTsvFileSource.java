@@ -145,4 +145,7 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

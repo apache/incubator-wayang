@@ -146,6 +146,10 @@ public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExec
         return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
+
     /**
      * Utility to chunk a {@link Stream} into portions of fixed size.
      */
@@ -185,7 +189,6 @@ public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExec
                 this.nextIndex = 0;
             }
         }
-
 
     }
 }

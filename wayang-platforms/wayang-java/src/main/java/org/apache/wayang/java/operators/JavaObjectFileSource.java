@@ -126,6 +126,10 @@ public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements Java
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
+
     private static class SequenceFileIterator<T> implements Iterator<T>, AutoCloseable, Closeable {
 
         private SequenceFile.Reader sequenceFileReader;

@@ -111,4 +111,7 @@ public class FlinkTsvFileSink<Type extends Tuple2<?, ?>> extends UnarySink<Type>
         return true;
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

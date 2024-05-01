@@ -117,4 +117,7 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
         return false;
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

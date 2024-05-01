@@ -65,7 +65,7 @@ public class TreeEncoder implements Encoder {
         return result.get(0);
     }
 
-    public static TreeNode encode(WayangPlan plan, WayangContext context) {
+    public static TreeNode encode(WayangPlan plan) {
         List<TreeNode> result = new ArrayList<TreeNode>();
         plan.prune();
 
@@ -85,7 +85,7 @@ public class TreeEncoder implements Encoder {
         return result.get(0);
     }
 
-    public static TreeNode encode(ExecutionPlan plan) {
+    public static TreeNode encode(ExecutionPlan plan, boolean ignoreConversions) {
         List<TreeNode> result = new ArrayList<TreeNode>();
         HashMap<Operator, Collection<ExecutionTask>> tree = new HashMap<>();
         Set<ExecutionTask> tasks = plan.collectAllTasks();
@@ -94,7 +94,7 @@ public class TreeEncoder implements Encoder {
                 .filter(task -> task.getOperator().isSink()).collect(Collectors.toList());
 
         for (ExecutionTask sink : sinks) {
-            TreeNode sinkNode = traverse(sink, tree);
+            TreeNode sinkNode = traverse(sink, tree, ignoreConversions);
             sinkNode.isRoot = true;
             result.add(sinkNode);
         }
@@ -163,7 +163,7 @@ public class TreeEncoder implements Encoder {
         return currentNode;
     }
 
-    private static TreeNode traverse(ExecutionTask current, HashMap<Operator, Collection<ExecutionTask>> visited) {
+    private static TreeNode traverse(ExecutionTask current, HashMap<Operator, Collection<ExecutionTask>> visited, boolean ignoreConversions) {
         if (visited.containsKey(current)) {
             return null;
         }
@@ -171,11 +171,17 @@ public class TreeEncoder implements Encoder {
         Collection<ExecutionTask> producers = Stream.of(current.getInputChannels())
                 .map(Channel::getProducer).collect(Collectors.toList());
 
+        ExecutionOperator operator = current.getOperator();
         TreeNode currentNode = new TreeNode();
-        currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current.getOperator());
+        currentNode.encoded = OneHotEncoder.encodeOperator(operator);
 
         for (ExecutionTask producer : producers) {
-            TreeNode next = traverse(producer, visited);
+            TreeNode next = traverse(producer, visited, ignoreConversions);
+
+            if (operator.isConversion() && ignoreConversions) {
+                System.out.println("Ignored conversion: " + operator);
+                return next;
+            }
 
             if (currentNode.left == null) {
                 currentNode.left = next;

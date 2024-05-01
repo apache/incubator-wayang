@@ -115,4 +115,8 @@ public class SqlToRddOperator extends UnaryToUnaryOperator<Record, Record> imple
     public WayangJsonObj toJson() {
         return null;
     }
+
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

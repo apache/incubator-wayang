@@ -107,4 +107,8 @@ public class FlinkCollectionSource<Type> extends CollectionSource<Type> implemen
         return Arrays.asList(DataSetChannel.DESCRIPTOR, DataSetChannel.DESCRIPTOR_MANY);
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
+
 }

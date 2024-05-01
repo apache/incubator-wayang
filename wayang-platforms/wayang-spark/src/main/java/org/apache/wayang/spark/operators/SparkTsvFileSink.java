@@ -114,4 +114,7 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
         return true;
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

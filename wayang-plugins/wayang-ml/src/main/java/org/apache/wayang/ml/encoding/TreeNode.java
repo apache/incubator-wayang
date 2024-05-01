@@ -34,6 +34,14 @@ public class TreeNode {
     //private static Pattern pattern = Pattern.compile("\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))", Pattern.CASE_INSENSITIVE);
     private static Pattern pattern = Pattern.compile("\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<children>(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))|\\)*)", Pattern.CASE_INSENSITIVE);
 
+    public TreeNode() { }
+
+    public TreeNode(long[] encoded, TreeNode left, TreeNode right) {
+        this.encoded = encoded;
+        this.left = left;
+        this.right = right;
+    }
+
     @Override
     public String toString() {
         String encodedString = Arrays.toString(encoded).replace("[", "(").replace("]", ")").replaceAll("\\s+", "");
@@ -100,6 +108,10 @@ public class TreeNode {
         }
 
         return this;
+    }
+
+    public boolean isLeaf() {
+        return this.left == null && this.right == null;
     }
 
 }

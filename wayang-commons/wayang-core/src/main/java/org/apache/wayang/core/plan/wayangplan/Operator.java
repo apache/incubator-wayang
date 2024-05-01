@@ -464,6 +464,13 @@ public interface Operator {
     }
 
     /**
+     * @return whether this is a conversion operator
+     */
+    default boolean isConversion() {
+        return false;
+    }
+
+    /**
      * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
      */
     <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload);

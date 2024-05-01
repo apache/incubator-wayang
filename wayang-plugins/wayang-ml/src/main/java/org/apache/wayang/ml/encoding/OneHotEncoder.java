@@ -383,7 +383,11 @@ public class OneHotEncoder implements Encoder {
         int platformsCount = platformMappings.size();
         long[] result = new long[operatorsCount + platformsCount + 3];
 
-        result[0] = (long) new HashCodeBuilder(17, 37).append(operator.toString()).toHashCode();
+        result[0] = (long) new HashCodeBuilder(17, 37)
+            .append(operator.toString())
+            .append(operator.getAllInputs())
+            .append(operator.getAllOutputs())
+            .toHashCode();
         result[operatorsCount + platformsCount] = Udf.getComplexity(operator).ordinal();
         result[operatorsCount + platformsCount + 1] = inputCardinality;
         result[operatorsCount + platformsCount + 2] = outputCardinality;
@@ -406,12 +410,16 @@ public class OneHotEncoder implements Encoder {
         long outputCardinality = 0;
 
         if (operatorSamples.size() == 0) {
-            for (InputSlot<?> input: operator.getAllInputs()) {
-                inputCardinality += optimizationContext.getOperatorContext(operator).getInputCardinality(input.getIndex()).getLowerEstimate();
-            }
+            OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(operator);
 
-            for (OutputSlot<?> output: operator.getAllOutputs()) {
-                outputCardinality += optimizationContext.getOperatorContext(operator).getOutputCardinality(output.getIndex()).getLowerEstimate();
+            if (operatorContext != null) {
+                for (InputSlot<?> input: operator.getAllInputs()) {
+                    inputCardinality += operatorContext.getInputCardinality(input.getIndex()).getLowerEstimate();
+                }
+
+                for (OutputSlot<?> output: operator.getAllOutputs()) {
+                    outputCardinality += operatorContext.getOutputCardinality(output.getIndex()).getLowerEstimate();
+                }
             }
         } else {
             inputCardinality = operatorSamples.stream()

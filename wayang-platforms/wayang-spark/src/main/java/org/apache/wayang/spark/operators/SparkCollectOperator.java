@@ -97,4 +97,7 @@ public class SparkCollectOperator<Type>
         return "wayang.spark.collect.load";
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

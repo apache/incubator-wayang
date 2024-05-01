@@ -98,10 +98,7 @@
     <build>
         <resources>
             <resource>
-                <directory>${MODULE_DIR}/src/main/resources</directory>
-                <includes>
-                    <include>**/*.onnx</include>
-                </includes>
+                <directory>src/main/resources</directory>
             </resource>
         </resources>
     </build>

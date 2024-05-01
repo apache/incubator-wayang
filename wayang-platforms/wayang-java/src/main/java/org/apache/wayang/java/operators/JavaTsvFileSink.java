@@ -136,4 +136,7 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
         return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

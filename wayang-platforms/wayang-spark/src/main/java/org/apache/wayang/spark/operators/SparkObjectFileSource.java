@@ -111,4 +111,7 @@ public class SparkObjectFileSource<T> extends ObjectFileSource<T> implements Spa
         return false;
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

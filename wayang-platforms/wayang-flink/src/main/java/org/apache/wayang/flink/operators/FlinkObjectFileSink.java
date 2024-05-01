@@ -112,4 +112,8 @@ public class FlinkObjectFileSink<Type> extends ObjectFileSink<Type> implements F
     public boolean containsAction() {
         return true;
     }
+
+    @Override public boolean isConversion() {
+        return true;
+    }
 }
