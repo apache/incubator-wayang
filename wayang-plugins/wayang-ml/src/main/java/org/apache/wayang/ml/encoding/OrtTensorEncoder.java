@@ -31,7 +31,7 @@ public class OrtTensorEncoder {
      * @param trees
      * @return returns a tuple of (flatTrees, indexes)
      */
-    public Tuple<ArrayList<long[][]>,ArrayList<long[][]>>prepareTrees(ArrayList<TreeNode> trees){
+    public Tuple<ArrayList<long[][]>,ArrayList<long[][]>> prepareTrees(ArrayList<TreeNode> trees){
         ArrayList<long[][]> flatTrees = trees.stream()
                 .map(this::flatten)
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -141,12 +141,17 @@ public class OrtTensorEncoder {
      * @return
      */
     private ArrayList<long[][]> padAndCombine(List<long[][]> flatTrees) {
+        ArrayList<long[][]> vecs = new ArrayList<>();
+
+        if (flatTrees.get(0).length == 0) {
+            return vecs;
+        }
+
         int secondDim = flatTrees.get(0)[0].length;                                   //find the size of a flat trees node structure
         int maxFirstDim = flatTrees.stream()
                 .map(a -> a.length)
                 .max(Integer::compare).get(); //we are trying to find the largest flat tree
 
-        ArrayList<long[][]> vecs = new ArrayList<>();
 
         for (long[][] tree : flatTrees) {
             long[][] padding = new long[maxFirstDim][secondDim];

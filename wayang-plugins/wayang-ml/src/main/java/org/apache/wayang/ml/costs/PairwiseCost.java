@@ -49,6 +49,8 @@ import java.util.HashMap;
 public class PairwiseCost implements EstimatableCost {
     public HashMap<PlanImplementation, ExecutionPlan> executionPlans = new HashMap<>();
 
+    public HashMap<ExecutionPlan, TreeNode> encodings = new HashMap<>();
+
     public EstimatableCostFactory getFactory() {
         return new Factory();
     }
@@ -100,43 +102,67 @@ public static class Factory implements EstimatableCostFactory {
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
-                    //final double t1 = p1.getSquashedCostEstimate();
-                    //final double t2 = p2.getSquashedCostEstimate();
-                    //
-                    //
-                    //
                     try {
                         Configuration config = p1
                             .getOptimizationContext()
                             .getConfiguration();
-                        OneHotMappings.setOptimizationContext(p1.getOptimizationContext());
                         OrtMLModel model = OrtMLModel.getInstance(config);
 
-                        final ExecutionTaskFlow etfOne = ExecutionTaskFlow.createFrom(p1);
-                        final ExecutionPlan epOne = ExecutionPlan.createFrom(etfOne, (producerTask, channel, consumerTask) -> false);
-                        final ExecutionTaskFlow etfTwo = ExecutionTaskFlow.createFrom(p2);
-                        final ExecutionPlan epTwo = ExecutionPlan.createFrom(etfTwo, (producerTask, channel, consumerTask) -> false);
+                        ExecutionPlan epOne;
+                        ExecutionPlan epTwo;
 
-                        this.executionPlans.put(p1, epOne);
-                        this.executionPlans.put(p2, epTwo);
+                        if (!this.executionPlans.containsKey(p1)) {
+                            final ExecutionTaskFlow etfOne = ExecutionTaskFlow.createFrom(p2);
+                            epOne = ExecutionPlan.createFrom(etfOne, (producerTask, channel, consumerTask) -> true);
+                            this.executionPlans.put(p1, epOne);
+                        } else {
+                            epOne = this.executionPlans.get(p1);
+                        }
 
-                        TreeNode encodedOne = TreeEncoder.encode(epOne, false);
+                        if (!this.executionPlans.containsKey(p2)) {
+                            final ExecutionTaskFlow etfTwo = ExecutionTaskFlow.createFrom(p2);
+                            epTwo = ExecutionPlan.createFrom(etfTwo, (producerTask, channel, consumerTask) -> true);
+                            this.executionPlans.put(p2, epTwo);
+                        } else {
+                            epTwo = this.executionPlans.get(p2);
+                        }
 
-                        OneHotMappings.setOptimizationContext(p2.getOptimizationContext());
-                        TreeNode encodedTwo = TreeEncoder.encode(epTwo, false);
+                        TreeNode encodedOne;
+                        TreeNode encodedTwo;
+
+                        if (!this.encodings.containsKey(epOne)) {
+                            OneHotMappings.setOptimizationContext(p1.getOptimizationContext());
+                            encodedOne = TreeEncoder.encode(epOne, false);
+                            this.encodings.put(epOne, encodedOne);
+                        } else {
+                            encodedOne = this.encodings.get(epOne);
+                        }
+
+                        if (!this.encodings.containsKey(epTwo)) {
+                            OneHotMappings.setOptimizationContext(p2.getOptimizationContext());
+                            encodedTwo = TreeEncoder.encode(epTwo, false);
+                            this.encodings.put(epTwo, encodedTwo);
+                        } else {
+                            encodedTwo = this.encodings.get(epTwo);
+                        }
 
                         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple1 = OrtTensorEncoder.encode(encodedOne);
                         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple2 = OrtTensorEncoder.encode(encodedTwo);
 
                         int result = model.runPairwise(tuple1, tuple2);
-                        if (Math.round(result) == 1) {
+                        System.out.println("[ML] result: " + result);
+                        System.out.println("[PLAN 1]: " + epOne.toExtensiveString());
+                        System.out.println("[PLAN 2]: " + epTwo.toExtensiveString());
+                        if (result == 1) {
+                            System.out.println("PICKED PLAN 2");
                             return p2;
                         }
 
+                        System.out.println("PICKED PLAN 1");
                         return p1;
                     } catch(Exception e) {
                         e.printStackTrace();
-                        return p1;
+                        return p2;
                     }
                 })
                 .orElseThrow(() -> new WayangException("Could not find an execution plan."));

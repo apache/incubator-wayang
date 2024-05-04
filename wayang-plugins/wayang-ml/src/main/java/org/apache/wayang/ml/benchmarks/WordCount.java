@@ -37,6 +37,7 @@ import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.wayang.ml.MLContext;
 import org.apache.wayang.ml.costs.MLCost;
 import org.apache.wayang.ml.costs.PairwiseCost;
+import org.apache.logging.log4j.Level;
 import org.apache.wayang.apps.util.Parameters;
 import org.apache.wayang.core.plugin.Plugin;
 
@@ -146,6 +147,7 @@ public class WordCount {
 
             config.setCostModel(new PairwiseCost());
             final MLContext wayangContext = new MLContext(config);
+            //wayangContext.setLogLevel(Level.DEBUG);
 
             List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(args[0]));
             plugins.stream().forEach(plug -> wayangContext.register(plug));

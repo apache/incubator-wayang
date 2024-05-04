@@ -107,6 +107,7 @@ public class OrtMLModel {
         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> input2
     ) throws OrtException {
 
+        //TODO: Use shape information for padding
         float[][][] input1Left = new float[1][50][58];
         long[][][] input1Right = new long[1][171][1];
         float[][][] input2Left = new float[1][50][58];
@@ -145,6 +146,7 @@ public class OrtMLModel {
         for (int i = 0; i < input2.field1.get(0).length; i++) {
             input2Right[0][i]  = input2.field1.get(0)[i];
         }
+
         System.out.println(Arrays.deepToString(input2Right));
 
         OnnxTensor tensorOneLeft = OnnxTensor.createTensor(env, input1Left);
@@ -178,7 +180,8 @@ public class OrtMLModel {
         try (Result r = session.run(this.inputMap, this.requestedOutputs)) {
             Float[] result = unwrapFunc.apply(r, "output");
 
-            return result[0].intValue();
+            System.out.println("[ORT] result:" + Arrays.toString(result));
+            return Math.round(result[0]);
         } catch (OrtException e) {
             e.printStackTrace();
 

@@ -228,8 +228,7 @@ public class MLJob extends Job {
         this.pickBestExecutionPlan(executionPlans, null, null, null);
         HashMap<PlanImplementation, ExecutionPlan> planMappings = this.getConfiguration().getCostModel().getPlanMappings();
 
-        System.out.println(planMappings);
-        if (!planMappings.isEmpty()) {
+        if (planMappings.containsKey(this.planImplementation)) {
             final ExecutionPlan executionPlan = planMappings.get(this.planImplementation);
 
             this.timeEstimates.add(planImplementation.getTimeEstimate());
@@ -260,6 +259,8 @@ public class MLJob extends Job {
             this.planImplementation.mergeJunctionOptimizationContexts();
 
             this.planImplementation.logTimeEstimates();
+
+            System.out.println("[CREATE INITIAL TRADITIONAL]: " + executionPlan.toExtensiveString());
 
             //assert executionPlan.isSane();
             this.optimizationRound.stop("Create Initial Execution Plan");
@@ -297,17 +298,17 @@ public class MLJob extends Job {
         this.timeEstimates.add(this.planImplementation.getTimeEstimate());
         this.costEstimates.add(this.planImplementation.getCostEstimate());
         HashMap<PlanImplementation, ExecutionPlan> planMappings = this.getConfiguration().getCostModel().getPlanMappings();
-        System.out.println(planMappings);
+        System.out.println("[UPDATED]: " + planMappings);
 
         if (!planMappings.isEmpty()) {
 
-            executionPlan.expand(planMappings.get(this.planImplementation));
-            System.out.println(executionPlan.toExtensiveString());
+            executionPlan = planMappings.get(this.planImplementation);
+            //executionPlan.expand(planMappings.get(this.planImplementation));
+            System.out.println("[UPDATED]: " + executionPlan.toExtensiveString());
 
             this.planImplementation.mergeJunctionOptimizationContexts();
 
         } else {
-
             ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
                     planImplementation, executionPlan, openChannels, completedStages
             );

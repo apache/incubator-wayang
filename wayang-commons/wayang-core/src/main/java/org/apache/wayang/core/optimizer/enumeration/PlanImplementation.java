@@ -281,7 +281,7 @@ public class PlanImplementation {
     /**
      * Find the {@link OutputSlot}s of already picked {@link ExecutionOperator}s that represent the given {@link OutputSlot}.
      *
-     * @param someOutput any {@link OutputSlot} of the original {@link WayangPlan}
+     * @param someOutput any {@link OutputSlot} of the original {@link WayangPlan}PlanImplementation
      * @return the representing {@link OutputSlot}s together with their enclosing {@link PlanImplementation}
      */
     Collection<Tuple<OutputSlot<?>, PlanImplementation>> findExecutionOperatorOutputWithContext(
