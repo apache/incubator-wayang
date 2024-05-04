@@ -27,6 +27,7 @@ import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.util.Tuple;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.List;
 
@@ -54,4 +55,8 @@ public interface EstimatableCost {
     public double getSquashedParallelEstimate(PlanImplementation plan, boolean isOverheadIncluded);
 
     public Tuple<List<ProbabilisticDoubleInterval>, List<Double>> getParallelOperatorJunctionAllCostEstimate(PlanImplementation plan, Operator operator);
+
+    default public HashMap<PlanImplementation, ExecutionPlan> getPlanMappings() {
+        return new HashMap<>();
+    }
 }

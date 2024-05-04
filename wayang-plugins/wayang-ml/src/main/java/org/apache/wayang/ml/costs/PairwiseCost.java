@@ -44,8 +44,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.List;
+import java.util.HashMap;
 
 public class PairwiseCost implements EstimatableCost {
+    public HashMap<PlanImplementation, ExecutionPlan> executionPlans = new HashMap<>();
+
     public EstimatableCostFactory getFactory() {
         return new Factory();
     }
@@ -82,6 +85,10 @@ public static class Factory implements EstimatableCostFactory {
         return new Tuple<>(intervalList, doubleList);
     }
 
+    @Override public HashMap<PlanImplementation, ExecutionPlan> getPlanMappings() {
+        return this.executionPlans;
+    }
+
     public PlanImplementation pickBestExecutionPlan(
             Collection<PlanImplementation> executionPlans,
             ExecutionPlan existingPlan,
@@ -97,6 +104,7 @@ public static class Factory implements EstimatableCostFactory {
                     //final double t2 = p2.getSquashedCostEstimate();
                     //
                     //
+                    //
                     try {
                         Configuration config = p1
                             .getOptimizationContext()
@@ -104,14 +112,17 @@ public static class Factory implements EstimatableCostFactory {
                         OneHotMappings.setOptimizationContext(p1.getOptimizationContext());
                         OrtMLModel model = OrtMLModel.getInstance(config);
 
-                        PlanImplementation r2 = p1.clone();
-                        PlanImplementation r1 = p2.clone();
-                        ExecutionTaskFlow etfOne = ExecutionTaskFlow.createFrom(p1);
-                        ExecutionPlan epOne = ExecutionPlan.createFrom(etfOne, (producerTask, channel, consumerTask) -> false);
-                        ExecutionTaskFlow etfTwo = ExecutionTaskFlow.createFrom(p2);
-                        ExecutionPlan epTwo = ExecutionPlan.createFrom(etfTwo, (producerTask, channel, consumerTask) -> false);
+                        final ExecutionTaskFlow etfOne = ExecutionTaskFlow.createFrom(p1);
+                        final ExecutionPlan epOne = ExecutionPlan.createFrom(etfOne, (producerTask, channel, consumerTask) -> false);
+                        final ExecutionTaskFlow etfTwo = ExecutionTaskFlow.createFrom(p2);
+                        final ExecutionPlan epTwo = ExecutionPlan.createFrom(etfTwo, (producerTask, channel, consumerTask) -> false);
+
+                        this.executionPlans.put(p1, epOne);
+                        this.executionPlans.put(p2, epTwo);
 
                         TreeNode encodedOne = TreeEncoder.encode(epOne, false);
+
+                        OneHotMappings.setOptimizationContext(p2.getOptimizationContext());
                         TreeNode encodedTwo = TreeEncoder.encode(epTwo, false);
 
                         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple1 = OrtTensorEncoder.encode(encodedOne);
@@ -119,10 +130,10 @@ public static class Factory implements EstimatableCostFactory {
 
                         int result = model.runPairwise(tuple1, tuple2);
                         if (Math.round(result) == 1) {
-                            return r2;
+                            return p2;
                         }
 
-                        return r1;
+                        return p1;
                     } catch(Exception e) {
                         e.printStackTrace();
                         return p1;

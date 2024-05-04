@@ -34,6 +34,7 @@ import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.spark.platform.SparkPlatform;
+import org.apache.wayang.ml.MLContext;
 import org.apache.wayang.ml.costs.MLCost;
 import org.apache.wayang.ml.costs.PairwiseCost;
 import org.apache.wayang.apps.util.Parameters;
@@ -139,12 +140,12 @@ public class WordCount {
             );
 
             config.setProperty(
-                "wayang.core.optimizer.instrumentation",
-                "org.apache.wayang.core.profiling.NoInstrumentationStrategy"
+                "wayang.core.log.enabled",
+                "false"
             );
 
             config.setCostModel(new PairwiseCost());
-            final WayangContext wayangContext = new WayangContext(config);
+            final MLContext wayangContext = new MLContext(config);
 
             List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(args[0]));
             plugins.stream().forEach(plug -> wayangContext.register(plug));
@@ -152,8 +153,7 @@ public class WordCount {
             wayangContext.execute(wayangPlan, ReflectionUtils.getDeclaringJar(WordCount.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
 
             collector.sort((t1, t2) -> Integer.compare(t2.field1, t1.field1));
-            System.out.printf("Found %d words:\n", collector.size());
-            //collector.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
+            System.out.printf("Found %d words:\n", collector.size()); //collector.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
         } catch (Exception e) {
             System.err.println("App failed.");
             e.printStackTrace();

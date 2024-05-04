@@ -19,6 +19,7 @@
 package org.apache.wayang.ml;
 
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
@@ -31,6 +32,7 @@ import org.apache.wayang.ml.encoding.OneHotMappings;
 import org.apache.wayang.ml.encoding.TreeEncoder;
 import org.apache.wayang.ml.encoding.TreeNode;
 import org.apache.wayang.ml.util.EnumerationStrategy;
+import org.apache.wayang.commons.util.profiledb.model.Subject;
 
 
 /**
@@ -59,17 +61,22 @@ public class MLContext extends WayangContext {
      */
     @Override
     public void execute(WayangPlan wayangPlan, String... udfJars) {
-        Job wayangJob = super.createJob("", wayangPlan, udfJars);
+        MLJob wayangJob = this.createMLJob("", wayangPlan, new Experiment("unknown", new Subject("unknown", "unknown")), udfJars);
         OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
 
+        /*
         if (this.enumerationStrategy == EnumerationStrategy.NONE) {
             // Encode WayangPlan
             // Query the model
             // Reconstruct with set platforms
             // Either use conversion operator model or enumerator
             TreeNode wayangNode = TreeEncoder.encode(wayangPlan);
-        }
+        }*/
         wayangJob.execute();
+    }
+
+    public MLJob createMLJob(String jobName, WayangPlan wayangPlan, Experiment experiment, String... udfJars) {
+        return new MLJob(this, jobName, null, wayangPlan, experiment, udfJars);
     }
 
     public void setModel(OrtMLModel model) {

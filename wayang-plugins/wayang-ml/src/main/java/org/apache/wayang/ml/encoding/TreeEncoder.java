@@ -47,10 +47,12 @@ public class TreeEncoder implements Encoder {
         List<TreeNode> result = new ArrayList<TreeNode>();
 
         OneHotMappings.setOptimizationContext(plan.getOptimizationContext());
+        System.out.println(plan.getOperators());
 
         HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
         Collection<Operator> sinks = plan.getOperators().stream()
                 .filter(Operator::isSink).collect(Collectors.toList());
+
 
         for (Operator sink : sinks) {
             TreeNode sinkNode = traverse(sink, tree);

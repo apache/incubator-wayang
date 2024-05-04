@@ -990,6 +990,7 @@ public class PlanImplementation {
         PlanImplementation copied = new PlanImplementation(
             this.getPlanEnumeration(),
             this.getJunctions(),
+            this.getOperators().stream().map(op -> op.copy()).collect(Collectors.toSet()),
             this.getOptimizationContext()
         );
 
