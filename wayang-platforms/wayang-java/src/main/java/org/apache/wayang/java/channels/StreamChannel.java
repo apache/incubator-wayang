@@ -126,6 +126,7 @@ public class StreamChannel extends Channel {
             assert this.stream == null;
             this.stream = stream;
             if (this.isMarkedForInstrumentation()) {
+                System.out.println("Using stream due to instrumentalization");
                 this.stream = this.stream.filter(dataQuantum -> {
                     this.cardinality += 1;
                     return true;

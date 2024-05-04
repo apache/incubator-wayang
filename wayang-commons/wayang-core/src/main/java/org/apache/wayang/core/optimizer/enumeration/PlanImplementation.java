@@ -985,6 +985,18 @@ public class PlanImplementation {
         );
     }
 
+    @Override
+    public PlanImplementation clone() {
+        PlanImplementation copied = new PlanImplementation(
+            this.getPlanEnumeration(),
+            this.getJunctions(),
+            this.getOptimizationContext()
+        );
+
+        return copied;
+    }
+
+
     /**
      * Creates a new {@link ConcatenationDescriptor} for this instance.
      *

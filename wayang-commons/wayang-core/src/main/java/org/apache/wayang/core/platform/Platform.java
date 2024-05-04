@@ -18,6 +18,8 @@
 
 package org.apache.wayang.core.platform;
 
+import java.io.Serializable;
+
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -35,7 +37,7 @@ import org.apache.wayang.core.util.json.WayangJsonObj;
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.
  */
-public abstract class Platform {
+public abstract class Platform implements Serializable {
 
     private final String name, configName;
 

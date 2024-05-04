@@ -35,8 +35,12 @@ import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.wayang.ml.costs.MLCost;
-import org.apache.wayang.ml.util.CardinalitySampler;
+import org.apache.wayang.ml.costs.PairwiseCost;
+import org.apache.wayang.apps.util.Parameters;
+import org.apache.wayang.core.plugin.Plugin;
 
+import scala.collection.Seq;
+import scala.collection.JavaConversions;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -129,27 +133,21 @@ public class WordCount {
             WayangPlan wayangPlan = createWayangPlan(args[1], collector);
 
             Configuration config = new Configuration();
-            int hashCode = wayangPlan.hashCode();
-            String path = "/var/www/html/data/" + hashCode + "-cardinalities.json";
-            CardinalitySampler.configureWriteToFile(config, path);
-            //CardinalitySampler.readFromFile(path);
-            config.setCostModel(new MLCost());
-            WayangContext wayangContext = new WayangContext(config);
+            config.setProperty(
+                "wayang.ml.model.file",
+                "/var/www/html/wayang-plugins/wayang-ml/src/main/resources/pairwise.onnx"
+            );
 
-            for (String platform : args[0].split(",")) {
-                switch (platform) {
-                    case "java":
-                        wayangContext.register(Java.basicPlugin());
-                        break;
-                    case "spark":
-                        wayangContext.register(Spark.basicPlugin());
-                        break;
-                    default:
-                        System.err.format("Unknown platform: \"%s\"\n", platform);
-                        System.exit(3);
-                        return;
-                }
-            }
+            config.setProperty(
+                "wayang.core.optimizer.instrumentation",
+                "org.apache.wayang.core.profiling.NoInstrumentationStrategy"
+            );
+
+            config.setCostModel(new PairwiseCost());
+            final WayangContext wayangContext = new WayangContext(config);
+
+            List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(args[0]));
+            plugins.stream().forEach(plug -> wayangContext.register(plug));
 
             wayangContext.execute(wayangPlan, ReflectionUtils.getDeclaringJar(WordCount.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
 

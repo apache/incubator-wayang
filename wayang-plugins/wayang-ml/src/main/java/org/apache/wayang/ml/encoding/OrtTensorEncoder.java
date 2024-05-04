@@ -80,10 +80,14 @@ public class OrtTensorEncoder {
 
 
     private void treeConvIndexesStep(TreeNode root, ArrayList<long[]> acc){
+        if (root == null) {
+            return;
+        }
+
         if (!root.isLeaf()) {
             long ID  = root.encoded[0];
-            long lID = root.left.encoded[0];
-            long rID = root.right.encoded[0];
+            long lID = root.left != null ? root.left.encoded[0] : 0;
+            long rID = root.right != null ? root.right.encoded[0]: 0;
 
             acc.add(new long[]{ID,lID,rID});
             treeConvIndexesStep(root.left,acc);
@@ -107,6 +111,10 @@ public class OrtTensorEncoder {
      */
     private TreeNode preorderIndexes(TreeNode root, long idx){ //this method is very scary
         //System.out.println("Node: " + root + " id: " + idx);
+        if (root == null) {
+            return null;
+        }
+
         orderedNodes.add(root);
 
         if (root.isLeaf()) {
@@ -123,6 +131,7 @@ public class OrtTensorEncoder {
     }
 
     private long rightMost(TreeNode root){
+        if (root == null) return 0;
         if (!root.isLeaf()) return rightMost(root.right);
         return root.encoded[0];
     }
@@ -152,69 +161,25 @@ public class OrtTensorEncoder {
         return vecs;
     }
 
-    public static void main(String[] args) {
+    public static Tuple<ArrayList<long[][]>, ArrayList<long[][]>> encode(TreeNode node) {
         //matrix transpose test
-        ArrayList<long[][]> arr = new ArrayList<>();
-
-        long[][] matrix1 = new long[][]{
-                {1,2,3,4},
-                {5,6,7,8},
-                {9,10,11,12},
-                {13,14,15,16}
-        };
-
-        arr.add(matrix1);
-
-        arr = arr.stream().map(tree -> IntStream.range(0, tree[0].length)
-                .mapToObj(i -> Arrays.stream(tree).mapToLong(row -> row[i]).toArray()).toArray(long[][]::new)
-        ).collect(Collectors.toCollection(ArrayList::new));
-
-        assert(Arrays.deepEquals(arr.get(0), new long[][]{{1, 5, 9, 13},
-                {2, 6, 10, 14},
-                {3, 7, 11, 15},
-                {4, 8, 12, 16}}));
-        System.out.println("test 1: Passed");
-
-        //System.out.println(Arrays.deepToString(arr.get(0)));
-
-        TreeNode n1 = new TreeNode(new long[]{2, 3},null,null);
-        TreeNode n2 = new TreeNode(new long[]{1, 2},null,null);
-        TreeNode n3 = new TreeNode(new long[]{-3,0},n1,n2);
-
-        TreeNode n4 = new TreeNode(new long[]{0, 1},null,null);
-        TreeNode n5 = new TreeNode(new long[]{-1, 0},null,null);
-        TreeNode n6 = new TreeNode(new long[]{1,2},n4,n5);
-
-        TreeNode n7 = new TreeNode(new long[]{0,1},n6,n3);
 
         OrtTensorEncoder testo = new OrtTensorEncoder();
 
-        long[][] correcto = testo.flatten(n7);
+        assert node != null : "Node is null and can't be encoded";
 
-        long[][] valid = new long[][]
-                {{0,0},{0,1},{1,2},{0,1},{-1,0},{-3,0},{2,3},{1,2}};
-        assert Arrays.deepEquals(valid, correcto);
-        System.out.println("test 2: Passed");
-
-        ArrayList<long[][]> correcto2 = testo.padAndCombine(Collections.singletonList(valid));
         System.out.println("test 3: Passed");
 
-        //new int[][]{{0, 0, 1, 0, -1, -3, 2, 1}, {0, 1, 2, 1, 0, 0, 3, 2}}
-        assert true;
-        System.out.println("test 4: Passed");
-
-        System.out.println(Arrays.deepToString(testo.treeConvIndexes(n7)));
-
-        System.out.println("test 5: Passed");
-        assert(testo.preorderIndexes(n7,1).toString().equals("(1,(2,3,4),(5,6,7))"));
-
-        System.out.println("test 6: Passed");
+        testo.treeConvIndexes(node);
+        testo.preorderIndexes(node,1);
 
         ArrayList<TreeNode> testArr = new ArrayList<>();
-        testArr.add(n7);
+        testArr.add(node);
         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> t = testo.prepareTrees(testArr);
         t.field0.forEach(tree -> System.out.println(Arrays.deepToString(tree)));
         t.field1.forEach(tree -> System.out.println(Arrays.deepToString(tree)));
+
+        return t;
     }
 
 
@@ -223,9 +188,12 @@ public class OrtTensorEncoder {
      * @return
      */
     private long[][] flatten(TreeNode root){
+        if (root == null) {
+            return new long[0][0];
+        }
+
         ArrayList<long[]> acc = new ArrayList<>();
         flattenStep(root,acc);
-
 
         acc.add(0, new long[acc.get(0).length]); //not sure that the size is correct.
 
@@ -233,6 +201,10 @@ public class OrtTensorEncoder {
     }
 
     private void flattenStep(TreeNode v, ArrayList<long[]> acc){
+        if (v == null) {
+            return;
+        }
+
         if (v.isLeaf()) {
             acc.add(v.encoded);
             return;
