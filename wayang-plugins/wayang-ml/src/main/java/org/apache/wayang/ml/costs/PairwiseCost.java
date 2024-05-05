@@ -99,6 +99,21 @@ public static class Factory implements EstimatableCostFactory {
         // Call the model with both encoded plans and compare
         // Use the retrieved ranking to pick the better one
         //
+        System.out.println("[PAIRWISE]: Starting enumeration of ExecutionPlans");
+
+        for (PlanImplementation planImplementation : executionPlans) {
+            ExecutionTaskFlow etfOne = ExecutionTaskFlow.createFrom(planImplementation);
+            ExecutionPlan epOne = ExecutionPlan.createFrom(etfOne, (producerTask, channel, consumerTask) -> false);
+            this.executionPlans.put(planImplementation, epOne);
+
+            OneHotMappings.setOptimizationContext(planImplementation.getOptimizationContext());
+            TreeNode encodedOne = TreeEncoder.encode(epOne, false);
+            this.encodings.put(epOne, encodedOne);
+
+            //return planImplementation;
+        }
+
+        System.out.println("[PAIRWISE]: Finished enumeration of ExecutionPlans");
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
@@ -108,6 +123,7 @@ public static class Factory implements EstimatableCostFactory {
                             .getConfiguration();
                         OrtMLModel model = OrtMLModel.getInstance(config);
 
+                        /*
                         ExecutionPlan epOne;
                         ExecutionPlan epTwo;
 
@@ -144,15 +160,16 @@ public static class Factory implements EstimatableCostFactory {
                             this.encodings.put(epTwo, encodedTwo);
                         } else {
                             encodedTwo = this.encodings.get(epTwo);
-                        }
+                        }*/
+
+                        TreeNode encodedOne = this.encodings.get(this.executionPlans.get(p1));
+                        TreeNode encodedTwo = this.encodings.get(this.executionPlans.get(p2));
 
                         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple1 = OrtTensorEncoder.encode(encodedOne);
                         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple2 = OrtTensorEncoder.encode(encodedTwo);
 
                         int result = model.runPairwise(tuple1, tuple2);
                         System.out.println("[ML] result: " + result);
-                        System.out.println("[PLAN 1]: " + epOne.toExtensiveString());
-                        System.out.println("[PLAN 2]: " + epTwo.toExtensiveString());
                         if (result == 1) {
                             System.out.println("PICKED PLAN 2");
                             return p2;

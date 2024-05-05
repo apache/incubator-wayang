@@ -73,6 +73,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -239,7 +240,10 @@ public class MLJob extends Job {
 
             this.planImplementation.logTimeEstimates();
 
+            System.out.println("[CREATE INITIAL]: " + this.planImplementation.getOperators());
             System.out.println("[CREATE INITIAL]: " + executionPlan.toExtensiveString());
+            System.out.println("[CREATE INITIAL]: " + executionPlan.getStages());
+            System.out.println("[CREATE INITIAL]: " + executionPlan.collectAllTasks());
 
             assert executionPlan.isSane();
 
