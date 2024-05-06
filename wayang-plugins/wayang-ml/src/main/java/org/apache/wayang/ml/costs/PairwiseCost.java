@@ -34,6 +34,7 @@ import org.apache.wayang.ml.encoding.OneHotMappings;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.optimizer.enumeration.StageAssignmentTraversal;
 import org.apache.wayang.ml.OrtMLModel;
 import org.apache.wayang.ml.encoding.TreeNode;
 import org.apache.wayang.ml.encoding.TreeEncoder;
@@ -43,19 +44,34 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class PairwiseCost implements EstimatableCost {
     public HashMap<PlanImplementation, ExecutionPlan> executionPlans = new HashMap<>();
 
     public HashMap<ExecutionPlan, TreeNode> encodings = new HashMap<>();
 
+    /**
+     * <i>Currently not used.</i>
+     */
+    protected final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
+            (producerTask, channel, consumerTask) -> false;
+
+    private ExecutorService executor = Executors.newFixedThreadPool(1);
+
     public EstimatableCostFactory getFactory() {
         return new Factory();
     }
 
-public static class Factory implements EstimatableCostFactory {
+    public static class Factory implements EstimatableCostFactory {
         @Override public EstimatableCost makeCost() {
             return new PairwiseCost();
         }
@@ -76,6 +92,11 @@ public static class Factory implements EstimatableCostFactory {
 
     @Override public double getSquashedParallelEstimate(PlanImplementation plan, boolean isOverheadIncluded) {
         return 0;
+    }
+
+    private ExecutionPlan createExecutionPlan(PlanImplementation plan) {
+        ExecutionTaskFlow etfOne = ExecutionTaskFlow.createFrom(plan);
+        return ExecutionPlan.createFrom(etfOne, this.stageSplittingCriterion);
     }
 
     @Override public Tuple<List<ProbabilisticDoubleInterval>, List<Double>> getParallelOperatorJunctionAllCostEstimate(PlanImplementation plan, Operator operator) {
@@ -99,11 +120,11 @@ public static class Factory implements EstimatableCostFactory {
         // Call the model with both encoded plans and compare
         // Use the retrieved ranking to pick the better one
         //
+        /*
         System.out.println("[PAIRWISE]: Starting enumeration of ExecutionPlans");
 
         for (PlanImplementation planImplementation : executionPlans) {
-            ExecutionTaskFlow etfOne = ExecutionTaskFlow.createFrom(planImplementation);
-            ExecutionPlan epOne = ExecutionPlan.createFrom(etfOne, (producerTask, channel, consumerTask) -> false);
+            ExecutionPlan epOne = this.createExecutionPlan(new PlanImplementation(planImplementation));
             this.executionPlans.put(planImplementation, epOne);
 
             OneHotMappings.setOptimizationContext(planImplementation.getOptimizationContext());
@@ -113,7 +134,7 @@ public static class Factory implements EstimatableCostFactory {
             //return planImplementation;
         }
 
-        System.out.println("[PAIRWISE]: Finished enumeration of ExecutionPlans");
+        System.out.println("[PAIRWISE]: Finished enumeration of ExecutionPlans");*/
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
@@ -162,8 +183,11 @@ public static class Factory implements EstimatableCostFactory {
                             encodedTwo = this.encodings.get(epTwo);
                         }*/
 
+                        /*
                         TreeNode encodedOne = this.encodings.get(this.executionPlans.get(p1));
-                        TreeNode encodedTwo = this.encodings.get(this.executionPlans.get(p2));
+                        TreeNode encodedTwo = this.encodings.get(this.executionPlans.get(p2));*/
+                        TreeNode encodedOne = TreeEncoder.encode(p1);
+                        TreeNode encodedTwo = TreeEncoder.encode(p2);
 
                         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple1 = OrtTensorEncoder.encode(encodedOne);
                         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple2 = OrtTensorEncoder.encode(encodedTwo);

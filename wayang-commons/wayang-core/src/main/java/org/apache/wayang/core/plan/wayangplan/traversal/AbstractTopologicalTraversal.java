@@ -83,6 +83,7 @@ public abstract class AbstractTopologicalTraversal<
                 }
             }
         }
+
         return activatorQueue;
     }
 
@@ -117,6 +118,7 @@ public abstract class AbstractTopologicalTraversal<
             if (successorActivations == null) {
                 throw new AbortException(String.format("%s requested to abort.", this));
             }
+
 
             for (TActivation activation : successorActivations) {
                 final Activator<TActivation> activator = activation.getTargetActivator();

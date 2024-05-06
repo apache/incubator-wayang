@@ -444,6 +444,12 @@ public class OneHotEncoder implements Encoder {
         int platformsCount = platformMappings.size();
         long[] result = new long[operatorsCount + platformsCount + 3];
 
+        result[0] = (long) new HashCodeBuilder(17, 37)
+            .append(operator.toString())
+            .append(operator.getAllInputs())
+            .append(operator.getAllOutputs())
+            .toHashCode();
+
         result[operatorsCount + platformsCount] = Udf.getComplexity(operator).ordinal();
         result[operatorsCount + platformsCount + 1] = inputCardinality;
         result[operatorsCount + platformsCount + 2] = outputCardinality;

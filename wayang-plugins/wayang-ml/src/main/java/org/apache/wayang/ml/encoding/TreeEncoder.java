@@ -19,6 +19,7 @@
 package org.apache.wayang.ml.encoding;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,13 +33,16 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plan.wayangplan.ElementaryOperator;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.wayang.core.plan.wayangplan.InputSlot;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.platform.Junction;
 import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
 import org.apache.wayang.core.api.exception.WayangException;
 
@@ -47,15 +51,15 @@ public class TreeEncoder implements Encoder {
         List<TreeNode> result = new ArrayList<TreeNode>();
 
         OneHotMappings.setOptimizationContext(plan.getOptimizationContext());
-        System.out.println(plan.getOperators());
 
         HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
         Collection<Operator> sinks = plan.getOperators().stream()
                 .filter(Operator::isSink).collect(Collectors.toList());
 
+        Map<OutputSlot<?>, Junction> junctions = plan.getJunctions();
 
         for (Operator sink : sinks) {
-            TreeNode sinkNode = traverse(sink, tree);
+            TreeNode sinkNode = traversePIOperator(sink, junctions, tree);
             sinkNode.isRoot = true;
             result.add(sinkNode);
         }
@@ -108,6 +112,62 @@ public class TreeEncoder implements Encoder {
         return result.get(0);
     }
 
+    private static TreeNode traversePIOperator(
+            Operator current,
+            Map<OutputSlot<?>, Junction> junctions,
+            HashMap<Operator, Collection<Operator>> visited) {
+        if (visited.containsKey(current)) {
+            return null;
+        }
+
+        TreeNode currentNode = new TreeNode();
+
+        if (current.isAlternative()) {
+            Operator original = ((OperatorAlternative) current)
+                .getAlternatives()
+                .get(0)
+                .getContainedOperators()
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new WayangException("Operator could not be retrieved from Alternatives"));
+            OneHotMappings.addOriginalOperator(original);
+
+            currentNode.encoded = OneHotEncoder.encodeOperator(original);
+        } else {
+            OneHotMappings.addOriginalOperator(current);
+
+            if (current.isExecutionOperator()) {
+                currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current);
+            } else {
+                currentNode.encoded = OneHotEncoder.encodeOperator(current);
+            }
+        }
+
+        Collection<ExecutionOperator> inputs = junctions.values().stream()
+            .filter(junction -> {
+                for (InputSlot<?> input : current.getAllInputs()) {
+                    if (junction.getTargetInputs().contains(input)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }).map(junction -> junction.getSourceOperator())
+            .collect(Collectors.toList());
+
+        for (Operator input : inputs) {
+            TreeNode next = traversePIOperator(input, junctions, visited);
+
+            if (currentNode.left == null) {
+                currentNode.left = next;
+            } else {
+                currentNode.right = next;
+            }
+        }
+
+        return currentNode;
+    }
+
     private static TreeNode traverse(Operator current, HashMap<Operator, Collection<Operator>> visited) {
         if (visited.containsKey(current)) {
             return null;
@@ -137,7 +197,6 @@ public class TreeEncoder implements Encoder {
         }
 
         // Add for later reconstruction in TreeDecoder
-
         Collection<Operator> inputs = Stream.of(current.getAllInputs())
                 .filter(input -> input.getOccupant() != null)
                 .map(input -> input.getOccupant().getOwner()).collect(Collectors.toList());

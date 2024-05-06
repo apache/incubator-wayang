@@ -107,7 +107,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      * @param executionTaskFlow should be converted into an {@link ExecutionPlan}
      * @param splittingCriteria to create splits beside the precedence-based splitting
      */
-    private StageAssignmentTraversal(ExecutionTaskFlow executionTaskFlow,
+    StageAssignmentTraversal(ExecutionTaskFlow executionTaskFlow,
                                      StageSplittingCriterion... splittingCriteria) {
         // Some sanity checks.
         final Set<ExecutionTask> executionTasks = executionTaskFlow.collectAllTasks();
@@ -145,7 +145,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      */
     public static ExecutionPlan assignStages(ExecutionTaskFlow executionTaskFlow,
                                              StageSplittingCriterion... additionalSplittingCriteria) {
-        final StageAssignmentTraversal instance = new StageAssignmentTraversal(executionTaskFlow, additionalSplittingCriteria);
+        StageAssignmentTraversal instance = new StageAssignmentTraversal(executionTaskFlow, additionalSplittingCriteria);
         return instance.buildExecutionPlan();
     }
 
@@ -660,7 +660,9 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
             this.assembleExecutionPlan(finalStages, null, sinkTask, new HashSet<>());
         }
         final ExecutionPlan executionPlan = new ExecutionPlan();
-        finalStages.values().stream().filter(ExecutionStage::isStartingStage).forEach(executionPlan::addStartingStage);
+        finalStages.values().stream().distinct().filter(ExecutionStage::isStartingStage).forEach(executionPlan::addStartingStage);
+
+        System.out.println(executionPlan.toExtensiveString());
         return executionPlan;
     }
 
@@ -681,17 +683,18 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         final InterimStage interimStage = this.assignedInterimStages.get(currentExecutionTask);
         final ExecutionStage executionStage = finalStages.computeIfAbsent(interimStage, InterimStage::toExecutionStage);
 
+        // Avoid running into loops. However, we must not do this check earlier because we might visit ExecutionTasks
+        // from several different predecessor InterimStages.
+        if (!visitedTasks.add(currentExecutionTask)) {
+            return;
+        }
+
         if (successorExecutionStage != null
                 && !executionStage.equals(successorExecutionStage)
                 && !executionStage.getSuccessors().contains(successorExecutionStage)) {
             executionStage.addSuccessor(successorExecutionStage);
         }
 
-        // Avoid running into loops. However, we must not do this check earlier because we might visit ExecutionTasks
-        // from several different predecessor InterimStages.
-        if (!visitedTasks.add(currentExecutionTask)) {
-            return;
-        }
 
         for (Channel channel : currentExecutionTask.getInputChannels()) {
             if (this.shouldVisitProducerOf(channel)) {

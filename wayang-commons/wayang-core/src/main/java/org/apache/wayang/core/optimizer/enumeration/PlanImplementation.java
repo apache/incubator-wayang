@@ -71,13 +71,13 @@ public class PlanImplementation {
     /**
      * {@link ExecutionOperator}s contained in this instance.
      */
-    private final Canonicalizer<ExecutionOperator> operators;
+    private final Canonicalizer<ExecutionOperator> operators = new Canonicalizer<>();
 
     /**
      * Describes the {@link Channel}s that have been picked between {@link ExecutionOperator}s and how they are
      * implemented.
      */
-    private final Map<OutputSlot<?>, Junction> junctions;
+    private final Map<OutputSlot<?>, Junction> junctions = new HashMap<>() ;
 
     /**
      * Defines how {@link LoopSubplan}s should be executed.
@@ -150,8 +150,8 @@ public class PlanImplementation {
      */
     public PlanImplementation(PlanImplementation original) {
         this.planEnumeration = original.planEnumeration;
-        this.junctions = new HashMap<>(original.junctions);
-        this.operators = new Canonicalizer<>(original.getOperators());
+        this.junctions.putAll(original.junctions);
+        this.operators.addAll(original.getOperators());
         this.settledAlternatives.putAll(original.settledAlternatives);
         this.loopImplementations.putAll(original.loopImplementations);
         this.optimizationContext = original.optimizationContext;
@@ -170,8 +170,8 @@ public class PlanImplementation {
                                Canonicalizer<ExecutionOperator> operators,
                                OptimizationContext optimizationContext) {
         this.planEnumeration = planEnumeration;
-        this.junctions = junctions;
-        this.operators = operators;
+        this.junctions.putAll(junctions);
+        this.operators.addAll(operators);
         this.optimizationContext = optimizationContext;
         this.costModel = this.optimizationContext
             .getConfiguration()
@@ -495,6 +495,10 @@ public class PlanImplementation {
 
     public Canonicalizer<ExecutionOperator> getOperators() {
         return this.operators;
+    }
+
+    public Map<OperatorAlternative, OperatorAlternative.Alternative> getSettledAlternatives() {
+        return this.settledAlternatives;
     }
 
     public Map<LoopSubplan, LoopImplementation> getLoopImplementations() {
@@ -984,19 +988,6 @@ public class PlanImplementation {
                 this.getUtilizedPlatforms(), this.getTimeEstimate(), this.getCostEstimate()
         );
     }
-
-    @Override
-    public PlanImplementation clone() {
-        PlanImplementation copied = new PlanImplementation(
-            this.getPlanEnumeration(),
-            this.getJunctions(),
-            this.getOperators().stream().map(op -> op.copy()).collect(Collectors.toSet()),
-            this.getOptimizationContext()
-        );
-
-        return copied;
-    }
-
 
     /**
      * Creates a new {@link ConcatenationDescriptor} for this instance.

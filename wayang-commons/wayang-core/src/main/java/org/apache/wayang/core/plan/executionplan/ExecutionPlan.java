@@ -254,5 +254,4 @@ public class ExecutionPlan {
                                            StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion) {
         return StageAssignmentTraversal.assignStages(executionTaskFlow, stageSplittingCriterion);
     }
-
 }

@@ -241,9 +241,6 @@ public class MLJob extends Job {
             this.planImplementation.logTimeEstimates();
 
             System.out.println("[CREATE INITIAL]: " + this.planImplementation.getOperators());
-            System.out.println("[CREATE INITIAL]: " + executionPlan.toExtensiveString());
-            System.out.println("[CREATE INITIAL]: " + executionPlan.getStages());
-            System.out.println("[CREATE INITIAL]: " + executionPlan.collectAllTasks());
 
             assert executionPlan.isSane();
 
@@ -264,7 +261,6 @@ public class MLJob extends Job {
 
             this.planImplementation.logTimeEstimates();
 
-            System.out.println("[CREATE INITIAL TRADITIONAL]: " + executionPlan.toExtensiveString());
 
             //assert executionPlan.isSane();
             this.optimizationRound.stop("Create Initial Execution Plan");
@@ -308,7 +304,6 @@ public class MLJob extends Job {
 
             executionPlan = planMappings.get(this.planImplementation);
             //executionPlan.expand(planMappings.get(this.planImplementation));
-            System.out.println("[UPDATED]: " + executionPlan.toExtensiveString());
 
             this.planImplementation.mergeJunctionOptimizationContexts();
 

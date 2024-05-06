@@ -313,7 +313,7 @@ public class ExecutionTaskFlowCompiler
     /**
      * Identifies an {@link Activator}.
      */
-    private static class ActivatorKey {
+    private static final class ActivatorKey {
 
         private final ExecutionOperator executionOperator;
 

@@ -173,7 +173,6 @@ public class OrtTensorEncoder {
 
         assert node != null : "Node is null and can't be encoded";
 
-        System.out.println("test 3: Passed");
 
         testo.treeConvIndexes(node);
         testo.preorderIndexes(node,1);
@@ -181,8 +180,6 @@ public class OrtTensorEncoder {
         ArrayList<TreeNode> testArr = new ArrayList<>();
         testArr.add(node);
         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> t = testo.prepareTrees(testArr);
-        t.field0.forEach(tree -> System.out.println(Arrays.deepToString(tree)));
-        t.field1.forEach(tree -> System.out.println(Arrays.deepToString(tree)));
 
         return t;
     }

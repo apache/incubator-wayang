@@ -126,9 +126,11 @@ public class ExecutionTaskFlow {
                 return new ExecutionTaskFlow(compiler.getTerminalTasks(), compiler.getInputChannels());
             }
         } catch (AbstractTopologicalTraversal.AbortException e) {
+            System.out.println("RECREATE FROM FAILED");
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
-        return null;
 
+        return null;
     }
 }

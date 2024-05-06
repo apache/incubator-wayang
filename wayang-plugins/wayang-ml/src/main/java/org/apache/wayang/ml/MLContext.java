@@ -61,7 +61,8 @@ public class MLContext extends WayangContext {
      */
     @Override
     public void execute(WayangPlan wayangPlan, String... udfJars) {
-        MLJob wayangJob = this.createMLJob("", wayangPlan, new Experiment("unknown", new Subject("unknown", "unknown")), udfJars);
+        Job wayangJob = this.createJob("", wayangPlan, udfJars);
+        //MLJob wayangJob = this.createMLJob("", wayangPlan, new Experiment("unknown", new Subject("unknown", "unknown")), udfJars);
         OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
 
         /*
