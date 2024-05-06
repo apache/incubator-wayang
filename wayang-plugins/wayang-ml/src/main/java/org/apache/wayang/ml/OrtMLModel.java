@@ -23,6 +23,7 @@ import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
+import ai.onnxruntime.TensorInfo;
 import ai.onnxruntime.OrtSession.Result;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.commons.lang3.ArrayUtils;
@@ -107,16 +108,17 @@ public class OrtMLModel {
         Tuple<ArrayList<long[][]>, ArrayList<long[][]>> input2
     ) throws OrtException {
 
-        //TODO: Use shape information for padding
-        float[][][] input1Left = new float[1][50][58];
-        long[][][] input1Right = new long[1][171][1];
-        float[][][] input2Left = new float[1][50][58];
-        long[][][] input2Right = new long[1][171][1];
 
         Map<String, NodeInfo> inputInfoList = this.session.getInputInfo();
-        System.out.println(inputInfoList);
+        long[] input1Dims = ((TensorInfo) inputInfoList.get("input1").getInfo()).getShape();
+        long[] input2Dims = ((TensorInfo) inputInfoList.get("input2").getInfo()).getShape();
+        long[] input3Dims = ((TensorInfo) inputInfoList.get("input3").getInfo()).getShape();
+        long[] input4Dims = ((TensorInfo) inputInfoList.get("input4").getInfo()).getShape();
 
-        //Tuple<Integer, Integer> inputOneDims =
+        float[][][] input1Left = new float[1][(int) input1Dims[1]][(int) input1Dims[2]];
+        long[][][] input1Right = new long[1][(int) input2Dims[1]][(int) input2Dims[2]];
+        float[][][] input2Left = new float[1][(int) input3Dims[1]][(int) input3Dims[2]];
+        long[][][] input2Right = new long[1][(int) input4Dims[1]][(int) input4Dims[2]];
 
         //input1Left = input1.field0.toArray(input1Left);
         for (int i = 0; i < input1.field0.get(0).length; i++) {

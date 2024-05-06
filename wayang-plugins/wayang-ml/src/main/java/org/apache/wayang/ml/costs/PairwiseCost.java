@@ -55,9 +55,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class PairwiseCost implements EstimatableCost {
-    public HashMap<PlanImplementation, ExecutionPlan> executionPlans = new HashMap<>();
-
-    public HashMap<ExecutionPlan, TreeNode> encodings = new HashMap<>();
 
     /**
      * <i>Currently not used.</i>
@@ -108,33 +105,11 @@ public class PairwiseCost implements EstimatableCost {
         return new Tuple<>(intervalList, doubleList);
     }
 
-    @Override public HashMap<PlanImplementation, ExecutionPlan> getPlanMappings() {
-        return this.executionPlans;
-    }
-
     public PlanImplementation pickBestExecutionPlan(
             Collection<PlanImplementation> executionPlans,
             ExecutionPlan existingPlan,
             Set<Channel> openChannels,
             Set<ExecutionStage> executedStages) {
-        // Call the model with both encoded plans and compare
-        // Use the retrieved ranking to pick the better one
-        //
-        /*
-        System.out.println("[PAIRWISE]: Starting enumeration of ExecutionPlans");
-
-        for (PlanImplementation planImplementation : executionPlans) {
-            ExecutionPlan epOne = this.createExecutionPlan(new PlanImplementation(planImplementation));
-            this.executionPlans.put(planImplementation, epOne);
-
-            OneHotMappings.setOptimizationContext(planImplementation.getOptimizationContext());
-            TreeNode encodedOne = TreeEncoder.encode(epOne, false);
-            this.encodings.put(epOne, encodedOne);
-
-            //return planImplementation;
-        }
-
-        System.out.println("[PAIRWISE]: Finished enumeration of ExecutionPlans");*/
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
@@ -144,48 +119,6 @@ public class PairwiseCost implements EstimatableCost {
                             .getConfiguration();
                         OrtMLModel model = OrtMLModel.getInstance(config);
 
-                        /*
-                        ExecutionPlan epOne;
-                        ExecutionPlan epTwo;
-
-                        if (!this.executionPlans.containsKey(p1)) {
-                            final ExecutionTaskFlow etfOne = ExecutionTaskFlow.createFrom(p2);
-                            epOne = ExecutionPlan.createFrom(etfOne, (producerTask, channel, consumerTask) -> true);
-                            this.executionPlans.put(p1, epOne);
-                        } else {
-                            epOne = this.executionPlans.get(p1);
-                        }
-
-                        if (!this.executionPlans.containsKey(p2)) {
-                            final ExecutionTaskFlow etfTwo = ExecutionTaskFlow.createFrom(p2);
-                            epTwo = ExecutionPlan.createFrom(etfTwo, (producerTask, channel, consumerTask) -> true);
-                            this.executionPlans.put(p2, epTwo);
-                        } else {
-                            epTwo = this.executionPlans.get(p2);
-                        }
-
-                        TreeNode encodedOne;
-                        TreeNode encodedTwo;
-
-                        if (!this.encodings.containsKey(epOne)) {
-                            OneHotMappings.setOptimizationContext(p1.getOptimizationContext());
-                            encodedOne = TreeEncoder.encode(epOne, false);
-                            this.encodings.put(epOne, encodedOne);
-                        } else {
-                            encodedOne = this.encodings.get(epOne);
-                        }
-
-                        if (!this.encodings.containsKey(epTwo)) {
-                            OneHotMappings.setOptimizationContext(p2.getOptimizationContext());
-                            encodedTwo = TreeEncoder.encode(epTwo, false);
-                            this.encodings.put(epTwo, encodedTwo);
-                        } else {
-                            encodedTwo = this.encodings.get(epTwo);
-                        }*/
-
-                        /*
-                        TreeNode encodedOne = this.encodings.get(this.executionPlans.get(p1));
-                        TreeNode encodedTwo = this.encodings.get(this.executionPlans.get(p2));*/
                         TreeNode encodedOne = TreeEncoder.encode(p1);
                         TreeNode encodedTwo = TreeEncoder.encode(p2);
 
@@ -203,7 +136,7 @@ public class PairwiseCost implements EstimatableCost {
                         return p1;
                     } catch(Exception e) {
                         e.printStackTrace();
-                        return p2;
+                        return p1;
                     }
                 })
                 .orElseThrow(() -> new WayangException("Could not find an execution plan."));

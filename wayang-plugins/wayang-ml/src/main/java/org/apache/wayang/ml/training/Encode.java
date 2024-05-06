@@ -125,13 +125,8 @@ public class Encode {
 
         for (PlanImplementation planImplementation : planImplementations) {
             try {
-                System.out.println(planImplementation.getOperators());
-                ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(planImplementation);
-                ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, (producerTask, channel, consumerTask) -> false);
-
-                System.out.println(executionPlan.toExtensiveString());
-                TreeNode execNode = TreeEncoder.encode(executionPlan, false).withIdsFrom(wayangNode);
-                writer.write(String.format("%s:%s:%d", wayangNode.toString(), execNode.toString(), planImplementation.getTimeEstimate().getUpperEstimate()));
+                TreeNode planImplNode = TreeEncoder.encode(planImplementation).withIdsFrom(wayangNode);
+                writer.write(String.format("%s:%s:%d", wayangNode.toString(), planImplNode.toString(), planImplementation.getTimeEstimate().getUpperEstimate()));
                 writer.newLine();
                 writer.flush();
             } catch(Exception e) {
