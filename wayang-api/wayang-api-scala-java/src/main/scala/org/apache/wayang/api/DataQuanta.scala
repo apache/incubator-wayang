@@ -38,6 +38,8 @@ import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
+import com.google.protobuf.ByteString;
+import org.apache.wayang.api.python.function._
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -120,6 +122,24 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   /**
+    * Feed this instance into a [[MapPartitionsOperator]].
+    *
+    * @return a new instance representing the [[MapOperator]]'s output
+    */
+  def mapPartitionsPython[NewOut: ClassTag](udf: String): DataQuanta[NewOut] = {
+    val mapOperator = new MapPartitionsOperator(
+      new WrappedMapPartitionsDescriptor[Object, Object](
+        ByteString.copyFromUtf8(udf),
+        classOf[Object],
+        classOf[Object],
+      ),
+    )
+    this.connectTo(mapOperator, 0)
+    mapOperator
+  }
+
+
+  /**
     * Feed this instance into a [[MapOperator]] with a [[ProjectionDescriptor]].
     *
     * @param fieldNames names of the fields to be projected
@@ -178,6 +198,21 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     filterOperator
   }
 
+  def filterPython(udf: String,
+                 sqlUdf: String = null,
+                 selectivity: ProbabilisticDoubleInterval = null,
+                 udfLoad: LoadProfileEstimator = null): DataQuanta[Out] = {
+    val filterOperator = new FilterOperator(
+      new WrappedPredicateDescriptor(
+        ByteString.copyFromUtf8(udf),
+        this.output.getType.getDataUnitType.toBasicDataUnitType,
+        selectivity,
+        udfLoad
+    ).withSqlImplementation(sqlUdf))
+    this.connectTo(filterOperator, 0)
+    filterOperator
+  }
+
   /**
     * Feed this instance into a [[FlatMapOperator]].
     *
@@ -205,6 +240,22 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     val flatMapOperator = new FlatMapOperator(new FlatMapDescriptor(
       udf, basicDataUnitType[Out], basicDataUnitType[NewOut], selectivity, udfLoad
     ))
+    this.connectTo(flatMapOperator, 0)
+    flatMapOperator
+  }
+
+  def flatMapPython[NewOut: ClassTag](udf: String,
+                                    selectivity: ProbabilisticDoubleInterval = null,
+                                    udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] = {
+    val flatMapOperator = new FlatMapOperator(
+      new WrappedFlatMapDescriptor(
+        ByteString.copyFromUtf8(udf),
+        basicDataUnitType[Out],
+        basicDataUnitType[NewOut],
+        selectivity,
+        udfLoad
+      )
+    )
     this.connectTo(flatMapOperator, 0)
     flatMapOperator
   }
@@ -329,6 +380,26 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     val reduceByOperator = new ReduceByOperator(
       new TransformationDescriptor(keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out], udfLoad)
+    )
+    this.connectTo(reduceByOperator, 0)
+    reduceByOperator
+  }
+
+  def reduceByKeyPython[Key: ClassTag](keyUdf: String,
+                                     udf: String,
+                                     udfLoad: LoadProfileEstimator = null)
+  : DataQuanta[Out] = {
+    val reduceByOperator = new ReduceByOperator(
+      new WrappedTransformationDescriptor(
+        ByteString.copyFromUtf8(keyUdf),
+        basicDataUnitType[Out],
+        basicDataUnitType[Key]
+      ),
+      new WrappedReduceDescriptor(
+        ByteString.copyFromUtf8(udf),
+        groupedDataUnitType[Out],
+        basicDataUnitType[Out]
+      )
     )
     this.connectTo(reduceByOperator, 0)
     reduceByOperator
@@ -461,6 +532,29 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     val joinOperator = new JoinOperator(
       new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       new TransformationDescriptor(thatKeyUdf, basicDataUnitType[ThatOut], basicDataUnitType[Key])
+    )
+    this.connectTo(joinOperator, 0)
+    that.connectTo(joinOperator, 1)
+    joinOperator
+  }
+
+  def joinPython[ThatOut: ClassTag, Key: ClassTag]
+  (thisKeyUdf: String,
+   that: DataQuanta[ThatOut],
+   thatKeyUdf: String)
+  : DataQuanta[WayangTuple2[Out, ThatOut]] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
+    val joinOperator = new JoinOperator(
+      new WrappedTransformationDescriptor(
+        ByteString.copyFromUtf8(thisKeyUdf),
+        basicDataUnitType[Out],
+        basicDataUnitType[Key]
+      ),
+      new WrappedTransformationDescriptor(
+        ByteString.copyFromUtf8(thatKeyUdf),
+        basicDataUnitType[ThatOut],
+        basicDataUnitType[Key]
+      )
     )
     this.connectTo(joinOperator, 0)
     that.connectTo(joinOperator, 1)

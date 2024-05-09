@@ -15,74 +15,64 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.wayang.api.json
 
-import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
-import org.apache.wayang.api._
-import org.apache.wayang.core.api.{Configuration, WayangContext}
-import org.apache.wayang.java.Java
+import zio._
+import zio.IO
+import zio.http._
+import zio.Console._
+import scala.util.Try
+
 import org.apache.wayang.api.json.builder.JsonPlanBuilder
-import org.apache.wayang.api.json.parserutil.ParseOperatorsFromJson.parseOperatorsFromFile
-import org.apache.wayang.api.graph._
+import org.apache.wayang.api.json.operatorfromdrawflow.OperatorFromDrawflowConverter
+import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
+import org.apache.wayang.api.json.parserutil.ParseOperatorsFromDrawflow
+import org.apache.wayang.api.json.parserutil.ParseOperatorsFromJson
+import org.apache.wayang.api.json.parserutil.ParsePlanFromJson
+import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
 
-object Main {
-
-  def main0(args : Array[String]): Unit = {
-    // main1()
-    // main2()
+object Main extends ZIOAppDefault {
+  val drawRoute =
+    Method.POST / "wayang-api-json" / "submit-plan" / "drawflow-format" -> handler { (req: Request) =>
+     (for {
+        requestBody <- req.body.asString
+        operatorsFromDrawflow <- ZIO.fromTry(Try(ParseOperatorsFromDrawflow.parseOperatorsFromString(requestBody).get))
+        operatorsFromJson = operatorsFromDrawflow.flatMap(op => OperatorFromDrawflowConverter.toOperatorFromJson(op))
+        result <- ZIO.attempt(new JsonPlanBuilder().setOperators(operatorsFromJson).execute())
+        responseBody <- ZIO.attempt {
+          if (operatorsFromJson.exists(op => op.cat == OperatorFromJson.Categories.Output))
+            "Success"
+          else
+            result.collect().toString()
+        }
+        resBody <- ZIO.succeed(Response.text(responseBody))
+     } yield resBody).catchAll(t => ZIO.succeed(Response.text(t.getMessage)))
   }
 
-  def main1() {
-    println( "Hello World!" )
+  val jsonRoute =
+    Method.POST / "wayang-api-json" / "submit-plan" / "json" -> handler { (req: Request) =>
+     (for {
+        requestBody <- req.body.asString
+        planFromJson <- ZIO.fromTry(Try(ParsePlanFromJson.parsePlanFromString(requestBody).get))
+        result <- ZIO.attempt(new JsonPlanBuilder().fromPlan(planFromJson).execute())
+        responseBody <- ZIO.attempt {
+          if (planFromJson.operators.exists(op => op.cat == OperatorFromJson.Categories.Output)) {
+            println("Successfully executed WayangJob")
+            "Success"
+          } else {
+            result.collect().toString()
+          }
+        }
+        resBody <- ZIO.succeed(Response.text(responseBody))
+     } yield resBody).catchAll(t => {
+       t.printStackTrace
+       ZIO.succeed(Response.error(Status.BadRequest, t.getMessage))
+     })
+    }
 
-    val inputUrl = "file:///home/mike/in1.txt"
+  // Create HTTP route
+  val app = Routes(drawRoute, jsonRoute).toHttpApp
 
-    // Get a plan builder.
-    val wayangContext = new WayangContext(new Configuration)
-      .withPlugin(Java.basicPlugin)
-    val planBuilder = new PlanBuilder(wayangContext)
-      .withJobName(s"WordCount ($inputUrl)")
-      .withUdfJarsOf(this.getClass)
-
-    val wordcounts = planBuilder
-      // Read the text file.
-      .loadCollection(List("123 234 345 345 123")).withName("Load collection")
-
-
-      // Split each line by non-word characters.
-      .flatMap(_.split("\\s+"), selectivity = 10).withName("Split words")
-
-      // Filter empty tokens.
-      .filter(_.nonEmpty, selectivity = 0.99).withName("Filter empty words")
-
-      // Attach counter to each word.
-      .map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
-
-      // Sum up counters for every word.
-      .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
-      .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
-
-      // Execute the plan and collect the results.
-      .collect()
-
-    println(wordcounts)
-  }
-
-  def main2(): Unit = {
-
-    val filename = "plan-c.json"
-    val operators: List[OperatorFromJson] = parseOperatorsFromFile(filename).get
-    println("PARSED")
-    operators.foreach(x => println(x))
-    println()
-
-    new JsonPlanBuilder()
-      .setOperators(operators)
-      .execute()
-    println("Written out.")
-    println()
-
-  }
-
+  // Run it like any simple app
+  override val run = Server.serve(app).provide(Server.default)
 }

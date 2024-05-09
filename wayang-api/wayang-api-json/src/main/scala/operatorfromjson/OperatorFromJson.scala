@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.wayang.api.json.operatorfromjson
 
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
@@ -79,10 +78,12 @@ import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson,
   )
 )
 class OperatorFromJson(val id: Long,
-                                val input: Array[Long],
-                                val output: Array[Long],
-                                val cat: String,
-                                val operatorName: String) {
+                       val input: Array[Long],
+                       val output: Array[Long],
+                       val cat: String,
+                       val operatorName: String,
+                       val executionPlatform: String = null
+                      ) extends Serializable {
 
 
   //
@@ -172,5 +173,15 @@ object OperatorFromJson {
 
     //  Other
     final val KMeans = "kmeans"
+  }
+
+  object ExecutionPlatforms {
+    final val Java = "java"
+    final val Spark = "spark"
+    final val Flink = "flink"
+    final val JDBC = "jdbc"
+    final val Postgres = "postgres"
+    final val SQLite3 = "sqlite3"
+    final val All = List(Java, Spark, Flink, JDBC, Postgres, SQLite3)
   }
 }

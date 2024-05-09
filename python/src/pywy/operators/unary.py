@@ -15,6 +15,10 @@
 #  limitations under the License.
 #
 
+from itertools import chain, groupby
+from collections import defaultdict
+import ast
+
 from pywy.operators.base import PywyOperator
 from pywy.types import (
                             GenericTco,
@@ -22,6 +26,7 @@ from pywy.types import (
                             Predicate,
                             get_type_predicate,
                             Function,
+                            BiFunction,
                             get_type_function,
                             FlatmapFunction,
                             get_type_flatmap_function
@@ -30,8 +35,8 @@ from pywy.types import (
 
 class UnaryToUnaryOperator(PywyOperator):
 
-    def __init__(self, name: str, input_type: GenericTco, output_type: GenericUco):
-        super().__init__(name, input_type, output_type, 1, 1)
+    def __init__(self, name: str):
+        super().__init__(name, "unary", 1, 1)
 
     def postfix(self) -> str:
         return 'OperatorUnary'
@@ -46,11 +51,18 @@ class UnaryToUnaryOperator(PywyOperator):
 class FilterOperator(UnaryToUnaryOperator):
 
     predicate: Predicate
+    json_name: str
 
     def __init__(self, predicate: Predicate):
-        predicate_type = get_type_predicate(predicate) if predicate else None
-        super().__init__("Filter", predicate_type, predicate_type)
+        super().__init__("Filter")
         self.predicate = predicate
+        self.json_name = "filter"
+
+    def use_predicate(self, iterator) -> bool:
+        return self.predicate(next(iterator))
+
+    def get_udf(self, iterator):
+        return filter(self.predicate, iterator)
 
     def __str__(self):
         return super().__str__()
@@ -62,11 +74,34 @@ class FilterOperator(UnaryToUnaryOperator):
 class MapOperator(UnaryToUnaryOperator):
 
     function: Function
+    json_name: str
 
     def __init__(self, function: Function):
-        types = get_type_function(function) if function else (None, None)
-        super().__init__("Map", types[0], types[1])
+        super().__init__("Map")
         self.function = function
+        self.json_name = "map"
+
+    def get_udf(self, iterator):
+        return map(self.function, iterator)
+
+    def __str__(self):
+        return super().__str__()
+
+    def __repr__(self):
+        return super().__repr__()
+
+class MapPartitionsOperator(UnaryToUnaryOperator):
+
+    function: Function
+    json_name: str
+
+    def __init__(self, function: Function):
+        super().__init__("MapPartitions")
+        self.function = function
+        self.json_name = "mapPartitions"
+
+    def get_udf(self, iterator):
+        return map(self.function, iterator)
 
     def __str__(self):
         return super().__str__()
@@ -78,11 +113,50 @@ class MapOperator(UnaryToUnaryOperator):
 class FlatmapOperator(UnaryToUnaryOperator):
 
     fm_function: FlatmapFunction
+    json_name: str
 
     def __init__(self, fm_function: FlatmapFunction):
-        types = get_type_flatmap_function(fm_function) if fm_function else (None, None)
-        super().__init__("Flatmap", types[0], types[1])
+        super().__init__("Flatmap")
         self.fm_function = fm_function
+        self.json_name = "flatMap"
+
+    def get_udf(self, iterator):
+        return chain.from_iterable(map(self.fm_function, iterator))
+
+    def __str__(self):
+        return super().__str__()
+
+    def __repr__(self):
+        return super().__repr__()
+
+class ReduceByKeyOperator(UnaryToUnaryOperator):
+    key_function: Function
+    reduce_function: BiFunction
+    json_name: str
+
+    def __init__(self, key_function: Function, reduce_function: BiFunction):
+        super().__init__("ReduceByKey")
+        self.key_function = key_function
+        self.reduce_function = reduce_function
+        self.json_name = "reduceBy"
+
+    def get_udf(self, iterator):
+        # Use ast.literal_eval() to safely evaluate the string as a Python literal
+        #print(", ".join(iterator))
+        #list_of_tuples = ast.literal_eval("[" + ", ".join(iterator)  + "]")
+
+        tuples = [(str(item[0]), str(item[1])) for item in iterator]
+        grouped_data = groupby(sorted(tuples, key=self.key_function), key=self.key_function)
+
+        # Create a defaultdict to store the sums
+        sums = {}
+
+        for key, group in grouped_data:
+            sums[key] = (key, 1)
+            for item in group:
+                sums[key] = self.reduce_function(sums[key], item)
+
+        return sums.values()
 
     def __str__(self):
         return super().__str__()

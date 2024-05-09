@@ -22,5 +22,5 @@ dir=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 cd ${dir}/..
 
 protoc -I=./wayang-commons/wayang-serializable/src/main/proto \
---python_out=./python/src/pywayang/protobuf/ \
+--python_out=./python/src/pywy/platforms/jvm/serializable \
 pywayangplan.proto

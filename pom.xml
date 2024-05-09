@@ -849,7 +849,6 @@
 
         <!-- Coverage -->
         <!-- TODO: add the coverage elements -->
-
     </dependencies>
 
     <build>
@@ -1141,7 +1140,7 @@
                     </includedLicenses>
                     <failOnBlacklist>true</failOnBlacklist>
                     <excludedGroups>
-                        org.apache.spark.*|org.apache.hadoop.*|org.apache.giraph.*|org.antlr.*|junit.*|org.graphchi.*
+                        org.apache.spark.*|org.apache.hadoop.*|org.apache.giraph.*|org.antlr.*|junit.*|org.graphchi.*|org.springframework.*
                     </excludedGroups>
                     <excludeTransitiveDependencies>true</excludeTransitiveDependencies>
                 </configuration>

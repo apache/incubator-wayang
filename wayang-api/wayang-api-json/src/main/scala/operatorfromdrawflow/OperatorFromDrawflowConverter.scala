@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.wayang.api.json.operatorfromdrawflow
 
 import com.fasterxml.jackson.databind.json.JsonMapper
@@ -28,11 +27,9 @@ import org.apache.wayang.api.json.operatorfromjson.output._
 import org.apache.wayang.api.json.operatorfromjson.unary._
 import org.apache.wayang.api.json.parserutil.ParseOperatorsFromDrawflow
 
-import scala.collection.mutable.ListBuffer
-
 object OperatorFromDrawflowConverter {
 
-  def extractInfo(operatorFromDrawflow: OperatorFromDrawflow): (Long, String, String, Array[Long], Array[Long]) = {
+  private def extractInfo(operatorFromDrawflow: OperatorFromDrawflow): (Long, String, String, Array[Long], Array[Long], String) = {
     val id = operatorFromDrawflow.id
     val cat = operatorFromDrawflow.data("cat").asInstanceOf[String]
     val operatorName = operatorFromDrawflow.data("operatorName").asInstanceOf[String]
@@ -44,12 +41,14 @@ object OperatorFromDrawflowConverter {
       .map(outputs => outputs.connections)
       .flatMap(connections => connections.map(connection => connection.node.toLong))
       .toArray
-    (id, cat, operatorName, input, output)
+
+    val executionPlatform = operatorFromDrawflow.data.getOrElse("executionPlatform", null).asInstanceOf[String]
+    (id, cat, operatorName, input, output, executionPlatform)
   }
 
   def toOperatorFromJson(operatorFromDrawflow: OperatorFromDrawflow): List[OperatorFromJson] = {
 
-    val (id, cat, operatorName, composedOperatorInput, composedOperatorOutput) = extractInfo(operatorFromDrawflow)
+    val (id, cat, operatorName, composedOperatorInput, composedOperatorOutput, executionPlatform) = extractInfo(operatorFromDrawflow)
 
     if (cat == "composed") {
       val objectMapper = JsonMapper.builder()
@@ -76,13 +75,13 @@ object OperatorFromDrawflowConverter {
 
   private def toOperatorFromJsonBody(operatorFromDrawflow: OperatorFromDrawflow): OperatorFromJson = {
 
-    val (id, cat, operatorName, input, output) = extractInfo(operatorFromDrawflow)
+    val (id, cat, operatorName, input, output, executionPlatform) = extractInfo(operatorFromDrawflow)
 
     operatorName match {
       // input
-      case "iBinary" => InputCollectionFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.InputCollection, InputCollectionFromJson.Data(operatorFromDrawflow.data("collectionGeneratorFunction").asInstanceOf[String]))
-      case "iTextFile" => TextFileInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.TextFileInput, TextFileInputFromJson.Data(operatorFromDrawflow.data("inputFileURL").asInstanceOf[String]))
-      case "iCsvFile" => TableInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Table, TableInputFromJson.Data(operatorFromDrawflow.data("tableName").asInstanceOf[String], operatorFromDrawflow.data("columnNames").asInstanceOf[String].split(",").map(s => s.trim()).toList))
+      case "iBinary" => InputCollectionFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.InputCollection, InputCollectionFromJson.Data(operatorFromDrawflow.data("collectionGeneratorFunction").asInstanceOf[String]), executionPlatform)
+      case "iTextFile" => TextFileInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.TextFileInput, TextFileInputFromJson.Data(operatorFromDrawflow.data("inputFileURL").asInstanceOf[String]), executionPlatform)
+      case "iCsvFile" => TableInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Table, TableInputFromJson.Data(operatorFromDrawflow.data("tableName").asInstanceOf[String], operatorFromDrawflow.data("columnNames").asInstanceOf[String].split(",").map(s => s.trim()).toList), executionPlatform)
       case "iJdbc" => JDBCRemoteInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.JDBCRemoteInput,
         JDBCRemoteInputFromJson.Data(
           operatorFromDrawflow.data("inputJDBCconnection").asInstanceOf[String],
@@ -93,32 +92,32 @@ object OperatorFromDrawflowConverter {
         ))
 
       // unary
-      case "filter" => FilterOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Filter, FilterOperatorFromJson.Data(operatorFromDrawflow.data("booleanFunction").asInstanceOf[String]))
-      case "reduceBy" => ReduceByOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.ReduceBy, ReduceByOperatorFromJson.Data(operatorFromDrawflow.data("keyFunction").asInstanceOf[String], operatorFromDrawflow.data("reduceFunction").asInstanceOf[String]))
-      case "count" => CountOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Count)
-      case "groupBy" => GroupByOpeartorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.GroupBy, GroupByOpeartorFromJson.Data(operatorFromDrawflow.data("keyFunction").asInstanceOf[String]))
-      case "sort" => SortOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Sort, SortOperatorFromJson.Data(operatorFromDrawflow.data("keyFunction").asInstanceOf[String]))
-      case "flatMap" => FlatMapOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.FlatMap, FlatMapOperatorFromJson.Data(operatorFromDrawflow.data("flatMapFunction").asInstanceOf[String]))
-      case "map" => MapOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Map, MapOperatorFromJson.Data(operatorFromDrawflow.data("mapFunction").asInstanceOf[String]))
-      case "reduce" => ReduceOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Reduce, ReduceOperatorFromJson.Data(operatorFromDrawflow.data("reduceFunction").asInstanceOf[String]))
-      case "distinct" => DistinctOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Distinct)
-      case "mapPartitions" => MapPartitionsOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.MapPartitions, MapPartitionsOperatorFromJson.Data(operatorFromDrawflow.data("mapPartitionsFunction").asInstanceOf[String]))
-      case "sample" => SampleOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Sample, SampleOperatorFromJson.Data(operatorFromDrawflow.data("sampleSize").asInstanceOf[String].toInt))
+      case "filter" => FilterOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Filter, FilterOperatorFromJson.Data(operatorFromDrawflow.data("booleanFunction").asInstanceOf[String]), executionPlatform)
+      case "reduceBy" => ReduceByOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.ReduceBy, ReduceByOperatorFromJson.Data(operatorFromDrawflow.data("keyFunction").asInstanceOf[String], operatorFromDrawflow.data("reduceFunction").asInstanceOf[String]), executionPlatform)
+      case "count" => CountOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Count, executionPlatform)
+      case "groupBy" => GroupByOpeartorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.GroupBy, GroupByOpeartorFromJson.Data(operatorFromDrawflow.data("keyFunction").asInstanceOf[String]), executionPlatform)
+      case "sort" => SortOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Sort, SortOperatorFromJson.Data(operatorFromDrawflow.data("keyFunction").asInstanceOf[String]), executionPlatform)
+      case "flatMap" => FlatMapOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.FlatMap, FlatMapOperatorFromJson.Data(operatorFromDrawflow.data("flatMapFunction").asInstanceOf[String]), executionPlatform)
+      case "map" => MapOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Map, MapOperatorFromJson.Data(operatorFromDrawflow.data("mapFunction").asInstanceOf[String]), executionPlatform)
+      case "reduce" => ReduceOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Reduce, ReduceOperatorFromJson.Data(operatorFromDrawflow.data("reduceFunction").asInstanceOf[String]), executionPlatform)
+      case "distinct" => DistinctOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Distinct, executionPlatform)
+      case "mapPartitions" => MapPartitionsOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.MapPartitions, MapPartitionsOperatorFromJson.Data(operatorFromDrawflow.data("mapPartitionsFunction").asInstanceOf[String]), executionPlatform)
+      case "sample" => SampleOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Sample, SampleOperatorFromJson.Data(operatorFromDrawflow.data("sampleSize").asInstanceOf[String].toInt), executionPlatform)
 
       // binary
-      case "union" => UnionOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Union)
-      case "coGroup" => CoGroupOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.CoGroup, CoGroupOperatorFromJson.Data(operatorFromDrawflow.data("groupKey1").asInstanceOf[String], operatorFromDrawflow.data("groupKey2").asInstanceOf[String]))
-      case "cartesian" => CartesianOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Cartesian)
-      case "join" => JoinOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Join, JoinOperatorFromJson.Data(operatorFromDrawflow.data("joinKey1").asInstanceOf[String], operatorFromDrawflow.data("joinKey2").asInstanceOf[String]))
-      case "intersect" => IntersectOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Intersect)
+      case "union" => UnionOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Union, executionPlatform)
+      case "coGroup" => CoGroupOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.CoGroup, CoGroupOperatorFromJson.Data(operatorFromDrawflow.data("groupKey1").asInstanceOf[String], operatorFromDrawflow.data("groupKey2").asInstanceOf[String]), executionPlatform)
+      case "cartesian" => CartesianOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Cartesian, executionPlatform)
+      case "join" => JoinOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Join, JoinOperatorFromJson.Data(operatorFromDrawflow.data("joinKey1").asInstanceOf[String], operatorFromDrawflow.data("joinKey2").asInstanceOf[String]), executionPlatform)
+      case "intersect" => IntersectOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Intersect, executionPlatform)
 
       // loop
-      case "foreach" => ForeachOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Foreach, ForeachOperatorFromJson.Data(operatorFromDrawflow.data("Body").asInstanceOf[String]))
-      case "while" => DoWhileOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.TextFileOutput, DoWhileOperatorFromJson.Data(operatorFromDrawflow.data("criterionFunction").asInstanceOf[String], operatorFromDrawflow.data("Body").asInstanceOf[String]))
-      case "repeat" => RepeatOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Repeat, RepeatOperatorFromJson.Data(operatorFromDrawflow.data("numberOfIterations").asInstanceOf[String].toInt, operatorFromDrawflow.data("Body").asInstanceOf[String]))
+      case "foreach" => ForeachOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Foreach, ForeachOperatorFromJson.Data(operatorFromDrawflow.data("Body").asInstanceOf[String]), executionPlatform)
+      case "while" => DoWhileOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.TextFileOutput, DoWhileOperatorFromJson.Data(operatorFromDrawflow.data("criterionFunction").asInstanceOf[String], operatorFromDrawflow.data("Body").asInstanceOf[String]), executionPlatform)
+      case "repeat" => RepeatOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Repeat, RepeatOperatorFromJson.Data(operatorFromDrawflow.data("numberOfIterations").asInstanceOf[String].toInt, operatorFromDrawflow.data("Body").asInstanceOf[String]), executionPlatform)
 
       // output
-      case "oTextFile" => TextFileOutputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.TextFileOutput, TextFileOutputFromJson.Data(operatorFromDrawflow.data("outputFileURL").asInstanceOf[String]))
+      case "oTextFile" => TextFileOutputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.TextFileOutput, TextFileOutputFromJson.Data(operatorFromDrawflow.data("outputFileURL").asInstanceOf[String]), executionPlatform)
     }
 
   }

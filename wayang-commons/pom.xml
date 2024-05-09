@@ -217,6 +217,7 @@
         <module>wayang-core</module>
         <module>wayang-basic</module>
         <module>wayang-utils-profile-db</module>
+        <module>wayang-serializable</module>
     </modules>
 
 </project>
