@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.{DeserializationFeature, JsonNode}
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.OperatorNames
-import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, UnionOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
 import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TextFileInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
@@ -65,6 +65,7 @@ import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson,
     // Binary operators
     new JsonSubTypes.Type(value = classOf[UnionOperatorFromJson], name = OperatorNames.Union),
     new JsonSubTypes.Type(value = classOf[JoinOperatorFromJson], name = OperatorNames.Join),
+    new JsonSubTypes.Type(value = classOf[PredictOperatorFromJson], name = OperatorNames.Predict),
     new JsonSubTypes.Type(value = classOf[CartesianOperatorFromJson], name = OperatorNames.Cartesian),
     new JsonSubTypes.Type(value = classOf[CoGroupOperatorFromJson], name = OperatorNames.CoGroup),
     new JsonSubTypes.Type(value = classOf[IntersectOperatorFromJson], name = OperatorNames.Intersect),
@@ -164,6 +165,7 @@ object OperatorFromJson {
     // Binary
     final val Union = "union"
     final val Join = "join"
+    final val Predict = "predict"
     final val Cartesian = "cartesian"
     final val CoGroup = "coGroup"
     final val Intersect = "intersect"

@@ -20,7 +20,7 @@ package org.apache.wayang.api.json.builder
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.ExecutionPlatforms
 import org.apache.wayang.api.json.parserutil.{SerializableIterable, SerializableLambda, SerializableLambda2}
 import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson}
-import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, UnionOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
 import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
@@ -387,6 +387,13 @@ class JsonPlanBuilder() {
         dataQuanta1.join(lambda1, dataQuanta2, lambda2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
           .map(tuple2 => (tuple2.field0, tuple2.field1)).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
     }
+  }
+
+  private def visit(operator: PredictOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
+    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+      dataQuanta1.predict(dataQuanta2)
+    else
+      dataQuanta1.predict(dataQuanta2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
