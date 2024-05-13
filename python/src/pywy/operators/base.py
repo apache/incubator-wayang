@@ -28,6 +28,8 @@ class PywyOperator:
     def __init__(self,
                  name: str,
                  cat: str,
+                 input_type: TypeVar = None,
+                 output_type: TypeVar = None,
                  input_length: Optional[int] = 1,
                  output_length: Optional[int] = 1,
                  *args,

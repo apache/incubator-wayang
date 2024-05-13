@@ -34,8 +34,8 @@ from pywy.types import (
 
 class BinaryToUnaryOperator(PywyOperator):
 
-    def __init__(self, name: str):
-        super().__init__(name, "binary", 2, 1)
+    def __init__(self, name: str, input_type: GenericTco, output_type: GenericTco):
+        super().__init__(name, "binary", input_type, output_type, 2, 1)
 
     def postfix(self) -> str:
         return 'OperatorBinary'
@@ -52,8 +52,15 @@ class JoinOperator(BinaryToUnaryOperator):
     that_key_function: Function
     json_name: str
 
-    def __init__(self, this_key_function: Function, that: PywyOperator, that_key_function: Function):
-        super().__init__("Join")
+    def __init__(
+            self,
+            this_key_function: Function,
+            that: PywyOperator,
+            that_key_function: Function,
+            input_type: GenericTco,
+            output_type: GenericTco
+        ):
+        super().__init__("Join", input_type, output_type)
         self.this_key_function = lambda g: this_key_function(next(g))
         self.that = that
         self.that_key_function = lambda g: that_key_function(next(g))

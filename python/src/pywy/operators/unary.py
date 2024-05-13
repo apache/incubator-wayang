@@ -35,8 +35,8 @@ from pywy.types import (
 
 class UnaryToUnaryOperator(PywyOperator):
 
-    def __init__(self, name: str):
-        super().__init__(name, "unary", 1, 1)
+    def __init__(self, name: str, input_type: GenericTco, output_type: GenericTco):
+        super().__init__(name, "unary", input_type, output_type, 1, 1)
 
     def postfix(self) -> str:
         return 'OperatorUnary'
@@ -53,8 +53,8 @@ class FilterOperator(UnaryToUnaryOperator):
     predicate: Predicate
     json_name: str
 
-    def __init__(self, predicate: Predicate):
-        super().__init__("Filter")
+    def __init__(self, predicate: Predicate, input_type: GenericTco):
+        super().__init__("Filter", input_type, input_type)
         self.predicate = predicate
         self.json_name = "filter"
 
@@ -76,8 +76,8 @@ class MapOperator(UnaryToUnaryOperator):
     function: Function
     json_name: str
 
-    def __init__(self, function: Function):
-        super().__init__("Map")
+    def __init__(self, function: Function, input_type: GenericTco, output_type: GenericTco):
+        super().__init__("Map", input_type, output_type)
         self.function = function
         self.json_name = "map"
 
@@ -95,8 +95,8 @@ class MapPartitionsOperator(UnaryToUnaryOperator):
     function: Function
     json_name: str
 
-    def __init__(self, function: Function):
-        super().__init__("MapPartitions")
+    def __init__(self, function: Function, input_type: GenericTco, output_type: GenericTco):
+        super().__init__("MapPartitions", input_type, output_type)
         self.function = function
         self.json_name = "mapPartitions"
 
@@ -115,8 +115,8 @@ class FlatmapOperator(UnaryToUnaryOperator):
     fm_function: FlatmapFunction
     json_name: str
 
-    def __init__(self, fm_function: FlatmapFunction):
-        super().__init__("Flatmap")
+    def __init__(self, fm_function: FlatmapFunction, input_type: GenericTco, output_type: GenericTco):
+        super().__init__("Flatmap", input_type, output_type)
         self.fm_function = fm_function
         self.json_name = "flatMap"
 
@@ -134,8 +134,14 @@ class ReduceByKeyOperator(UnaryToUnaryOperator):
     reduce_function: BiFunction
     json_name: str
 
-    def __init__(self, key_function: Function, reduce_function: BiFunction):
-        super().__init__("ReduceByKey")
+    def __init__(
+            self,
+            key_function: Function,
+            reduce_function: BiFunction,
+            input_type: GenericTco,
+            output_type: GenericTco
+        ):
+        super().__init__("ReduceByKey", input_type, output_type)
         self.key_function = key_function
         self.reduce_function = reduce_function
         self.json_name = "reduceBy"
