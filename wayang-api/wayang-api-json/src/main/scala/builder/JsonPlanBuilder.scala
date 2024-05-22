@@ -389,12 +389,13 @@ class JsonPlanBuilder() {
     }
   }
 
+  /*
   private def visit(operator: PredictOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
       dataQuanta1.predict(dataQuanta2)
     else
       dataQuanta1.predict(dataQuanta2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
-  }
+  }*/
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))

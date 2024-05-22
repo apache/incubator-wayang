@@ -34,7 +34,7 @@ from pywy.types import (
 
 class BinaryToUnaryOperator(PywyOperator):
 
-    def __init__(self, name: str, input_type: GenericTco, output_type: GenericTco):
+    def __init__(self, name: str, input_type: GenericTco = None, output_type: GenericTco = None):
         super().__init__(name, "binary", input_type, output_type, 2, 1)
 
     def postfix(self) -> str:
