@@ -82,6 +82,7 @@ def get_type_bifunction(call: BiFunction) -> (type, type, type):
 
 def get_type_flatmap_function(call: FlatmapFunction) -> (type, type):
     sig = signature(call)
+    print(sig.parameters)
     if len(sig.parameters) != 1:
         raise PywyException(
             "the parameters for the FlatmapFunction are distinct than one, {}".format(

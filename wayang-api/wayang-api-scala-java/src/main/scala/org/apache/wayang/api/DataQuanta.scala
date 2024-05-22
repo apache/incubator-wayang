@@ -561,15 +561,15 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     joinOperator
   }
 
-  def predict[ThatOut: ClassTag](that: DataQuanta[ThatOut]): DataQuanta[Out] =
+  def predict[ThatOut: ClassTag](that: DataQuanta[ThatOut]): DataQuanta[Object] =
     predictJava(that)
 
   def predictJava[ThatOut: ClassTag](
     that: DataQuanta[ThatOut]
-  ): DataQuanta[Out] = {
+  ): DataQuanta[Object] = {
     val predictOperator = new PredictOperator(
-      dataSetType[ThatOut],
-      dataSetType[Out],
+      dataSetType[Object],
+      dataSetType[Object],
     )
     this.connectTo(predictOperator, 0)
     that.connectTo(predictOperator, 1)

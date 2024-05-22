@@ -15,6 +15,7 @@
 #  limitations under the License.
 #
 
+from typing import Any
 from pywy.types import GenericTco
 from pywy.operators.base import PywyOperator
 
@@ -27,7 +28,7 @@ class SinkOperator(PywyOperator):
 
 class SinkUnaryOperator(SinkOperator):
 
-    def __init__(self, name: str, input_type: GenericTco):
+    def __init__(self, name: str, input_type: GenericTco = Any):
         super().__init__(name, "output", input_type, None, 1, 0)
 
     def __str__(self):

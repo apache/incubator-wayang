@@ -70,23 +70,21 @@ class DataQuanta(GenericTco):
         self.operator = operator
         self.context = context
 
-    def filter(self: "DataQuanta[T]", p: Predicate, input_type: GenericTco) -> "DataQuanta[T]":
-        return DataQuanta(self.context, self._connect(FilterOperator(p, input_type)))
+    def filter(self: "DataQuanta[T]", p: Predicate) -> "DataQuanta[T]":
+        return DataQuanta(self.context, self._connect(FilterOperator(p)))
 
-    def map(self: "DataQuanta[In]", f: Function, input_type: GenericTco, output_type: GenericTco) -> "DataQuanta[Out]":
-        return DataQuanta(self.context, self._connect(MapOperator(f, input_type, output_type)))
+    def map(self: "DataQuanta[In]", f: Function) -> "DataQuanta[Out]":
+        return DataQuanta(self.context, self._connect(MapOperator(f)))
 
-    def flatmap(self: "DataQuanta[In]", f: FlatmapFunction, input_type: GenericTco, output_type: GenericTco) -> "DataQuanta[IterableOut]":
-        return DataQuanta(self.context, self._connect(FlatmapOperator(f, input_type, output_type)))
+    def flatmap(self: "DataQuanta[In]", f: FlatmapFunction) -> "DataQuanta[IterableOut]":
+        return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
 
     def reduce_by_key(self: "DataQuanta[In]",
                       key_f: Function,
-                      f: BiFunction,
-                      input_type: GenericTco,
-                      output_type: GenericTco
+                      f: BiFunction
                       ) -> "DataQuanta[IterableOut]":
 
-        return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f, input_type, output_type)))
+        return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f)))
 
     def join(
         self: "DataQuanta[In]",

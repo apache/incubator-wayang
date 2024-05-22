@@ -24,6 +24,8 @@ class PywyOperator:
     outputs: int
     inputOperator: List['PywyOperator']
     outputOperator: List['PywyOperator']
+    input_type: TypeVar
+    output_type: TypeVar
 
     def __init__(self,
                  name: str,
@@ -41,6 +43,8 @@ class PywyOperator:
         self.outputs = output_length
         self.inputOperator = [None] * self.inputs
         self.outputOperator = [None] * self.outputs
+        self.input_type = input_type
+        self.output_type = output_type
 
     def validate_inputs(self, vec):
         if len(vec) != self.inputs:
