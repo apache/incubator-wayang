@@ -19,6 +19,8 @@ package org.apache.wayang.api.sql.sources.fs;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -48,6 +50,7 @@ import java.util.stream.StreamSupport;
 
 public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecutionOperator {
 
+    private static final Logger logger = LogManager.getLogger(JavaCSVTableSource.class);
 
     private final String sourcePath;
 
@@ -57,14 +60,25 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
     // TODO: incorporate fields later for projectable table scans
     // private final ImmutableIntList fields;
 
+    /**
+     * We do not provide a separator, so we use the default separator, which is hardcoded as ";"
+     *
+     * @param sourcePath
+     * @param type
+     * @param fieldTypes
+     */
     public JavaCSVTableSource(String sourcePath, DataSetType type, List<RelDataType> fieldTypes) {
         super(type);
         this.sourcePath = sourcePath;
         this.fieldTypes = fieldTypes;
+        logger.info( ">>> JavaCSVTableSource uses the *default* sparator {" + this.separator + "} for CsvRowConverter." );
     }
 
     /**
-     * Constructor with separator
+     * Constructor with separator.
+     *
+     * If you use the "\0" (null Character) we can determine the delimiter automatically from the first data line.
+     *
      * @param sourcePath
      * @param type
      * @param fieldTypes
@@ -75,6 +89,7 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
         this.sourcePath = sourcePath;
         this.fieldTypes = fieldTypes;
         this.separator = separator;
+        logger.info( ">>> JavaCSVTableSource uses the sparator {" + separator + "} for CsvRowConverter." );
     }
 
     /*public JavaCSVTableSource(DataSetType<T> type) {
