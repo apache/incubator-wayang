@@ -20,6 +20,8 @@ from collections import defaultdict
 import ast
 
 from pywy.operators.base import PywyOperator
+from pywy.basic.model.models import Model
+from pywy.basic.model.option import Option
 from pywy.types import (
                             GenericTco,
                             GenericUco,
@@ -66,3 +68,18 @@ class JoinOperator(BinaryToUnaryOperator):
         self.that_key_function = lambda g: that_key_function(next(g))
         self.json_name = "join"
 
+
+class DLTrainingOperator(BinaryToUnaryOperator):
+    model: Model
+    option: Option
+
+    def __init__(self, model: Model, option: Option, x_type: GenericTco, y_type: GenericTco):
+        super().__init__("DLTraining", x, y)
+        self.model = model
+        self.option = option
+
+
+class PredictOperator(BinaryToUnaryOperator):
+
+    def __init__(self, input_type: GenericTco, output_type: GenericTco):
+        super().__init__("Protect", input_type, output_type)
