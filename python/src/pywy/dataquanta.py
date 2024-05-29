@@ -20,7 +20,9 @@ from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
 from pywy.types import (GenericTco, Predicate, Function, BiFunction, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
-
+from pywy.basic.model.ops import Op
+from pywy.basic.model.option import Option
+from pywy.basic.model.models import Model
 
 class WayangContext:
     """

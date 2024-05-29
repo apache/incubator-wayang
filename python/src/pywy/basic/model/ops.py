@@ -34,7 +34,7 @@ class Op:
 
     def __init__(self, dType: DType, name=None):
         if name is None:
-            self.name = f"{self.__class__.__name__}{next(Op.CNT)}"
+            self.name = self.__class__.__name__
         else:
             self.name = name
         self.fromList: List[Op] = []
@@ -59,6 +59,15 @@ class Op:
 
     def inputs_required(self):
         pass
+
+    def to_dict(self):
+        output = {}
+        output['op'] = self.name
+        output['dType'] = self.dType
+        output['fromList'] = list(map(lambda child: child.to_dict(),self.fromList))
+
+        return output
+
 
 
 class ArgMax(Op):

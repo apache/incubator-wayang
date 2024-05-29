@@ -75,7 +75,7 @@ class DLTrainingOperator(BinaryToUnaryOperator):
     json_name: str
 
     def __init__(self, model: Model, option: Option, x_type: GenericTco, y_type: GenericTco):
-        super().__init__("DLTraining", x, y)
+        super().__init__("DLTraining", x_type, y_type)
         self.model = model
         self.option = option
         self.json_name = "dltraining"

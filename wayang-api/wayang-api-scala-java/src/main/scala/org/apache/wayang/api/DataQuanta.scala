@@ -37,6 +37,7 @@ import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
+import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function._
@@ -561,19 +562,47 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     joinOperator
   }
 
-  def predict[ThatOut: ClassTag](that: DataQuanta[ThatOut]): DataQuanta[Object] =
+  def predict[ThatOut: ClassTag](that: DataQuanta[ThatOut]): DataQuanta[Out] =
     predictJava(that)
 
   def predictJava[ThatOut: ClassTag](
     that: DataQuanta[ThatOut]
-  ): DataQuanta[Object] = {
+  ): DataQuanta[Out] = {
     val predictOperator = new PredictOperator(
-      dataSetType[Object],
-      dataSetType[Object],
+      dataSetType[Out],
+      dataSetType[Out],
     )
     this.connectTo(predictOperator, 0)
     that.connectTo(predictOperator, 1)
     predictOperator
+  }
+
+  def dlTraining[ThatOut: ClassTag](
+    model: DLModel,
+    option: DLTrainingOperator.Option,
+    that: DataQuanta[ThatOut],
+    xType: Class[Any],
+    yType: Class[Any]
+  ): DataQuanta[Out] =
+    dlTrainingJava(model, option, that, xType, yType)
+
+  def dlTrainingJava[ThatOut: ClassTag](
+    model: DLModel,
+    option: DLTrainingOperator.Option,
+    that: DataQuanta[ThatOut],
+    xType: Class[Any],
+    yType: Class[Any]
+  ): DataQuanta[Out] = {
+    val dlTrainingOperator = new DLTrainingOperator(
+      model,
+      option,
+      xType,
+      yType
+    )
+
+    this.connectTo(dlTrainingOperator, 0)
+    that.connectTo(dlTrainingOperator, 1)
+    dlTrainingOperator
   }
 
   /**

@@ -67,9 +67,10 @@ class JSONSerializer:
 
             return json_operator
         elif operator.json_name == "dltraining":
-            json_operator["data"]["model"] = {"type": "DLModel", "op": operator.model.get_out()}
-            json_operator["data"]["option"] = operator.option
+            json_operator["data"]["model"] = {"type": "DLModel", "op": operator.model.get_out().to_dict()}
+            json_operator["data"]["option"] = operator.option.to_dict()
 
+            print(json_operator)
             return json_operator
         else:
             if hasattr(operator, "get_udf"):

@@ -42,3 +42,14 @@ class Option:
     def get_accuracy_calculation(self):
         return self.accuracy_calculation
 
+    def to_dict(self):
+        result = { \
+            "optimizer": self.get_optimizer().to_dict(), \
+            "criterion": self.get_criterion().to_dict(), \
+            "batch_size": self.get_batch_size(), \
+            "epoch": self.get_epoch() }
+
+        if self.accuracy_calculation is not None:
+            result["accuracy_calculation"] = self.get_accuracy_calculation().to_dict()
+
+        return result

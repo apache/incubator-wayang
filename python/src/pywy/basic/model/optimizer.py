@@ -26,13 +26,19 @@ class Optimizer:
         if name is not None:
             self.name = name
         else:
-            self.name = f"{self.__class__.__name__}{next(Optimizer._CNT)}"
+            self.name = self.__class__.__name__
 
     def get_name(self):
         return self.name
 
     def get_learning_rate(self):
         return self.learningRate
+
+    def to_dict(self):
+        return { \
+            "name": self.name, \
+            "learning_rate": self.learningRate, \
+        }
 
 
 class Adam(Optimizer):

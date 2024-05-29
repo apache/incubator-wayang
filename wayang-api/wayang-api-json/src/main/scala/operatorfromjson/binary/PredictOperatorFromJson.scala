@@ -32,5 +32,5 @@ case class PredictOperatorFromJson(override val id: Long,
 }
 
 object PredictOperatorFromJson {
-  case class Data(thisKeyUdf: String, thatKeyUdf: String)
+  case class Data(inputType: String, outputType: String)
 }
