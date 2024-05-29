@@ -72,14 +72,18 @@ class JoinOperator(BinaryToUnaryOperator):
 class DLTrainingOperator(BinaryToUnaryOperator):
     model: Model
     option: Option
+    json_name: str
 
     def __init__(self, model: Model, option: Option, x_type: GenericTco, y_type: GenericTco):
         super().__init__("DLTraining", x, y)
         self.model = model
         self.option = option
+        self.json_name = "dltraining"
 
 
 class PredictOperator(BinaryToUnaryOperator):
+    json_name: str
 
     def __init__(self, input_type: GenericTco, output_type: GenericTco):
-        super().__init__("Protect", input_type, output_type)
+        super().__init__("Predict", input_type, output_type)
+        self.json_name = "predict"

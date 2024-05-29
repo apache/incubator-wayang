@@ -66,6 +66,11 @@ class JSONSerializer:
             json_operator["data"]["thatKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.that_key_function)).decode('utf-8')
 
             return json_operator
+        elif operator.json_name == "dltraining":
+            json_operator["data"]["model"] = {"type": "DLModel", "op": operator.model.get_out()}
+            json_operator["data"]["option"] = operator.option
+
+            return json_operator
         else:
             if hasattr(operator, "get_udf"):
                 json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.get_udf)).decode('utf-8')
