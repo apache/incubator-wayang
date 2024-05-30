@@ -66,11 +66,15 @@ class JSONSerializer:
             json_operator["data"]["thatKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.that_key_function)).decode('utf-8')
 
             return json_operator
-        elif operator.json_name == "dltraining":
-            json_operator["data"]["model"] = {"type": "DLModel", "op": operator.model.get_out().to_dict()}
+        elif operator.json_name == "dlTraining":
+            json_operator["data"]["model"] = {"modelType": "DLModel", "op": operator.model.get_out().to_dict()}
             json_operator["data"]["option"] = operator.option.to_dict()
 
-            print(json_operator)
+            return json_operator
+        elif operator.json_name == "predict":
+            json_operator["data"]["inputType"] = str(operator.input_type)
+            json_operator["data"]["outputType"] = str(operator.output_type)
+
             return json_operator
         else:
             if hasattr(operator, "get_udf"):

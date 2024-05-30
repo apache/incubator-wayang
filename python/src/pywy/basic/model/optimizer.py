@@ -37,7 +37,7 @@ class Optimizer:
     def to_dict(self):
         return { \
             "name": self.name, \
-            "learning_rate": self.learningRate, \
+            "learningRate": self.learningRate, \
         }
 
 

@@ -20,7 +20,7 @@ package org.apache.wayang.api.json.builder
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.ExecutionPlatforms
 import org.apache.wayang.api.json.parserutil.{SerializableIterable, SerializableLambda, SerializableLambda2}
 import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson}
-import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, UnionOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
 import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
@@ -43,6 +43,10 @@ import org.apache.wayang.genericjdbc.GenericJdbc
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.core.plugin.Plugin
+import org.apache.wayang.basic.model.DLModel;
+import org.apache.wayang.basic.model.optimizer.Adam;
+import org.apache.wayang.basic.model.op.nn.CrossEntropyLoss;
+import org.apache.wayang.basic.model.op.ArgMax;
 
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
@@ -171,6 +175,8 @@ class JsonPlanBuilder() {
       case operator: CartesianOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
       case operator: CoGroupOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
       case operator: IntersectOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
+      case operator: PredictOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
+      case operator: DLTrainingOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
 
       // loop
       case operator: DoWhileOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
@@ -394,6 +400,15 @@ class JsonPlanBuilder() {
       dataQuanta1.predict(dataQuanta2)
     else
       dataQuanta1.predict(dataQuanta2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+  }
+
+  private def visit(operator: DLTrainingOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
+    val model: DLModel = new DLModel(new ArgMax(1));
+    val option : DLTrainingOperator.Option = new DLTrainingOperator.Option(new CrossEntropyLoss(3), new Adam(0.1f), 3, 100);
+    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+      dataQuanta1.dlTraining(model, option, dataQuanta2, classOf[Any], classOf[Any])
+    else
+      dataQuanta1.dlTraining(model, option, dataQuanta2, classOf[Any], classOf[Any]).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {

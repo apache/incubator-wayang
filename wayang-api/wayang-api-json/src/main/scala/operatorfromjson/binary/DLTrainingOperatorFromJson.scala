@@ -20,17 +20,22 @@ package org.apache.wayang.api.json.operatorfromjson.binary
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
 
-@JsonTypeName(OperatorFromJson.OperatorNames.Predict)
-case class PredictOperatorFromJson(override val id: Long,
+@JsonTypeName(OperatorFromJson.OperatorNames.DLTraining)
+case class DLTrainingOperatorFromJson(override val id: Long,
                                 override val input: Array[Long],
                                 override val output: Array[Long],
                                 override val cat: String,
                                 override val operatorName: String,
-                                val data: PredictOperatorFromJson.Data,
+                                val data: DLTrainingData,
                                 override val executionPlatform: String = null)
   extends OperatorFromJson(id, input, output, cat, operatorName, executionPlatform) {
 }
+case class Op(val op: String, val dType: String, val fromList: Array[Op]){}
 
-object PredictOperatorFromJson {
-  case class Data(val inputType: String, val outputType: String)
-}
+case class Optimizer(val name: String, val learningRate: Float){}
+
+case class Model(val modelType: String, val op: Op){}
+
+case class Option(val optimizer: Optimizer, val criterion: Op, val batchSize: Long, val epoch: Long){}
+
+case class DLTrainingData(val model: Model, val option: Option){}

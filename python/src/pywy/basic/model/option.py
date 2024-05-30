@@ -46,7 +46,7 @@ class Option:
         result = { \
             "optimizer": self.get_optimizer().to_dict(), \
             "criterion": self.get_criterion().to_dict(), \
-            "batch_size": self.get_batch_size(), \
+            "batchSize": self.get_batch_size(), \
             "epoch": self.get_epoch() }
 
         if self.accuracy_calculation is not None:

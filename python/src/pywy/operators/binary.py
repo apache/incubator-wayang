@@ -78,7 +78,7 @@ class DLTrainingOperator(BinaryToUnaryOperator):
         super().__init__("DLTraining", x_type, y_type)
         self.model = model
         self.option = option
-        self.json_name = "dltraining"
+        self.json_name = "dlTraining"
 
 
 class PredictOperator(BinaryToUnaryOperator):
