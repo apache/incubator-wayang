@@ -30,7 +30,7 @@ case class DLTrainingOperatorFromJson(override val id: Long,
                                 override val executionPlatform: String = null)
   extends OperatorFromJson(id, input, output, cat, operatorName, executionPlatform) {
 }
-case class Op(val op: String, val dType: String, val fromList: Array[Op]){}
+case class Op(val op: String, val dType: String, val fromList: Array[Op], val dim: Integer, val labels: Integer, val inFeatures: Integer, val outFeatures: Integer, val bias: Boolean){}
 
 case class Optimizer(val name: String, val learningRate: Float){}
 

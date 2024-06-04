@@ -65,6 +65,26 @@ class Op:
         output['op'] = self.name
         output['dType'] = self.dType
         output['fromList'] = list(map(lambda child: child.to_dict(),self.fromList))
+        output["dim"] = None
+        output["labels"] = None
+        output["inFeatures"] = None
+        output["outFeatures"] = None
+        output["bias"] = None
+
+        if hasattr(self, "dim"):
+            output["dim"] = self.dim
+
+        if hasattr(self, "labels"):
+            output["labels"] = self.labels
+
+        if hasattr(self, "inFeatures"):
+            output["inFeatures"] = self.inFeatures
+
+        if hasattr(self, "outFeatures"):
+            output["outFeatures"] = self.outFeatures
+
+        if hasattr(self, "bias"):
+            output["bias"] = self.bias
 
         return output
 

@@ -39,14 +39,17 @@ import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.postgres.operators.PostgresTableSource
 import org.apache.wayang.spark.Spark
 import org.apache.wayang.flink.Flink
+import org.apache.wayang.tensorflow.Tensorflow
 import org.apache.wayang.genericjdbc.GenericJdbc
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.core.plugin.Plugin
 import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.basic.model.optimizer.Adam;
-import org.apache.wayang.basic.model.op.nn.CrossEntropyLoss;
-import org.apache.wayang.basic.model.op.ArgMax;
+import org.apache.wayang.basic.model.op.nn._;
+import org.apache.wayang.basic.model.op._;
+import org.apache.wayang.basic.model.optimizer._;
+import org.apache.wayang.api.json.operatorfromjson.binary.{Op => JsonOp}
 
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
@@ -403,12 +406,56 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: DLTrainingOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
-    val model: DLModel = new DLModel(new ArgMax(1));
-    val option : DLTrainingOperator.Option = new DLTrainingOperator.Option(new CrossEntropyLoss(3), new Adam(0.1f), 3, 100);
+    val (model, option) = parseDLTrainingData(operator);
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
       dataQuanta1.dlTraining(model, option, dataQuanta2, classOf[Any], classOf[Any])
     else
       dataQuanta1.dlTraining(model, option, dataQuanta2, classOf[Any], classOf[Any]).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+  }
+
+  private def parseDLTrainingData(operator: DLTrainingOperatorFromJson): (DLModel, DLTrainingOperator.Option) = {
+    val model: DLModel = new DLModel(new ArgMax(1));
+    val option : DLTrainingOperator.Option = new DLTrainingOperator.Option(new CrossEntropyLoss(3), new Adam(0.1f), 3, 100);
+
+    (model, option)
+  }
+
+  private def parseOp(op: JsonOp): Op = {
+    val recursiveOp: Op = op.op match {
+      case "ArgMax" => new ArgMax(op.dim)
+      case "Cast" => new Cast(parseDType(op.dType))
+      case "CrossEntropyLoss" => new CrossEntropyLoss(op.labels)
+      case "Eq" => new Eq()
+      case "Input" => new Input(parseInputType(op.dType))
+      case "Mean" => new Mean(op.dim)
+      case "Linear" => new Linear(op.inFeatures, op.outFeatures, op.bias)
+      case "ReLU" => new ReLU()
+      case "Sigmoid" => new Sigmoid()
+      case "Softmax" => new Softmax()
+    }
+
+    recursiveOp
+  }
+
+  private def parseDType(dType: String): Op.DType = {
+    dType match {
+      case "ANY" => Op.DType.ANY
+      case "INT32" => Op.DType.INT32
+      case "INT64" => Op.DType.INT64
+      case "FLOAT32" => Op.DType.FLOAT32
+      case "FLOAT64" => Op.DType.FLOAT64
+      case "BYTE" => Op.DType.BYTE
+      case "INT16" => Op.DType.INT16
+      case "BOOL" => Op.DType.BOOL
+    }
+  }
+
+  private def parseInputType(inputType: String): Input.Type = {
+    inputType match {
+      case "...FEATURES.." => Input.Type.FEATURES
+      case "...LABEL.." => Input.Type.LABEL
+      case "...PREDICTED.." => Input.Type.PREDICTED
+    }
   }
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
@@ -548,6 +595,7 @@ class JsonPlanBuilder() {
       case OperatorFromJson.ExecutionPlatforms.JDBC => GenericJdbc.plugin
       case OperatorFromJson.ExecutionPlatforms.Postgres => Postgres.plugin
       case OperatorFromJson.ExecutionPlatforms.SQLite3 => Sqlite3.plugin
+      case OperatorFromJson.ExecutionPlatforms.Tensorflow => Tensorflow.plugin
       case _ => null
     }
   }

@@ -186,6 +186,7 @@ object OperatorFromJson {
     final val JDBC = "jdbc"
     final val Postgres = "postgres"
     final val SQLite3 = "sqlite3"
-    final val All = List(Java, Spark, Flink, JDBC, Postgres, SQLite3)
+    final val Tensorflow = "tensorflow"
+    final val All = List(Java, Spark, Flink, JDBC, Postgres, SQLite3, Tensorflow)
   }
 }
