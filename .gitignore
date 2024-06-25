@@ -7,6 +7,7 @@
 
 # Maven
 **/target/
+.java-version
 
 # Mac OS X
 **/.DS_Store
