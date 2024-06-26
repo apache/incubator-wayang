@@ -19,7 +19,9 @@ package org.apache.wayang.api.json.operatorfromjson.output
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeName(OperatorFromJson.OperatorNames.TextFileOutput)
 case class TextFileOutputFromJson(override val id: Long,
                                   override val input: Array[Long],
@@ -31,6 +33,8 @@ case class TextFileOutputFromJson(override val id: Long,
   extends OperatorFromJson(id, input, output, cat, operatorName, executionPlatform) {
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 object TextFileOutputFromJson {
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class Data(filename: String)
 }

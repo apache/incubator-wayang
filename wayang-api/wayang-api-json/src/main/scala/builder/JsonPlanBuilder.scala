@@ -54,7 +54,6 @@ import org.apache.wayang.api.json.operatorfromjson.binary.{Op => JsonOp}
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
 
-
 class JsonPlanBuilder() {
 
   var planBuilder: PlanBuilder = _
@@ -399,6 +398,9 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: PredictOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
+    val inputPythonType = parsePythonType(operator.data.inputType);
+    val outputPythonType = parsePythonType(operator.data.outputType);
+
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
       dataQuanta1.predict(dataQuanta2)
     else
@@ -407,10 +409,13 @@ class JsonPlanBuilder() {
 
   private def visit(operator: DLTrainingOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
     val (model, option) = parseDLTrainingData(operator);
+    val inputPythonType = parsePythonType(operator.data.inputType);
+    val outputPythonType = parsePythonType(operator.data.outputType);
+
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta1.dlTraining(model, option, dataQuanta2, classOf[Any], classOf[Any])
+      dataQuanta1.dlTraining(model, option, dataQuanta2, inputPythonType, outputPythonType)
     else
-      dataQuanta1.dlTraining(model, option, dataQuanta2, classOf[Any], classOf[Any]).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+      dataQuanta1.dlTraining(model, option, dataQuanta2, inputPythonType, outputPythonType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 
   private def parseDLTrainingData(operator: DLTrainingOperatorFromJson): (DLModel, DLTrainingOperator.Option) = {
@@ -456,6 +461,12 @@ class JsonPlanBuilder() {
       case "...LABEL.." => Input.Type.LABEL
       case "...PREDICTED.." => Input.Type.PREDICTED
     }
+  }
+
+  private def parsePythonType(inputType: String): Class[_ <: Any] = {
+    println("SCALA PARSED PYTHON CLASS")
+    println(Class.forName(inputType))
+    Class.forName(inputType)
   }
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {

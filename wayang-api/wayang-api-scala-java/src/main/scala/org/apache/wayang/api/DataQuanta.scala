@@ -41,6 +41,7 @@ import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function._
+import org.tensorflow.ndarray.NdArray
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -562,15 +563,16 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     joinOperator
   }
 
-  def predict[ThatOut: ClassTag](that: DataQuanta[ThatOut]): DataQuanta[Out] =
+  def predict[ThatOut: ClassTag](
+    that: DataQuanta[ThatOut],
+  ): DataQuanta[Out] =
     predictJava(that)
 
   def predictJava[ThatOut: ClassTag](
-    that: DataQuanta[ThatOut]
+    that: DataQuanta[ThatOut],
   ): DataQuanta[Out] = {
     val predictOperator = new PredictOperator(
-      dataSetType[Out],
-      dataSetType[Out],
+      classOf[NdArray[Any]], classOf[NdArray[Any]]
     )
     this.connectTo(predictOperator, 0)
     that.connectTo(predictOperator, 1)
@@ -581,8 +583,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     model: DLModel,
     option: DLTrainingOperator.Option,
     that: DataQuanta[ThatOut],
-    xType: Class[Any],
-    yType: Class[Any]
+    xType: Class[_ <: Any],
+    yType: Class[_ <: Any]
   ): DataQuanta[Out] =
     dlTrainingJava(model, option, that, xType, yType)
 
@@ -590,8 +592,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     model: DLModel,
     option: DLTrainingOperator.Option,
     that: DataQuanta[ThatOut],
-    xType: Class[Any],
-    yType: Class[Any]
+    xType: Class[_ <: Any],
+    yType: Class[_ <: Any]
   ): DataQuanta[Out] = {
     val dlTrainingOperator = new DLTrainingOperator(
       model,
