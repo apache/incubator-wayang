@@ -53,7 +53,56 @@ BiFunction = Callable[[ConstrainedOperatorType, ConstrainedOperatorType], Constr
 
 FlatmapFunction = Callable[[ConstrainedOperatorType], Iterable[ConstrainedOperatorType]]
 
-# Define the mappings
+"""
+    List[List[int]]
+    [[1,2,3],[4,5,6]]
+    {origin: int, depth: 2}
+
+    List[int]
+    [1,2,3]
+    {origin: int, depth: 1}
+
+    Tuple[List[int]]
+    ([1,2,3], [1,2,3])
+    {origin: int, depth: 2}
+
+    int
+    1
+    {origin: int, depth: 0}
+"""
+class NDimArray:
+    origin: Type
+    depth: int
+
+    def __init__(self, origin: Type, depth: int):
+        self.origin = origin
+        self.depth = depth
+
+    def __str__(self) -> str:
+        return f"NDimArray: \n\t- origin: {self.origin.__name__}\n\t- depth: {self.depth}"
+
+    def to_json(self) -> str:
+        return '{' + f"origin: {get_java_type(self.origin)}, depth: {self.depth}"  +'}'
+
+def ndim_from_type(py_type: ConstrainedOperatorType, depth: int = 0) -> NDimArray:
+    # Handle basic types and direct typing module classes
+    if hasattr(py_type, '__name__'):
+        return NDimArray(py_type, depth)
+
+    origin = get_origin(py_type)
+    args = get_args(py_type)
+
+    # Handle generic types
+    if origin:
+        if origin is tuple and args:
+            return NDimArray(tuple, depth + 1)
+        if args:
+            return ndim_from_type(args[0], depth + 1)
+        return NDimArray(py_type, depth + 1)
+
+    return NDimArray(py_type, depth)
+
+#Define the mappings
 type_mappings: Dict[Type, str] = {
     'int': 'Integer',
     'float': 'Float',

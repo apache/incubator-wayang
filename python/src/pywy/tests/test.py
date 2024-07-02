@@ -66,7 +66,7 @@ class TestWCPlanToJson(unittest.TestCase):
 
         left.dlTraining(model, option, right, List[float], List[int]) \
             .predict(right, List[float], List[float]) \
-            .store_textfile("file:///var/www/html/data/wordcount-out-python.txt", Tuple[str, int])
+            .store_textfile("file:///var/www/html/data/wordcount-out-python.txt", List[float])
         self.assertEqual(True, True)
 
 if __name__ == "__main__":

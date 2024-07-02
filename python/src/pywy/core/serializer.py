@@ -27,7 +27,7 @@ from pywy.core.platform import Platform
 from pywy.core.functions import ChainedFunctions
 from pywy.graph.graph import WayangGraph
 from pywy.graph.types import WGraphOfVec, NodeOperator, NodeVec
-from pywy.types import get_java_type
+from pywy.types import get_java_type, NDimArray, ndim_from_type
 from pywy.operators import SinkOperator, UnaryToUnaryOperator, SourceUnaryOperator
 
 class JSONSerializer:
@@ -55,10 +55,10 @@ class JSONSerializer:
 
         if hasattr(operator, "input_type"):
             if operator.input_type is not None:
-                json_operator["data"]["inputType"] = get_java_type(operator.input_type)
+                json_operator["data"]["inputType"] = ndim_from_type(operator.input_type).to_json()
         if hasattr(operator, "output_type"):
             if operator.output_type is not None:
-                json_operator["data"]["outputType"] = get_java_type(operator.output_type)
+                json_operator["data"]["outputType"] = ndim_from_type(operator.output_type).to_json()
 
         if operator.json_name == "filter":
             json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.use_predicate)).decode('utf-8')
