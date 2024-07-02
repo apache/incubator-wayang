@@ -19,6 +19,7 @@ package org.apache.wayang.api.json.operatorfromjson.binary
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
+import org.apache.wayang.api.json.operatorfromjson.NDimArray
 
 @JsonTypeName(OperatorFromJson.OperatorNames.DLTraining)
 case class DLTrainingOperatorFromJson(override val id: Long,
@@ -38,4 +39,4 @@ case class Model(val modelType: String, val op: Op){}
 
 case class Option(val optimizer: Optimizer, val criterion: Op, val batchSize: Long, val epoch: Long){}
 
-case class DLTrainingData(val model: Model, val option: Option, val inputType: String, val outputType: String){}
+case class DLTrainingData(val model: Model, val option: Option, val inputType: scala.Option[NDimArray], val outputType: scala.Option[NDimArray]){}

@@ -19,6 +19,7 @@ package org.apache.wayang.api.json.operatorfromjson.unary
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
+import org.apache.wayang.api.json.operatorfromjson.NDimArray
 
 @JsonTypeName(OperatorFromJson.OperatorNames.Reduce)
 case class ReduceOperatorFromJson(override val id: Long,
@@ -32,5 +33,5 @@ case class ReduceOperatorFromJson(override val id: Long,
 }
 
 object ReduceOperatorFromJson {
-  case class Data(udf: String)
+  case class Data(udf: String, val inputType: scala.Option[NDimArray], val outputType: scala.Option[NDimArray])
 }

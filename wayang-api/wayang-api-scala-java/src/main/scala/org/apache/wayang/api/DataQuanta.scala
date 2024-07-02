@@ -128,12 +128,16 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @return a new instance representing the [[MapOperator]]'s output
     */
-  def mapPartitionsPython[NewOut: ClassTag](udf: String): DataQuanta[NewOut] = {
+  def mapPartitionsPython[NewOut: ClassTag](
+      udf: String,
+      inputType: Class[_ <: Any],
+      outputType: Class[_ <: Any]
+    ): DataQuanta[NewOut] = {
     val mapOperator = new MapPartitionsOperator(
-      new WrappedMapPartitionsDescriptor[Object, Object](
+      new WrappedMapPartitionsDescriptor(
         ByteString.copyFromUtf8(udf),
-        classOf[Object],
-        classOf[Object],
+        inputType,
+        outputType
       ),
     )
     this.connectTo(mapOperator, 0)
@@ -565,14 +569,18 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
 
   def predict[ThatOut: ClassTag](
     that: DataQuanta[ThatOut],
+    inputType: Class[_ <: Any],
+    outputType: Class[_ <: Any]
   ): DataQuanta[Out] =
-    predictJava(that)
+    predictJava(that, inputType, outputType)
 
   def predictJava[ThatOut: ClassTag](
     that: DataQuanta[ThatOut],
+    inputType: Class[_ <: Any],
+    outputType: Class[_ <: Any]
   ): DataQuanta[Out] = {
     val predictOperator = new PredictOperator(
-      classOf[NdArray[Any]], classOf[NdArray[Any]]
+      inputType, outputType
     )
     this.connectTo(predictOperator, 0)
     that.connectTo(predictOperator, 1)

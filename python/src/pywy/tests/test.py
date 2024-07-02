@@ -62,10 +62,11 @@ class TestWCPlanToJson(unittest.TestCase):
         ctx = WayangContext() \
             .register({JavaPlugin, SparkPlugin})
         left = ctx.textfile("file:///var/www/html/README.md").map(lambda x: floats, str, List[List[float]])
-        right = ctx.textfile("file:///var/www/html/README.md").map(lambda x: ints, str, List[List[int]])
+        right = ctx.textfile("file:///var/www/html/README.md").map(lambda x: floats, str, List[List[float]])
 
-        left.dlTraining(model, option, right, List[float], List[int]) \
-            .predict(right, List[float], List[float]) \
+        left.dlTraining(model, option, right, List[List[float]], List[List[float]]) \
+            .predict(right, List[List[float]], List[List[float]]) \
+            .map(lambda x: "Test", List[List[float]], str) \
             .store_textfile("file:///var/www/html/data/wordcount-out-python.txt", List[float])
         self.assertEqual(True, True)
 

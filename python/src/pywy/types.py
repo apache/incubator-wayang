@@ -81,8 +81,8 @@ class NDimArray:
     def __str__(self) -> str:
         return f"NDimArray: \n\t- origin: {self.origin.__name__}\n\t- depth: {self.depth}"
 
-    def to_json(self) -> str:
-        return '{' + f"origin: {get_java_type(self.origin)}, depth: {self.depth}"  +'}'
+    def to_json(self) -> dict:
+        return {"origin": get_java_type(self.origin), "depth": self.depth}
 
 def ndim_from_type(py_type: ConstrainedOperatorType, depth: int = 0) -> NDimArray:
     # Handle basic types and direct typing module classes

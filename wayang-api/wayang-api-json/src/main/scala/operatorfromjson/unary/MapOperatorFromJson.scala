@@ -20,6 +20,7 @@ package org.apache.wayang.api.json.operatorfromjson.unary
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import org.apache.wayang.api.json.operatorfromjson.NDimArray
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeName(OperatorFromJson.OperatorNames.Map)
@@ -36,6 +37,6 @@ case class MapOperatorFromJson(override val id: Long,
 @JsonIgnoreProperties(ignoreUnknown = true)
 object MapOperatorFromJson {
   @JsonIgnoreProperties(ignoreUnknown = true)
-  case class Data(udf: String)
+  case class Data(udf: String, val inputType: scala.Option[NDimArray], val outputType: scala.Option[NDimArray])
 }
 

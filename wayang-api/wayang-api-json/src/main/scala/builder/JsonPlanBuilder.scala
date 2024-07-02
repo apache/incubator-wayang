@@ -19,7 +19,7 @@ package org.apache.wayang.api.json.builder
 
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.ExecutionPlatforms
 import org.apache.wayang.api.json.parserutil.{SerializableIterable, SerializableLambda, SerializableLambda2}
-import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson, NDimArray}
 import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
 import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson}
@@ -239,10 +239,18 @@ class JsonPlanBuilder() {
 
   private def visit(operator: MapOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
+      val inputType: Class[_] = operator.data.inputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
+      val outputType: Class[_] = operator.data.outputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda.createLambda[Any, Any](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -269,10 +277,18 @@ class JsonPlanBuilder() {
 
   private def visit(operator: FlatMapOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
+      val inputType: Class[_] = operator.data.inputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
+      val outputType: Class[_] = operator.data.outputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda.createLambda[Any, Iterable[Any]](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -331,10 +347,18 @@ class JsonPlanBuilder() {
 
   private def visit(operator: ReduceOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
+      val inputType: Class[_] = operator.data.inputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
+      val outputType: Class[_] = operator.data.outputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda2.createLambda[Any, Any, Any](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -353,10 +377,18 @@ class JsonPlanBuilder() {
 
   private def visit(operator: MapPartitionsOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
+      val inputType: Class[_] = operator.data.inputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
+      val outputType: Class[_] = operator.data.outputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda.createLambda[Iterable[Any], Iterable[Any]](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -398,24 +430,34 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: PredictOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
-    val inputPythonType = parsePythonType(operator.data.inputType);
-    val outputPythonType = parsePythonType(operator.data.outputType);
-
+    val inputType: Class[_] = operator.data.inputType match {
+      case Some(nDimArray) => nDimArray.toClassTag()
+      case _ => classOf[Object]
+    }
+    val outputType: Class[_] = operator.data.outputType match {
+      case Some(nDimArray) => nDimArray.toClassTag()
+      case _ => classOf[Object]
+    }
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta1.predict(dataQuanta2)
+      dataQuanta1.predict(dataQuanta2, inputType, outputType)
     else
-      dataQuanta1.predict(dataQuanta2).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+      dataQuanta1.predict(dataQuanta2, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 
   private def visit(operator: DLTrainingOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
+    val inputType: Class[_] = operator.data.inputType match {
+      case Some(nDimArray) => nDimArray.toClassTag()
+      case _ => classOf[Object]
+    }
+    val outputType: Class[_] = operator.data.outputType match {
+      case Some(nDimArray) => nDimArray.toClassTag()
+      case _ => classOf[Object]
+    }
     val (model, option) = parseDLTrainingData(operator);
-    val inputPythonType = parsePythonType(operator.data.inputType);
-    val outputPythonType = parsePythonType(operator.data.outputType);
-
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      dataQuanta1.dlTraining(model, option, dataQuanta2, inputPythonType, outputPythonType)
+      dataQuanta1.dlTraining(model, option, dataQuanta2, inputType, outputType)
     else
-      dataQuanta1.dlTraining(model, option, dataQuanta2, inputPythonType, outputPythonType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+      dataQuanta1.dlTraining(model, option, dataQuanta2, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 
   private def parseDLTrainingData(operator: DLTrainingOperatorFromJson): (DLModel, DLTrainingOperator.Option) = {
@@ -461,12 +503,6 @@ class JsonPlanBuilder() {
       case "...LABEL.." => Input.Type.LABEL
       case "...PREDICTED.." => Input.Type.PREDICTED
     }
-  }
-
-  private def parsePythonType(inputType: String): Class[_ <: Any] = {
-    println("SCALA PARSED PYTHON CLASS")
-    println(Class.forName(inputType))
-    Class.forName(inputType)
   }
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {

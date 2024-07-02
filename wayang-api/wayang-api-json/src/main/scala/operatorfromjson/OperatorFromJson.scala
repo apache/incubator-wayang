@@ -87,7 +87,6 @@ class OperatorFromJson(val id: Long,
                        val executionPlatform: String = null
                       ) extends Serializable {
 
-
   //
   // Because case classes combined with inheritance were kind of difficult to change a field,
   // we use a workaround with json serialization -> modification -> deserialization.

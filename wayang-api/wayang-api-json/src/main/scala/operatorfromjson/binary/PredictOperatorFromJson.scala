@@ -19,6 +19,7 @@ package org.apache.wayang.api.json.operatorfromjson.binary
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
+import org.apache.wayang.api.json.operatorfromjson.NDimArray
 
 @JsonTypeName(OperatorFromJson.OperatorNames.Predict)
 case class PredictOperatorFromJson(override val id: Long,
@@ -32,5 +33,5 @@ case class PredictOperatorFromJson(override val id: Long,
 }
 
 object PredictOperatorFromJson {
-  case class Data(val inputType: String, val outputType: String)
+  case class Data(val inputType: scala.Option[NDimArray], val outputType: scala.Option[NDimArray])
 }
