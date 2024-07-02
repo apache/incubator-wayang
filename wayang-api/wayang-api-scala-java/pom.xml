@@ -34,6 +34,7 @@
 
     <properties>
         <java-module-name>org.apache.wayang.api</java-module-name>
+        <tensorflow.version>0.4.2</tensorflow.version>
     </properties>
 
     <dependencyManagement>
@@ -144,6 +145,16 @@
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-scala_2.12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.tensorflow</groupId>
+            <artifactId>tensorflow-core-platform</artifactId>
+            <version>${tensorflow.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.tensorflow</groupId>
+            <artifactId>tensorflow-framework</artifactId>
+            <version>${tensorflow.version}</version>
         </dependency>
     </dependencies>
 </project>

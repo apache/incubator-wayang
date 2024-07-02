@@ -15,6 +15,8 @@
 #  limitations under the License.
 #
 
+from typing import Any
+from pywy.types import GenericTco
 from pywy.operators.base import PywyOperator
 
 
@@ -26,8 +28,8 @@ class SinkOperator(PywyOperator):
 
 class SinkUnaryOperator(SinkOperator):
 
-    def __init__(self, name: str):
-        super().__init__(name, "output", 1, 0)
+    def __init__(self, name: str, input_type: GenericTco = Any):
+        super().__init__(name, "output", input_type, None, 1, 0)
 
     def __str__(self):
         return super().__str__()
@@ -40,8 +42,8 @@ class TextFileSink(SinkUnaryOperator):
     path: str
     json_name: str
 
-    def __init__(self, path: str):
-        super().__init__('TextFile')
+    def __init__(self, path: str, input_type: GenericTco):
+        super().__init__('TextFile', input_type)
         self.path = path
         self.json_name = "textFileOutput"
 

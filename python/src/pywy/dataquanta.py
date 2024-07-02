@@ -21,7 +21,9 @@ from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
 from pywy.types import (GenericTco, Predicate, Function, BiFunction, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
-
+from pywy.basic.model.ops import Op
+from pywy.basic.model.option import Option
+from pywy.basic.model.models import Model
 
 class WayangContext:
     """
@@ -70,31 +72,38 @@ class DataQuanta(GenericTco):
         self.operator = operator
         self.context = context
 
-    def filter(self: "DataQuanta[T]", p: Predicate) -> "DataQuanta[T]":
-        return DataQuanta(self.context, self._connect(FilterOperator(p)))
+    def filter(self: "DataQuanta[T]", p: Predicate, input_type: GenericTco = None) -> "DataQuanta[T]":
+        return DataQuanta(self.context, self._connect(FilterOperator(p, input_type)))
 
-    def map(self: "DataQuanta[In]", f: Function) -> "DataQuanta[Out]":
-        return DataQuanta(self.context, self._connect(MapOperator(f)))
+    def map(self: "DataQuanta[In]", f: Function, input_type: GenericTco = None, output_type: GenericTco = None) -> "DataQuanta[Out]":
+        return DataQuanta(self.context, self._connect(MapOperator(f, input_type, output_type)))
 
-    def flatmap(self: "DataQuanta[In]", f: FlatmapFunction) -> "DataQuanta[IterableOut]":
-        return DataQuanta(self.context, self._connect(FlatmapOperator(f)))
+    def flatmap(self: "DataQuanta[In]", f: FlatmapFunction, input_type: GenericTco = None, output_type: GenericTco = None) -> "DataQuanta[IterableOut]":
+        return DataQuanta(self.context, self._connect(FlatmapOperator(f, input_type, output_type)))
 
     def reduce_by_key(self: "DataQuanta[In]",
                       key_f: Function,
-                      f: BiFunction) -> "DataQuanta[IterableOut]":
+                      f: BiFunction,
+                      input_type: GenericTco = None
+                      ) -> "DataQuanta[IterableOut]":
 
-        return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f)))
+        return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f, input_type)))
 
     def join(
         self: "DataQuanta[In]",
         this_key_f: Function,
         that: "DataQuanta[In]",
-        that_key_f: Function) -> "DataQuanta[Out]":
+        that_key_f: Function,
+        input_type: GenericTco = None,
+        output_type: GenericTco = None
+        ) -> "DataQuanta[Out]":
 
         op = JoinOperator(
             this_key_f,
             that,
             that_key_f,
+            input_type,
+            output_type
         )
 
         self._connect(op),
@@ -103,13 +112,54 @@ class DataQuanta(GenericTco):
             that._connect(op,1)
         )
 
-    def store_textfile(self: "DataQuanta[In]", path: str):
+    def dlTraining(
+        self: "DataQuanta[In]",
+        model: Model,
+        option: Option,
+        that: "DataQuanta[In]",
+        input_type: GenericTco,
+        output_type: GenericTco
+    ) -> "DataQuanta[Out]":
+
+        op = DLTrainingOperator(
+            model,
+            option,
+            input_type,
+            output_type
+        )
+        self._connect(op)
+
+        return DataQuanta(
+            self.context,
+            that._connect(op,1)
+        )
+
+    def predict(
+        self: "DataQuanta[In]",
+        that: "DataQuanta[In]",
+        input_type: GenericTco,
+        output_type: GenericTco
+    ) -> "DataQuanta[Out]":
+        op = PredictOperator(
+            input_type,
+            output_type
+        )
+
+        self._connect(op)
+
+        return DataQuanta(
+            self.context,
+            that._connect(op,1)
+        )
+
+    def store_textfile(self: "DataQuanta[In]", path: str, input_type: GenericTco = None):
         last: List[SinkOperator] = [
             cast(
                 SinkOperator,
                 self._connect(
                     TextFileSink(
-                        path
+                        path,
+                        input_type
                     )
                 )
             )

@@ -27,13 +27,13 @@ class TestWCPlanToJson(unittest.TestCase):
         ctx = WayangContext() \
             .register({JavaPlugin, SparkPlugin})
         left = ctx.textfile("file:///var/www/html/README.md") \
-            .filter(lambda w: "Apache" in w) \
-            .flatmap(lambda w: w.split()) \
-            .map(lambda w: (len(w), w))
+            .filter(lambda w: "Apache" in w, str) \
+            .flatmap(lambda w: w.split(), str, str) \
+            .map(lambda w: (len(w), w), str, (int, str))
         right = ctx.textfile("file:///var/www/html/README.md") \
-            .filter(lambda w: "Wayang" in w) \
-            .map(lambda w: (len(w), w))
-        join = left.join(lambda w: w[0], right, lambda w: w[0]) \
+            .filter(lambda w: "Wayang" in w, str) \
+            .map(lambda w: (len(w), w), str, (int, str))
+        join = left.join(lambda w: w[0], right, lambda w: w[0], (int, str), ((int, str), (int, str))) \
             .store_textfile("file:///var/www/html/data/wordcount-out-python.txt")
 
         self.assertEqual(True, True)

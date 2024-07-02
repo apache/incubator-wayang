@@ -134,4 +134,5 @@ class PywyPlan:
         url = 'http://localhost:8080/wayang-api-json/submit-plan/json'
         headers = {'Content-type': 'application/json'}
         json_body = json.dumps(json_data)
+        print(json_body)
         response = requests.post(url, headers=headers, json=json_data)
