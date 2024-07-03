@@ -80,6 +80,9 @@ public class TensorflowCollectionSource<Type> extends CollectionSource<Type> imp
         assert inputs.length <= 1;
         assert outputs.length == this.getNumOutputs();
 
+        System.out.println("TFCS input: " + inputs[0].getChannel().getDataSetType());
+        System.out.println("TFCS outputs: " + outputs[0]);
+
         final Collection<Type> collection;
         if (this.collection != null) {
             collection = this.collection;
@@ -206,15 +209,16 @@ public class TensorflowCollectionSource<Type> extends CollectionSource<Type> imp
             ndArray = StdArrays.ndCopyOf(list.toArray(new boolean[0][][][][]));
         } else if (e instanceof boolean[][][][][]) {
             ndArray = StdArrays.ndCopyOf(list.toArray(new boolean[0][][][][][]));
-        }
-
-        else {
-            throw new RuntimeException("Unsupported element type.");
+        } else if (e instanceof String) {
+            ndArray = StdArrays.ndCopyOf(list.stream().toArray());
+        }else {
+            throw new RuntimeException("Unsupported element type: " + e.getClass().getName() + "; expected: " + this.getType());
         }
 
         final TensorChannel.Instance output = (TensorChannel.Instance) outputs[0];
         output.accept(ndArray);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+
     }
 }

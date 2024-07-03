@@ -19,7 +19,7 @@ package org.apache.wayang.api.json.builder
 
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.ExecutionPlatforms
 import org.apache.wayang.api.json.parserutil.{SerializableIterable, SerializableLambda, SerializableLambda2}
-import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson, NDimArray}
+import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
 import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson}
@@ -50,6 +50,7 @@ import org.apache.wayang.basic.model.op.nn._;
 import org.apache.wayang.basic.model.op._;
 import org.apache.wayang.basic.model.optimizer._;
 import org.apache.wayang.api.json.operatorfromjson.binary.{Op => JsonOp}
+import org.apache.wayang.api.util.NDimArray
 
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
@@ -499,9 +500,9 @@ class JsonPlanBuilder() {
 
   private def parseInputType(inputType: String): Input.Type = {
     inputType match {
-      case "...FEATURES.." => Input.Type.FEATURES
-      case "...LABEL.." => Input.Type.LABEL
-      case "...PREDICTED.." => Input.Type.PREDICTED
+      case "..FEATURES.." => Input.Type.FEATURES
+      case "..LABEL.." => Input.Type.LABEL
+      case "..PREDICTED.." => Input.Type.PREDICTED
     }
   }
 

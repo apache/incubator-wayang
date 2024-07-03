@@ -19,7 +19,7 @@ package org.apache.wayang.api.json.operatorfromjson.binary
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
-import org.apache.wayang.api.json.operatorfromjson.NDimArray
+import org.apache.wayang.api.util.NDimArray
 
 @JsonTypeName(OperatorFromJson.OperatorNames.Predict)
 case class PredictOperatorFromJson(override val id: Long,

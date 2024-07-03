@@ -40,12 +40,12 @@ public class WrappedPredicateDescriptor<Input> extends PredicateDescriptor<Input
             (item) -> {
                 final ArrayList<Input> input = new ArrayList<>();
                 input.add(item);
-                final PythonWorkerManager<Input, String> manager = new PythonWorkerManager<>(serializedUDF, input);
-                final Iterable<String> output = manager.execute();
+                final PythonWorkerManager<Input, Object> manager = new PythonWorkerManager<>(serializedUDF, input);
+                final Iterable<Object> output = manager.execute();
                 if (output.iterator().hasNext()) {
-                    String next = output.iterator().next();
-                    System.out.println(Integer.valueOf(next) == 1);
-                    return Integer.valueOf(next) == 1;
+                    Object next = output.iterator().next();
+                    System.out.println((Integer) next == 1);
+                    return ((Integer) next) == 1;
                 }
 
                 return false;

@@ -23,6 +23,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Iterator;
+
 /*TODO cannot be always string, include definition for every operator
 *  like: map(udf, inputtype, outputtype)*/
 public class ProcessReceiver<Output> {

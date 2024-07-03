@@ -20,7 +20,7 @@ package org.apache.wayang.api.json.operatorfromjson.unary
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import org.apache.wayang.api.json.operatorfromjson.NDimArray
+import org.apache.wayang.api.util.NDimArray
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeName(OperatorFromJson.OperatorNames.Map)

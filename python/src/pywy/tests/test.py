@@ -21,6 +21,7 @@ from pywy.dataquanta import WayangContext
 from unittest.mock import Mock
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
+from pywy.platforms.tensorflow import TensorflowPlugin
 from pywy.basic.model.ops import Mean, Cast, Eq, ArgMax, Input, Op, CrossEntropyLoss, Linear, Sigmoid
 from pywy.basic.model.optimizer import GradientDescent
 from pywy.basic.model.option import Option
@@ -40,6 +41,10 @@ class TestWCPlanToJson(unittest.TestCase):
         model = DLModel(l2)
 
         criterion = CrossEntropyLoss(3)
+        criterion.with_ops(
+            Input(Input.Type.PREDICTED),
+            Input(Input.Type.LABEL, Op.DType.INT32)
+        )
         acc = Mean(0)
         acc.with_ops(
             Cast(Op.DType.FLOAT32).with_ops(
@@ -60,12 +65,13 @@ class TestWCPlanToJson(unittest.TestCase):
         ints: List[List[int]] = [[0, 0, 1, 1, 2, 2]]
 
         ctx = WayangContext() \
-            .register({JavaPlugin, SparkPlugin})
-        left = ctx.textfile("file:///var/www/html/README.md").map(lambda x: floats, str, List[List[float]])
-        right = ctx.textfile("file:///var/www/html/README.md").map(lambda x: floats, str, List[List[float]])
+            .register({JavaPlugin, SparkPlugin, TensorflowPlugin})
+        trainXSource = ctx.textfile("file:///var/www/html/README.md").map(lambda x: floats, str, List[List[float]])
+        trainYSource = ctx.textfile("file:///var/www/html/README.md").map(lambda x: floats, str, List[List[float]])
+        testXSource = ctx.textfile("file:///var/www/html/README.md").map(lambda x: floats, str, List[List[float]])
 
-        left.dlTraining(model, option, right, List[List[float]], List[List[float]]) \
-            .predict(right, List[List[float]], List[List[float]]) \
+        trainXSource.dlTraining(model, option, trainYSource, List[List[float]], List[List[float]]) \
+            .predict(testXSource, List[List[float]], List[List[float]]) \
             .map(lambda x: "Test", List[List[float]], str) \
             .store_textfile("file:///var/www/html/data/wordcount-out-python.txt", List[float])
         self.assertEqual(True, True)

@@ -87,7 +87,7 @@ class MapOperator(UnaryToUnaryOperator):
         self.json_name = "map"
 
     def get_udf(self, iterator):
-        return map(lambda x: self.function(self.input_type(x)), iterator)
+        return map(lambda x: self.function(x), iterator)
 
     def __str__(self):
         return super().__str__()
@@ -108,7 +108,7 @@ class MapPartitionsOperator(UnaryToUnaryOperator):
         self.json_name = "mapPartitions"
 
     def get_udf(self, iterator):
-        return map(lambda x: self.function(self.input_type(x)), iterator)
+        return map(lambda x: self.function(x), iterator)
 
     def __str__(self):
         return super().__str__()
@@ -131,7 +131,7 @@ class FlatmapOperator(UnaryToUnaryOperator):
         self.json_name = "flatMap"
 
     def get_udf(self, iterator):
-        return chain.from_iterable(map(lambda x: self.fm_function(self.input_type(x)), iterator))
+        return chain.from_iterable(map(lambda x: self.fm_function(x), iterator))
 
     def __str__(self):
         return super().__str__()

@@ -19,7 +19,7 @@ package org.apache.wayang.api.json.operatorfromjson.unary
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
-import org.apache.wayang.api.json.operatorfromjson.NDimArray
+import org.apache.wayang.api.util.NDimArray
 
 @JsonTypeName(OperatorFromJson.OperatorNames.Reduce)
 case class ReduceOperatorFromJson(override val id: Long,

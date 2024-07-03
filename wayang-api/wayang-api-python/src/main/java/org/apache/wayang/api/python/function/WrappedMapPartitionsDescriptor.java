@@ -42,5 +42,8 @@ public class WrappedMapPartitionsDescriptor<Input, Output> extends MapPartitions
             outputTypeClass,
             (ProbabilisticDoubleInterval) null
         );
+
+        System.out.println("WMP Input: " + inputTypeClass);
+        System.out.println("WMP Output: " + outputTypeClass);
     }
 }

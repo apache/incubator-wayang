@@ -133,12 +133,14 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
       inputType: Class[_ <: Any],
       outputType: Class[_ <: Any]
     ): DataQuanta[NewOut] = {
-    val mapOperator = new MapPartitionsOperator(
-      new WrappedMapPartitionsDescriptor(
+    val descriptor = new WrappedMapPartitionsDescriptor(
         ByteString.copyFromUtf8(udf),
         inputType,
         outputType
-      ),
+    )
+    println("SCALA DESCRIPTOR: " + descriptor)
+    val mapOperator = new MapPartitionsOperator(
+      descriptor
     )
     this.connectTo(mapOperator, 0)
     mapOperator
