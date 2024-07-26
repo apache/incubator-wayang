@@ -32,13 +32,14 @@ class Op:
         INT16 = 'INT16'
         BOOL = 'BOOL'
 
-    def __init__(self, dType: DType, name=None):
+    def __init__(self, dType: DType, name=None, opType=None):
         if name is None:
             self.name = self.__class__.__name__
         else:
             self.name = name
         self.fromList: List[Op] = []
         self.dType = dType
+        self.opType = opType
 
     def get_name(self):
         return self.name
@@ -63,6 +64,7 @@ class Op:
     def to_dict(self):
         output = {}
         output['op'] = self.name
+        output['opType'] = self.opType
         output['dType'] = self.dType
         output['fromList'] = list(map(lambda child: child.to_dict(),self.fromList))
         output["dim"] = None
@@ -130,11 +132,11 @@ class Input(Op):
         def get_name(self):
             return self.name
 
-    def __init__(self, dType=Op.DType.FLOAT32, name=None, type=None):
-        if type is not None:
-            super().__init__(dType, type.get_name())
+    def __init__(self, opType=None, dType=Op.DType.FLOAT32, name=None):
+        if opType is not None:
+            super().__init__(dType=dType, opType=opType)
         else:
-            super().__init__(dType, name)
+            super().__init__(dType=dType, name=name)
 
     def inputs_required(self):
         return 0

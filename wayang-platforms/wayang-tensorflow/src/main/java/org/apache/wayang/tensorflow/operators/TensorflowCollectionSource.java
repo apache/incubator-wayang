@@ -80,9 +80,6 @@ public class TensorflowCollectionSource<Type> extends CollectionSource<Type> imp
         assert inputs.length <= 1;
         assert outputs.length == this.getNumOutputs();
 
-        System.out.println("TFCS input: " + inputs[0].getChannel().getDataSetType());
-        System.out.println("TFCS outputs: " + outputs[0]);
-
         final Collection<Type> collection;
         if (this.collection != null) {
             collection = this.collection;

@@ -76,7 +76,7 @@ def write_with_length(obj, stream):
         arr = np.array(obj)
         serialized = arr.tobytes()
     else:
-        serialized = obj.encode('utf-8')
+        serialized = str(obj).encode('utf-8')
     if serialized is None:
         raise ValueError("serialized value should not be None")
     if len(serialized) > (1 << 31):

@@ -30,7 +30,6 @@ from pywy.basic.model.models import DLModel
 
 class TestWCPlanToJson(unittest.TestCase):
     def test_to_json(self):
-        # anonymous functions with type hints
         l1 = Linear(4, 64, True)
         s1 = Sigmoid()
         l2 = Linear(64, 3, True)
@@ -60,7 +59,7 @@ class TestWCPlanToJson(unittest.TestCase):
         optimizer = GradientDescent(0.02)
         option = Option(criterion, optimizer, 6, 100)
 
-        floats: List[List[float]] = [[5.1, 3.5, 1.4, 0.2]]
+        floats: List[List[int]] = [[5.1, 3.5, 1.4, 0.2]]
 
         ints: List[List[int]] = [[0, 0, 1, 1, 2, 2]]
 

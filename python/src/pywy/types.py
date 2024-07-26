@@ -189,9 +189,9 @@ def typecheck(input_type: Type[ConstrainedOperatorType]):
     print(origin)
     print(args)
 
-    if origin is list and args:
+    if isinstance(input_type, List) and args:
         typecheck(args[0])
-    elif origin is tuple and args:
+    elif isinstance(input_type, Tuple):
         if all(arg in allowed_types for arg in args):
             return
         else:
@@ -200,7 +200,7 @@ def typecheck(input_type: Type[ConstrainedOperatorType]):
     #print(get_args(ConstrainedOperatorType))
     #if candT not in get_args(ConstrainedOperatorType) and candT is not None:
     #if candT is not PrimitiveType and candT is not IterableT and candT is not NumberOrArray and candT is not None:
-        raise TypeError(f"Unsupported Operator type: {input_type}")
+        raise TypeError(f"Unsupported Operator type: {input_type}, {args}, {isinstance(input_type, Tuple)}")
 
 def get_java_type(input_type: ConstrainedOperatorType) -> str:
     str_type = get_type_str(input_type)

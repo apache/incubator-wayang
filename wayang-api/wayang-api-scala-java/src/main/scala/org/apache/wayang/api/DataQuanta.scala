@@ -138,7 +138,6 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
         inputType,
         outputType
     )
-    println("SCALA DESCRIPTOR: " + descriptor)
     val mapOperator = new MapPartitionsOperator(
       descriptor
     )

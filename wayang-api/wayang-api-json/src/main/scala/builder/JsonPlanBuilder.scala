@@ -229,7 +229,6 @@ class JsonPlanBuilder() {
   //
 
   private def visit(operator: TextFileOutputFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    println("Executing TextFileOutputFromJson");
     dataQuanta.writeTextFile(operator.data.filename, (x: Any) => x.toString)
     dataQuanta
   }
@@ -462,49 +461,18 @@ class JsonPlanBuilder() {
   }
 
   private def parseDLTrainingData(operator: DLTrainingOperatorFromJson): (DLModel, DLTrainingOperator.Option) = {
-    val model: DLModel = new DLModel(new ArgMax(1));
-    val option : DLTrainingOperator.Option = new DLTrainingOperator.Option(new CrossEntropyLoss(3), new Adam(0.1f), 3, 100);
+    val modelOps = operator.data.model.op.toModelOp()
+    val model = new DLModel(modelOps);
+
+    val criterion = operator.data.option.criterion.toModelOp()
+    val optimizer = operator.data.option.optimizer.toModelOptimizer()
+    val batchSize = operator.data.option.batchSize;
+    val epoch = operator.data.option.epoch;
+    val option: DLTrainingOperator.Option = new DLTrainingOperator.Option(criterion, optimizer, batchSize.toInt, epoch.toInt);
 
     (model, option)
   }
 
-  private def parseOp(op: JsonOp): Op = {
-    val recursiveOp: Op = op.op match {
-      case "ArgMax" => new ArgMax(op.dim)
-      case "Cast" => new Cast(parseDType(op.dType))
-      case "CrossEntropyLoss" => new CrossEntropyLoss(op.labels)
-      case "Eq" => new Eq()
-      case "Input" => new Input(parseInputType(op.dType))
-      case "Mean" => new Mean(op.dim)
-      case "Linear" => new Linear(op.inFeatures, op.outFeatures, op.bias)
-      case "ReLU" => new ReLU()
-      case "Sigmoid" => new Sigmoid()
-      case "Softmax" => new Softmax()
-    }
-
-    recursiveOp
-  }
-
-  private def parseDType(dType: String): Op.DType = {
-    dType match {
-      case "ANY" => Op.DType.ANY
-      case "INT32" => Op.DType.INT32
-      case "INT64" => Op.DType.INT64
-      case "FLOAT32" => Op.DType.FLOAT32
-      case "FLOAT64" => Op.DType.FLOAT64
-      case "BYTE" => Op.DType.BYTE
-      case "INT16" => Op.DType.INT16
-      case "BOOL" => Op.DType.BOOL
-    }
-  }
-
-  private def parseInputType(inputType: String): Input.Type = {
-    inputType match {
-      case "..FEATURES.." => Input.Type.FEATURES
-      case "..LABEL.." => Input.Type.LABEL
-      case "..PREDICTED.." => Input.Type.PREDICTED
-    }
-  }
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
