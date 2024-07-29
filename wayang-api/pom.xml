@@ -23,11 +23,11 @@
     <parent>
         <artifactId>wayang</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>0.7.1-SNAPSHOT</version>
+        <version>1.0.0-RC3</version>
     </parent>
 
     <artifactId>wayang-api</artifactId>
-    <version>0.7.1-SNAPSHOT</version>
+    <version>1.0.0-RC3</version>
     <packaging>pom</packaging>
 
     <name>Wayang API</name>
