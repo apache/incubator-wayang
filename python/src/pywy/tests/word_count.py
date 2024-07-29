@@ -17,7 +17,7 @@
 
 import unittest
 from typing import Tuple, Callable, Iterable
-from pywy.dataquanta import WayangContext
+from pywy.dataquanta import WayangContext, Configuration
 from unittest.mock import Mock
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
@@ -53,8 +53,11 @@ class TestWCPlanToJson(unittest.TestCase):
             .store_textfile("file:///var/www/html/data/wordcount-out-python.txt", (str, int))
         self.assertEqual(True, True)
 
+        config = Configuration()
+        config.set_property("wayang.api.python.worker", "/var/www/html/python/src/pywy/execution/worker.py")
+
         # named functions with  signatures
-        ctx = WayangContext() \
+        ctx = WayangContext(config) \
             .register({JavaPlugin, SparkPlugin}) \
             .textfile("file:///var/www/html/README.md") \
             .flatmap(fm_func) \

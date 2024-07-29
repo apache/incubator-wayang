@@ -15,7 +15,7 @@
 #  limitations under the License.
 #
 
-from typing import Set, Iterable
+from typing import Set, Iterable, Dict
 import json
 import base64
 import cloudpickle
@@ -74,7 +74,7 @@ class PywyPlan:
     """
     graph: WayangGraph
 
-    def __init__(self, plugins: Set[Plugin], sinks: Iterable[SinkOperator]):
+    def __init__(self, plugins: Set[Plugin], configuration: Dict[str, str], sinks: Iterable[SinkOperator]):
         """basic Constructor of PywyPlan
 
         this constructor set the plugins and sinks element, and it prepares
@@ -88,6 +88,7 @@ class PywyPlan:
             Description of `sinks`.
         """
         self.plugins = plugins
+        self.configuration = configuration
         self.sinks = sinks
         self.set_graph()
 
@@ -105,6 +106,7 @@ class PywyPlan:
         context = {}
         context["origin"] = "python"
         context["platforms"] = {}
+        context["configuration"] = self.configuration
 
         if len(self.plugins) > 0:
             context["platforms"] = list(map(lambda pl: next(iter(pl.platforms)).name, self.plugins))

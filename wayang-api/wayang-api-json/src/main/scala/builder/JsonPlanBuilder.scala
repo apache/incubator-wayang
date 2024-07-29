@@ -58,6 +58,7 @@ import scala.collection.JavaConverters._
 class JsonPlanBuilder() {
 
   var planBuilder: PlanBuilder = _
+  var configuration: Configuration = null
   var operators: Map[Long, OperatorFromJson] = Map()
   var plugins: List[Plugin] = List(
     Java.basicPlugin,
@@ -78,7 +79,37 @@ class JsonPlanBuilder() {
   def fromPlan(plan: PlanFromJson): JsonPlanBuilder = {
     setPlatforms(plan.context.platforms)
     setOrigin(plan.context.origin)
+    setConfiguration(plan.context.configuration)
     setOperators(plan.operators)
+
+    this
+  }
+
+  def setConfiguration(config: Map[String, String]): JsonPlanBuilder = {
+    // Check if a wayang.properties file is declared using env variables, otherwise try default location.
+    val wayangPropertiesFile: String = sys.env.getOrElse("WAYANG_PROPERTIES_FILE", "file:///wayang.properties")
+
+    if (Files.exists(Paths.get("wayang.properties"))) {
+      println(s"Loading configuration from $wayangPropertiesFile.")
+      try {
+        this.configuration = new Configuration(wayangPropertiesFile)
+      }
+      catch {
+        case _: WayangException =>
+          println(s"Could not load configuration from $wayangPropertiesFile. Using default Wayang configuration file.")
+          this.configuration = new Configuration()
+      }
+    }
+    // If no wayang.properties file can be found, load default configuration.
+    else {
+      this.configuration = new Configuration()
+
+      if (config.size == 0) {
+        println("Using default Wayang configuration file.")
+      } else {
+        config.foreach(prop => this.configuration.setProperty(prop._1, prop._2))
+      }
+    }
 
     this
   }
@@ -86,31 +117,8 @@ class JsonPlanBuilder() {
   def setOperators(operators: List[OperatorFromJson]): JsonPlanBuilder = {
     setOperatorsRec(operators)
 
-    var configuration: Configuration = null
-
-    // Check if a wayang.properties file is declared using env variables, otherwise try default location.
-    val wayangPropertiesFile: String = sys.env.getOrElse("WAYANG_PROPERTIES_FILE", "file:///wayang.properties")
-
-    if (Files.exists(Paths.get("wayang.properties"))) {
-      println(s"Loading configuration from $wayangPropertiesFile.")
-      try {
-        configuration = new Configuration(wayangPropertiesFile)
-      }
-      catch {
-        case _: WayangException =>
-          println(s"Could not load configuration from $wayangPropertiesFile. Using default Wayang configuration file.")
-          configuration = new Configuration()
-      }
-    }
-
-    // If no wayang.properties file can be found, load default configuration.
-    else {
-      println("Using default Wayang configuration file.")
-      configuration = new Configuration()
-    }
-
     // Create context with plugins
-    val wayangContext = new WayangContext(configuration)
+    val wayangContext = new WayangContext(this.configuration)
     plugins.foreach(plugin => wayangContext.withPlugin(plugin))
 
     // Check if there is a jdbc remote input. If yes, set configuration appropriately

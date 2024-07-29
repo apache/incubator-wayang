@@ -33,6 +33,7 @@ import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson,
 
 class ContextFromJson(val platforms: List[String],
                       val origin: String,
+                      val configuration: Map[String, String],
                       ) extends Serializable {
 
   //

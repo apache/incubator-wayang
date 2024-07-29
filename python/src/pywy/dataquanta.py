@@ -15,7 +15,7 @@
 #  limitations under the License.
 #
 
-from typing import Set, List, cast
+from typing import Dict, Set, List, cast
 
 from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
@@ -25,14 +25,27 @@ from pywy.basic.model.ops import Op
 from pywy.basic.model.option import Option
 from pywy.basic.model.models import Model
 
+
+class Configuration:
+    entries: Dict[str, str]
+
+    def __init__(self):
+        self.entries = {}
+
+    def set_property(self, key: str, value: str):
+        self.entries[key] = value
+
+
 class WayangContext:
     """
     This is the entry point for users to work with Wayang.
     """
     plugins: Set[Plugin]
+    configuration: Configuration
 
-    def __init__(self):
+    def __init__(self, configuration: Configuration = Configuration()):
         self.plugins = set()
+        self.configuration = configuration
 
     """
     add a :class:`Plugin` to the :class:`Context`
@@ -172,7 +185,7 @@ class DataQuanta(GenericTco):
             )
         ]
         #print(PywyPlan(self.context.plugins, last))
-        PywyPlan(self.context.plugins, last).execute()
+        PywyPlan(self.context.plugins, self.context.configuration.entries, last).execute()
 
     def _connect(self, op: PO_T, port_op: int = 0) -> PywyOperator:
         self.operator.connect(0, op, port_op)
