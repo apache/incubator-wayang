@@ -37,6 +37,9 @@ def key_func(t: (str, int)) -> str:
 def reduce_func(t1: (str, int), t2: (str, int)) -> (str, int):
     return (t1[0], int(t1[1]) + int(t2[1]))
 
+def sort_func(tup: (str, int)):
+    return tup[0]
+
 class TestWCPlanToJson(unittest.TestCase):
     def test_to_json(self):
         # anonymous functions with type hints
@@ -58,6 +61,7 @@ class TestWCPlanToJson(unittest.TestCase):
             .filter(filter_func) \
             .map(map_func) \
             .reduce_by_key(key_func, reduce_func) \
+            .sort(sort_func) \
             .store_textfile("file:///var/www/html/data/wordcount-out-python.txt", (str, int))
         self.assertEqual(True, True)
 

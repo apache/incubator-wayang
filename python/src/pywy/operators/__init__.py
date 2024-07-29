@@ -18,7 +18,7 @@
 from pywy.operators.base import PywyOperator
 from pywy.operators.sink import TextFileSink, SinkOperator
 from pywy.operators.source import TextFileSource, SourceUnaryOperator
-from pywy.operators.unary import UnaryToUnaryOperator, FilterOperator, MapOperator, FlatmapOperator, ReduceByKeyOperator
+from pywy.operators.unary import UnaryToUnaryOperator, FilterOperator, MapOperator, FlatmapOperator, ReduceByKeyOperator, SortOperator
 from pywy.operators.binary import BinaryToUnaryOperator, JoinOperator, DLTrainingOperator, PredictOperator
 
 __ALL__ = [
@@ -29,6 +29,7 @@ __ALL__ = [
      TextFileSource,
      FilterOperator,
      SinkOperator,
+     SortOperator,
      SourceUnaryOperator,
      MapOperator,
      ReduceByKeyOperator,

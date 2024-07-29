@@ -89,6 +89,13 @@ class DataQuanta(GenericTco):
 
         return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f, input_type)))
 
+    def sort(self: "DataQuanta[In]",
+                      key_f: Function,
+                      input_type: GenericTco = None
+                      ) -> "DataQuanta[IterableOut]":
+
+        return DataQuanta(self.context, self._connect(SortOperator(key_f, input_type)))
+
     def join(
         self: "DataQuanta[In]",
         this_key_f: Function,
