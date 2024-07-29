@@ -51,7 +51,7 @@ jobs:
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven
-      - name: Run Unit tests
-        run: ./mvnw clean verify -B -Dmaven.test.skip=false -Dwayang.configuration=file:$(pwd)/tools/test/config/wayang.properties
       - name: Build And Install
         run: ./mvnw clean install -B -Dmaven.test.skip=true
+      - name: Run Unit tests
+        run: ./mvnw clean verify -B -Dmaven.test.skip=false -Dwayang.configuration=file:$(pwd)/tools/test/config/wayang.properties
