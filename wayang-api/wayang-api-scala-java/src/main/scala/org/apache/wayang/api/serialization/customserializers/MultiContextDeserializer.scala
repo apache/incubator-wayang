@@ -1,22 +1,3 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-
 package org.apache.wayang.api.serialization.customserializers
 
 import com.fasterxml.jackson.core.{JsonParser, JsonProcessingException}
@@ -30,6 +11,9 @@ import org.apache.wayang.java.Java
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.spark.Spark
 import org.apache.wayang.sqlite3.Sqlite3
+import org.apache.wayang.flink.Flink
+import org.apache.wayang.hadoop.Hadoop
+import org.apache.wayang.graphchi.GraphChi
 
 import java.io.IOException
 
@@ -75,24 +59,26 @@ class MultiContextDeserializer extends JsonDeserializer[MultiContext] {
         println("Unknown sink type")
     }
 
-    // TODO: Add all plugins
-    // 3. Add plugins
-    val javaPluginName = Java.basicPlugin.getClass.getName
-    val sparkPluginName = Spark.basicPlugin.getClass.getName
+    // Add all plugins
+    val javaPluginName = Java.basicPlugin().getClass.getName
+    val sparkPluginName = Spark.basicPlugin().getClass.getName
     val postgresPluginName = Postgres.plugin().getClass.getName
-    // val flinkPluginName = Flink.basicPlugin().getClass.getName
     val sqlite3PluginName = Sqlite3.plugin().getClass.getName
+    val flinkPluginName = Flink.basicPlugin().getClass.getName
+    val hadoopPluginName = Hadoop.basicPlugin().getClass.getName
+    val graphchiPluginName = GraphChi.basicPlugin().getClass.getName
 
     plugins.foreach {
       case pluginName if pluginName == javaPluginName => multiContext.register(Java.basicPlugin())
       case pluginName if pluginName == sparkPluginName => multiContext.register(Spark.basicPlugin())
       case pluginName if pluginName == postgresPluginName => multiContext.register(Postgres.plugin())
-      // case pluginName if pluginName == flinkPluginName => multiContext.register(Flink.basicPlugin())
       case pluginName if pluginName == sqlite3PluginName => multiContext.register(Sqlite3.plugin())
+      case pluginName if pluginName == flinkPluginName => multiContext.register(Flink.basicPlugin())
+      case pluginName if pluginName == hadoopPluginName => multiContext.register(Hadoop.basicPlugin())
+      case pluginName if pluginName == graphchiPluginName => multiContext.register(GraphChi.basicPlugin())
       case _ => println("Unknown plugin detected")
     }
 
     multiContext
   }
 }
-
