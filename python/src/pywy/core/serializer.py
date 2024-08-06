@@ -27,6 +27,7 @@ from pywy.core.platform import Platform
 from pywy.core.functions import ChainedFunctions
 from pywy.graph.graph import WayangGraph
 from pywy.graph.types import WGraphOfVec, NodeOperator, NodeVec
+from pywy.types import get_java_type, NDimArray, ndim_from_type
 from pywy.operators import SinkOperator, UnaryToUnaryOperator, SourceUnaryOperator
 
 class JSONSerializer:
@@ -52,6 +53,13 @@ class JSONSerializer:
 
         json_operator["data"] = {}
 
+        if hasattr(operator, "input_type"):
+            if operator.input_type is not None:
+                json_operator["data"]["inputType"] = ndim_from_type(operator.input_type).to_json()
+        if hasattr(operator, "output_type"):
+            if operator.output_type is not None:
+                json_operator["data"]["outputType"] = ndim_from_type(operator.output_type).to_json()
+
         if operator.json_name == "filter":
             json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.use_predicate)).decode('utf-8')
 
@@ -64,6 +72,11 @@ class JSONSerializer:
         elif operator.json_name == "join":
             json_operator["data"]["thisKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.this_key_function)).decode('utf-8')
             json_operator["data"]["thatKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.that_key_function)).decode('utf-8')
+
+            return json_operator
+        elif operator.json_name == "dlTraining":
+            json_operator["data"]["model"] = {"modelType": "DLModel", "op": operator.model.get_out().to_dict()}
+            json_operator["data"]["option"] = operator.option.to_dict()
 
             return json_operator
         else:

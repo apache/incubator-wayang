@@ -15,23 +15,12 @@
 #  limitations under the License.
 #
 
-import unittest
-#from typing import Tuple, Callable, Iterable
-from pywy.dataquanta import WayangContext
-from unittest.mock import Mock
-from pywy.platforms.java import JavaPlugin
-from pywy.platforms.spark import SparkPlugin
+from pywy.core.platform import Platform
+from pywy.core import Plugin
 
-class TestPlanToJson(unittest.TestCase):
-    def test_to_json(self):
-        ctx = WayangContext() \
-            .register({JavaPlugin, SparkPlugin}) \
-            .textfile("file:///var/www/html/data/in.txt") \
-            .map(lambda x: int(x)) \
-            .map(lambda x: int(x) + 1) \
-            .filter(lambda x: int(x) < 12) \
-            .store_textfile("file:///var/www/html/data/out-python.txt")
-        self.assertEqual(True, True)
+class TensorflowPlatform(Platform):
 
-if __name__ == "__main__":
-    unittest.main()
+    def __init__(self):
+        super(TensorflowPlatform, self).__init__("Tensorflow")
+
+TensorflowPlugin = Plugin({Platform('tensorflow')})

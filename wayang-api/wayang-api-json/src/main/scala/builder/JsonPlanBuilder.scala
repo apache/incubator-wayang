@@ -20,7 +20,7 @@ package org.apache.wayang.api.json.builder
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.ExecutionPlatforms
 import org.apache.wayang.api.json.parserutil.{SerializableIterable, SerializableLambda, SerializableLambda2}
 import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson}
-import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, UnionOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
 import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
@@ -39,18 +39,26 @@ import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.postgres.operators.PostgresTableSource
 import org.apache.wayang.spark.Spark
 import org.apache.wayang.flink.Flink
+import org.apache.wayang.tensorflow.Tensorflow
 import org.apache.wayang.genericjdbc.GenericJdbc
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.core.plugin.Plugin
+import org.apache.wayang.basic.model.DLModel;
+import org.apache.wayang.basic.model.optimizer.Adam;
+import org.apache.wayang.basic.model.op.nn._;
+import org.apache.wayang.basic.model.op._;
+import org.apache.wayang.basic.model.optimizer._;
+import org.apache.wayang.api.json.operatorfromjson.binary.{Op => JsonOp}
+import org.apache.wayang.api.util.NDimArray
 
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
 
-
 class JsonPlanBuilder() {
 
   var planBuilder: PlanBuilder = _
+  var configuration: Configuration = null
   var operators: Map[Long, OperatorFromJson] = Map()
   var plugins: List[Plugin] = List(
     Java.basicPlugin,
@@ -71,7 +79,37 @@ class JsonPlanBuilder() {
   def fromPlan(plan: PlanFromJson): JsonPlanBuilder = {
     setPlatforms(plan.context.platforms)
     setOrigin(plan.context.origin)
+    setConfiguration(plan.context.configuration)
     setOperators(plan.operators)
+
+    this
+  }
+
+  def setConfiguration(config: Map[String, String]): JsonPlanBuilder = {
+    // Check if a wayang.properties file is declared using env variables, otherwise try default location.
+    val wayangPropertiesFile: String = sys.env.getOrElse("WAYANG_PROPERTIES_FILE", "file:///wayang.properties")
+
+    if (Files.exists(Paths.get("wayang.properties"))) {
+      println(s"Loading configuration from $wayangPropertiesFile.")
+      try {
+        this.configuration = new Configuration(wayangPropertiesFile)
+      }
+      catch {
+        case _: WayangException =>
+          println(s"Could not load configuration from $wayangPropertiesFile. Using default Wayang configuration file.")
+          this.configuration = new Configuration()
+      }
+    }
+    // If no wayang.properties file can be found, load default configuration.
+    else {
+      this.configuration = new Configuration()
+
+      if (config.size == 0) {
+        println("Using default Wayang configuration file.")
+      } else {
+        config.foreach(prop => this.configuration.setProperty(prop._1, prop._2))
+      }
+    }
 
     this
   }
@@ -79,31 +117,8 @@ class JsonPlanBuilder() {
   def setOperators(operators: List[OperatorFromJson]): JsonPlanBuilder = {
     setOperatorsRec(operators)
 
-    var configuration: Configuration = null
-
-    // Check if a wayang.properties file is declared using env variables, otherwise try default location.
-    val wayangPropertiesFile: String = sys.env.getOrElse("WAYANG_PROPERTIES_FILE", "file:///wayang.properties")
-
-    if (Files.exists(Paths.get("wayang.properties"))) {
-      println(s"Loading configuration from $wayangPropertiesFile.")
-      try {
-        configuration = new Configuration(wayangPropertiesFile)
-      }
-      catch {
-        case _: WayangException =>
-          println(s"Could not load configuration from $wayangPropertiesFile. Using default Wayang configuration file.")
-          configuration = new Configuration()
-      }
-    }
-
-    // If no wayang.properties file can be found, load default configuration.
-    else {
-      println("Using default Wayang configuration file.")
-      configuration = new Configuration()
-    }
-
     // Create context with plugins
-    val wayangContext = new WayangContext(configuration)
+    val wayangContext = new WayangContext(this.configuration)
     plugins.foreach(plugin => wayangContext.withPlugin(plugin))
 
     // Check if there is a jdbc remote input. If yes, set configuration appropriately
@@ -171,6 +186,8 @@ class JsonPlanBuilder() {
       case operator: CartesianOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
       case operator: CoGroupOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
       case operator: IntersectOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
+      case operator: PredictOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
+      case operator: DLTrainingOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder), executeRecursive(this.operators(operator.input(1)), planBuilder))
 
       // loop
       case operator: DoWhileOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
@@ -220,7 +237,6 @@ class JsonPlanBuilder() {
   //
 
   private def visit(operator: TextFileOutputFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    println("Executing TextFileOutputFromJson");
     dataQuanta.writeTextFile(operator.data.filename, (x: Any) => x.toString)
     dataQuanta
   }
@@ -231,10 +247,18 @@ class JsonPlanBuilder() {
 
   private def visit(operator: MapOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
+      val inputType: Class[_] = operator.data.inputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
+      val outputType: Class[_] = operator.data.outputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda.createLambda[Any, Any](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -261,10 +285,18 @@ class JsonPlanBuilder() {
 
   private def visit(operator: FlatMapOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
+      val inputType: Class[_] = operator.data.inputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
+      val outputType: Class[_] = operator.data.outputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda.createLambda[Any, Iterable[Any]](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -323,10 +355,18 @@ class JsonPlanBuilder() {
 
   private def visit(operator: ReduceOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
+      val inputType: Class[_] = operator.data.inputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
+      val outputType: Class[_] = operator.data.outputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda2.createLambda[Any, Any, Any](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -345,10 +385,18 @@ class JsonPlanBuilder() {
 
   private def visit(operator: MapPartitionsOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (this.origin == "python") {
+      val inputType: Class[_] = operator.data.inputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
+      val outputType: Class[_] = operator.data.outputType match {
+        case Some(nDimArray) => nDimArray.toClassTag()
+        case _ => classOf[Object]
+      }
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-        dataQuanta.mapPartitionsPython(operator.data.udf)
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType)
       else
-        dataQuanta.mapPartitionsPython(operator.data.udf).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+        dataQuanta.mapPartitionsPython(operator.data.udf, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
     } else {
       val lambda = SerializableLambda.createLambda[Iterable[Any], Iterable[Any]](operator.data.udf)
       if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -388,6 +436,51 @@ class JsonPlanBuilder() {
           .map(tuple2 => (tuple2.field0, tuple2.field1)).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
     }
   }
+
+  private def visit(operator: PredictOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
+    val inputType: Class[_] = operator.data.inputType match {
+      case Some(nDimArray) => nDimArray.toClassTag()
+      case _ => classOf[Object]
+    }
+    val outputType: Class[_] = operator.data.outputType match {
+      case Some(nDimArray) => nDimArray.toClassTag()
+      case _ => classOf[Object]
+    }
+    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+      dataQuanta1.predict(dataQuanta2, inputType, outputType)
+    else
+      dataQuanta1.predict(dataQuanta2, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+  }
+
+  private def visit(operator: DLTrainingOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
+    val inputType: Class[_] = operator.data.inputType match {
+      case Some(nDimArray) => nDimArray.toClassTag()
+      case _ => classOf[Object]
+    }
+    val outputType: Class[_] = operator.data.outputType match {
+      case Some(nDimArray) => nDimArray.toClassTag()
+      case _ => classOf[Object]
+    }
+    val (model, option) = parseDLTrainingData(operator);
+    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+      dataQuanta1.dlTraining(model, option, dataQuanta2, inputType, outputType)
+    else
+      dataQuanta1.dlTraining(model, option, dataQuanta2, inputType, outputType).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+  }
+
+  private def parseDLTrainingData(operator: DLTrainingOperatorFromJson): (DLModel, DLTrainingOperator.Option) = {
+    val modelOps = operator.data.model.op.toModelOp()
+    val model = new DLModel(modelOps);
+
+    val criterion = operator.data.option.criterion.toModelOp()
+    val optimizer = operator.data.option.optimizer.toModelOptimizer()
+    val batchSize = operator.data.option.batchSize;
+    val epoch = operator.data.option.epoch;
+    val option: DLTrainingOperator.Option = new DLTrainingOperator.Option(criterion, optimizer, batchSize.toInt, epoch.toInt);
+
+    (model, option)
+  }
+
 
   private def visit(operator: CartesianOperatorFromJson, dataQuanta1: DataQuanta[Any], dataQuanta2: DataQuanta[Any]): DataQuanta[Any] = {
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
@@ -526,6 +619,7 @@ class JsonPlanBuilder() {
       case OperatorFromJson.ExecutionPlatforms.JDBC => GenericJdbc.plugin
       case OperatorFromJson.ExecutionPlatforms.Postgres => Postgres.plugin
       case OperatorFromJson.ExecutionPlatforms.SQLite3 => Sqlite3.plugin
+      case OperatorFromJson.ExecutionPlatforms.Tensorflow => Tensorflow.plugin
       case _ => null
     }
   }

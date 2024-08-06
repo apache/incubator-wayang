@@ -97,11 +97,11 @@ object OperatorFromDrawflowConverter {
       case "count" => CountOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Count, executionPlatform)
       case "groupBy" => GroupByOpeartorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.GroupBy, GroupByOpeartorFromJson.Data(operatorFromDrawflow.data("keyFunction").asInstanceOf[String]), executionPlatform)
       case "sort" => SortOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Sort, SortOperatorFromJson.Data(operatorFromDrawflow.data("keyFunction").asInstanceOf[String]), executionPlatform)
-      case "flatMap" => FlatMapOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.FlatMap, FlatMapOperatorFromJson.Data(operatorFromDrawflow.data("flatMapFunction").asInstanceOf[String]), executionPlatform)
-      case "map" => MapOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Map, MapOperatorFromJson.Data(operatorFromDrawflow.data("mapFunction").asInstanceOf[String]), executionPlatform)
-      case "reduce" => ReduceOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Reduce, ReduceOperatorFromJson.Data(operatorFromDrawflow.data("reduceFunction").asInstanceOf[String]), executionPlatform)
+      case "flatMap" => FlatMapOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.FlatMap, FlatMapOperatorFromJson.Data(operatorFromDrawflow.data("flatMapFunction").asInstanceOf[String], None, None), executionPlatform)
+      case "map" => MapOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Map, MapOperatorFromJson.Data(operatorFromDrawflow.data("mapFunction").asInstanceOf[String], None, None), executionPlatform)
+      case "reduce" => ReduceOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Reduce, ReduceOperatorFromJson.Data(operatorFromDrawflow.data("reduceFunction").asInstanceOf[String], None, None), executionPlatform)
       case "distinct" => DistinctOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Distinct, executionPlatform)
-      case "mapPartitions" => MapPartitionsOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.MapPartitions, MapPartitionsOperatorFromJson.Data(operatorFromDrawflow.data("mapPartitionsFunction").asInstanceOf[String]), executionPlatform)
+      case "mapPartitions" => MapPartitionsOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.MapPartitions, MapPartitionsOperatorFromJson.Data(operatorFromDrawflow.data("mapPartitionsFunction").asInstanceOf[String], None, None), executionPlatform)
       case "sample" => SampleOperatorFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Sample, SampleOperatorFromJson.Data(operatorFromDrawflow.data("sampleSize").asInstanceOf[String].toInt), executionPlatform)
 
       // binary

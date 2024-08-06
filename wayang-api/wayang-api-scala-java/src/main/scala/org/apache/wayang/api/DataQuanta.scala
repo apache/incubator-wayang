@@ -37,9 +37,11 @@ import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
+import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function._
+import org.tensorflow.ndarray.NdArray
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -126,13 +128,18 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @return a new instance representing the [[MapOperator]]'s output
     */
-  def mapPartitionsPython[NewOut: ClassTag](udf: String): DataQuanta[NewOut] = {
-    val mapOperator = new MapPartitionsOperator(
-      new WrappedMapPartitionsDescriptor[Object, Object](
+  def mapPartitionsPython[NewOut: ClassTag](
+      udf: String,
+      inputType: Class[_ <: Any],
+      outputType: Class[_ <: Any]
+    ): DataQuanta[NewOut] = {
+    val descriptor = new WrappedMapPartitionsDescriptor(
         ByteString.copyFromUtf8(udf),
-        classOf[Object],
-        classOf[Object],
-      ),
+        inputType,
+        outputType
+    )
+    val mapOperator = new MapPartitionsOperator(
+      descriptor
     )
     this.connectTo(mapOperator, 0)
     mapOperator
@@ -559,6 +566,54 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     this.connectTo(joinOperator, 0)
     that.connectTo(joinOperator, 1)
     joinOperator
+  }
+
+  def predict[ThatOut: ClassTag](
+    that: DataQuanta[ThatOut],
+    inputType: Class[_ <: Any],
+    outputType: Class[_ <: Any]
+  ): DataQuanta[Out] =
+    predictJava(that, inputType, outputType)
+
+  def predictJava[ThatOut: ClassTag](
+    that: DataQuanta[ThatOut],
+    inputType: Class[_ <: Any],
+    outputType: Class[_ <: Any]
+  ): DataQuanta[Out] = {
+    val predictOperator = new PredictOperator(
+      inputType, outputType
+    )
+    this.connectTo(predictOperator, 0)
+    that.connectTo(predictOperator, 1)
+    predictOperator
+  }
+
+  def dlTraining[ThatOut: ClassTag](
+    model: DLModel,
+    option: DLTrainingOperator.Option,
+    that: DataQuanta[ThatOut],
+    xType: Class[_ <: Any],
+    yType: Class[_ <: Any]
+  ): DataQuanta[Out] =
+    dlTrainingJava(model, option, that, xType, yType)
+
+  def dlTrainingJava[ThatOut: ClassTag](
+    model: DLModel,
+    option: DLTrainingOperator.Option,
+    that: DataQuanta[ThatOut],
+    xType: Class[_ <: Any],
+    yType: Class[_ <: Any]
+  ): DataQuanta[Out] = {
+    val dlTrainingOperator = new DLTrainingOperator(
+      model,
+      option,
+      xType,
+      yType
+    )
+
+    this.connectTo(dlTrainingOperator, 0)
+    that.connectTo(dlTrainingOperator, 1)
+    dlTrainingOperator
   }
 
   /**

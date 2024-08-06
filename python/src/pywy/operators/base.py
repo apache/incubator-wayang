@@ -16,6 +16,7 @@
 #
 
 from typing import (TypeVar, Optional, List)
+from pywy.types import (typecheck, ConstrainedOperatorType)
 
 
 class PywyOperator:
@@ -24,21 +25,29 @@ class PywyOperator:
     outputs: int
     inputOperator: List['PywyOperator']
     outputOperator: List['PywyOperator']
+    input_type: ConstrainedOperatorType
+    output_type: ConstrainedOperatorType
 
     def __init__(self,
                  name: str,
                  cat: str,
+                 input_type: ConstrainedOperatorType = None,
+                 output_type: ConstrainedOperatorType = None,
                  input_length: Optional[int] = 1,
                  output_length: Optional[int] = 1,
                  *args,
                  **kwargs
                  ):
+        typecheck(input_type)
+        typecheck(output_type)
         self.name = (self.prefix() + name + self.postfix()).strip()
         self.cat = cat
         self.inputs = input_length
         self.outputs = output_length
         self.inputOperator = [None] * self.inputs
         self.outputOperator = [None] * self.outputs
+        self.input_type = input_type
+        self.output_type = output_type
 
     def validate_inputs(self, vec):
         if len(vec) != self.inputs:

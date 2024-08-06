@@ -25,6 +25,7 @@ import ast
 import copy
 import pickle
 import cloudpickle
+import numpy as np
 
 from pywy.execution.util import SpecialLengths
 
@@ -71,7 +72,11 @@ def write_int(p, outfile):
 
 
 def write_with_length(obj, stream):
-    serialized = obj.encode('utf-8')
+    if type(obj) is list:
+        arr = np.array(obj)
+        serialized = arr.tobytes()
+    else:
+        serialized = str(obj).encode('utf-8')
     if serialized is None:
         raise ValueError("serialized value should not be None")
     if len(serialized) > (1 << 31):
@@ -90,7 +95,7 @@ def dump_stream(iterator, stream):
             if type(obj) is bool:
                 write_with_length(int(obj == True), stream)
             else:
-                write_with_length(str(obj), stream)
+                write_with_length(obj, stream)
             ## elif type(obj) is list:
             ##    write_with_length(obj, stream)
     write_int(SpecialLengths.END_OF_DATA_SECTION, stream)

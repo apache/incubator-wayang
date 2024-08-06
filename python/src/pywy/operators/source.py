@@ -23,6 +23,8 @@ class SourceUnaryOperator(PywyOperator):
     def __init__(self, name: str):
         super(SourceUnaryOperator, self).__init__(
             name=name,
+            input_type=None,
+            output_type=str,
             cat="input",
             input_length=0,
             output_length=1

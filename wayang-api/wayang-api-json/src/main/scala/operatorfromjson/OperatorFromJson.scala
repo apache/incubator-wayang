@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.{DeserializationFeature, JsonNode}
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.OperatorNames
-import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, UnionOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson,UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
 import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TextFileInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
@@ -65,6 +65,8 @@ import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson,
     // Binary operators
     new JsonSubTypes.Type(value = classOf[UnionOperatorFromJson], name = OperatorNames.Union),
     new JsonSubTypes.Type(value = classOf[JoinOperatorFromJson], name = OperatorNames.Join),
+    new JsonSubTypes.Type(value = classOf[PredictOperatorFromJson], name = OperatorNames.Predict),
+    new JsonSubTypes.Type(value = classOf[DLTrainingOperatorFromJson], name = OperatorNames.DLTraining),
     new JsonSubTypes.Type(value = classOf[CartesianOperatorFromJson], name = OperatorNames.Cartesian),
     new JsonSubTypes.Type(value = classOf[CoGroupOperatorFromJson], name = OperatorNames.CoGroup),
     new JsonSubTypes.Type(value = classOf[IntersectOperatorFromJson], name = OperatorNames.Intersect),
@@ -84,7 +86,6 @@ class OperatorFromJson(val id: Long,
                        val operatorName: String,
                        val executionPlatform: String = null
                       ) extends Serializable {
-
 
   //
   // Because case classes combined with inheritance were kind of difficult to change a field,
@@ -164,6 +165,8 @@ object OperatorFromJson {
     // Binary
     final val Union = "union"
     final val Join = "join"
+    final val Predict = "predict"
+    final val DLTraining = "dlTraining"
     final val Cartesian = "cartesian"
     final val CoGroup = "coGroup"
     final val Intersect = "intersect"
@@ -182,6 +185,7 @@ object OperatorFromJson {
     final val JDBC = "jdbc"
     final val Postgres = "postgres"
     final val SQLite3 = "sqlite3"
-    final val All = List(Java, Spark, Flink, JDBC, Postgres, SQLite3)
+    final val Tensorflow = "tensorflow"
+    final val All = List(Java, Spark, Flink, JDBC, Postgres, SQLite3, Tensorflow)
   }
 }

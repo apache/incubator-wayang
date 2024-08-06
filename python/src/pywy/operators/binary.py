@@ -20,6 +20,8 @@ from collections import defaultdict
 import ast
 
 from pywy.operators.base import PywyOperator
+from pywy.basic.model.models import Model
+from pywy.basic.model.option import Option
 from pywy.types import (
                             GenericTco,
                             GenericUco,
@@ -34,8 +36,8 @@ from pywy.types import (
 
 class BinaryToUnaryOperator(PywyOperator):
 
-    def __init__(self, name: str):
-        super().__init__(name, "binary", 2, 1)
+    def __init__(self, name: str, input_type: GenericTco = None, output_type: GenericTco = None):
+        super().__init__(name, "binary", input_type, output_type, 2, 1)
 
     def postfix(self) -> str:
         return 'OperatorBinary'
@@ -52,10 +54,36 @@ class JoinOperator(BinaryToUnaryOperator):
     that_key_function: Function
     json_name: str
 
-    def __init__(self, this_key_function: Function, that: PywyOperator, that_key_function: Function):
-        super().__init__("Join")
+    def __init__(
+            self,
+            this_key_function: Function,
+            that: PywyOperator,
+            that_key_function: Function,
+            input_type: GenericTco,
+            output_type: GenericTco
+        ):
+        super().__init__("Join", input_type, output_type)
         self.this_key_function = lambda g: this_key_function(next(g))
         self.that = that
         self.that_key_function = lambda g: that_key_function(next(g))
         self.json_name = "join"
 
+
+class DLTrainingOperator(BinaryToUnaryOperator):
+    model: Model
+    option: Option
+    json_name: str
+
+    def __init__(self, model: Model, option: Option, x_type: GenericTco, y_type: GenericTco):
+        super().__init__("DLTraining", x_type, y_type)
+        self.model = model
+        self.option = option
+        self.json_name = "dlTraining"
+
+
+class PredictOperator(BinaryToUnaryOperator):
+    json_name: str
+
+    def __init__(self, input_type: GenericTco, output_type: GenericTco):
+        super().__init__("Predict", input_type, output_type)
+        self.json_name = "predict"

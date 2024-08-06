@@ -14,27 +14,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from pywy.basic.model.ops import Op
 
-from pywy.operators.base import PywyOperator
-from pywy.operators.sink import TextFileSink, SinkOperator
-from pywy.operators.source import TextFileSource, SourceUnaryOperator
-from pywy.operators.unary import UnaryToUnaryOperator, FilterOperator, MapOperator, FlatmapOperator, ReduceByKeyOperator, SortOperator
-from pywy.operators.binary import BinaryToUnaryOperator, JoinOperator, DLTrainingOperator, PredictOperator
 
-__ALL__ = [
-     PywyOperator,
-     UnaryToUnaryOperator,
-     BinaryToUnaryOperator,
-     TextFileSink,
-     TextFileSource,
-     FilterOperator,
-     SinkOperator,
-     SortOperator,
-     SourceUnaryOperator,
-     MapOperator,
-     ReduceByKeyOperator,
-     FlatmapOperator,
-     JoinOperator,
-     DLTrainingOperator,
-     PredictOperator
-]
+class Model:
+    pass
+
+
+class DLModel(Model):
+    def __init__(self, out: Op):
+        self.out = out
+
+    def get_out(self):
+        return self.out
