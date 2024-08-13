@@ -49,10 +49,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * This is execution operator implements the {@link TextFileSource}.
  */
 public class JavaTextFileSource extends TextFileSource implements JavaExecutionOperator {
+
+    private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSource.class);
 
     public JavaTextFileSource(String inputUrl) {
         super(inputUrl);
@@ -79,12 +84,10 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
         String urlStr = this.getInputUrl().trim();
 
-        System.out.println("**MK** ---MARKER--- in JavaTextFileSource " + urlStr);
-
         try {
 
             FileSystem fs = FileSystems.getFileSystem(urlStr).get(); //.orElseThrow(
-                    //() -> new WayangException(String.format("**MK** Cannot access file system of %s. ", urlStr))
+                    //() -> new WayangException(String.format("FileSystems.getFileSystem( urlStr ).get() => Cannot access file system of %s. ", urlStr))
             //);
 
             final InputStream inputStream = fs.open(urlStr);
@@ -103,7 +106,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
                 // Check if the response code indicates success (HTTP status code 200)
                 if (connection2.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    System.out.println(">>> Ready to stream the data from URL: " + urlStr);
+                    logger.info(">>> Ready to stream the data from URL: " + urlStr);
                     // Read the data line by line and process it in the StreamChannel
                     Stream<String> lines2 = new BufferedReader(new InputStreamReader(connection2.getInputStream())).lines();
                     ((StreamChannel.Instance) outputs[0]).accept(lines2);

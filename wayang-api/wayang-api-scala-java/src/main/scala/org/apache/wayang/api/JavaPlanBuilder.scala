@@ -123,7 +123,6 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     */
   def withUdfJar(path: String) = {
     this.planBuilder withUdfJars path
-    System.out.println("**MK** ---MARKER--- in JavaPlanBuilder" )
     this
   }
 
@@ -147,7 +146,6 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     */
   def withUdfJarOf(cls: Class[_]) = {
     this.planBuilder withUdfJarsOf cls
-    System.out.println("**MK** ---MARKER--- in JavaPlanBuilder" )
     this
   }
 
