@@ -65,7 +65,7 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
             OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
-
+        
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
         final JavaRDD<String> rdd = sparkExecutor.sc.textFile(this.getInputUrl());
         this.name(rdd);

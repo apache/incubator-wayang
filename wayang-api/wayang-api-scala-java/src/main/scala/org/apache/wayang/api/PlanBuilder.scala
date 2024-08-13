@@ -122,6 +122,14 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
     */
   def readTextFile(url: String): DataQuanta[String] = load(new TextFileSource(url))
 
+  /**
+    * Read a text file and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param url the URL of the text file
+    * @return [[DataQuanta]] representing the file
+    */
+  def readRemoteTextFile(url: String): DataQuanta[String] = load(new TextFileSource(url))
+
 
   /**
    * Read a object's file and provide it as a dataset of [[Object]]s.
