@@ -21,6 +21,8 @@ import au.com.bytecode.opencsv.CSVParser;
 import org.apache.calcite.avatica.util.DateTimeUtils;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -30,15 +32,11 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-/**
- * Based on Calcite's CSV enumerator.
- * TODO: handle different variants
- *
- */
 public class CsvRowConverter {
 
+    private static final Logger logger = LogManager.getLogger(CsvRowConverter.class);
 
-    private static final CSVParser parser;
+    private static CSVParser parser;
 
     private static final FastDateFormat TIME_FORMAT_DATE;
     private static final FastDateFormat TIME_FORMAT_TIME;
@@ -52,9 +50,6 @@ public class CsvRowConverter {
 
         parser = new CSVParser();
     }
-
-
-
 
 
     public static Object convert(RelDataType fieldType, String string) {
@@ -138,42 +133,83 @@ public class CsvRowConverter {
         }
     }
 
-    private static BigDecimal parseDecimal(int precision, int scale, String string) {
-        BigDecimal result = new BigDecimal(string);
-        // If the parsed value has more fractional digits than the specified scale, round ties away
-        // from 0.
-        if (result.scale() > scale) {
-            //TODO: enable logging
-            /*LOGGER.warn(
-                    "Decimal value {} exceeds declared scale ({}). Performing rounding to keep the "
-                            + "first {} fractional digits.",
-                    result, scale, scale);*/
-            result = result.setScale(scale, RoundingMode.HALF_UP);
+    public static BigDecimal parseDecimal(int precision, int scale, String string) {
+
+        //System.out.println( ">>> " + string );
+        BigDecimal result = null;
+
+        try {
+
+            result = new BigDecimal(string);
+            //System.out.println( result );
+
+            // If the parsed value has more fractional digits than the specified scale, round ties away from 0.
+            if (result.scale() > scale) {
+                logger.info(
+                        "Decimal value {} exceeds declared scale ({}). Performing rounding to keep the "
+                                + "first {} fractional digits.",
+                        result, scale, scale);
+                result = result.setScale(scale, RoundingMode.HALF_UP);
+            }
+
+            // Throws an exception if the parsed value has more digits to the left of the decimal point
+            // than the specified value.
+            if (result.precision() - result.scale() > precision - scale) {
+                throw new IllegalArgumentException(String
+                        .format(Locale.ROOT, "Decimal value %s exceeds declared precision (%d) and scale (%d).",
+                                result, precision, scale));
+            }
+
         }
-        // Throws an exception if the parsed value has more digits to the left of the decimal point
-        // than the specified value.
-        if (result.precision() - result.scale() > precision - scale) {
+        catch (Exception ex) {
+            ex.printStackTrace();
             throw new IllegalArgumentException(String
-                    .format(Locale.ROOT, "Decimal value %s exceeds declared precision (%d) and scale (%d).",
-                            result, precision, scale));
+                    .format(Locale.ROOT, "BigDecimal %s can't be parsed.", string));
         }
+
         return result;
+
     }
 
-
+    /**
+     * Parse line with default separator.
+     *
+     * @param s - a line of data from a CSV file.
+     * @return - array of strings, representing the field's data.
+     *
+     * @throws IOException
+     */
     public static String[] parseLine(String s) throws IOException {
         return parser.parseLine(s);
     }
 
+
+
     /**
-     * Parse line with a separator
-     * @param s
-     * @param separator
-     * @return
+     * Parse line with a separator.
+     *
+     * If separator is '\0' (the null character), than we identify the separator.
+     *
+     * In case of a "null character" as separator we create a new CSVParser with the determined separator character.
+     *
+     * @param s - a line of data from a CSV file.
+     * @param separator - a character used for splitting the line into fields using a CSVParser.
+     * @return - array of strings, representing the field's data.
+     *
      * @throws IOException
      */
     public static String[] parseLine(String s, char separator) throws IOException {
-        CSVParser csvParser = new CSVParser(separator);
-        return csvParser.parseLine(s);
+
+        if ( separator == '\0'  ) {
+
+                separator = CSVDelimiterIdentifier.identifyDelimiter(s);
+                CsvRowConverter.parser = new CSVParser(separator);
+
+        }
+
+        return parser.parseLine(s);
+
     }
+
+
 }
