@@ -20,6 +20,7 @@ package org.apache.wayang.core.plan.wayangplan;
 
 import org.apache.wayang.core.types.DataSetType;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -27,7 +28,9 @@ import java.util.List;
  *
  * @param <T> see {@link Slot}
  */
-public class InputSlot<T> extends Slot<T> {
+public class InputSlot<T> extends Slot<T> implements Serializable {
+
+    public InputSlot() {}
 
     /**
      * Output slot of another operator that is connected to this input slot.
@@ -37,7 +40,7 @@ public class InputSlot<T> extends Slot<T> {
     /**
      * Tells whether this instance represents a broadcasted input.
      */
-    private final boolean isBroadcast;
+    private boolean isBroadcast;
 
     /**
      * Copy the {@link InputSlot}s of a given {@link Operator}.

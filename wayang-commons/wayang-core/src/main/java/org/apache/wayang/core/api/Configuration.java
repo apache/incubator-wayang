@@ -58,14 +58,13 @@ import org.apache.wayang.core.util.Actions;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;
-import org.apache.wayang.core.optimizer.costs.EstimatableCost;
-import org.apache.wayang.core.optimizer.costs.DefaultEstimatableCost;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -84,7 +83,7 @@ import static org.apache.wayang.core.util.ReflectionUtils.instantiateDefault;
 /**
  * Describes both the configuration of a {@link WayangContext} and {@link Job}s.
  */
-public class Configuration {
+public class Configuration implements Serializable {
 
     private static final Logger logger = LogManager.getLogger(Configuration.class);
 
@@ -137,8 +136,6 @@ public class Configuration {
     private ValueProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
     private KeyValueProvider<String, String> properties;
-
-    private EstimatableCost costModel = new DefaultEstimatableCost();
 
     /**
      * Creates a new top-level instance that bases directly from the default instance. Will try to load the
@@ -206,8 +203,6 @@ public class Configuration {
             // Properties.
             this.properties = new MapBasedKeyValueProvider<>(this.parent.properties, this);
 
-            // Cost model
-            this.costModel = this.parent.getCostModel();
         }
     }
 
@@ -812,14 +807,6 @@ public class Configuration {
 
     public Configuration getParent() {
         return parent;
-    }
-
-    public EstimatableCost getCostModel() {
-        return this.costModel;
-    }
-
-    public void setCostModel(EstimatableCost costModel) {
-        this.costModel = costModel;
     }
 
     @Override

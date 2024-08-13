@@ -20,6 +20,7 @@ package org.apache.wayang.core.plan.wayangplan;
 
 import org.apache.commons.lang3.Validate;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +30,9 @@ import java.util.stream.Stream;
 /**
  * Utilities to deal with {@link OperatorContainer}s.
  */
-public class OperatorContainers {
+public class OperatorContainers implements Serializable {
+
+    public OperatorContainers() {}
 
     /**
      * Check whether the combination of {@link InputSlot}s and {@link OutputSlot}s describe more than one {@link Operator}.

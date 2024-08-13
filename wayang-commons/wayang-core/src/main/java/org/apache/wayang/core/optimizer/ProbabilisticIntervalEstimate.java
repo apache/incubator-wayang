@@ -20,6 +20,7 @@ package org.apache.wayang.core.optimizer;
 
 import org.apache.wayang.core.util.Formats;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -29,24 +30,24 @@ import java.util.Objects;
  * expressing estimates as intervals
  * and assigning a probability of correctness (in [0, 1]).
  ***/
-public class ProbabilisticIntervalEstimate {
+public class ProbabilisticIntervalEstimate implements Serializable {
 
     /**
      * Probability of correctness between in the interval [0, 1]. This helps
      * Wayang in situations with many estimates to pick the best one.
      */
-    private final double correctnessProb;
+    private double correctnessProb;
 
     /**
      * Lower and upper estimate. Not that this is not a bounding box, i.e., there is no guarantee that the finally
      * observed value will be within the estimated interval.
      */
-    private final long lowerEstimate, upperEstimate;
+    private long lowerEstimate, upperEstimate;
 
     /**
      * When merging instances somehow, overriding instance should be chosen over the others.
      */
-    private final boolean isOverride;
+    private boolean isOverride;
 
     public ProbabilisticIntervalEstimate(long lowerEstimate, long upperEstimate, double correctnessProb) {
         this(lowerEstimate, upperEstimate, correctnessProb, false);
@@ -60,6 +61,10 @@ public class ProbabilisticIntervalEstimate {
         this.lowerEstimate = lowerEstimate;
         this.upperEstimate = upperEstimate;
         this.isOverride = isOverride;
+    }
+
+    public ProbabilisticIntervalEstimate() {
+
     }
 
     public long getLowerEstimate() {
