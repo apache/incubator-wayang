@@ -66,6 +66,8 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        System.out.println("**MK** ---MARKER--- in SparkTextFileSource" );
+
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
         final JavaRDD<String> rdd = sparkExecutor.sc.textFile(this.getInputUrl());
         this.name(rdd);
