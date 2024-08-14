@@ -18,22 +18,25 @@
 
 package org.apache.wayang.api.python.executor;
 
-import java.lang.ProcessBuilder.Redirect;
-import org.apache.wayang.api.python.function.PythonCode;
+import com.google.protobuf.ByteString;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
-import org.apache.wayang.core.util.ReflectionUtils;
 
 public class PythonProcessCaller {
 
-    private Thread process;
+    private Process process;
     private Socket socket;
     private ServerSocket serverSocket;
     private boolean ready;
@@ -41,7 +44,7 @@ public class PythonProcessCaller {
     //TODO How to get the config
     private Configuration configuration;
 
-    public PythonProcessCaller(PythonCode serializedUDF){
+    public PythonProcessCaller(ByteString serializedUDF){
 
         //TODO create documentation to how to the configuration in the code
         this.configuration = new Configuration();
@@ -53,41 +56,26 @@ public class PythonProcessCaller {
         try {
             /*TODO should NOT be assigned an specific port, set port as 0 (zero)*/
             this.serverSocket = new ServerSocket(0, 1, InetAddress.getByAddress(addr));
-
-            Runnable run1 = () -> {
-                ProcessBuilder pb = new ProcessBuilder(
+            ProcessBuilder pb = new ProcessBuilder(
                     Arrays.asList(
-                        "python3",
-                        this.configuration.getStringProperty("wayang.api.python.worker")
+                            this.configuration.getStringProperty("wayang.api.python.path"),
+                            this.configuration.getStringProperty("wayang.api.python.worker")
                     )
-                );
-                Map<String, String> workerEnv = pb.environment();
-                workerEnv.put("PYTHON_WORKER_FACTORY_PORT",
-                    String.valueOf(this.serverSocket.getLocalPort()));
+            );
+            Map<String, String> workerEnv = pb.environment();
+            workerEnv.put("PYTHON_WORKER_FACTORY_PORT", String.valueOf(this.serverSocket.getLocalPort()));
+            workerEnv.put("PYTHONPATH", this.configuration.getStringProperty("wayang.api.python.env.path"));
 
-                // TODO See what is happening with ENV Python version
-                workerEnv.put(
-                    "PYTHONPATH",
-                    this.configuration.getStringProperty("wayang.api.python.path")
-                );
+            pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+            this.process = pb.start();
 
-                pb.redirectOutput(Redirect.INHERIT);
-                pb.redirectError(Redirect.INHERIT);
-                try {
-                    pb.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            };
-            this.process = new Thread(run1);
-            this.process.start();
 
             // Redirect worker stdout and stderr
             //IDK redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
 
             // Wait for it to connect to our socket
-            this.serverSocket.setSoTimeout(100000);
-
+            this.serverSocket.setSoTimeout(10000);
             try {
                 this.socket = this.serverSocket.accept();
                 this.serverSocket.setSoTimeout(0);
@@ -105,7 +93,7 @@ public class PythonProcessCaller {
         }
     }
 
-    public Thread getProcess() {
+    public Process getProcess() {
         return process;
     }
 
@@ -119,10 +107,9 @@ public class PythonProcessCaller {
 
     public void close(){
         try {
-            this.process.interrupt();
+            this.process.destroy();
             this.socket.close();
             this.serverSocket.close();
-            System.out.println("Everything closed");
         } catch (IOException e) {
             e.printStackTrace();
         }

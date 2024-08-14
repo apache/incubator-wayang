@@ -23,6 +23,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Iterator;
+
 /*TODO cannot be always string, include definition for every operator
 *  like: map(udf, inputtype, outputtype)*/
 public class ProcessReceiver<Output> {
@@ -32,12 +33,12 @@ public class ProcessReceiver<Output> {
     public ProcessReceiver(Socket socket){
         try{
             //TODO use config buffer size
-            int BUFFER_SIZE = 1 * 1024;
+            int BUFFER_SIZE = 8192;
 
             DataInputStream stream = new DataInputStream(new BufferedInputStream(socket.getInputStream(), BUFFER_SIZE));
             this.iterator = new ReaderIterator<>(stream);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -48,6 +49,5 @@ public class ProcessReceiver<Output> {
 
     public void print(){
         iterator.forEachRemaining(x -> System.out.println(x.toString()));
-
     }
 }

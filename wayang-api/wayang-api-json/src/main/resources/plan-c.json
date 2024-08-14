@@ -1,0 +1,39 @@
+[
+  {
+    "id": 1,
+    "cat": "input",
+    "input": [],
+    "output": [3],
+    "operatorName": "inputCollection",
+    "data": {
+      "udf": "List(1, 2, 3, 4, 5)"
+    }
+  },
+  {
+    "id": 2,
+    "cat": "input",
+    "input": [],
+    "output": [3],
+    "operatorName": "inputCollection",
+    "data": {
+      "udf": "List(6, 7, 8, 9, 10)"
+    }
+  },
+  {
+    "id": 3,
+    "cat": "input",
+    "input": [1, 2],
+    "output": [4],
+    "operatorName": "union"
+  },
+  {
+    "id": 4,
+    "cat": "output",
+    "input": [3],
+    "output": [],
+    "operatorName": "textFileOutput",
+    "data": {
+      "filename": "file:///home/mike/json-api-examples/out3.txt"
+    }
+  }
+]

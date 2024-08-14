@@ -22,18 +22,19 @@ import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.model.LinearRegressionModel;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
-import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Optional;
 
-public class LinearRegressionOperator extends UnaryToUnaryOperator<Tuple2<double[], Double>, LinearRegressionModel> {
+public class LinearRegressionOperator extends BinaryToUnaryOperator<double[], Double, LinearRegressionModel> {
 
     // TODO other parameters
     protected boolean fitIntercept;
 
     public LinearRegressionOperator(boolean fitIntercept) {
-        super(DataSetType.createDefaultUnchecked(Tuple2.class),
+        super(DataSetType.createDefaultUnchecked(double[].class),
+                DataSetType.createDefaultUnchecked(Double.class),
                 DataSetType.createDefaultUnchecked(LinearRegressionModel.class),
                 false);
         this.fitIntercept = fitIntercept;

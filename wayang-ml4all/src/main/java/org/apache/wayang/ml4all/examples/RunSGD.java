@@ -20,17 +20,13 @@ package org.apache.wayang.ml4all.examples;
 
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.java.Java;
-import org.apache.wayang.ml4all.abstraction.plan.ML4allGlobalVars;
+import org.apache.wayang.ml4all.abstraction.plan.ML4allModel;
 import org.apache.wayang.ml4all.abstraction.plan.ML4allPlan;
-import org.apache.wayang.ml4all.abstraction.plan.Platforms;
 import org.apache.wayang.ml4all.algorithms.sgd.*;
 import org.apache.wayang.spark.Spark;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Arrays;
-
-import static org.apache.wayang.ml4all.abstraction.plan.Platforms.*;
 
 public class RunSGD {
 
@@ -90,10 +86,10 @@ public class RunSGD {
         plan.setUpdateLocalOp(new WeightsUpdate());
         plan.setLoopOp(new SGDLoop(accuracy, max_iterations));
 
-        ML4allGlobalVars context = plan.execute(fileURL, wayangContext);
+        ML4allModel ml4allModel = plan.execute(fileURL, wayangContext);
         System.out.println("Training finished in " + (System.currentTimeMillis() - start_time));
-        System.out.println(context);
-        System.out.println("Weights:" + Arrays.toString((double [])context.getByKey("weights")));
+        System.out.println(ml4allModel);
+        System.out.println("Weights:" + Arrays.toString((double [])ml4allModel.getByKey("weights")));
     }
 
 }

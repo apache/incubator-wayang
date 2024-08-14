@@ -38,11 +38,11 @@ import scala.reflect._
 /**
   * Utility to build [[WayangPlan]]s.
   */
-class PlanBuilder(wayangContext: WayangContext, private var jobName: String = null) {
+class PlanBuilder(private[api] val wayangContext: WayangContext, private var jobName: String = null) {
 
   private[api] val sinks = ListBuffer[Operator]()
 
-  private val udfJars = scala.collection.mutable.Set[String]()
+  private[api] val udfJars = scala.collection.mutable.Set[String]()
 
   private var experiment: Experiment = _
 
@@ -107,12 +107,28 @@ class PlanBuilder(wayangContext: WayangContext, private var jobName: String = nu
   }
 
   /**
+    * Build the [[org.apache.wayang.core.api.Job]] and explain it.
+    */
+  def buildAndExplain(): Unit = {
+    val plan: WayangPlan = new WayangPlan(this.sinks.toArray: _*)
+    this.wayangContext.explain(plan, this.udfJars.toArray: _*)
+  }
+
+  /**
     * Read a text file and provide it as a dataset of [[String]]s, one per line.
     *
     * @param url the URL of the text file
     * @return [[DataQuanta]] representing the file
     */
   def readTextFile(url: String): DataQuanta[String] = load(new TextFileSource(url))
+
+  /**
+    * Read a text file and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param url the URL of the text file
+    * @return [[DataQuanta]] representing the file
+    */
+  def readRemoteTextFile(url: String): DataQuanta[String] = load(new TextFileSource(url))
 
 
   /**

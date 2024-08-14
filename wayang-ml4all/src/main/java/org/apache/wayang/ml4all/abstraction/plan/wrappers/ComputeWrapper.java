@@ -20,7 +20,7 @@ package org.apache.wayang.ml4all.abstraction.plan.wrappers;
 
 import org.apache.wayang.ml4all.abstraction.api.Compute;
 
-public class ComputeWrapper<R, V> extends LogicalOperatorWrapperWithContext<R, V> {
+public class ComputeWrapper<R, V> extends LogicalOperatorWrapperWithModel<R, V> {
 
     Compute<R, V> logOp;
 
@@ -30,7 +30,7 @@ public class ComputeWrapper<R, V> extends LogicalOperatorWrapperWithContext<R, V
 
     @Override
     public R apply(V o) {
-        return this.logOp.process(o, context);
+        return this.logOp.process(o, ml4allModel);
     }
 
     @Override

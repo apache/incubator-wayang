@@ -28,7 +28,7 @@ import _root_.java.util.{Collection => JavaCollection}
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.basic.function.ProjectionDescriptor
 import org.apache.wayang.basic.operators._
-import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.function._
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator
@@ -37,7 +37,11 @@ import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
+import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.commons.util.profiledb.model.Experiment
+import com.google.protobuf.ByteString;
+import org.apache.wayang.api.python.function._
+import org.tensorflow.ndarray.NdArray
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -120,6 +124,29 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   /**
+    * Feed this instance into a [[MapPartitionsOperator]].
+    *
+    * @return a new instance representing the [[MapOperator]]'s output
+    */
+  def mapPartitionsPython[NewOut: ClassTag](
+      udf: String,
+      inputType: Class[_ <: Any],
+      outputType: Class[_ <: Any]
+    ): DataQuanta[NewOut] = {
+    val descriptor = new WrappedMapPartitionsDescriptor(
+        ByteString.copyFromUtf8(udf),
+        inputType,
+        outputType
+    )
+    val mapOperator = new MapPartitionsOperator(
+      descriptor
+    )
+    this.connectTo(mapOperator, 0)
+    mapOperator
+  }
+
+
+  /**
     * Feed this instance into a [[MapOperator]] with a [[ProjectionDescriptor]].
     *
     * @param fieldNames names of the fields to be projected
@@ -178,6 +205,21 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     filterOperator
   }
 
+  def filterPython(udf: String,
+                 sqlUdf: String = null,
+                 selectivity: ProbabilisticDoubleInterval = null,
+                 udfLoad: LoadProfileEstimator = null): DataQuanta[Out] = {
+    val filterOperator = new FilterOperator(
+      new WrappedPredicateDescriptor(
+        ByteString.copyFromUtf8(udf),
+        this.output.getType.getDataUnitType.toBasicDataUnitType,
+        selectivity,
+        udfLoad
+    ).withSqlImplementation(sqlUdf))
+    this.connectTo(filterOperator, 0)
+    filterOperator
+  }
+
   /**
     * Feed this instance into a [[FlatMapOperator]].
     *
@@ -209,12 +251,29 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     flatMapOperator
   }
 
+  def flatMapPython[NewOut: ClassTag](udf: String,
+                                    selectivity: ProbabilisticDoubleInterval = null,
+                                    udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] = {
+    val flatMapOperator = new FlatMapOperator(
+      new WrappedFlatMapDescriptor(
+        ByteString.copyFromUtf8(udf),
+        basicDataUnitType[Out],
+        basicDataUnitType[NewOut],
+        selectivity,
+        udfLoad
+      )
+    )
+    this.connectTo(flatMapOperator, 0)
+    flatMapOperator
+  }
+
   /**
     * Feed this instance into a [[SampleOperator]]. If this operation is inside of a loop, the sampling size
     * can be adjusted in each iteration.
     *
     * @param sampleSize   absolute size of the sample
     * @param datasetSize  optional size of the dataset to be sampled
+    * @param seed         the seed for the random sample
     * @param sampleMethod the [[SampleOperator.Methods]] to use for sampling
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */
@@ -238,7 +297,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                     seed: Option[Long] = None,
                     sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
     this.sampleDynamicJava(
-      new IntUnaryOperator {
+      new SerializableIntUnaryOperator {
         override def applyAsInt(operand: Int): Int = sampleSizeFunction(operand)
       },
       datasetSize,
@@ -255,7 +314,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param sampleMethod       the [[SampleOperator.Methods]] to use for sampling
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */
-  def sampleDynamicJava(sampleSizeFunction: IntUnaryOperator,
+  def sampleDynamicJava(sampleSizeFunction: SerializableIntUnaryOperator,
                         datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
                         seed: Option[Long] = None,
                         sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
@@ -328,6 +387,26 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     val reduceByOperator = new ReduceByOperator(
       new TransformationDescriptor(keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out], udfLoad)
+    )
+    this.connectTo(reduceByOperator, 0)
+    reduceByOperator
+  }
+
+  def reduceByKeyPython[Key: ClassTag](keyUdf: String,
+                                     udf: String,
+                                     udfLoad: LoadProfileEstimator = null)
+  : DataQuanta[Out] = {
+    val reduceByOperator = new ReduceByOperator(
+      new WrappedTransformationDescriptor(
+        ByteString.copyFromUtf8(keyUdf),
+        basicDataUnitType[Out],
+        basicDataUnitType[Key]
+      ),
+      new WrappedReduceDescriptor(
+        ByteString.copyFromUtf8(udf),
+        groupedDataUnitType[Out],
+        basicDataUnitType[Out]
+      )
     )
     this.connectTo(reduceByOperator, 0)
     reduceByOperator
@@ -464,6 +543,77 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     this.connectTo(joinOperator, 0)
     that.connectTo(joinOperator, 1)
     joinOperator
+  }
+
+  def joinPython[ThatOut: ClassTag, Key: ClassTag]
+  (thisKeyUdf: String,
+   that: DataQuanta[ThatOut],
+   thatKeyUdf: String)
+  : DataQuanta[WayangTuple2[Out, ThatOut]] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
+    val joinOperator = new JoinOperator(
+      new WrappedTransformationDescriptor(
+        ByteString.copyFromUtf8(thisKeyUdf),
+        basicDataUnitType[Out],
+        basicDataUnitType[Key]
+      ),
+      new WrappedTransformationDescriptor(
+        ByteString.copyFromUtf8(thatKeyUdf),
+        basicDataUnitType[ThatOut],
+        basicDataUnitType[Key]
+      )
+    )
+    this.connectTo(joinOperator, 0)
+    that.connectTo(joinOperator, 1)
+    joinOperator
+  }
+
+  def predict[ThatOut: ClassTag](
+    that: DataQuanta[ThatOut],
+    inputType: Class[_ <: Any],
+    outputType: Class[_ <: Any]
+  ): DataQuanta[Out] =
+    predictJava(that, inputType, outputType)
+
+  def predictJava[ThatOut: ClassTag](
+    that: DataQuanta[ThatOut],
+    inputType: Class[_ <: Any],
+    outputType: Class[_ <: Any]
+  ): DataQuanta[Out] = {
+    val predictOperator = new PredictOperator(
+      inputType, outputType
+    )
+    this.connectTo(predictOperator, 0)
+    that.connectTo(predictOperator, 1)
+    predictOperator
+  }
+
+  def dlTraining[ThatOut: ClassTag](
+    model: DLModel,
+    option: DLTrainingOperator.Option,
+    that: DataQuanta[ThatOut],
+    xType: Class[_ <: Any],
+    yType: Class[_ <: Any]
+  ): DataQuanta[Out] =
+    dlTrainingJava(model, option, that, xType, yType)
+
+  def dlTrainingJava[ThatOut: ClassTag](
+    model: DLModel,
+    option: DLTrainingOperator.Option,
+    that: DataQuanta[ThatOut],
+    xType: Class[_ <: Any],
+    yType: Class[_ <: Any]
+  ): DataQuanta[Out] = {
+    val dlTrainingOperator = new DLTrainingOperator(
+      model,
+      option,
+      xType,
+      yType
+    )
+
+    this.connectTo(dlTrainingOperator, 0)
+    that.connectTo(dlTrainingOperator, 1)
+    dlTrainingOperator
   }
 
   /**
@@ -761,6 +911,19 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     // Return the collected values.
     collector
   }
+
+  def explain(): Unit = {
+    // Set up the sink.
+    val collector = new java.util.LinkedList[Out]()
+    val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
+    sink.setName("explain()")
+    this.connectTo(sink, 0)
+
+    // Do the explanation.
+    this.planBuilder.sinks += sink
+    this.planBuilder.buildAndExplain()
+  }
+
 
   /**
     * Write the data quanta in this instance to a text file. Triggers execution.

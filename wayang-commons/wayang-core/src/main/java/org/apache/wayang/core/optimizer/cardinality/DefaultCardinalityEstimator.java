@@ -19,12 +19,11 @@
 package org.apache.wayang.core.optimizer.cardinality;
 
 import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.function.ToLongBiFunction;
-import java.util.function.ToLongFunction;
 
 /**
  * Default implementation of the {@link CardinalityEstimator}. Generalizes a single-point estimation function.
@@ -35,9 +34,7 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator, Serial
 
     private double certaintyProb;
 
-    private int numInputs;
-
-    private ToLongBiFunction<long[], Configuration> singlePointEstimator;
+    private final FunctionDescriptor.SerializableToLongBiFunction<long[], Configuration> singlePointEstimator;
 
     /**
      * If {@code true}, receiving more than {@link #numInputs} is also fine.
@@ -47,7 +44,7 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator, Serial
     public DefaultCardinalityEstimator(double certaintyProb,
                                        int numInputs,
                                        boolean isAllowMoreInputs,
-                                       ToLongFunction<long[]> singlePointEstimator) {
+                                       FunctionDescriptor.SerializableToLongFunction<long[]> singlePointEstimator) {
         this(certaintyProb,
                 numInputs,
                 isAllowMoreInputs,
@@ -57,7 +54,7 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator, Serial
     public DefaultCardinalityEstimator(double certaintyProb,
                                        int numInputs,
                                        boolean isAllowMoreInputs,
-                                       ToLongBiFunction<long[], Configuration> singlePointEstimator) {
+                                       FunctionDescriptor.SerializableToLongBiFunction<long[], Configuration> singlePointEstimator) {
         this.certaintyProb = certaintyProb;
         this.numInputs = numInputs;
         this.singlePointEstimator = singlePointEstimator;

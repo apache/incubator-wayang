@@ -19,7 +19,6 @@
 package org.apache.wayang.api.python.executor;
 
 import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
@@ -56,9 +55,6 @@ public class ReaderIterator <Output> implements Iterator<Output> {
                 this.eos = true;
                 return null;
             }
-        } catch (EOFException e){
-            this.eos = true;
-            return null;
         } catch (IOException e) {
             //e.printStackTrace();
             throw new RuntimeException(e);
@@ -71,9 +67,11 @@ public class ReaderIterator <Output> implements Iterator<Output> {
 
         if(!this.eos){
             nextObj = read();
-         //   System.out.println(nextObj + " " + !this.eos);
-            /*To work with null values it is suppose to use -5
+
+            //To work with null values it is suppose to use -5
+            /*
             if(this.nextObj == null){
+                System.out.println("HAS NEXT IS NULL");
                 return false;
             }*/
 
@@ -94,5 +92,4 @@ public class ReaderIterator <Output> implements Iterator<Output> {
 
         throw new NoSuchElementException();
     }
-
 }
