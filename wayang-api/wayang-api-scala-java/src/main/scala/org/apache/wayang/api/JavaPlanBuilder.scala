@@ -25,7 +25,7 @@ import java.util.{Collection => JavaCollection}
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api.util.DataQuantaBuilderCache
 import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.{TableSource, TextFileSource}
+import org.apache.wayang.basic.operators.{TableSource, TextFileSource, KafkaTopicSource}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
@@ -61,6 +61,15 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     */
   def readTextFile(url: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
   createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
+
+  /**
+   * Read a textmessages from a Kafka topic and provide it as a dataset of [[String]]s, one per message.
+   *
+   * @param topicName the topic's name
+   * @return [[DataQuantaBuilder]] for the content in the topic
+   */
+  def readKafkaTopic(topicName: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+    createSourceBuilder(new KafkaTopicSource(topicName))(ClassTag(classOf[String]))
 
   /**
     * Reads a database table and provides them as a dataset of [[Record]]s.

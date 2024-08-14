@@ -24,10 +24,14 @@ import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.core.util.JsonSerializable;
 import org.apache.wayang.core.util.json.WayangJsonObj;
 
+import java.io.Serializable;
+
 /**
  * An estimate of cardinality within a {@link WayangPlan} expressed as a {@link ProbabilisticIntervalEstimate}.
  */
-public class CardinalityEstimate extends ProbabilisticIntervalEstimate implements JsonSerializable {
+public class CardinalityEstimate extends ProbabilisticIntervalEstimate implements JsonSerializable, Serializable {
+
+    public CardinalityEstimate() {};
 
     public static final CardinalityEstimate EMPTY_ESTIMATE = new CardinalityEstimate(0, 0, 1d);
 

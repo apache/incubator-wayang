@@ -20,13 +20,16 @@ package org.apache.wayang.core.types;
 
 import org.apache.wayang.core.util.ReflectionUtils;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * A data set is an abstraction of the Wayang programming model. Although never directly materialized, a data set
  * keeps track of type and structure of data units being passed between operators.
  */
-public class DataSetType<T> {
+public class DataSetType<T> implements Serializable {
+
+    public DataSetType() {}
 
     /**
      * Stands for the absence of an actual instance.
@@ -41,7 +44,7 @@ public class DataSetType<T> {
     /**
      * Type of the data units within the data set.
      */
-    private final DataUnitType<T> dataUnitType;
+    private DataUnitType<T> dataUnitType;
 
     /**
      * Creates a flat data set that contains basic data units. This is the normal case.

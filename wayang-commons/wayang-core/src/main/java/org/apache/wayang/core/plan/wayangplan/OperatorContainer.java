@@ -23,6 +23,7 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.logging.log4j.LogManager;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
  * This is not an {@link Operator} in its own right. However, it contains a set of operators and can redirect
  * to those.
  */
-public interface OperatorContainer {
+public interface OperatorContainer extends Serializable {
 
     /**
      * Provide the {@link SlotMapping} that translates between the contained {@link Operator}s and the containing

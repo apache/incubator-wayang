@@ -5,6 +5,9 @@
 **/*.iml
 **/maven-wrapper.jar
 
+.env
+.env.sh
+
 # Maven
 **/target/
 
@@ -21,3 +24,9 @@ pom.xml.*
 # VSCode
 .vscode
 .vscode/*
+
+/build/env.sh
+
+/conf/kafka/default.properties
+/wayang-platforms/wayang-java/src/main/resources/wayang-kafka-defaults.properties
+/wayang-platforms/wayang-java/src/main/resources/wayang-kafka-defaults.properties.template

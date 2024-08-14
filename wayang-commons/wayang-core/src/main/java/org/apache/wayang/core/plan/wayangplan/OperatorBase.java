@@ -39,6 +39,7 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.Tuple;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,7 +51,7 @@ import java.util.function.Supplier;
 /**
  * Helper class for the implementation of the {@link Operator} interface.
  */
-public abstract class OperatorBase implements Operator {
+public abstract class OperatorBase implements Operator, Serializable {
 
     public static final List<Tuple<Class<?>, Supplier<?>>> STANDARD_OPERATOR_ARGS = Arrays.asList(
             new Tuple<>(DataSetType.class, DataSetType::none),
@@ -65,7 +66,7 @@ public abstract class OperatorBase implements Operator {
             new Tuple<>(String[].class, () -> new String[0])
     );
 
-    private final boolean isSupportingBroadcastInputs;
+    private boolean isSupportingBroadcastInputs;
 
     private OperatorContainer container;
 
@@ -78,7 +79,7 @@ public abstract class OperatorBase implements Operator {
 
     protected InputSlot<?>[] inputSlots;
 
-    protected final OutputSlot<?>[] outputSlots;
+    protected OutputSlot<?>[] outputSlots;
 
     private final Set<Platform> targetPlatforms = new HashSet<>(0);
 
@@ -121,6 +122,8 @@ public abstract class OperatorBase implements Operator {
         this(that.getNumRegularInputs(), that.getNumOutputs(), that.isSupportingBroadcastInputs());
         System.arraycopy(that.cardinalityEstimators, 0, this.cardinalityEstimators, 0, this.getNumOutputs());
     }
+
+    public OperatorBase() {}
 
     @Override
     public InputSlot<?>[] getAllInputs() {
