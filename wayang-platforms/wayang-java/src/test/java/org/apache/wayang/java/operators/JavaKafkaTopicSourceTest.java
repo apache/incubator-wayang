@@ -40,10 +40,15 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Test suite for {@link JavaKafkaTopicSource}.
  */
 public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
+
+    private static final Logger logger = LoggerFactory.getLogger(JavaKafkaTopicSourceTest.class);
 
     private Locale defaultLocale;
 
@@ -56,57 +61,57 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
     public void setupTest() {
         defaultLocale = Locale.getDefault();
         Locale.setDefault(Locale.US);
-        System.out.println(">>> Test SETUP()");
+        logger.info(">>> Test SETUP()");
     }
 
     @After
     public void teardownTest() {
-        System.out.println(">>> Test TEARDOWN()");
+        logger.info(">>> Test TEARDOWN()");
         Locale.setDefault(defaultLocale);
     }
 
     @Test
     public void testA() throws Exception {
         Assert.assertEquals(3, 3);
-        System.out.println(">>> Test A");
+        logger.info(">>> Test A");
     }
 
     @Test
     public void testReadFromKafkaTopic() {
 
-        System.out.println(">>> Test testReadFromKafkaTopic()");
+        logger.info(">>> Test testReadFromKafkaTopic()");
 
         final String topicName1 = "banking-tx-small-csv";
 
-        System.out.println("> 0 ... ");
+        logger.info("> 0 ... ");
 
-        System.out.println( "*** [TOPIC-Name] " + topicName1 + " ***");
+        logger.info( "*** [TOPIC-Name] " + topicName1 + " ***");
 
-        System.out.println( ">   Read from topic ... ");
+        logger.info( ">   Read from topic ... ");
 
-        System.out.println("> 1 ... ");
+        logger.info("> 1 ... ");
 
         Properties props = KafkaTopicSource.getDefaultProperties();
 
-        System.out.println("> 2 ... ");
+        logger.info("> 2 ... ");
 
         props.list(System.out);
 
-        System.out.println("> 3 ... ");
+        logger.info("> 3 ... ");
 
         JavaExecutor javaExecutor = null;
         try {
             // Prepare the source.
             JavaKafkaTopicSource jks = new JavaKafkaTopicSource( topicName1 );
 
-            System.out.println("> 4 ... ");
+            logger.info("> 4 ... ");
 
             // Execute.
             JavaChannelInstance[] inputs = new JavaChannelInstance[]{};
             JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
             evaluate(jks, inputs, outputs);
 
-            System.out.println("> 5 ... ");
+            logger.info("> 5 ... ");
 
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
@@ -114,7 +119,7 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
             Assert.assertNotNull(jks);
             Assert.assertNotNull(result);
 
-            System.out.println("> 6 ... ");
+            logger.info("> 6 ... ");
 
 
         } finally {

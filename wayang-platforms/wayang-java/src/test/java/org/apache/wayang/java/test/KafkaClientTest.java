@@ -102,15 +102,12 @@ public class KafkaClientTest {
         String SR_API_KEY = System.getenv("SR_API_KEY");
         String SR_API_SECRET = System.getenv("SR_API_SECRET");
 
-
-
         System.out.println( BOOTSTRAP_SERVER );
         System.out.println( CLUSTER_API_KEY );
         System.out.println( CLUSTER_API_SECRET );
         System.out.println( SR_ENDPOINT );
         System.out.println( SR_API_KEY );
         System.out.println( SR_API_SECRET );
-
 
         // Set additional properties if needed
         props.put("bootstrap.servers", BOOTSTRAP_SERVER );
