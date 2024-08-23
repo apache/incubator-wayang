@@ -71,6 +71,15 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
   def readKafkaTopic(topicName: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
     createSourceBuilder(new KafkaTopicSource(topicName))(ClassTag(classOf[String]))
 
+     /** 
+      * Read a remote text file and provide it as a dataset of [[String]]s, one per line.
+      *
+      * @param url the URL of the text file
+      * @return [[DataQuantaBuilder]] for the file
+      */
+  def readRemoteTextFile(url: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+    createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
+
   /**
     * Reads a database table and provides them as a dataset of [[Record]]s.
     *

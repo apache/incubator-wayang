@@ -18,22 +18,18 @@
 
 package org.apache.wayang.api.python.executor;
 
-import org.apache.wayang.api.python.function.PythonCode;
-import org.apache.wayang.api.python.function.PythonUDF;
+import com.google.protobuf.ByteString;
 import org.apache.wayang.core.api.exception.WayangException;
 
 public class PythonWorkerManager<Input, Output> {
 
-    private PythonUDF<Input, Output> udf;
-    private PythonCode serializedUDF;
+    private ByteString serializedUDF;
     private Iterable<Input> inputIterator;
 
     public PythonWorkerManager(
-            PythonUDF<Input, Output> udf,
-            PythonCode serializedUDF,
+            ByteString serializedUDF,
             Iterable<Input> input
     ){
-        this.udf = udf;
         this.serializedUDF = serializedUDF;
         this.inputIterator = input;
     }
@@ -42,25 +38,15 @@ public class PythonWorkerManager<Input, Output> {
         PythonProcessCaller worker = new PythonProcessCaller(this.serializedUDF);
 
         if(worker.isReady()){
-            Runnable run1 = () -> {
-                ProcessFeeder<Input, Output> feed = new ProcessFeeder<>(
-                    worker.getSocket(),
-                    this.udf,
-                    this.serializedUDF,
-                    this.inputIterator
-                );
-                feed.send();
-            };
-            Thread lala = new Thread(run1);
-            lala.start();
+            ProcessFeeder<Input, Output> feed = new ProcessFeeder<>(
+                worker.getSocket(),
+                this.serializedUDF,
+                this.inputIterator
+            );
+            feed.send();
             ProcessReceiver<Output> r = new ProcessReceiver<>(worker.getSocket());
-
-            //r.print();
             return r.getIterable();
-            //return (Iterable<Output>) this.inputIterator;
-
         } else{
-
             int port = worker.getSocket().getLocalPort();
             worker.close();
             throw new WayangException("Not possible to work with the Socket provided on port: " + port);

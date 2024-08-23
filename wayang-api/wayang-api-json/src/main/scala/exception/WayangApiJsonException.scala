@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.wayang.api.json.exception
 
 class WayangApiJsonException(s: String) extends Exception(s){}

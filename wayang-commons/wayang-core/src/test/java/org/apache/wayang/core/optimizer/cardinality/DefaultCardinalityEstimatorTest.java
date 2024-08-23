@@ -18,12 +18,11 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-
-import java.util.function.ToLongFunction;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -42,7 +41,7 @@ public class DefaultCardinalityEstimatorTest {
         CardinalityEstimate inputEstimate1 = new CardinalityEstimate(50, 60, 0.8);
         CardinalityEstimate inputEstimate2 = new CardinalityEstimate(10, 100, 0.4);
 
-        final ToLongFunction<long[]> singlePointEstimator =
+        final FunctionDescriptor.SerializableToLongFunction<long[]> singlePointEstimator =
                 inputEstimates -> (long) Math.ceil(0.8 * inputEstimates[0] * inputEstimates[1]);
 
         CardinalityEstimator estimator = new DefaultCardinalityEstimator(

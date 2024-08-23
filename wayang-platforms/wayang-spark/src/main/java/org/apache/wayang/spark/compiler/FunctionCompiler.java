@@ -37,6 +37,7 @@ import org.apache.wayang.spark.operators.SparkExecutionOperator;
 import java.util.Iterator;
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
+import java.io.Serializable;
 
 /**
  * A compiler translates Wayang functions into executable Java functions.
@@ -81,6 +82,7 @@ public class FunctionCompiler {
                                                           OptimizationContext.OperatorContext operatorContext,
                                                           ChannelInstance[] inputs) {
         final java.util.function.Function<Iterable<I>, Iterable<O>> javaImplementation = descriptor.getJavaImplementation();
+
         if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
             return new ExtendedMapPartitionsFunctionAdapter<>(
                     (FunctionDescriptor.ExtendedSerializableFunction<Iterable<I>, Iterable<O>>) javaImplementation,

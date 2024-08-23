@@ -22,6 +22,7 @@ import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
@@ -36,7 +37,7 @@ public abstract class LoadEstimator {
      * Functional interface for lambda expressions to express single-point load estimation functions.
      */
     @FunctionalInterface
-    public interface SinglePointEstimationFunction {
+    public interface SinglePointEstimationFunction extends Serializable {
 
         /**
          * Estimate the load for the given artifact, input, and output estimates.

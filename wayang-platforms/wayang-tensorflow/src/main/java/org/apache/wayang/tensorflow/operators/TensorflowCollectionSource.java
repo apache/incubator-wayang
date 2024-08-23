@@ -206,15 +206,16 @@ public class TensorflowCollectionSource<Type> extends CollectionSource<Type> imp
             ndArray = StdArrays.ndCopyOf(list.toArray(new boolean[0][][][][]));
         } else if (e instanceof boolean[][][][][]) {
             ndArray = StdArrays.ndCopyOf(list.toArray(new boolean[0][][][][][]));
-        }
-
-        else {
-            throw new RuntimeException("Unsupported element type.");
+        } else if (e instanceof String) {
+            ndArray = StdArrays.ndCopyOf(list.stream().toArray());
+        }else {
+            throw new RuntimeException("Unsupported element type: " + e.getClass().getName() + "; expected: " + this.getType());
         }
 
         final TensorChannel.Instance output = (TensorChannel.Instance) outputs[0];
         output.accept(ndArray);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+
     }
 }
