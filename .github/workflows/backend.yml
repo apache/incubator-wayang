@@ -45,6 +45,13 @@ jobs:
         with:
           java-version:  11
           distribution: 'adopt'
+          BOOTSTRAP_SERVER: ${{ secrets.BOOTSTRAP_SERVER }}
+          CLUSTER_API_KEY: ${{ secrets.CLUSTER_API_KEY }}
+          CLUSTER_API_SECRET: ${{ secrets.CLUSTER_API_SECRET }}
+          SR_ENDPOINT: ${{ secrets.SR_ENDPOINT }}
+          SR_API_KEY: ${{ secrets.SR_API_KEY }}
+          SR_API_SECRET: ${{ secrets.SR_API_SECRET }}
+          export_default_credentials: true          
       - name: Install Protoc
         run: sudo apt install -y protobuf-compiler
       - uses: actions/cache@v2
