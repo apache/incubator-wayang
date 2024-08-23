@@ -70,16 +70,16 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
         Locale.setDefault(defaultLocale);
     }
 
-    @Test
+    // @Test
     public void testA() throws Exception {
         Assert.assertEquals(3, 3);
         logger.info(">>> Test A");
     }
 
-    @Test
+    // @Test
     public void testReadFromKafkaTopic() {
 
-        logger.info(">>> Test testReadFromKafkaTopic()");
+        logger.info(">>> Test: testReadFromKafkaTopic()");
 
         final String topicName1 = "banking-tx-small-csv";
 
@@ -91,8 +91,9 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
 
         logger.info("> 1 ... ");
 
-        Properties props = KafkaTopicSource.getDefaultProperties();
-
+        //Properties props = KafkaTopicSource.getDefaultProperties();
+        Properties props = new Properties();
+        
         logger.info("> 2 ... ");
 
         props.list(System.out);
@@ -101,6 +102,7 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
 
         JavaExecutor javaExecutor = null;
         try {
+
             // Prepare the source.
             JavaKafkaTopicSource jks = new JavaKafkaTopicSource( topicName1 );
 

@@ -159,33 +159,12 @@ public class KafkaTopicSource extends UnarySource<String> {
 
         Properties props = new Properties();
 
-        String BOOTSTRAP_SERVER = System.getenv("BOOTSTRAP_SERVER");
-        String CLUSTER_API_KEY = System.getenv("CLUSTER_API_KEY");
-        String CLUSTER_API_SECRET = System.getenv("CLUSTER_API_SECRET");
-        String SR_ENDPOINT = System.getenv("SR_ENDPOINT");
-        String SR_API_KEY = System.getenv("SR_API_KEY");
-        String SR_API_SECRET = System.getenv("SR_API_SECRET");
-
-        /*
-        System.out.println( BOOTSTRAP_SERVER );
-        System.out.println( CLUSTER_API_KEY );
-        System.out.println( CLUSTER_API_SECRET );
-        System.out.println( SR_ENDPOINT );
-        System.out.println( SR_API_KEY );
-        System.out.println( SR_API_SECRET );
-        */
-
-        // Set additional properties if needed
-        props.put("bootstrap.servers", BOOTSTRAP_SERVER );
         props.put("security.protocol", "SASL_SSL");
-        props.put("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required username='" + CLUSTER_API_KEY + "' password='" + CLUSTER_API_SECRET + "';");
         props.put("sasl.mechanism", "PLAIN");
         props.put("client.dns.lookup", "use_all_dns_ips");
         props.put("session.timeout.ms", "45000");
         props.put("acks", "all");
-        props.put("schema.registry.url", SR_ENDPOINT);
         props.put("basic.auth.credentials.source", "USER_INFO");
-        props.put("basic.auth.user.info", SR_API_KEY + ":" + SR_API_SECRET );
 
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
@@ -196,7 +175,46 @@ public class KafkaTopicSource extends UnarySource<String> {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "wayang-kafka-java-source-client-2");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-        // props.list( System.out );
+
+
+        String BOOTSTRAP_SERVER = "-";
+        String CLUSTER_API_KEY = "-";
+        String CLUSTER_API_SECRET = "-";
+        String SR_ENDPOINT = "-";
+        String SR_API_KEY = "-";
+        String SR_API_SECRET = "-";
+
+        try {
+            BOOTSTRAP_SERVER = System.getenv("BOOTSTRAP_SERVER");
+            CLUSTER_API_KEY = System.getenv("CLUSTER_API_KEY");
+            CLUSTER_API_SECRET = System.getenv("CLUSTER_API_SECRET");
+            SR_ENDPOINT = System.getenv("SR_ENDPOINT");
+            SR_API_KEY = System.getenv("SR_API_KEY");
+            SR_API_SECRET = System.getenv("SR_API_SECRET");
+
+            System.out.println( ">>> PROPERTIES from ENV used <<<");
+
+            // Set additional properties if needed
+            props.put("bootstrap.servers", BOOTSTRAP_SERVER );
+            props.put("schema.registry.url", SR_ENDPOINT);
+            props.put("basic.auth.user.info", SR_API_KEY + ":" + SR_API_SECRET );
+            props.put("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required username='" + CLUSTER_API_KEY + "' password='" + CLUSTER_API_SECRET + "';");
+            
+        }
+        catch (Exception ex) {
+
+            System.out.println( "*** NO PROPERTIES from ENV ***");
+
+            props.put("bootstrap.servers", "--" );
+            props.put("schema.registry.url", "--" );
+            props.put("basic.auth.user.info", "--:--" );
+            props.put("sasl.jaas.config", "--");
+            
+        }
+
+        System.out.println( "### PROPERTIES used in KafkaTopicSource ###");
+
+        props.list( System.out );
 
         return props;
     }

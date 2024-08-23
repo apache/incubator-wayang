@@ -31,9 +31,20 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * What is this test testin?
+ *
+ * Currently, it tests only if a KafkaConsumer can connect to a given
+ * Kafka cluster using the defaultConnectionProperties.
+ *
+ * This is helpful during debugging, but it doesn't add any value to the
+ * test suite of Apache Wayang. Hence, the test functions are deactivated
+ * in the main branch.
+ *
+ */
 public class KafkaClientTest {
 
-    @Test
+    //@Test
     public void testReadFromKafkaTopic() {
 
         final String topicName1 = "banking-tx-small-csv";
@@ -73,6 +84,7 @@ public class KafkaClientTest {
             }
 
             System.out.println("> 5 ... " + i);
+
         }
         catch (Exception ex) {
 
@@ -95,19 +107,36 @@ public class KafkaClientTest {
 
         Properties props = new Properties();
 
-        String BOOTSTRAP_SERVER = System.getenv("BOOTSTRAP_SERVER");
-        String CLUSTER_API_KEY = System.getenv("CLUSTER_API_KEY");
-        String CLUSTER_API_SECRET = System.getenv("CLUSTER_API_SECRET");
-        String SR_ENDPOINT = System.getenv("SR_ENDPOINT");
-        String SR_API_KEY = System.getenv("SR_API_KEY");
-        String SR_API_SECRET = System.getenv("SR_API_SECRET");
+        String BOOTSTRAP_SERVER = null;
+        String CLUSTER_API_KEY = null;
+        String CLUSTER_API_SECRET = null;
+        String SR_ENDPOINT = null;
+        String SR_API_KEY = null;
+        String SR_API_SECRET = null;
 
-        System.out.println( BOOTSTRAP_SERVER );
-        System.out.println( CLUSTER_API_KEY );
-        System.out.println( CLUSTER_API_SECRET );
-        System.out.println( SR_ENDPOINT );
-        System.out.println( SR_API_KEY );
-        System.out.println( SR_API_SECRET );
+        try {
+            BOOTSTRAP_SERVER = System.getenv("BOOTSTRAP_SERVER");
+            CLUSTER_API_KEY = System.getenv("CLUSTER_API_KEY");
+            CLUSTER_API_SECRET = System.getenv("CLUSTER_API_SECRET");
+            SR_ENDPOINT = System.getenv("SR_ENDPOINT");
+            SR_API_KEY = System.getenv("SR_API_KEY");
+            SR_API_SECRET = System.getenv("SR_API_SECRET");
+        }
+        catch (Exception ex) {
+            BOOTSTRAP_SERVER = null;
+            CLUSTER_API_KEY = null;
+            CLUSTER_API_SECRET = null;
+            SR_ENDPOINT = null;
+            SR_API_KEY = null;
+            SR_API_SECRET = null;
+        }
+
+        System.out.println( "BOOTSTRAP_SERVER   : " + BOOTSTRAP_SERVER );
+        System.out.println( "CLUSTER_API_KEY    : " + CLUSTER_API_KEY );
+        System.out.println( "CLUSTER_API_SECRET : " + CLUSTER_API_SECRET );
+        System.out.println( "SR_ENDPOINT        : " + SR_ENDPOINT );
+        System.out.println( "SR_API_KEY         : " + SR_API_KEY );
+        System.out.println( "SR_API_SECRET      : " + SR_API_SECRET );
 
         // Set additional properties if needed
         props.put("bootstrap.servers", BOOTSTRAP_SERVER );

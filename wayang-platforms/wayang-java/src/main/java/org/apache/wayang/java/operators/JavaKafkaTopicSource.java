@@ -59,8 +59,7 @@ public class JavaKafkaTopicSource extends KafkaTopicSource implements JavaExecut
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
         return Arrays.asList("wayang.java.kafkatopicsource.load.prepare", "wayang.java.kafkatopicsource.load.main");
     }
-
-
+    
     @Override
     public JavaKafkaTopicSource copy() {
         return new JavaKafkaTopicSource(this.getTopicName(), this.getEncoding());
@@ -91,6 +90,7 @@ public class JavaKafkaTopicSource extends KafkaTopicSource implements JavaExecut
 
             // Poll messages from the topic
             System.out.println("### 7 ... ");
+
             this.initConsumer( (KafkaTopicSource) this );
 
             ConsumerRecords<String, String> records = getConsumer().poll(Duration.ofMillis(15000));
