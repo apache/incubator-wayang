@@ -34,9 +34,9 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator, Serial
 
     private double certaintyProb;
   
-    // private int numInputs;
-    // private ToLongBiFunction<long[], Configuration> singlePointEstimator;
+    private int numInputs;
     
+    // private ToLongBiFunction<long[], Configuration> singlePointEstimator;
     private final FunctionDescriptor.SerializableToLongBiFunction<long[], Configuration> singlePointEstimator;
 
     /**
