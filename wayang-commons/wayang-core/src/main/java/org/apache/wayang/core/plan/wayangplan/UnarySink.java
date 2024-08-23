@@ -25,6 +25,12 @@ import org.apache.wayang.core.types.DataSetType;
  */
 public abstract class UnarySink<T> extends OperatorBase implements ElementaryOperator {
 
+
+
+    public UnarySink() {
+        super();
+    }
+
     /**
      * Creates a new instance that does not support broadcast {@link InputSlot}s.
      */

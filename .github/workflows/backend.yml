@@ -44,7 +44,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version:  11
-          distribution: 'adopt'
+          distribution: 'adopt'      
       - name: Install Protoc
         run: sudo apt install -y protobuf-compiler
       - uses: actions/cache@v2

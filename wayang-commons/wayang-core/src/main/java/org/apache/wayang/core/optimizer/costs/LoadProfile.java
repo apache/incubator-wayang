@@ -23,6 +23,7 @@ import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.util.JsonSerializable;
 import org.apache.wayang.core.util.JsonSerializables;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
 import org.apache.wayang.core.util.json.WayangJsonObj;
@@ -30,7 +31,7 @@ import org.apache.wayang.core.util.json.WayangJsonObj;
 /**
  * Reflects the (estimated) required resources of an {@link Operator} or {@link FunctionDescriptor}.
  */
-public class LoadProfile implements JsonSerializable {
+public class LoadProfile implements JsonSerializable, Serializable {
 
     /**
      * Instance with all values set to {@code 0}.

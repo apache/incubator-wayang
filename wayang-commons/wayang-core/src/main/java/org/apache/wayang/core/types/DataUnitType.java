@@ -18,11 +18,14 @@
 
 package org.apache.wayang.core.types;
 
+import java.io.Serializable;
+
 /**
  * The type of data types designate the kind of data that are being passed between operators.
  */
-public abstract class DataUnitType<T> {
+public abstract class DataUnitType<T> implements Serializable {
 
+    public DataUnitType() {}
     /**
      * Tells whether this data unit type represents groups of data units.
      */

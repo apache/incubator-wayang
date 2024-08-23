@@ -405,6 +405,21 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   }
 
   /**
+    * Feed the built [[DataQuanta]] into a [[org.apache.wayang.basic.operators.KafkaTopicSink]]. This triggers
+    * execution of the constructed [[WayangPlan]].
+    *
+    * @param topicName of the Kafka topic to be written
+    * @return the collected data quanta
+    */
+  def writeKafkaTopic(topicName: String,
+                    formatterUdf: Out => String,
+                    jobName: String,
+                    udfLoadProfileEstimator: LoadProfileEstimator): Unit = {
+    this.javaPlanBuilder.withJobName(jobName)
+    this.dataQuanta().writeKafkaTopic(topicName, formatterUdf, udfLoadProfileEstimator)
+  }
+
+  /**
     * Enriches the set of operations to [[Record]]-based ones. This instances must deal with data quanta of
     * type [[Record]], though. Because of Java's type erasure, we need to leave it up to you whether this
     * operation is applicable.

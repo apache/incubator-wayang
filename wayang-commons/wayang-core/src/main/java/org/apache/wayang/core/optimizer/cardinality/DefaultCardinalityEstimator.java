@@ -22,23 +22,27 @@ import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * Default implementation of the {@link CardinalityEstimator}. Generalizes a single-point estimation function.
  */
-public class DefaultCardinalityEstimator implements CardinalityEstimator {
+public class DefaultCardinalityEstimator implements CardinalityEstimator, Serializable {
 
-    private final double certaintyProb;
+    public DefaultCardinalityEstimator() {}
 
-    private final int numInputs;
-
-    private final FunctionDescriptor.SerializableToLongBiFunction<long[], Configuration> singlePointEstimator;
+    private double certaintyProb = 0.0;
+  
+    private int numInputs = 0;
+    
+    // private ToLongBiFunction<long[], Configuration> singlePointEstimator = null;
+    private FunctionDescriptor.SerializableToLongBiFunction<long[], Configuration> singlePointEstimator = null;
 
     /**
      * If {@code true}, receiving more than {@link #numInputs} is also fine.
      */
-    private final boolean isAllowMoreInputs;
+    private boolean isAllowMoreInputs = true;
 
     public DefaultCardinalityEstimator(double certaintyProb,
                                        int numInputs,

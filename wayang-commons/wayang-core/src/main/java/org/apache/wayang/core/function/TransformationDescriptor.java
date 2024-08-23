@@ -24,6 +24,7 @@ import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.apache.wayang.core.types.BasicDataUnitType;
 
+import java.io.Serializable;
 import java.util.function.Function;
 
 /**
@@ -32,13 +33,15 @@ import java.util.function.Function;
  * @param <Input>  input type of the transformation function
  * @param <Output> output type of the transformation function
  */
-public class TransformationDescriptor<Input, Output> extends FunctionDescriptor {
+public class TransformationDescriptor<Input, Output> extends FunctionDescriptor implements Serializable {
 
-    protected final BasicDataUnitType<Input> inputType;
+    public TransformationDescriptor() {}
 
-    protected final BasicDataUnitType<Output> outputType;
+    protected BasicDataUnitType<Input> inputType;
 
-    private final FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation;
+    protected BasicDataUnitType<Output> outputType;
+
+    private FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation;
 
     private Tuple<String, String> sqlImplementation;
 

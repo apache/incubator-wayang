@@ -23,10 +23,16 @@ import org.apache.wayang.core.util.JsonSerializable;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.json.WayangJsonObj;
 
+import java.io.Serializable;
+
 /**
  * An estimate of costs of some executable code expressed as a {@link ProbabilisticIntervalEstimate}.
  */
-public class LoadEstimate extends ProbabilisticIntervalEstimate implements JsonSerializable {
+public class LoadEstimate extends ProbabilisticIntervalEstimate implements JsonSerializable, Serializable {
+
+    public LoadEstimate() {
+        super();
+    }
 
     public LoadEstimate(long exactValue) {
         this(exactValue, exactValue, 1d);

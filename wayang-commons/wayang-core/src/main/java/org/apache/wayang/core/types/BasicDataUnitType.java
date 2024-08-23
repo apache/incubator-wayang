@@ -18,14 +18,17 @@
 
 package org.apache.wayang.core.types;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * A basic data unit type is elementary and not constructed from other data unit types.
  */
-public class BasicDataUnitType<T> extends DataUnitType<T> {
+public class BasicDataUnitType<T> extends DataUnitType<T> implements Serializable {
 
-    private final Class<T> typeClass;
+    public BasicDataUnitType() {}
+
+    private Class<T> typeClass;
 
     protected BasicDataUnitType(Class<T> typeClass) {
         this.typeClass = typeClass;

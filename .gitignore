@@ -5,6 +5,9 @@
 **/*.iml
 **/maven-wrapper.jar
 
+.env
+.env.sh
+
 # Maven
 **/target/
 
@@ -21,6 +24,13 @@ pom.xml.*
 # VSCode
 .vscode
 .vscode/*
+
+
+# Kafka integration configuration for development
+/build/env.sh
+/conf/kafka/default.properties
+/wayang-platforms/wayang-java/src/main/resources/wayang-kafka-defaults.properties
+/wayang-platforms/wayang-java/src/main/resources/wayang-kafka-defaults.properties.template
 
 # Scala Plugin for VSCode
 .metals

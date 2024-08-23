@@ -30,7 +30,9 @@ import java.util.function.*;
 /**
  * A function operates on single data units or collections of those.
  */
-public abstract class FunctionDescriptor {
+public abstract class FunctionDescriptor implements Serializable {
+
+    public FunctionDescriptor() {}
 
     private LoadProfileEstimator loadProfileEstimator;
 

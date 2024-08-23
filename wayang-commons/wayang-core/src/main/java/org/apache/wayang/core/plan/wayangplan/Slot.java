@@ -21,22 +21,25 @@ package org.apache.wayang.core.plan.wayangplan;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.types.DataSetType;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 /**
  * Abstract class for inputs and outputs to operators.
  */
-abstract public class Slot<T> {
+abstract public class Slot<T> implements Serializable {
+
+    public Slot() {}
 
     /**
      * Identifies this slot within its operator.
      */
-    private final String name;
+    private String name;
 
     /**
      * The operator that is being decorated by this slot.
      */
-    private final Operator owner;
+    private Operator owner;
 
     /**
      * <i>Lazy initialized.</i> The index of this instance within its {@link #owner}.
@@ -47,7 +50,7 @@ abstract public class Slot<T> {
      * Type of data passed through this slot, expressed as a {@link DataSetType} so as to define not only the types of
      * elements that are passed but also capture their structure (e.g., flat, grouped, sorted, ...).
      */
-    private final DataSetType<T> type;
+    private DataSetType<T> type;
 
     protected Slot(String name, Operator owner, DataSetType<T> type) {
         assert owner != null;
