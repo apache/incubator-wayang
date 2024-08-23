@@ -30,6 +30,9 @@ import org.apache.wayang.core.util.ExplainUtils;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 
 /**
  * This is the entry point for users to work with Wayang.
@@ -206,5 +209,15 @@ public class WayangContext {
             this.cardinalityRepository = new CardinalityRepository(this.configuration);
         }
         return this.cardinalityRepository;
+    }
+
+    public WayangContext setLogLevel(Level level) {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        org.apache.logging.log4j.core.config.Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+        loggerConfig.setLevel(level);
+        ctx.updateLoggers();
+
+        return this;
     }
 }

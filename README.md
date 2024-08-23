@@ -1,4 +1,4 @@
-# Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang logo">
+# Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang Logo">
 
 ## The first open-source cross-platform data processing system
 
@@ -188,7 +188,7 @@ The list of [contributors](https://github.com/apache/incubator-wayang/graphs/con
 ## License
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 - 2023 The Apache Software Foundation.
+Copyright 2020 - 2024 The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

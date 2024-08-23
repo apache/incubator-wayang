@@ -82,7 +82,7 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
             }
         }
         if (!changeInput) {
-            throw new RuntimeException("This operator must start with a Input named '__PREDICTED__'");
+            throw new RuntimeException("Op " + op.getName() + " operator must start with a Input named '__PREDICTED__'");
         }
     }
 

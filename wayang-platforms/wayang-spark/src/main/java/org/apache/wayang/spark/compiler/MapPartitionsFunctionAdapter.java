@@ -41,7 +41,7 @@ public class MapPartitionsFunctionAdapter<InputType, OutputType> implements Flat
     public Iterator<OutputType> call(Iterator<InputType> it) throws Exception {
         List<OutputType> out = new ArrayList<>();
         while (it.hasNext()) {
-            final Iterable<OutputType> mappedPartition = this.function.apply(Iterators.wrapWithIterable(it));
+            Iterable<OutputType> mappedPartition = this.function.apply(Iterators.wrapWithIterable(it));
             for (OutputType dataQuantum : mappedPartition) {
                 out.add(dataQuantum);
             }

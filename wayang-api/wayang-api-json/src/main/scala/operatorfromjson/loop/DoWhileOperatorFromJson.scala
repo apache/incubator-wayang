@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.wayang.api.json.operatorfromjson.loop
 
 import com.fasterxml.jackson.annotation.JsonTypeName
@@ -27,8 +26,9 @@ case class DoWhileOperatorFromJson(override val id: Long,
                                    override val output: Array[Long],
                                    override val cat: String,
                                    override val operatorName: String,
-                                   val data: DoWhileOperatorFromJson.Data)
-  extends OperatorFromJson(id, input, output, cat, operatorName) {
+                                   val data: DoWhileOperatorFromJson.Data,
+                                   override val executionPlatform: String = null)
+  extends OperatorFromJson(id, input, output, cat, operatorName, executionPlatform) {
 }
 
 object DoWhileOperatorFromJson {

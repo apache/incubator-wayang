@@ -25,6 +25,7 @@ class SourceUnaryOperator(PywyOperator):
             name=name,
             input_type=None,
             output_type=str,
+            cat="input",
             input_length=0,
             output_length=1
         )
@@ -41,13 +42,16 @@ class SourceUnaryOperator(PywyOperator):
 
 class TextFileSource(SourceUnaryOperator):
     path: str
+    json_name: str
 
     def __init__(self, path: str):
         super(TextFileSource, self).__init__('TextFile')
         self.path = path
+        self.json_name = "textFileInput"
 
     def __str__(self):
         return super().__str__()
 
     def __repr__(self):
         return super().__repr__()
+

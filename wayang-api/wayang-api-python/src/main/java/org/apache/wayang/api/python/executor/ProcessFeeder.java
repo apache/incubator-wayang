@@ -18,8 +18,7 @@
 
 package org.apache.wayang.api.python.executor;
 
-import org.apache.wayang.api.python.function.PythonCode;
-import org.apache.wayang.api.python.function.PythonUDF;
+import com.google.protobuf.ByteString;
 import org.apache.wayang.core.api.exception.WayangException;
 
 import java.io.BufferedOutputStream;
@@ -34,8 +33,7 @@ import java.util.Map;
 public class ProcessFeeder<Input, Output> {
 
     private Socket socket;
-    private PythonUDF<Input, Output> udf;
-    private PythonCode serializedUDF;
+    private ByteString serializedUDF;
     private Iterable<Input> input;
 
     //TODO add to a config file
@@ -44,24 +42,21 @@ public class ProcessFeeder<Input, Output> {
 
     public ProcessFeeder(
             Socket socket,
-            PythonUDF<Input, Output> udf,
-            PythonCode serializedUDF,
+            ByteString serializedUDF,
             Iterable<Input> input){
 
         if(input == null) throw new WayangException("Nothing to process with Python API");
 
         this.socket = socket;
-        this.udf = udf;
         this.serializedUDF = serializedUDF;
         this.input = input;
 
     }
 
     public void send(){
-
-        try{
+        try {
             //TODO use config buffer size
-            int BUFFER_SIZE = 8 * 1024;
+            int BUFFER_SIZE = 65536;
 
             BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), BUFFER_SIZE);
             DataOutputStream dataOut = new DataOutputStream(stream);
@@ -70,28 +65,18 @@ public class ProcessFeeder<Input, Output> {
             this.writeIteratorToStream(input.iterator(), dataOut);
             dataOut.writeInt(END_OF_DATA_SECTION);
             dataOut.flush();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void writeUDF(PythonCode serializedUDF, DataOutputStream dataOut){
-
-        //write(serializedUDF.toByteArray(), dataOut);
+    public void writeUDF(ByteString serializedUDF, DataOutputStream dataOut){
         writeBytes(serializedUDF.toByteArray(), dataOut);
-        System.out.println("UDF written");
-
     }
 
-    public void writeIteratorToStream(Iterator<Input> iter, DataOutputStream dataOut)
-        throws IOException {
-
-        System.out.println("iterator being send");
-        int buffer = 0;
+    public void writeIteratorToStream(Iterator<Input> iter, DataOutputStream dataOut){
         for (Iterator<Input> it = iter; it.hasNext(); ) {
             Input elem = it.next();
-            //System.out.println(elem.toString());
             write(elem, dataOut);
         }
     }
@@ -107,25 +92,30 @@ public class ProcessFeeder<Input, Output> {
              * Byte Array cases
              */
             else if (obj instanceof Byte[] || obj instanceof byte[]) {
-                System.out.println("Writing Bytes");
                 writeBytes(obj, dataOut);
             }
             /**
              * String case
              * */
-            else if (obj instanceof String)
+            else if (obj instanceof String) {
                 writeUTF((String) obj, dataOut);
+            }
+
+            // TODO: Properly type this in the future
+            else if (obj instanceof Object) {
+                writeUTF(String.valueOf(obj), dataOut);
+            }
 
             /**
              * Key, Value case
              * */
-            else if (obj instanceof Map.Entry)
+            else if (obj instanceof Map.Entry) {
                 writeKeyValue((Map.Entry) obj, dataOut);
+            }
 
             else{
                 throw new WayangException("Unexpected element type " + obj.getClass());
             }
-
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -165,18 +155,14 @@ public class ProcessFeeder<Input, Output> {
         byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
 
         try {
-
             dataOut.writeInt(bytes.length);
             dataOut.write(bytes);
-        } catch (SocketException e){
-
-        } catch (IOException e) {
+        } catch (Exception e){
             e.printStackTrace();
         }
     }
 
     public void writeKeyValue(Map.Entry obj, DataOutputStream dataOut){
-
         write(obj.getKey(), dataOut);
         write(obj.getValue(), dataOut);
     }
