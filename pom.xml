@@ -1338,14 +1338,15 @@
     <modules>
         <module>wayang-commons</module>
         <module>wayang-platforms</module>
-        <module>wayang-tests-integration</module>
         <module>wayang-api</module>
         <module>wayang-profiler</module>
         <module>wayang-plugins</module>
         <module>wayang-resources</module>
-        <module>wayang-benchmark</module>
         <module>wayang-assembly</module>
         <module>wayang-ml4all</module>
-        <!-- <module>wayang-docs</module> -->
+        <module>wayang-applications</module>
+        <module>wayang-benchmark</module>
+        <module>wayang-tests-integration</module>
+        <!--module>wayang-docs</module-->
     </modules>
 </project>

@@ -87,12 +87,12 @@ import org.apache.wayang.core.api.Configuration
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
 
-class WordCount {}
+class org.apache.wayang.examples.WordCount {}
 
-object WordCount {
+object org.apache.wayang.examples.WordCount {
 
   def main(args: Array[String]): Unit = {
-    println("WordCount")
+    println("org.apache.wayang.examples.WordCount")
     println("Scala version:")
     println(scala.util.Properties.versionString)
 

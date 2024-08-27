@@ -33,6 +33,9 @@ import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 
+import org.apache.wayang.basic.operators.KafkaTopicSource;
+
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -46,6 +49,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Properties;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -54,9 +58,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Test suite for {@link JavaTextFileSink}.
+ * Test suite for {@link JavaKafkaTopicSink}.
  */
-public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
+public class JavaKafkaTopicSinkTest extends JavaExecutionOperatorTestBase {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSinkTest.class);
 
@@ -75,42 +79,79 @@ public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
 
     @After
     public void teardownTest() {
-
         Locale.setDefault(defaultLocale);
     }
 
+
+
     @Test
-    public void testWritingLocalFile() throws IOException, URISyntaxException {
+    public void testWritingToKafkaTopic() throws Exception {
+
         Configuration configuration = new Configuration();
 
-        final File tempDir = LocalFileSystem.findTempDir();
-        final String targetUrl = LocalFileSystem.toURL(new File(tempDir, "testWritingLocalFile_2.txt"));
-        JavaTextFileSink<Float> sink = new JavaTextFileSink<>(
-                targetUrl,
-                new TransformationDescriptor<>(
-                        f -> String.format("%.2f", f),
-                        Float.class, String.class
-                )
-        );
+        // We assume, that we write back into the same cluster, to avoid "external copies"...
+        Properties props = KafkaTopicSource.getDefaultProperties();
 
-        Job job = mock(Job.class);
-        when(job.getConfiguration()).thenReturn(configuration);
-        final JavaExecutor javaExecutor = (JavaExecutor) JavaPlatform.getInstance().createExecutor(job);
+        logger.info(">>> Test: testWriteIntoKafkaTopic()");
 
-        StreamChannel.Instance inputChannelInstance = (StreamChannel.Instance) StreamChannel.DESCRIPTOR
-                .createChannel(mock(OutputSlot.class), configuration)
-                .createInstance(javaExecutor, mock(OptimizationContext.OperatorContext.class), 0);
-        inputChannelInstance.accept(Stream.of(1.123f, -0.1f, 3f));
-        evaluate(sink, new ChannelInstance[]{inputChannelInstance}, new ChannelInstance[0]);
+        final String topicName1 = "banking-tx-small-csv";
 
+        logger.info("> 0 ... ");
 
-        final List<String> lines = Files.lines(Paths.get(new URI(targetUrl))).collect(Collectors.toList());
-        Assert.assertEquals(
-                Arrays.asList("1.12", "-0.10", "3.00"),
-                lines
-        );
+        logger.info( "*** [TOPIC-Name] " + topicName1 + " ***");
+
+        logger.info( ">   Write to topic ... ");
+
+        logger.info("> 1 ... ");
+
+        props.list(System.out);
+
+        logger.info("> 2 ... ");
+        
+        JavaExecutor javaExecutor = null;
+        
+        try {
+
+            JavaKafkaTopicSink<Float> sink = new JavaKafkaTopicSink<>(
+                    topicName1,
+                    new TransformationDescriptor<>(
+                            f -> String.format("%.2f", f),
+                            Float.class, String.class
+                    )
+            );
+
+            logger.info("> 3 ... ");
+            
+            Job job = mock(Job.class);
+            when(job.getConfiguration()).thenReturn(configuration);
+            javaExecutor = (JavaExecutor) JavaPlatform.getInstance().createExecutor(job);
+
+            StreamChannel.Instance inputChannelInstance = (StreamChannel.Instance) StreamChannel.DESCRIPTOR
+                    .createChannel(mock(OutputSlot.class), configuration)
+                    .createInstance(javaExecutor, mock(OptimizationContext.OperatorContext.class), 0);
+            inputChannelInstance.accept(Stream.of(1.123f, -0.1f, 3f));
+            evaluate(sink, new ChannelInstance[]{inputChannelInstance}, new ChannelInstance[0]);
+
+            logger.info("> 4 ... ");
+
+        }
+        catch (Exception ex ) {
+            
+            ex.printStackTrace();
+
+            logger.info("##5## ... ");
+
+            Assert.fail();
+        
+        }
+
+        Assert.assertTrue( true );
+
+        logger.info("> *6*");
+
 
     }
+
 
 
 }
