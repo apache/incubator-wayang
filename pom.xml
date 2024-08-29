@@ -105,6 +105,7 @@
         <scala.version>2.12.12</scala.version>
         <scala.mayor.version>2.12</scala.mayor.version>
         <spark.version>3.1.2</spark.version>
+        <flink.version>1.20.0</flink.version>
 
         <java.version>11</java.version>
         <source.level>11</source.level>

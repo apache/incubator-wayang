@@ -35,7 +35,6 @@
     <properties>
         <java-module-name>org.apache.wayang.api</java-module-name>
         <spark.version>2.4.0</spark.version>
-        <flink.version>1.7.1</flink.version>
         <scala.mayor.version>2.12</scala.mayor.version>
         <giraph.version>1.2.0-hadoop2</giraph.version>
     </properties>
