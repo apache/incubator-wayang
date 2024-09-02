@@ -14,18 +14,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-export JAVA_HOME=/Users/kamir/.sdkman/candidates/java/current
 
-cd ..
-cd ..
+confluent kafka topic delete topic_l1_a --cluster lkc-m2kpj2
+confluent kafka topic delete topic_l1_b --cluster lkc-m2kpj2
+confluent kafka topic delete topic_l1_c --cluster lkc-m2kpj2
+confluent kafka topic delete topic_l2_a --cluster lkc-m2kpj2
+confluent kafka topic delete topic_l2_b --cluster lkc-m2kpj2
 
-#mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
-
-cd wayang-applications
-mvn compile package install -DskipTests
-
-cd ..
-
-source ./.env.sh; bin/wayang-submit org.apache.wayang.applications.WordCountOnKafkaTopic
+confluent kafka topic list --cluster lkc-m2kpj2

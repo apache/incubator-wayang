@@ -21,7 +21,7 @@ export JAVA_HOME=/Users/kamir/.sdkman/candidates/java/current
 cd ..
 cd ..
 
-#mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
+mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
 
 cd wayang-applications
 mvn compile package install -DskipTests
