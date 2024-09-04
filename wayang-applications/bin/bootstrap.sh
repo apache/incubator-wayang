@@ -1,15 +1,3 @@
-
-#brew install confluentinc/tap/cli
-#brew install jq
-#brew install git-lfs
-
-export topic_l1_a=region_emea_counts
-export topic_l1_b=region_apac_counts
-export topic_l1_c=region_uswest_counts
-export topic_l2_a=global_contribution
-export topic_l2_b=global_averages
-
-#confluent login
 #!/usr/bin/env bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -27,6 +15,15 @@ export topic_l2_b=global_averages
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#brew install confluentinc/tap/cli
+#brew install jq
+#brew install git-lfs
+
+export topic_l1_a=region_emea_counts
+export topic_l1_b=region_apac_counts
+export topic_l1_c=region_uswest_counts
+export topic_l2_a=global_contribution
+export topic_l2_b=global_averages
 
 confluent kafka topic delete topic_l1_a --cluster lkc-m2kpj2
 confluent kafka topic delete topic_l1_b --cluster lkc-m2kpj2
