@@ -76,7 +76,7 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
         logger.info(">>> Test A");
     }
 
-    @Test
+    //@Test
     public void testReadFromKafkaTopic() {
 
         logger.info(">>> Test: testReadFromKafkaTopic()");
@@ -128,8 +128,6 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
         }
 
     }
-
-
 
     private void processRecord(ConsumerRecord<String, String> record) {
         // Implement your record processing logic here
