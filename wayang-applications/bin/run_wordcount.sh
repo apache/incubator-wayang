@@ -16,7 +16,10 @@
 # limitations under the License.
 #
 
-export JAVA_HOME=/Users/kamir/.sdkman/candidates/java/current
+######
+# to adjust variables to your own environment, please configure them in env.sh
+#
+source .env.sh
 
 cd ..
 cd ..
