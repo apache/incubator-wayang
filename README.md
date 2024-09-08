@@ -48,7 +48,7 @@ Apache Wayang (incubating) can be used via the following APIs:
 
 ## Quick Guide for Running Wayang
 
-For a quick guide on how to run org.apache.wayang.examples.WordCount see [here](guides/tutorial.md).
+For a quick guide on how to run WordCount see [here](guides/tutorial.md).
 
 ## Quick Guide for Developing with Wayang
 

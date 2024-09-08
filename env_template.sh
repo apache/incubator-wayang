@@ -1,9 +1,27 @@
-export BOOTSTRAP_SERVER=pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
-export CLUSTER_API_KEY=4UHO44F3C5REE4GQ
-export CLUSTER_API_SECRET=+ItHijlhTyclRL0aQb/xr0QwnR1H+k6fSFUyPy26XmkBgiy2Tfvmz5oxRgqyKdSL
-export SR_ENDPOINT=https://psrc-lo5k9.eu-central-1.aws.confluent.cloud
-export SR_API_KEY=KRUBMHQAX4GV7Y5V
-export SR_API_SECRET=ZHZSa/1Rqm+1+e3bMfo+D6hjbmxm6bV5CjKcSetf+83P/ReG2l5PzFAGV2CGg4AC
+#!/usr/bin/env bash
+
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+export BOOTSTRAP_SERVER=...
+export CLUSTER_API_KEY=...
+export CLUSTER_API_SECRET=...
+export SR_ENDPOINT=...
+export SR_API_KEY=...
+export SR_API_SECRET=...
 
 export SPARK_HOME=/opt/homebrew/Cellar/apache-spark/3.5.2/libexec
 export HADOOP_HOME=/opt/homebrew/Cellar/hadoop/3.4.0/libexec

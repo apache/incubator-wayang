@@ -49,7 +49,7 @@ public class WordCount {
                 .withPlugin(Java.basicPlugin());
         //        .withPlugin(Spark.basicPlugin());
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
-                .withJobName(String.format("org.apache.wayang.examples.WordCount (%s)", inputUrl))
+                .withJobName(String.format("WordCount (%s)", inputUrl))
                 .withUdfJarOf(WordCount.class);
 
         // Start building the WayangPlan.

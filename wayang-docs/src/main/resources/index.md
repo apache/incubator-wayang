@@ -172,7 +172,7 @@ This tool will attempt to determine suitable values for the question marks (`?`)
 
 For some executable examples, have a look at [this repository](https://github.com/sekruse/rheem-examples).
 
-### org.apache.wayang.examples.WordCount
+### WordCount
 
 #### Java API
 ```java
@@ -198,7 +198,7 @@ public class WordcountJava {
                 .withPlugin(Java.basicPlugin())
                 .withPlugin(Spark.basicPlugin());
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
-                .withJobName(String.format("org.apache.wayang.examples.WordCount (%s)", inputUrl))
+                .withJobName(String.format("WordCount (%s)", inputUrl))
                 .withUdfJarOf(WordcountJava.class);
 
         // Start building the WayangPlan.
@@ -254,7 +254,7 @@ object WordcountScala {
       .withPlugin(Java.basicPlugin)
       .withPlugin(Spark.basicPlugin)
     val planBuilder = new PlanBuilder(wayangContext)
-      .withJobName(s"org.apache.wayang.examples.WordCount ($inputUrl)")
+      .withJobName(s"WordCount ($inputUrl)")
       .withUdfJarsOf(this.getClass)
 
     val wordcounts = planBuilder

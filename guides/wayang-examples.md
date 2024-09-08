@@ -17,13 +17,13 @@
 
 -->
 This page contains examples to be executed using Wayang.
-- [org.apache.wayang.examples.WordCount](#wordcount)
+- [WordCount](#wordcount)
   * [Java scala-like API](#java-scala-like-api)
   * [Scala API](#scala-api)
 - [k-means](#k-means)
   * [Scala API](#scala-api-1)
 
-## org.apache.wayang.examples.WordCount
+## WordCount
 
 The "Hello World!" of data processing systems is the wordcount.
 
@@ -51,7 +51,7 @@ public class WordcountJava {
                 .withPlugin(Java.basicPlugin())
                 .withPlugin(Spark.basicPlugin());
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
-                .withJobName(String.format("org.apache.wayang.examples.WordCount (%s)", inputUrl))
+                .withJobName(String.format("WordCount (%s)", inputUrl))
                 .withUdfJarOf(WordcountJava.class);
 
         // Start building the WayangPlan.
@@ -107,7 +107,7 @@ object WordcountScala {
       .withPlugin(Java.basicPlugin)
       .withPlugin(Spark.basicPlugin)
     val planBuilder = new PlanBuilder(wayangContext)
-      .withJobName(s"org.apache.wayang.examples.WordCount ($inputUrl)")
+      .withJobName(s"WordCount ($inputUrl)")
       .withUdfJarsOf(this.getClass)
 
     val wordcounts = planBuilder

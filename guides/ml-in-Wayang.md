@@ -28,7 +28,7 @@ public class CustomEstimatableCost implements EstimatableCost {
      * by implementing the interface in this class.
      */
 }
-public class org.apache.wayang.examples.WordCount {
+public class WordCount {
     public static void main(String[] args) {
         /* Create a Wayang context and specify the platforms Wayang will consider */
         Configuration config = new Configuration();

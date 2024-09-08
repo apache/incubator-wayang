@@ -16,7 +16,7 @@
   limitations under the License.
 
 -->
-This tutorial will show users how to run the org.apache.wayang.examples.WordCount example locally with Wayang.
+This tutorial will show users how to run the WordCount example locally with Wayang.
 
 # Clone repository
 ```shell
@@ -57,7 +57,7 @@ source ~/.zshrc
 
 # Run the program
 
-To execute the org.apache.wayang.examples.WordCount example with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
+To execute the WordCount example with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
 
 ```shell
 cd wayang-0.7.1-SNAPSHOT

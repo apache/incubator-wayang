@@ -71,7 +71,7 @@ This tutorial shows users how to import Wayang in their Java project using the m
 ```
 A sample pom file can be found [here](pom-example.xml).
 
-# Test org.apache.wayang.examples.WordCount
+# Test WordCount
 ## Create a Java class that contains the main method that runs the Wordcount
 Here is a sample implementation getting as input the filename (e.g., file:/Projects/Wayang/test.txt)
 
@@ -85,8 +85,8 @@ public static void main(String[] args) {
 
         /* Get a plan builder */
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
-                .withJobName("org.apache.wayang.examples.WordCount")
-                .withUdfJarOf(org.apache.wayang.examples.WordCount.class);
+                .withJobName("WordCount")
+                .withUdfJarOf(WordCount.class);
 
         /* Start building the Apache WayangPlan */
         Collection<Tuple2<String, Integer>> wordcounts = planBuilder
@@ -119,4 +119,4 @@ public static void main(String[] args) {
         System.out.println(wordcounts);
 }
 ```
-A sample Java class file can be found [here](org.apache.wayang.examples.WordCount.java).
+A sample Java class file can be found [here](WordCount.java).
