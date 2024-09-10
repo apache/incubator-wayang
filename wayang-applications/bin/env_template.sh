@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -17,4 +16,23 @@
 # limitations under the License.
 #
 
-export JAVA_HOME=....
+export JAVA_HOME=...
+export SPARK_HOME=...
+export HADOOP_HOME=...
+export PATH=$PATH:$HADOOP_HOME/bin
+export WAYANG_HOME=...
+export WAYANG_APP_HOME=...
+
+# properties of brokers and schema registry of Ccloud cluster for demo 1
+export BOOTSTRAP_SERVER=
+export CLUSTER_API_KEY=
+export CLUSTER_API_SECRET=
+export SR_ENDPOINT=
+export SR_API_KEY=
+export SR_API_SECRET=
+
+export SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO="...:..."
+export SCHEMA_REGISTRY_URL="..."
+
+# cluster-id of Ccloud cluster...
+export DEMO1_CLUSTER1=...

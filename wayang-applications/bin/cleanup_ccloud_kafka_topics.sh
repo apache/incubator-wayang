@@ -15,10 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-confluent kafka topic delete topic_l1_a --cluster lkc-m2kpj2
-confluent kafka topic delete topic_l1_b --cluster lkc-m2kpj2
-confluent kafka topic delete topic_l1_c --cluster lkc-m2kpj2
-confluent kafka topic delete topic_l2_a --cluster lkc-m2kpj2
-confluent kafka topic delete topic_l2_b --cluster lkc-m2kpj2
+source .env.sh
+source env.demo1.sh
 
-confluent kafka topic list --cluster lkc-m2kpj2
+confluent kafka topic delete $topic_l1_a --cluster $DEMO1_CLUSTER1
+confluent kafka topic delete $topic_l1_b --cluster $DEMO1_CLUSTER1
+confluent kafka topic delete $topic_l1_c --cluster $DEMO1_CLUSTER1
+confluent kafka topic delete $topic_l2_a --cluster $DEMO1_CLUSTER1
+confluent kafka topic delete $topic_l2_b --cluster $DEMO1_CLUSTER1
+
+confluent kafka topic list --cluster $DEMO1_CLUSTER1

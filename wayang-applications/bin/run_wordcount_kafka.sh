@@ -20,15 +20,16 @@
 # to adjust variables to your own environment, please configure them in env.sh
 #
 source .env.sh
+source env.demo1.sh
 
-cd ..
-cd ..
+cd ../..
 
-#mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
+mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
 
 cd wayang-applications
+
 mvn compile package install -DskipTests
 
 cd ..
 
-source ./.env.sh; bin/wayang-submit org.apache.wayang.applications.WordCountOnKafkaTopic
+bin/wayang-submit org.apache.wayang.applications.WordCountOnKafkaTopic

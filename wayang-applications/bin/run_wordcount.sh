@@ -21,14 +21,14 @@
 #
 source .env.sh
 
-cd ..
-cd ..
+cd ../..
 
 mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
 
 cd wayang-applications
+
 mvn compile package install -DskipTests
 
 cd ..
 
-source ./.env.sh; bin/wayang-submit org.apache.wayang.applications.WordCount java file://$(pwd)/wayang-applications/data/case-study/DATA_REPO_001/README.md
+bin/wayang-submit org.apache.wayang.applications.WordCount java file://$(pwd)/wayang-applications/data/case-study/DATA_REPO_001/README.md

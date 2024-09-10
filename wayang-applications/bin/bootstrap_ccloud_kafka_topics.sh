@@ -19,31 +19,21 @@
 #brew install jq
 #brew install git-lfs
 
-export topic_l1_a=region_emea_counts
-export topic_l1_b=region_apac_counts
-export topic_l1_c=region_uswest_counts
-export topic_l2_a=global_contribution
-export topic_l2_b=global_averages
+source .env.sh
+source env.demo1.sh
 
-confluent kafka topic delete topic_l1_a --cluster lkc-m2kpj2
-confluent kafka topic delete topic_l1_b --cluster lkc-m2kpj2
-confluent kafka topic delete topic_l1_c --cluster lkc-m2kpj2
-confluent kafka topic delete topic_l2_a --cluster lkc-m2kpj2
-confluent kafka topic delete topic_l2_b --cluster lkc-m2kpj2
+confluent kafka topic delete $topic_l1_a --cluster $DEMO1_CLUSTER1
+confluent kafka topic delete $topic_l1_b --cluster $DEMO1_CLUSTER1
+confluent kafka topic delete $topic_l1_c --cluster $DEMO1_CLUSTER1
+confluent kafka topic delete $topic_l2_a --cluster $DEMO1_CLUSTER1
+confluent kafka topic delete $topic_l2_b --cluster $DEMO1_CLUSTER1
 
-confluent kafka topic create topic_l1_a --cluster lkc-m2kpj2
-confluent kafka topic create topic_l1_b --cluster lkc-m2kpj2
-confluent kafka topic create topic_l1_c --cluster lkc-m2kpj2
-confluent kafka topic create topic_l2_a --cluster lkc-m2kpj2
-confluent kafka topic create topic_l2_b --cluster lkc-m2kpj2
+confluent kafka topic create $topic_l1_a --cluster $DEMO1_CLUSTER1
+confluent kafka topic create $topic_l1_b --cluster $DEMO1_CLUSTER1
+confluent kafka topic create $topic_l1_c --cluster $DEMO1_CLUSTER1
+confluent kafka topic create $topic_l2_a --cluster $DEMO1_CLUSTER1
+confluent kafka topic create $topic_l2_b --cluster $DEMO1_CLUSTER1
 
-######################################################################################################
-# https://docs.confluent.io/cloud/current/sr/schema_registry_ccloud_tutorial.html
-export SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO="...:...."
-export SCHEMA_REGISTRY_URL="https://...."
+confluent kafka topic list --cluster $DEMO1_CLUSTER1
 
-confluent kafka topic list --cluster lkc-m2kpj2
-
-###
-# List schemas
 curl --silent -X GET -u $SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO $SCHEMA_REGISTRY_URL/subjects | jq .
