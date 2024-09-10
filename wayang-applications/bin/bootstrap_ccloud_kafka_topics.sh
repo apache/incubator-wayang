@@ -15,10 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#brew install confluentinc/tap/cli
-#brew install jq
-#brew install git-lfs
-
 source .env.sh
 source env.demo1.sh
 
