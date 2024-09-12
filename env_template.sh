@@ -25,16 +25,17 @@ export SR_API_SECRET= ...
 export SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO=" ... : .... "
 export SCHEMA_REGISTRY_URL="https://.... "
 
-export SPARK_HOME=/opt/homebrew/Cellar/apache-spark/3.5.2/libexec
-export HADOOP_HOME=/opt/homebrew/Cellar/hadoop/3.4.0/libexec
+export SPARK_HOME= ...
+export HADOOP_HOME= ...
 export PATH=$PATH:$HADOOP_HOME/bin
-export WAYANG_VERSION=0.7.1
-export WAYANG_HOME=" ... /incubator-wayang/wayang-assembly/target/apache-wayang-assembly-$WAYANG_VERSION-incubating-dist/wayang-$WAYANG_VERSION"
-export WAYANG_APP_HOME=" ... /incubator-wayang/wayang-applications/target/*"
+export WAYANG_VERSION= ...
+export WAYANG_HOME= ...
+export WAYANG_APP_HOME= ...
 
-echo "Hadoop home : $HADOOP_HOME"
-echo "Spark home  : $SPARK_HOME"
-echo "Wayang home : $WAYANG_HOME"
-echo "Wayang app  : $WAYANG_APP_HOME"
+echo "Hadoop home     : $HADOOP_HOME"
+echo "Spark home      : $SPARK_HOME"
+echo "Wayang home     : $WAYANG_HOME"
+echo "Wayang app      : $WAYANG_APP_HOME"
+echo "Wayang version  : $WAYANG_VERSION"
 
 
