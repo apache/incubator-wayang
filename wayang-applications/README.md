@@ -38,7 +38,7 @@ For now you need the following tools installed, in addition to the Wayang, Spark
 - Confluent CLI tool.
 - jq 
 
-Both can be installed using homebrew.
+In OSX, both can be installed using homebrew. The installation and setup process for other environment are different.
 ```bash
 brew install confluentinc/tap/cli
 brew install jq
