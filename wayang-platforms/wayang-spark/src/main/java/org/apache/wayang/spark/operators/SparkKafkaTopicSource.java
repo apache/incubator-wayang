@@ -70,7 +70,7 @@ public class SparkKafkaTopicSource extends KafkaTopicSource implements SparkExec
         System.out.println("### 7 ... ");
         this.initConsumer( (KafkaTopicSource) this );
 
-        ConsumerRecords<String, String> records = this.getConsumer().poll(Duration.ofMillis(15000));
+        ConsumerRecords<String, String> records = this.getConsumer().poll(Duration.ofMillis(100));
 
         List<String> collectedRecords = new ArrayList<>();
         for (ConsumerRecord<String, String> record : records) {

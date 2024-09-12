@@ -139,6 +139,7 @@ public class KafkaTopicSink<T> extends UnarySink<T> implements Serializable {
         if ( props == null ) {
             props = getDefaultProperties();
             System.out.println(">>> Create producer from DEFAULT PROPERTIES.");
+            props.list( System.out );
         }
         else {
             System.out.println(">>> Create producer from PROPERTIES: " + props);
