@@ -1,0 +1,188 @@
+version: "3.7"
+services:
+  kafka:
+    image: confluentinc/confluent-local:7.6.2
+    hostname: kafka-democluster
+    container_name: kafka-democluster
+    networks:
+      - democluster_net
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+      - "39092:39092"
+      - "49092:49092"
+      - "59092:59092"
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,SASL_DOCKER:SASL_PLAINTEXT,PLAIN_HOST:PLAINTEXT,PLAIN_HOST_DOCKER:PLAINTEXT,SASL_HOST:SASL_PLAINTEXT
+      KAFKA_LISTENERS: BROKER://:9092, CONTROLLER://:9093,SASL_DOCKER://:19092,PLAIN_HOST://:39092,PLAIN_HOST_DOCKER://:49092,SASL_HOST://:59092
+      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka-democluster:9092,SASL_DOCKER://kafka-democluster:19092,PLAIN_HOST://localhost:39092,PLAIN_HOST_DOCKER://host.docker.internal:49092,SASL_HOST://localhost:59092
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_jaas.conf"
+    volumes:
+      - ./kafka_jaas.conf:/etc/kafka/kafka_jaas.conf
+
+#  example-topic-init:
+#    image: confluentinc/cp-enterprise-kafka:7.6.2
+#    hostname: democluster-topic-init
+#    container_name: democluster-topic-init
+#    networks:
+#      - democluster_net
+#    depends_on:
+#      - kafka
+#    command: >
+#      bash -c "echo Waiting for Kafka to be ready... &&
+#             cub kafka-ready -b host.docker.internal:49092 1 20 &&
+#             echo Creating topics... &&
+#             kafka-topics --create --topic assignmentsIn --bootstrap-server host.docker.internal:49092 --partitions 1 --replication-factor 1 || true &&
+#             kafka-topics --create --topic zloiIn --bootstrap-server host.docker.internal:49092 --partitions 1 --replication-factor 1 || true &&
+#             kafka-topics --create --topic assignmentsEnriched --bootstrap-server host.docker.internal:49092 --partitions 1 --replication-factor 1 &&"
+
+  sr:
+    image: confluentinc/cp-schema-registry:7.6.2
+    hostname: sr
+    container_name: sr-democluster
+    ports:
+      - '8081:8081'
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: sr
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC: "schemas"
+      # SCHEMA_REGISTRY_KAFKASTORE_SSL_ENDPOINT_IDENTIFIED_ALGORITHM: "https"
+      SCHEMA_REGISTRY_KAFKASTORE_REQUEST_TIMEOUT_MS: 20000
+      SCHEMA_REGISTRY_KAFKASTORE_RETRY_BACKOFF_MS: 500
+      #SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: "SASL_SSL"
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: host.docker.internal:49092
+      #SCHEMA_REGISTRY_KAFKASTORE_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"alice\" password=\"alice-secret\";"
+      #SCHEMA_REGISTRY_KAFKASTORE_SASL_MECHANISM: "PLAIN"
+      SCHEMA_REGISTRY_CONFLUENT_LICENSE_REPLICATION_FACTOR: 3
+      # SCHEMA_REGISTRY_CONFLUENT_LICENSE: $CONFLUENT_LICENSE
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:7.6.2
+    hostname: control-center
+    container_name: c3-democluster
+    restart: always
+    depends_on:
+      - kafka
+      - sr
+    ports:
+      - "${C3_PORT:-9021}:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: host.docker.internal:49092
+      CONTROL_CENTER_KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:49092
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://sr:8081"
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_KAFKA_MYCLUSTER_BOOTSTRAP_SERVERS: host.docker.internal:49092
+      CONTROL_CENTER_UI_AUTOUPDATE_ENABLE: "false"
+      CONTROL_CENTER_COMMAND_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_METRICS_TOPIC_REPLICATION: 1
+
+  akhq:
+    image: tchiotludo/akhq
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: host.docker.internal:49092
+              schema-registry:
+                url: http://host.docker.internal:8081
+    ports:
+      - "8082:8080"
+
+  spark-master:
+    image: cluster-apache-spark:3.0.2
+    ports:
+      - "9190:8080"
+      - "7077:7077"
+    volumes:
+      - ./apps:/opt/spark-apps
+      - ./data:/opt/spark-data
+    environment:
+      - SPARK_LOCAL_IP=spark-master
+      - SPARK_WORKLOAD=master
+
+  spark-worker-a:
+    image: cluster-apache-spark:3.0.2
+    ports:
+      - "9191:8080"
+      - "7010:7000"
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_WORKLOAD=worker
+      - SPARK_LOCAL_IP=spark-worker-a
+    volumes:
+      - ./apps:/opt/spark-apps
+      - ./data:/opt/spark-data
+
+  spark-worker-b:
+    image: cluster-apache-spark:3.0.2
+    ports:
+      - "9192:8080"
+      - "7011:7000"
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_WORKLOAD=worker
+      - SPARK_LOCAL_IP=spark-worker-b
+    volumes:
+      - ./apps:/opt/spark-apps
+      - ./data:/opt/spark-data
+
+  postgres2:
+    image: postgres:12
+    hostname: postgres2
+    container_name: postgres2
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: apache_wayang_test_db
+    volumes:
+      - ./dataset/init2.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - democluster_net
+
+  postgres:
+    image: postgres:12
+    hostname: postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: apache_wayang_test_db
+    volumes:
+      - ./dataset/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - democluster_net
+
+  metabase:
+    image: metabase/metabase:latest
+    depends_on:
+      - postgres
+    ports:
+      - 3000:3000
+    networks:
+      - democluster_net
+
+networks:
+  democluster_net:
