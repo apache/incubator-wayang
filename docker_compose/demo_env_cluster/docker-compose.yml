@@ -147,6 +147,20 @@ services:
       - ./apps:/opt/spark-apps
       - ./data:/opt/spark-data
 
+  postgres3:
+    image: postgres:12
+    hostname: postgres3
+    container_name: postgres3
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: apache_wayang_test_db
+    volumes:
+      - ./dataset/init3.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - democluster_net
+
   postgres2:
     image: postgres:12
     hostname: postgres2
@@ -177,6 +191,10 @@ services:
 
   metabase:
     image: metabase/metabase:latest
+    volumes:
+      - ./metabase-data:/metabase-data
+    environment:
+      - MB_DB_FILE=/metabase-data/metabase.db
     depends_on:
       - postgres
     ports:
