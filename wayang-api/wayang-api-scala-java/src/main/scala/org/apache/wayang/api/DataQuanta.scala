@@ -966,7 +966,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
         topicName,
         new TransformationDescriptor(formatterUdf, basicDataUnitType[Out], basicDataUnitType[String], udfLoad)
       )
-      sink.setName(s"Write to KafkaTopic $topicName")
+      sink.setName(s"*#-> Write to KafkaTopic $topicName")
+      println(s"*#-> Write to KafkaTopic $topicName")
       this.connectTo(sink, 0)
 
       // Do the execution.
@@ -991,6 +992,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
       new TransformationDescriptor(formatterUdf, basicDataUnitType[Out], basicDataUnitType[String], udfLoad)
     )
     sink.setName(s"Write to $url")
+
     this.connectTo(sink, 0)
 
     // Do the execution.
