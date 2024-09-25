@@ -16,12 +16,12 @@
 # limitations under the License.
 #
 
-export JAVA_HOME=...
-export SPARK_HOME=...
-export HADOOP_HOME=...
+export JAVA_HOME=JAVA_HOME=/Users/kamir/.sdkman/candidates/java/current
+export SPARK_HOME=/opt/homebrew/opt/apache-spark
+export HADOOP_HOME=/opt/homebrew/opt/hadoop
 export PATH=$PATH:$HADOOP_HOME/bin
-export WAYANG_HOME=...
-export WAYANG_APP_HOME=...
+export WAYANG_HOME=/Users/kamir/GITHUB.active/kamir-incubator-wayang/
+export WAYANG_APP_HOME=/Users/kamir/GITHUB.active/kamir-incubator-wayang/wayang-applications/
 
 # properties of brokers and schema registry of Ccloud cluster for demo 1
 export BOOTSTRAP_SERVER=

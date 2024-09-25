@@ -21,9 +21,12 @@
 #
 source .env.sh
 
+export JAVA_HOME=/Users/kamir/.sdkman/candidates/java/11.0.24-amzn
+
 cd ../..
 
-#mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
+#mvn clean compile install -DskipTests
+#mvn package install -pl :wayang-assembly -Pdistribution -DskipTests
 
 cd wayang-applications
 
@@ -31,4 +34,6 @@ mvn compile package install -DskipTests
 
 cd ..
 
-bin/wayang-submit org.apache.wayang.applications.WordCount java file://$(pwd)/wayang-applications/data/case-study/DATA_REPO_001/README.md
+#bin/wayang-submit org.apache.wayang.applications.demo1.Job123
+#bin/wayang-submit org.apache.wayang.applications.demo1.Northwind
+bin/wayang-submit org.apache.wayang.applications.demo1.Northwind2

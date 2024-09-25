@@ -24,7 +24,7 @@ source env.demo1.sh
 
 cd ../..
 
-mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
+#mvn clean compile package install -pl :wayang-assembly -Pdistribution -DskipTests
 
 cd wayang-applications
 
