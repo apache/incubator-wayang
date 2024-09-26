@@ -18,6 +18,7 @@
 
 CLASS=$1
 
+
 if [ -z "${CLASS}" ]; then
     echo "Target Class for execution was not provided"
     exit 1
@@ -118,8 +119,6 @@ for arg in $(echo ${@:2})
 do
   ARGS="$ARGS \"${arg}\""
 done
-
-WAYANG_CLASSPATH="${WAYANG_CLASSPATH}:${WAYANG_APP_HOME}"
 
 eval "$RUNNER $FLAGS -cp "${WAYANG_CLASSPATH}" $CLASS ${ARGS}"
 
