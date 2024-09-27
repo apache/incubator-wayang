@@ -73,7 +73,6 @@ public class KafkaTopicSink<T> extends UnarySink<T> implements Serializable {
                         )
                 )
         );
-        System.out.println("### 11 ... ");
 
     }
 
@@ -92,7 +91,6 @@ public class KafkaTopicSink<T> extends UnarySink<T> implements Serializable {
                 topicName,
                 new TransformationDescriptor<>(formattingFunction, typeClass, String.class)
         );
-        System.out.println("### 12 ... ");
 
     }
 
@@ -106,7 +104,6 @@ public class KafkaTopicSink<T> extends UnarySink<T> implements Serializable {
         super(DataSetType.createDefault(formattingDescriptor.getInputType()));
         this.topicName = topicName;
         this.formattingDescriptor = formattingDescriptor;
-        System.out.println("### 13 ... ");
     }
 
     /**
@@ -118,7 +115,6 @@ public class KafkaTopicSink<T> extends UnarySink<T> implements Serializable {
         super(that);
         this.topicName = that.topicName;
         this.formattingDescriptor = that.formattingDescriptor;
-        System.out.println("### 14 ... ");
     }
 
     boolean isInitialized = false;

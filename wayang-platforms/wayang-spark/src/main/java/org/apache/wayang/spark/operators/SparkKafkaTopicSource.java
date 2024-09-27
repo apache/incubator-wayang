@@ -77,8 +77,6 @@ public class SparkKafkaTopicSource extends KafkaTopicSource implements SparkExec
             collectedRecords.add( record.value() );
         }
 
-        System.out.println("### 8 ... ");
-
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final JavaRDD<String> rdd = sparkExecutor.sc.parallelize( collectedRecords );
