@@ -34,6 +34,10 @@ mvn compile package install -DskipTests
 
 cd ..
 
+bin/wayang-submit org.apache.wayang.applications.PeerGroupComparison
+#bin/wayang-submit org.apache.wayang.applications.Tpch
+
+#bin/wayang-submit org.apache.wayang.applications.demo1.Job123C
 #bin/wayang-submit org.apache.wayang.applications.demo1.Job123
 #bin/wayang-submit org.apache.wayang.applications.demo1.Northwind
-bin/wayang-submit org.apache.wayang.applications.demo1.Northwind2
+#bin/wayang-submit org.apache.wayang.applications.demo1.Northwind2
