@@ -6,35 +6,6 @@ This is a major release of Apache Wayang (incubating).
 Based on this release the projects wants to continue the path towards becoming an
 Apache TLP.
 
-This release supports the following frameworks:
-- ...
-
-Previous updates that are included in this release:
-- ...
-
-NOTE: depending on the scala version the list of the supported platforms available
-could be different.
-
-
-New Features
-------------
-[WAYANG-...] ...
-
-Incompatible changes
---------------------
-NONE
-- ...
-
-
-==============================================================
-Apache Wayang (incubating) 0.7.1
-==============================================================
-
-This is a patch/bugfix release of Apache Wayang (incubating).
-
-This release supports the following frameworks:
-- This patch version fixes a problem in the artifact gpg encrypting key.
-
 Previous updates that are included in this release:
 - Apache Flink v1.7.1
 - Apache Giraph v1.2.0-hadoop2
@@ -51,16 +22,25 @@ could be different.
 
 New Features
 ------------
-[WAYANG-34] Terasort
-[WAYANG-IDE] Recognition of Scala code in IDE
-[WAYANG-8] Inclusion of Python as platform of processing
-[WAYANG-211] JVM-platform inside of Python-API
-Grep Benchmark
-Test classes and operators for Flink
-Support for S3 files locations
-Initial version of the SQL API and suppport for joins
+Jdbc/Postgres join operators
+Wayang-api-json module that allows creation of WayangPlans via REST API in json format
+Explain functionality that displays information about plans
+Tensorflow operator support to the Scala-API
+Python-API that allows creating WayangPlans from Python
+Abstraction for cost-models for the cost-based optimzier that allows users to plug their own cost-models into Wayang
+SqlContext extension of WayangContext to allow specifying platforms for SQL execution
 
-Basic SQL support
+Fixes
+------------
+Fixed the CardinalityRepository that now allows to write actually sampled cardinalities during runtime
+
+
+Deprecated features
+------------
+Deprecated support for Scala 2.11 for all modules
+Deprecated support for Java8
+
 
 Incompatible changes
 --------------------
+NONE
