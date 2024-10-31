@@ -19,7 +19,6 @@
 package org.apache.wayang.apps.wordcount;
 
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.operators.GoogleTextFileSource;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
@@ -41,15 +40,8 @@ public class Main {
     public static void main(String[] args) throws IOException, URISyntaxException {
         try {
 
-            var bucket = "wayang-test-bucket";
-            String fileName = "GCS-sample.txt";
-            String filePath = "/Users/christofferkristensen/Documents/SoftwareDesign/research_project/ResearchProject/long-centaur-438410-p7-90933b1671ea.json";
-            
-            GoogleTextFileSource googleTextFileSource = new GoogleTextFileSource(bucket, filePath, "");
 
-            OptionalDouble estimate = googleTextFileSource.GetEstimateBytesPerLine(fileName);
-
-            System.out.printf("Found %d words:\n", estimate.getAsDouble());
+            System.out.println("I AM RUNNING MAIN CLASS IN MAIN FUNCTION!!..........:DXDi12u312ij3asdpijasjhdasghejh!");
 
 
             if (args.length == 0) {
@@ -57,61 +49,61 @@ public class Main {
                 System.exit(1);
             }
 
-            // WayangContext wayangContext = new WayangContext();
-            // for (String platform : args[0].split(",")) {
-            //     switch (platform) {
-            //         case "java":
-            //             wayangContext.register(Java.basicPlugin());
-            //             break;
-            //         case "spark":
-            //             wayangContext.register(Spark.basicPlugin());
-            //             break;
-            //         default:
-            //             System.err.format("Unknown platform: \"%s\"\n", platform);
-            //             System.exit(3);
-            //             return;
-            //     }
-            // }
+            WayangContext wayangContext = new WayangContext();
+            for (String platform : args[0].split(",")) {
+                switch (platform) {
+                    case "java":
+                        wayangContext.register(Java.basicPlugin());
+                        break;
+                    case "spark":
+                        wayangContext.register(Spark.basicPlugin());
+                        break;
+                    default:
+                        System.err.format("Unknown platform: \"%s\"\n", platform);
+                        System.exit(3);
+                        return;
+                }
+            }
 
-            // /* Get a plan builder */
-            // JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
-            //         .withJobName("WordCount")
-            //         .withUdfJarOf(Main.class);
+            /* Get a plan builder */
+            JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
+                    .withJobName("WordCount")
+                    .withUdfJarOf(Main.class);
 
-            // /* Start building the Apache WayangPlan */
-            // Collection<Tuple2<String, Integer>> wordcounts = planBuilder
-            //         /* Read the text file */
-            //         .readTextFile(args[1]).withName("Load file")
+            /* Start building the Apache WayangPlan */
+            Collection<Tuple2<String, Integer>> wordcounts = planBuilder
+                    /* Read the text file */
+                    .readTextFile(args[1]).withName("Load file")
 
-            //         /* Split each line by non-word characters */
-            //         .flatMap(line -> Arrays.asList(line.split("\\W+")))
-            //         .withSelectivity(1, 100, 0.9)
-            //         .withName("Split words")
+                    /* Split each line by non-word characters */
+                    .flatMap(line -> Arrays.asList(line.split("\\W+")))
+                    .withSelectivity(1, 100, 0.9)
+                    .withName("Split words")
 
-            //         /* Filter empty tokens */
-            //         .filter(token -> !token.isEmpty())
-            //         .withName("Filter empty words")
+                    /* Filter empty tokens */
+                    .filter(token -> !token.isEmpty())
+                    .withName("Filter empty words")
 
-            //         /* Attach counter to each word */
-            //         .map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
+                    /* Attach counter to each word */
+                    .map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
 
-            //         // Sum up counters for every word.
-            //         .reduceByKey(
-            //                 Tuple2::getField0,
-            //                 (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
-            //         )
-            //         .withName("Add counters")
+                    // Sum up counters for every word.
+                    .reduceByKey(
+                            Tuple2::getField0,
+                            (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
+                    )
+                    .withName("Add counters")
 
-            //         /* Execute the plan and collect the results */
-            //         .collect();
+                    /* Execute the plan and collect the results */
+                    .collect();
 
 
-            // System.out.printf("Found %d words:\n", wordcounts.size());
-            // wordcounts.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
+            System.out.printf("Found %d words:\n", wordcounts.size());
+            wordcounts.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
         } catch (Exception e) {
-            // System.err.println("App failed.");
-            // e.printStackTrace();
-            // System.exit(4);
+            System.err.println("App failed.");
+            e.printStackTrace();
+            System.exit(4);
         }
     }
 }

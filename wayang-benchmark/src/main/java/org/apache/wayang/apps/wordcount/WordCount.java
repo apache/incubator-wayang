@@ -28,15 +28,25 @@ import org.apache.wayang.spark.Spark;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.OptionalDouble;
 
 public class WordCount {
 
     public static void main(String[] args){
 
+        System.out.println("I AM RUNNING WORD COUNT CLASS IN MAIN FUNCTION!!!");
+
         if (args.length == 0) {
             System.err.print("Usage: <input file URL>");
             System.exit(1);
         }
+
+
+
+            if (args.length == 0) {
+                System.err.print("Usage: <platform1>[,<platform2>]* <input file URL>");
+                System.exit(1);
+            }
 
         /* Get a plan builder */
         WayangContext wayangContext = new WayangContext(new Configuration())
