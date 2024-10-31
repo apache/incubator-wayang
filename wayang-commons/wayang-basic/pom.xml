@@ -98,6 +98,13 @@
             <artifactId>s3</artifactId>
             <version>2.20.28</version>
         </dependency>
+        
+        <!-- org.json Dependencies-->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20230227</version>
+        </dependency>
 
     </dependencies>
 
