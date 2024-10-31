@@ -2,29 +2,18 @@ package org.apache.wayang.basic.operators;
 
 
 import com.google.cloud.storage.Bucket;
-import com.google.api.client.json.Json;
-import com.google.api.services.storage.Storage.Projects.ServiceAccount;
 import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.cloud.ReadChannel;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import com.google.common.base.Charsets;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
+
 
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
-import org.apache.wayang.core.plan.wayangplan.UnarySource;
+
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.LimitedInputStream;
-import org.apache.wayang.core.util.fs.FileSystem;
-import org.apache.wayang.core.util.fs.FileSystems;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,24 +21,12 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalLong;
 
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.OptionalDouble;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import java.nio.channels.Channels;
-public class GoogleTextFileSource extends UnarySource<String> {
+public class GoogleCloudStorageSource extends UnarySource<String> {
 
     private final Logger logger = LogManager.getLogger(this.getClass());
 
@@ -60,12 +37,12 @@ public class GoogleTextFileSource extends UnarySource<String> {
     private final Storage storage;
     private final Bucket bucket;
 
-    public GoogleTextFileSource(String bucket, String filePathToCredentialsFile, String inputUrl) throws IOException {
+    public GoogleCloudStorageSource(String bucket, String filePathToCredentialsFile, String inputUrl) throws IOException {
         this(bucket, filePathToCredentialsFile, inputUrl, "UTF-8");
     }
 
 
-    public GoogleTextFileSource(String bucket, String filePathToCredentialsFile, String inputUrl, String encoding) throws IOException {
+    public GoogleCloudStorageSource(String bucket, String filePathToCredentialsFile, String inputUrl, String encoding) throws IOException {
         super(DataSetType.createDefault(String.class));
         this.inputUrl = inputUrl;
         this.encoding = encoding;
@@ -86,7 +63,7 @@ public class GoogleTextFileSource extends UnarySource<String> {
      *
      * @param that that should be copied
      */
-    public GoogleTextFileSource(GoogleTextFileSource that) {
+    public GoogleCloudStorageSource(GoogleCloudStorageSource that) {
         super(that);
         this.inputUrl = that.getInputUrl();
         this.encoding = that.getEncoding();
@@ -132,7 +109,7 @@ public class GoogleTextFileSource extends UnarySource<String> {
         try (LimitedInputStream lis = new LimitedInputStream(Channels.newInputStream(blob.reader()), 1 * MiB)) {
 
             final BufferedReader bufferedReader = new BufferedReader(
-                new InputStreamReader(lis, GoogleTextFileSource.this.encoding)
+                new InputStreamReader(lis, GoogleCloudStorageSource.this.encoding)
             );
 
             // Read as much as possible.
@@ -152,7 +129,7 @@ public class GoogleTextFileSource extends UnarySource<String> {
             }
 
             if (numLineFeeds == 0) {
-                GoogleTextFileSource.this.logger.warn("Could not find any newline character in {}.", GoogleTextFileSource.this.inputUrl);
+                GoogleCloudStorageSource.this.logger.warn("Could not find any newline character in {}.", GoogleCloudStorageSource.this.inputUrl);
                 return OptionalDouble.empty();
             }
 
@@ -161,7 +138,7 @@ public class GoogleTextFileSource extends UnarySource<String> {
 
         }
         catch (IOException e) {
-            GoogleTextFileSource.this.logger.error("Could not estimate bytes per line of an input file.", e);
+            GoogleCloudStorageSource.this.logger.error("Could not estimate bytes per line of an input file.", e);
         }
 
         return OptionalDouble.empty();
