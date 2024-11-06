@@ -62,22 +62,23 @@ public class AmazonS3Source extends UnarySource<String> {
 
     private final S3Client s3Client;
     private final String bucket;
+    private final String blobName;
 
-
-
-
-    public AmazonS3Source(String bucket, String filePathToCredentialsFile, String inputUrl) throws IOException {
-        this(bucket, filePathToCredentialsFile, inputUrl, "UTF-8");
+    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl) throws IOException {
+        this(bucket, blobName, filePathToCredentialsFile, inputUrl, "UTF-8");
     }
     
 
-    public AmazonS3Source(String bucket, String filePathToCredentialsFile, String inputUrl, String encoding) throws IOException {
+    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl, String encoding) throws IOException {
         super(DataSetType.createDefault(String.class));
         this.inputUrl = inputUrl;
         this.encoding = encoding;
 
         this.s3Client = getS3Client(filePathToCredentialsFile);
         this.bucket = bucket;
+        this.blobName = blobName;
+
+        System.out.println("FOUND BUCKET! " + bucket);
     }
 
 
@@ -93,7 +94,86 @@ public class AmazonS3Source extends UnarySource<String> {
         this.encoding = that.getEncoding();
         this.bucket = that.getBucket();
         this.s3Client = that.getS3Client();
+        this.blobName = that.getBlobName();
     }
+
+        // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/s3/model/GetObjectRequest.html
+        private static GetObjectRequest getGetObjectRequest(String bucketName, String blobName ) {
+            return GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(blobName)
+                .build();
+        }
+    
+    
+        public String getInputUrl() {
+            return inputUrl;
+        }
+    
+    
+        public String getEncoding() {
+            return encoding;
+        }
+    
+    
+        public S3Client getS3Client() {
+            return s3Client;
+        }
+    
+    
+        public String getBucket() {
+            return bucket;
+        }
+    
+        public String getBlobName() {
+            return blobName;
+        }
+
+        //TODO ADDED TO BE ABLE TO run the GetEstemitesBytesPerLine. Delete when not used anymore.
+
+        public OptionalDouble GetEstimateBytesPerLine() {
+
+            ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getGetObjectRequest(bucket, blobName));    
+            
+            final int KiB = 1024;
+            final int MiB = KiB * 1024; // 1 MiB
+    
+            try (LimitedInputStream lis = new LimitedInputStream(responseInputStream, 1 * MiB)) {
+                final BufferedReader bufferedReader = new BufferedReader(
+                    new InputStreamReader(lis, AmazonS3Source.this.encoding)
+                );
+    
+                // Read as much as possible.
+                char[] cbuf = new char[1024];
+                int numReadChars, numLineFeeds = 0;
+                while ((numReadChars = bufferedReader.read(cbuf)) != -1) {
+    
+                    System.out.println("PRINTING NUM READ CHARS: " + numReadChars);
+                    
+                    for (int i = 0; i < numReadChars; i++) {
+                        if (cbuf[i] == '\n') {
+                            System.out.println("PRINTING new line character: " + cbuf[i]);
+                            numLineFeeds++;
+                        }
+                        System.out.println("PRINTING character: " + cbuf[i]);
+                    }
+                }
+    
+                if (numLineFeeds == 0) {
+                    AmazonS3Source.this.logger.warn("Could not find any newline character in {}.", AmazonS3Source.this.inputUrl);
+                    return OptionalDouble.empty();
+                }
+    
+                return OptionalDouble.of((double) lis.getNumReadBytes() / numLineFeeds);
+            }
+    
+            catch (IOException e) {
+                AmazonS3Source.this.logger.error("Could not estimate bytes per line of an input file.", e);
+            }
+    
+            return OptionalDouble.empty();
+        }
+    
 
     
     /**
@@ -169,15 +249,10 @@ public class AmazonS3Source extends UnarySource<String> {
             timeMeasurement.stop();
             return cardinalityEstimate;
         }
-    }
-        
 
 
 
-
-
-
-    private OptionalDouble estimateBytesPerLine(String blobName) {
+    private OptionalDouble estimateBytesPerLine() {
 
         ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getGetObjectRequest(bucket, blobName));    
         
@@ -193,15 +268,11 @@ public class AmazonS3Source extends UnarySource<String> {
             char[] cbuf = new char[1024];
             int numReadChars, numLineFeeds = 0;
             while ((numReadChars = bufferedReader.read(cbuf)) != -1) {
-
-                System.out.println("PRINTING NUM READ CHARS: " + numReadChars);
                 
                 for (int i = 0; i < numReadChars; i++) {
                     if (cbuf[i] == '\n') {
-                        System.out.println("PRINTING new line character: " + cbuf[i]);
                         numLineFeeds++;
                     }
-                    System.out.println("PRINTING character: " + cbuf[i]);
                 }
             }
 
@@ -219,36 +290,16 @@ public class AmazonS3Source extends UnarySource<String> {
 
         return OptionalDouble.empty();
     }
-
-
-
-    // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/s3/model/GetObjectRequest.html
-    private static GetObjectRequest getGetObjectRequest(String bucketName, String blobName ) {
-        return GetObjectRequest.builder()
-            .bucket(bucketName)
-            .key(blobName)
-            .build();
     }
+        
 
 
-    public String getInputUrl() {
-        return inputUrl;
-    }
 
 
-    public String getEncoding() {
-        return encoding;
-    }
 
 
-    public S3Client getS3Client() {
-        return s3Client;
-    }
 
 
-    public String getBucket() {
-        return bucket;
-    }
 
 
 
