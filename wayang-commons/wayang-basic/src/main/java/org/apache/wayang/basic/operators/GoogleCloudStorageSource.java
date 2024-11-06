@@ -3,6 +3,7 @@ package org.apache.wayang.basic.operators;
 
 import com.google.cloud.storage.Bucket;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.ReadChannel;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -10,12 +11,15 @@ import com.google.cloud.storage.StorageOptions;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 
+import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
 
 
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.LimitedInputStream;
-
+import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,29 +39,23 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
     private final String inputUrl;
 
     private final String encoding;
-    private final Storage storage;
-    private final Bucket bucket;
+    private final String bucket;
+    private final String blobName;
+    private final String filePathToCredentialsFile;
 
-    public GoogleCloudStorageSource(String bucket, String filePathToCredentialsFile, String inputUrl) throws IOException {
-        this(bucket, filePathToCredentialsFile, inputUrl, "UTF-8");
+    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl) throws IOException {
+        this(bucket, blobName, filePathToCredentialsFile, inputUrl, "UTF-8");
     }
 
 
-    public GoogleCloudStorageSource(String bucket, String filePathToCredentialsFile, String inputUrl, String encoding) throws IOException {
+    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl, String encoding) throws IOException {
         super(DataSetType.createDefault(String.class));
         this.inputUrl = inputUrl;
         this.encoding = encoding;
-
-        this.storage = getStorage(filePathToCredentialsFile);
-
-        this.bucket = storage.get(bucket);
+        this.filePathToCredentialsFile =filePathToCredentialsFile;
+        this.bucket = bucket;
+        this.blobName = blobName;
     }
-
-        //throw an error if bucket does not exists
-    //     if (bucket == null) {
-    //         throw new Exception("Can not connect to bucket, bucket is not found with name " + bucket);
-    //     }
-    // }
 
     /**
      * Copies an instance (exclusive of broadcasts).
@@ -66,112 +64,160 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
      */
     public GoogleCloudStorageSource(GoogleCloudStorageSource that) {
         super(that);
+        this.filePathToCredentialsFile =that.getfilePathToCredentialsFile();
         this.inputUrl = that.getInputUrl();
         this.encoding = that.getEncoding();
         this.bucket = that.getBucket();
-        this.storage = that.getStorage();
+        this.blobName =that.getBlobName();
+    
 
-        //throw an error if bucket does not exists
-        //     if (bucket == null) {
-        //         throw new Exception("Can not connect to bucket, bucket is not found with name " + bucket);
-        //     }
-        // }
 
     }
 
-    // @Override
-    // public Optional<org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
-    //         final int outputIndex,
-    //         final Configuration configuration) {
-    //     Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-    //     return Optional.of(new GoogleTextFileSource.CardinalityEstimator());
-    // }
+    /**
+     * Custom {@link org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator} for {@link FlatMapOperator}s.
+     */
+    protected class CardinalityEstimator implements org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator {
 
-    public OptionalDouble GetEstimateBytesPerLine(String blobName) {
-        return this.estimateBytesPerLine(blobName);
+    public final CardinalityEstimate FALLBACK_ESTIMATE = new CardinalityEstimate(1000L, 100000000L, 0.7);
+
+    public static final double CORRECTNESS_PROBABILITY = 0.95d;
+
+    /**
+     * We expect selectivities to be correct within a factor of {@value #EXPECTED_ESTIMATE_DEVIATION}.
+     */
+    public static final double EXPECTED_ESTIMATE_DEVIATION = 0.05;
+
+    @Override
+    public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
+        Validate.isTrue(GoogleCloudStorageSource.this.getNumInputs() == inputEstimates.length);
+
+        // see Job for StopWatch measurements
+        final TimeMeasurement timeMeasurement = optimizationContext.getJob().getStopWatch().start(
+                "Optimization", "Cardinality&Load Estimation", "Push Estimation", "Estimate source cardinalities"
+        );
+
+        // Query the job cache first to see if there is already an estimate.
+        String jobCacheKey = String.format("%s.estimate(%s)", this.getClass().getCanonicalName(), GoogleCloudStorageSource.this.inputUrl);
+        CardinalityEstimate cardinalityEstimate = optimizationContext.queryJobCache(jobCacheKey, CardinalityEstimate.class);
+
+        if (cardinalityEstimate != null) return  cardinalityEstimate;
+
+        // Otherwise calculate the cardinality.
+        // First, inspect the size of the file and its line sizes.
+
+
+        OptionalLong fileSize = getBlobByteSize();
+
+
+        if (!fileSize.isPresent()) {
+            GoogleCloudStorageSource.this.logger.warn("Could not determine size of {}... deliver fallback estimate.",
+                GoogleCloudStorageSource.this.inputUrl);
+            timeMeasurement.stop();
+            return this.FALLBACK_ESTIMATE;
+
+        } else if (fileSize.getAsLong() == 0L) {
+            timeMeasurement.stop();
+            return new CardinalityEstimate(0L, 0L, 1d);
+        }
+
+        //TODO how to pass down blob name? Should maybe be in consutrctor?
+
+        OptionalDouble bytesPerLine = this.estimateBytesPerLine();
+        if (!bytesPerLine.isPresent()) {
+            GoogleCloudStorageSource.this.logger.warn("Could not determine average line size of {}... deliver fallback estimate.",
+                    GoogleCloudStorageSource.this.inputUrl);
+            timeMeasurement.stop();
+            return this.FALLBACK_ESTIMATE;
+        }
+
+        // Extrapolate a cardinality estimate for the complete file.
+        double numEstimatedLines = fileSize.getAsLong() / bytesPerLine.getAsDouble();
+        double expectedDeviation = numEstimatedLines * EXPECTED_ESTIMATE_DEVIATION;
+        cardinalityEstimate = new CardinalityEstimate(
+                (long) (numEstimatedLines - expectedDeviation),
+                (long) (numEstimatedLines + expectedDeviation),
+                CORRECTNESS_PROBABILITY
+        );
+
+        // Cache the result, so that it will not be recalculated again.
+        optimizationContext.putIntoJobCache(jobCacheKey, cardinalityEstimate);
+
+        timeMeasurement.stop();
+        return cardinalityEstimate;
     }
+            /**
+         * Estimate the number of bytes that are in each line of a given file.
+         *
+         * @return the average number of bytes per line if it could be determined
+         */
+        private OptionalDouble estimateBytesPerLine() {
+            try{
+                Blob blob = getBlob();
+        
+            if (blob == null || !blob.exists()) {
+                return OptionalDouble.empty();
+            }
 
-            //TODO implement for google
-    public OptionalLong getBlobByteSize() { return null;
+            final int KiB = 1024;
+            final int MiB = KiB * 1024; // 1 MiB
 
-        /*
+
+                try (LimitedInputStream lis = new LimitedInputStream(Channels.newInputStream(blob.reader()), 1 * MiB)) {
+
+                    final BufferedReader bufferedReader = new BufferedReader(
+                        new InputStreamReader(lis, GoogleCloudStorageSource.this.encoding)
+                    );
+
+                    // Read as much as possible.
+                    char[] cbuf = new char[1024];
+                    int numReadChars, numLineFeeds = 0;
+                    while ((numReadChars = bufferedReader.read(cbuf)) != -1) {
+
+                        System.out.println("PRINTING NUM READ CHARS: " + numReadChars);
+                        
+                        for (int i = 0; i < numReadChars; i++) {
+                            if (cbuf[i] == '\n') {
+                                System.out.println("PRINTING new line character: " + cbuf[i]);
+                                numLineFeeds++;
+                            }
+                            System.out.println("PRINTING character: " + cbuf[i]);
+                        }
+                    }
+
+                    if (numLineFeeds == 0) {
+                        GoogleCloudStorageSource.this.logger.warn("Could not find any newline character in {}.", GoogleCloudStorageSource.this.inputUrl);
+                        return OptionalDouble.empty();
+                    }
+
+                    return OptionalDouble.of((double) lis.getNumReadBytes() / numLineFeeds);
+
+
+                }
+            }
+
+            catch (Exception e) {
+                GoogleCloudStorageSource.this.logger.error("Could not estimate bytes per line of an input file.", e);
+            }
+
+        return OptionalDouble.empty();
+
+        }
+}    
+
+
+    public OptionalLong getBlobByteSize() {
     try {
-        HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
-        .bucket(getBucket())
-        .key(getBlobName())
-        .build();
-
-    HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
-    return OptionalLong.of(headObjectResponse.contentLength()); // returns the size in bytes
+        
+        return OptionalLong.of(getBlob().getSize());
     } 
     catch (Exception ex) {
         return OptionalLong.empty();
     }
-
-     */
     
     }
-
-    //TODO needs this for both cloud opeartors
-    public InputStream getInputStream() { 
-        /*
-        return s3Client.getObject(getGetObjectRequest(bucket, blobName));
-         */
-        return null;
-    }
-
-    /**
-     * Estimate the number of bytes that are in each line of a given file.
-     *
-     * @return the average number of bytes per line if it could be determined
-     */
-    private OptionalDouble estimateBytesPerLine(String blobName) {
-        Blob blob = bucket.get(blobName);
-
-        if (blob == null || !blob.exists()) {
-            return OptionalDouble.empty();
-        }
-
-        final int KiB = 1024;
-        final int MiB = KiB * 1024; // 1 MiB
-
-
-        try (LimitedInputStream lis = new LimitedInputStream(Channels.newInputStream(blob.reader()), 1 * MiB)) {
-
-            final BufferedReader bufferedReader = new BufferedReader(
-                new InputStreamReader(lis, GoogleCloudStorageSource.this.encoding)
-            );
-
-            // Read as much as possible.
-            char[] cbuf = new char[1024];
-            int numReadChars, numLineFeeds = 0;
-            while ((numReadChars = bufferedReader.read(cbuf)) != -1) {
-
-                System.out.println("PRINTING NUM READ CHARS: " + numReadChars);
-                
-                for (int i = 0; i < numReadChars; i++) {
-                    if (cbuf[i] == '\n') {
-                        System.out.println("PRINTING new line character: " + cbuf[i]);
-                        numLineFeeds++;
-                    }
-                    System.out.println("PRINTING character: " + cbuf[i]);
-                }
-            }
-
-            if (numLineFeeds == 0) {
-                GoogleCloudStorageSource.this.logger.warn("Could not find any newline character in {}.", GoogleCloudStorageSource.this.inputUrl);
-                return OptionalDouble.empty();
-            }
-
-            return OptionalDouble.of((double) lis.getNumReadBytes() / numLineFeeds);
-
-
-        }
-        catch (IOException e) {
-            GoogleCloudStorageSource.this.logger.error("Could not estimate bytes per line of an input file.", e);
-        }
-
-        return OptionalDouble.empty();
+    public InputStream getInputStream() throws IOException { 
+        return Channels.newInputStream(getBlob().reader());
 
     }
 
@@ -183,15 +229,23 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
         return this.encoding;
     }    
 
-    public Storage getStorage(){
-        return this.storage;
-    }
-
-    public Bucket getBucket() {
+    public String getBucket() {
         return this.bucket;
     }
-    
 
+    public String getBlobName(){
+        return this.blobName;
+    }
+
+    public String getfilePathToCredentialsFile(){
+        return this.filePathToCredentialsFile;
+    }
+
+    public Blob getBlob() throws IOException{
+        Storage storage = getStorage(getfilePathToCredentialsFile());
+        return storage.get(bucket, blobName);
+    }
+    
     
     private static Storage getStorage(String filePathToCredentialsFile) throws IOException {
         FileInputStream fileInputStream = new FileInputStream(filePathToCredentialsFile);
