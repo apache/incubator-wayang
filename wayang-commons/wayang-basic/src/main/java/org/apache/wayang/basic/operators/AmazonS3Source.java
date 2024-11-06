@@ -30,8 +30,10 @@ import org.json.JSONObject;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -39,7 +41,10 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.InvalidObjectStateException;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.BufferedReader;
@@ -62,25 +67,25 @@ public class AmazonS3Source extends UnarySource<String> {
 
     private final String encoding;
 
-    private final S3Client s3Client;
+    //private final S3Client s3Client;
     private final String bucket;
     private final String blobName;
+    private final String filePathToCredentialsFile;
 
-    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl) throws IOException {
+    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl) {
         this(bucket, blobName, filePathToCredentialsFile, inputUrl, "UTF-8");
     }
     
 
-    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl, String encoding) throws IOException {
+    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl, String encoding) {
         super(DataSetType.createDefault(String.class));
         this.inputUrl = inputUrl;
         this.encoding = encoding;
 
-        this.s3Client = getS3Client(filePathToCredentialsFile);
+        this.filePathToCredentialsFile = filePathToCredentialsFile;
         this.bucket = bucket;
         this.blobName = blobName;
 
-        System.out.println("FOUND BUCKET! " + bucket);
     }
 
 
@@ -95,8 +100,9 @@ public class AmazonS3Source extends UnarySource<String> {
         this.inputUrl = that.getInputUrl();
         this.encoding = that.getEncoding();
         this.bucket = that.getBucket();
-        this.s3Client = that.getS3Client();
         this.blobName = that.getBlobName();
+        this.filePathToCredentialsFile = that.getFilePathToCredentialsFile();
+
     }
 
         // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/s3/model/GetObjectRequest.html
@@ -116,10 +122,9 @@ public class AmazonS3Source extends UnarySource<String> {
         public String getEncoding() {
             return encoding;
         }
-    
-    
-        public S3Client getS3Client() {
-            return s3Client;
+
+        public String getFilePathToCredentialsFile() {
+            return filePathToCredentialsFile;
         }
     
     
@@ -133,14 +138,13 @@ public class AmazonS3Source extends UnarySource<String> {
 
         //TODO implement for google
         public OptionalLong getBlobByteSize() {
-
         try {
             HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
             .bucket(getBucket())
             .key(getBlobName())
             .build();
 
-        HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
+        HeadObjectResponse headObjectResponse = getS3Client(filePathToCredentialsFile).headObject(headObjectRequest);
         return OptionalLong.of(headObjectResponse.contentLength()); // returns the size in bytes
         } 
         catch (Exception ex) {
@@ -150,52 +154,9 @@ public class AmazonS3Source extends UnarySource<String> {
         }
 
         //TODO needs this for both cloud opeartors
-        public InputStream getInputStream() {
-            return s3Client.getObject(getGetObjectRequest(bucket, blobName));
+        public InputStream getInputStream() throws Exception {
+            return getS3Client(filePathToCredentialsFile).getObject(getGetObjectRequest(bucket, blobName));
         }
-
-        //TODO ADDED TO BE ABLE TO run the GetEstemitesBytesPerLine. Delete when not used anymore.
-        public OptionalDouble GetEstimateBytesPerLine() {
-
-            final int KiB = 1024;
-            final int MiB = KiB * 1024; // 1 MiB
-    
-            try (LimitedInputStream lis = new LimitedInputStream(getInputStream(), 1 * MiB)) {
-                final BufferedReader bufferedReader = new BufferedReader(
-                    new InputStreamReader(lis, AmazonS3Source.this.encoding)
-                );
-    
-                // Read as much as possible.
-                char[] cbuf = new char[1024];
-                int numReadChars, numLineFeeds = 0;
-                while ((numReadChars = bufferedReader.read(cbuf)) != -1) {
-    
-                    System.out.println("PRINTING NUM READ CHARS: " + numReadChars);
-                    
-                    for (int i = 0; i < numReadChars; i++) {
-                        if (cbuf[i] == '\n') {
-                            System.out.println("PRINTING new line character: " + cbuf[i]);
-                            numLineFeeds++;
-                        }
-                        System.out.println("PRINTING character: " + cbuf[i]);
-                    }
-                }
-    
-                if (numLineFeeds == 0) {
-                    AmazonS3Source.this.logger.warn("Could not find any newline character in {}.", AmazonS3Source.this.inputUrl);
-                    return OptionalDouble.empty();
-                }
-    
-                return OptionalDouble.of((double) lis.getNumReadBytes() / numLineFeeds);
-            }
-    
-            catch (IOException e) {
-                AmazonS3Source.this.logger.error("Could not estimate bytes per line of an input file.", e);
-            }
-    
-            return OptionalDouble.empty();
-        }
-    
 
     
     /**
@@ -221,6 +182,8 @@ public class AmazonS3Source extends UnarySource<String> {
                     "Optimization", "Cardinality&Load Estimation", "Push Estimation", "Estimate source cardinalities"
             );
 
+            //TODO remove reference in JobCacheKey to this.inputUrl to something unique!
+
             // Query the job cache first to see if there is already an estimate.
             String jobCacheKey = String.format("%s.estimate(%s)", this.getClass().getCanonicalName(), AmazonS3Source.this.inputUrl);
             CardinalityEstimate cardinalityEstimate = optimizationContext.queryJobCache(jobCacheKey, CardinalityEstimate.class);
@@ -232,7 +195,7 @@ public class AmazonS3Source extends UnarySource<String> {
 
             //TODO: verify that filesize in FileSystems works with Cloud operator. Otherwise use built in method for Cloud operators to get filesize. Should we add to filesystems class or just use local method to get blob size. 
             //TODO: AWS and GOOGLE has built in.
-            OptionalLong fileSize = FileSystems.getFileSize(AmazonS3Source.this.inputUrl);
+            OptionalLong fileSize = getBlobByteSize();
 
 
             if (!fileSize.isPresent()) {
@@ -276,54 +239,47 @@ public class AmazonS3Source extends UnarySource<String> {
 
     private OptionalDouble estimateBytesPerLine() {
 
-        ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getGetObjectRequest(bucket, blobName));    
+        try {
+            ResponseInputStream<GetObjectResponse> responseInputStream = getS3Client(filePathToCredentialsFile).getObject(getGetObjectRequest(bucket, blobName));    
         
-        final int KiB = 1024;
-        final int MiB = KiB * 1024; // 1 MiB
-
-        try (LimitedInputStream lis = new LimitedInputStream(responseInputStream, 1 * MiB)) {
-            final BufferedReader bufferedReader = new BufferedReader(
-                new InputStreamReader(lis, AmazonS3Source.this.encoding)
-            );
-
-            // Read as much as possible.
-            char[] cbuf = new char[1024];
-            int numReadChars, numLineFeeds = 0;
-            while ((numReadChars = bufferedReader.read(cbuf)) != -1) {
-                
-                for (int i = 0; i < numReadChars; i++) {
-                    if (cbuf[i] == '\n') {
-                        numLineFeeds++;
+            final int KiB = 1024;
+            final int MiB = KiB * 1024; // 1 MiB
+    
+            try (LimitedInputStream lis = new LimitedInputStream(responseInputStream, 1 * MiB)) {
+                final BufferedReader bufferedReader = new BufferedReader(
+                    new InputStreamReader(lis, AmazonS3Source.this.encoding)
+                );
+    
+                // Read as much as possible.
+                char[] cbuf = new char[1024];
+                int numReadChars, numLineFeeds = 0;
+                while ((numReadChars = bufferedReader.read(cbuf)) != -1) {
+                    
+                    for (int i = 0; i < numReadChars; i++) {
+                        if (cbuf[i] == '\n') {
+                            numLineFeeds++;
+                        }
                     }
                 }
+    
+                if (numLineFeeds == 0) {
+                    AmazonS3Source.this.logger.warn("Could not find any newline character in {}.", AmazonS3Source.this.inputUrl);
+                    return OptionalDouble.empty();
+                }
+    
+                return OptionalDouble.of((double) lis.getNumReadBytes() / numLineFeeds);
             }
-
-            if (numLineFeeds == 0) {
-                AmazonS3Source.this.logger.warn("Could not find any newline character in {}.", AmazonS3Source.this.inputUrl);
-                return OptionalDouble.empty();
-            }
-
-            return OptionalDouble.of((double) lis.getNumReadBytes() / numLineFeeds);
         }
 
-        catch (IOException e) {
+       
+        catch (Exception e) {
             AmazonS3Source.this.logger.error("Could not estimate bytes per line of an input file.", e);
         }
 
         return OptionalDouble.empty();
+        }
     }
-    }
-        
-
-
-
-
-
-
-
-
-
-
+    
 
     private static S3Client getS3Client(String filePathToCredentialsFile) throws IOException{
         String credentialsString = new String(
@@ -342,8 +298,6 @@ public class AmazonS3Source extends UnarySource<String> {
                 .region(region)
                 .credentialsProvider(credentialsProvider)
                 .build();
-
-
     }
 
     private static String getAccessKey(JSONObject credentialsJson){
