@@ -43,12 +43,12 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
     private final String blobName;
     private final String filePathToCredentialsFile;
 
-    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl) throws IOException {
+    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl){
         this(bucket, blobName, filePathToCredentialsFile, inputUrl, "UTF-8");
     }
 
 
-    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl, String encoding) throws IOException {
+    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl, String encoding) {
         super(DataSetType.createDefault(String.class));
         this.inputUrl = inputUrl;
         this.encoding = encoding;
