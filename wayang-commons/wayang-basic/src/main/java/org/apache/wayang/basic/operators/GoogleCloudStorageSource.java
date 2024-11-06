@@ -7,6 +7,8 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
 
@@ -20,11 +22,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.OptionalDouble;
-
-
-
+import java.util.OptionalLong;
 import java.nio.channels.Channels;
 public class GoogleCloudStorageSource extends UnarySource<String> {
 
@@ -88,6 +89,35 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
 
     public OptionalDouble GetEstimateBytesPerLine(String blobName) {
         return this.estimateBytesPerLine(blobName);
+    }
+
+            //TODO implement for google
+    public OptionalLong getBlobByteSize() { return null;
+
+        /*
+    try {
+        HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+        .bucket(getBucket())
+        .key(getBlobName())
+        .build();
+
+    HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
+    return OptionalLong.of(headObjectResponse.contentLength()); // returns the size in bytes
+    } 
+    catch (Exception ex) {
+        return OptionalLong.empty();
+    }
+
+     */
+    
+    }
+
+    //TODO needs this for both cloud opeartors
+    public InputStream getInputStream() { 
+        /*
+        return s3Client.getObject(getGetObjectRequest(bucket, blobName));
+         */
+        return null;
     }
 
     /**

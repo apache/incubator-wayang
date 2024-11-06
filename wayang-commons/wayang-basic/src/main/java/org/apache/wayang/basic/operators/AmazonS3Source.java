@@ -37,6 +37,8 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
@@ -129,16 +131,36 @@ public class AmazonS3Source extends UnarySource<String> {
             return blobName;
         }
 
-        //TODO ADDED TO BE ABLE TO run the GetEstemitesBytesPerLine. Delete when not used anymore.
+        //TODO implement for google
+        public OptionalLong getBlobByteSize() {
 
+        try {
+            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+            .bucket(getBucket())
+            .key(getBlobName())
+            .build();
+
+        HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
+        return OptionalLong.of(headObjectResponse.contentLength()); // returns the size in bytes
+        } 
+        catch (Exception ex) {
+            return OptionalLong.empty();
+        }
+        
+        }
+
+        //TODO needs this for both cloud opeartors
+        public InputStream getInputStream() {
+            return s3Client.getObject(getGetObjectRequest(bucket, blobName));
+        }
+
+        //TODO ADDED TO BE ABLE TO run the GetEstemitesBytesPerLine. Delete when not used anymore.
         public OptionalDouble GetEstimateBytesPerLine() {
 
-            ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getGetObjectRequest(bucket, blobName));    
-            
             final int KiB = 1024;
             final int MiB = KiB * 1024; // 1 MiB
     
-            try (LimitedInputStream lis = new LimitedInputStream(responseInputStream, 1 * MiB)) {
+            try (LimitedInputStream lis = new LimitedInputStream(getInputStream(), 1 * MiB)) {
                 final BufferedReader bufferedReader = new BufferedReader(
                     new InputStreamReader(lis, AmazonS3Source.this.encoding)
                 );
@@ -336,9 +358,6 @@ public class AmazonS3Source extends UnarySource<String> {
         String regionString = credentialsJson.getString("region");
         return Region.of(regionString);
     }
-
-
-
 
 
     
