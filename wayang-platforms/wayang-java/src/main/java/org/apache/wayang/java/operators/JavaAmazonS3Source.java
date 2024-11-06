@@ -56,12 +56,10 @@ public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionO
         assert outputs.length == this.getNumOutputs();
 
         try {
-
-
-            //TODO fix resssource leak
-            Stream<String> lines = new BufferedReader(new InputStreamReader(super.getInputStream())).lines(); 
+            
+            BufferedReader buffereadReder = new BufferedReader(new InputStreamReader(super.getInputStream()));
+            Stream<String> lines = buffereadReder.lines(); 
             ((StreamChannel.Instance) outputs[0]).accept(lines);
-
         }
         catch (Exception e) {
             throw new WayangException("Failed to read file from Amazon storage with error", e);
@@ -82,7 +80,7 @@ public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionO
                 "wayang.java.amazons3source.load.main", javaExecutor.getConfiguration()
         ));
 
-        
+
         outputs[0].getLineage().addPredecessor(mainLineageNode);
 
         return prepareLineageNode.collectAndMark();
