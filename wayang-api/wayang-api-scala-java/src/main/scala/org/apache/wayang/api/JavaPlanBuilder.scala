@@ -63,6 +63,29 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
   createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
 
   /**
+    * Read a text file from a Google Cloud Storage bucket and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param bucket the bucket name of the file
+    * @param blobName the name of the blob within the bucket, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuantaBuilder]] for the file
+    */
+  def readGoogleCloudStorageFile(bucket: String, blobName: String, filePathToCredentialsFile: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+  createSourceBuilder(new GoogleCloudStorageSource(bucket, blobName, filePathToCredentialsFile))(ClassTag(classOf[String]))
+
+  /**
+    * Read a text file from a Amazon S3 bucket and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param bucket the bucket name of the file
+    * @param blobName the name of the blob within the bucket, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuantaBuilder]] for the file
+    */
+  def readAmazonS3File(bucket: String, blobName: String, filePathToCredentialsFile: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+  createSourceBuilder(new AmazonS3Source(bucket, blobName, filePathToCredentialsFile))(ClassTag(classOf[String]))
+
+
+  /**
    * Read a textmessages from a Kafka topic and provide it as a dataset of [[String]]s, one per message.
    *
    * @param topicName the topic's name
