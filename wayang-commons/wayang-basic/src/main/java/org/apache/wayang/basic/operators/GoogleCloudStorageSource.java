@@ -36,21 +36,18 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
     private final Logger logger = LogManager.getLogger(this.getClass());
 
     //TODO is this needed?
-    private final String inputUrl;
-
     private final String encoding;
     private final String bucket;
     private final String blobName;
     private final String filePathToCredentialsFile;
 
-    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl){
-        this(bucket, blobName, filePathToCredentialsFile, inputUrl, "UTF-8");
+    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile){
+        this(bucket, blobName, filePathToCredentialsFile, "UTF-8");
     }
 
 
-    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl, String encoding) {
+    public GoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String encoding) {
         super(DataSetType.createDefault(String.class));
-        this.inputUrl = inputUrl;
         this.encoding = encoding;
         this.filePathToCredentialsFile =filePathToCredentialsFile;
         this.bucket = bucket;
@@ -65,7 +62,6 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
     public GoogleCloudStorageSource(GoogleCloudStorageSource that) {
         super(that);
         this.filePathToCredentialsFile =that.getfilePathToCredentialsFile();
-        this.inputUrl = that.getInputUrl();
         this.encoding = that.getEncoding();
         this.bucket = that.getBucket();
         this.blobName =that.getBlobName();
@@ -98,7 +94,7 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
         );
 
         // Query the job cache first to see if there is already an estimate.
-        String jobCacheKey = String.format("%s.estimate(%s)", this.getClass().getCanonicalName(), GoogleCloudStorageSource.this.inputUrl);
+        String jobCacheKey = String.format("%s.estimate(%s)", this.getClass().getCanonicalName(), GoogleCloudStorageSource.this.blobName);
         CardinalityEstimate cardinalityEstimate = optimizationContext.queryJobCache(jobCacheKey, CardinalityEstimate.class);
 
         if (cardinalityEstimate != null) return  cardinalityEstimate;
@@ -112,7 +108,7 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
 
         if (!fileSize.isPresent()) {
             GoogleCloudStorageSource.this.logger.warn("Could not determine size of {}... deliver fallback estimate.",
-                GoogleCloudStorageSource.this.inputUrl);
+                GoogleCloudStorageSource.this.blobName);
             timeMeasurement.stop();
             return this.FALLBACK_ESTIMATE;
 
@@ -126,7 +122,7 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
         OptionalDouble bytesPerLine = this.estimateBytesPerLine();
         if (!bytesPerLine.isPresent()) {
             GoogleCloudStorageSource.this.logger.warn("Could not determine average line size of {}... deliver fallback estimate.",
-                    GoogleCloudStorageSource.this.inputUrl);
+                    GoogleCloudStorageSource.this.blobName);
             timeMeasurement.stop();
             return this.FALLBACK_ESTIMATE;
         }
@@ -186,7 +182,7 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
                     }
 
                     if (numLineFeeds == 0) {
-                        GoogleCloudStorageSource.this.logger.warn("Could not find any newline character in {}.", GoogleCloudStorageSource.this.inputUrl);
+                        GoogleCloudStorageSource.this.logger.warn("Could not find any newline character in {}.", GoogleCloudStorageSource.this.blobName);
                         return OptionalDouble.empty();
                     }
 
@@ -221,9 +217,6 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
 
     }
 
-    public String getInputUrl() {
-        return this.inputUrl;
-    }
 
     public String getEncoding() {
         return this.encoding;

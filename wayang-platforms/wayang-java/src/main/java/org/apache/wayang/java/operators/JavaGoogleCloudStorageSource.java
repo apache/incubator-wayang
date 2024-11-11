@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource implements JavaExecutionOperator {
     private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSource.class);
 
-    public JavaGoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl) throws IOException {
-        super(bucket, blobName, filePathToCredentialsFile, inputUrl);
+    public JavaGoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile) throws IOException {
+        super(bucket, blobName, filePathToCredentialsFile);
     }
 
     public JavaGoogleCloudStorageSource(GoogleCloudStorageSource that) {
