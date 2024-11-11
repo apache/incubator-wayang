@@ -30,7 +30,7 @@ public class AmazonS3SourceMapping implements Mapping {
     private SubplanPattern createSubplanPattern(){
         final OperatorPattern operatorPattern = new OperatorPattern(
                 "source", 
-                new org.apache.wayang.basic.operators.AmazonS3Source((String) null, (String) null, (String) null, (String) null),
+                new org.apache.wayang.basic.operators.AmazonS3Source((String) null, (String) null, (String) null),
                 false
         );
         return SubplanPattern.createSingleton(operatorPattern);

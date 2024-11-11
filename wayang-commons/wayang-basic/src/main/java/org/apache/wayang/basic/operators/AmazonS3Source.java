@@ -63,7 +63,6 @@ public class AmazonS3Source extends UnarySource<String> {
     private final Logger logger = LogManager.getLogger(this.getClass());
 
     //NOTE; TODO how is input url used? Or what is input url
-    private final String inputUrl;
 
     private final String encoding;
 
@@ -72,16 +71,14 @@ public class AmazonS3Source extends UnarySource<String> {
     private final String blobName;
     private final String filePathToCredentialsFile;
 
-    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl) {
-        this(bucket, blobName, filePathToCredentialsFile, inputUrl, "UTF-8");
+    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile) {
+        this(bucket, blobName, filePathToCredentialsFile, "UTF-8");
     }
     
 
-    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl, String encoding) {
+    public AmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String encoding) {
         super(DataSetType.createDefault(String.class));
-        this.inputUrl = inputUrl;
         this.encoding = encoding;
-
         this.filePathToCredentialsFile = filePathToCredentialsFile;
         this.bucket = bucket;
         this.blobName = blobName;
@@ -97,7 +94,6 @@ public class AmazonS3Source extends UnarySource<String> {
 
     public AmazonS3Source(AmazonS3Source that) {
         super(that);
-        this.inputUrl = that.getInputUrl();
         this.encoding = that.getEncoding();
         this.bucket = that.getBucket();
         this.blobName = that.getBlobName();
@@ -113,10 +109,6 @@ public class AmazonS3Source extends UnarySource<String> {
                 .build();
         }
     
-    
-        public String getInputUrl() {
-            return inputUrl;
-        }
     
     
         public String getEncoding() {
@@ -185,7 +177,7 @@ public class AmazonS3Source extends UnarySource<String> {
             //TODO remove reference in JobCacheKey to this.inputUrl to something unique!
 
             // Query the job cache first to see if there is already an estimate.
-            String jobCacheKey = String.format("%s.estimate(%s)", this.getClass().getCanonicalName(), AmazonS3Source.this.inputUrl);
+            String jobCacheKey = String.format("%s.estimate(%s)", this.getClass().getCanonicalName(), AmazonS3Source.this.blobName);
             CardinalityEstimate cardinalityEstimate = optimizationContext.queryJobCache(jobCacheKey, CardinalityEstimate.class);
 
             if (cardinalityEstimate != null) return  cardinalityEstimate;
@@ -200,7 +192,7 @@ public class AmazonS3Source extends UnarySource<String> {
 
             if (!fileSize.isPresent()) {
                 AmazonS3Source.this.logger.warn("Could not determine size of {}... deliver fallback estimate.",
-                        AmazonS3Source.this.inputUrl);
+                        AmazonS3Source.this.blobName);
                 timeMeasurement.stop();
                 return this.FALLBACK_ESTIMATE;
 
@@ -214,7 +206,7 @@ public class AmazonS3Source extends UnarySource<String> {
             OptionalDouble bytesPerLine = this.estimateBytesPerLine();
             if (!bytesPerLine.isPresent()) {
                 AmazonS3Source.this.logger.warn("Could not determine average line size of {}... deliver fallback estimate.",
-                        AmazonS3Source.this.inputUrl);
+                        AmazonS3Source.this.blobName);
                 timeMeasurement.stop();
                 return this.FALLBACK_ESTIMATE;
             }
@@ -263,7 +255,7 @@ public class AmazonS3Source extends UnarySource<String> {
                 }
     
                 if (numLineFeeds == 0) {
-                    AmazonS3Source.this.logger.warn("Could not find any newline character in {}.", AmazonS3Source.this.inputUrl);
+                    AmazonS3Source.this.logger.warn("Could not find any newline character in {}.", AmazonS3Source.this.blobName);
                     return OptionalDouble.empty();
                 }
     

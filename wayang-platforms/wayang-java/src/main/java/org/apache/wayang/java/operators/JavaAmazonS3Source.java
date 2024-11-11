@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory;
 public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionOperator {
     private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSource.class);
 
-    public JavaAmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile, String inputUrl) throws IOException {
-        super(bucket, blobName, filePathToCredentialsFile, inputUrl);
+    public JavaAmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile) throws IOException {
+        super(bucket, blobName, filePathToCredentialsFile);
     }
 
     public JavaAmazonS3Source(AmazonS3Source that) {
