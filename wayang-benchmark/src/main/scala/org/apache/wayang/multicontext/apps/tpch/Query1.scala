@@ -33,10 +33,10 @@ object Query1 {
 
   def main(args: Array[String]): Unit = {
 
-//    if (args.length != 2 || args.length != 4) {
-//      println("Usage: <lineitem-url> <delta> <optional-path-to-config-1> <optional-path-to-config-2>")
-//      System.exit(1)
-//    }
+    if (args.length != 2 && args.length != 4) {
+      println("Usage: <lineitem-url> <delta> <optional-path-to-config-1> <optional-path-to-config-2>")
+      System.exit(1)
+    }
 
     println("TPC-H querying #1 in multi context wayang!")
     println("Scala version:")
@@ -59,8 +59,8 @@ object Query1 {
     // 1|155190|7706|1|17|21168.23|0.04|0.02|N|O|1996-03-13|1996-02-12|1996-03-22|DELIVER IN PERSON|TRUCK|egular courts above the
     // 1|67310|7311|2|36|45983.16|0.09|0.06|N|O|1996-04-12|1996-02-28|1996-04-20|TAKE BACK RETURN|MAIL|ly final dependencies: slyly bold
     // ...
-    val lineItemFile = "file:///Users/zoi/Work/ITU/submissions/wayang-demo/GUI/wayang-demo-gui/files/lineitem.tbl"
-    val delta = 0
+    val lineItemFile = args(0)
+    val delta = args(1).toInt
 
     multiContextPlanBuilder
 

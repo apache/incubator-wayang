@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class create a {@link Aggregator} that generate aggregatorWrapper
+ * Class create a {@Link Aggregator} that generate aggregatorWrapper
  */
 public class WayangAggregator implements Aggregator<ListValue<WayangValue>> {
     private List<WayangValue> elements;

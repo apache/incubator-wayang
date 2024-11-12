@@ -23,7 +23,7 @@ import org.apache.flink.util.Collector;
 import org.apache.wayang.basic.data.Tuple2;
 
 /**
- * Wrapper of {@link CoGroupFunction} of Flink for use in Wayang
+ * Wrapper of {@Link CoGroupFunction} of Flink for use in Wayang
  */
 public class FlinkCoGroupFunction<InputType0, InputType1, OutputType> implements CoGroupFunction<InputType0, InputType1, OutputType> {
 

@@ -39,8 +39,8 @@ object WordCount {
       .withPlugin(Spark.basicPlugin())
       .withTextFileSink("file:///tmp/out11")
     val context2 = new MultiContext(configuration2)
-      .withPlugin(Java.basicPlugin())
-      .withTextFileSink("file:///tmp/out12.txt")
+      .withPlugin(Spark.basicPlugin())
+      .withTextFileSink("file:///tmp/out12")
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(this.getClass)

@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
- * Class create a {@link ConvergenceCriterion} that generate aggregatorWrapper
+ * Class create a {@Link ConvergenceCriterion} that generate aggregatorWrapper
  */
 public class WayangConvergenceCriterion<T>
         implements ConvergenceCriterion<WayangListValue>, Serializable {

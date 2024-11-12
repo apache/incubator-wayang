@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.util.function.Function;
 
 /**
- * Wrapper for {@link KeySelector}
+ * Wrapper for {@Link KeySelector}
  */
 public class KeySelectorFunction<T, K> implements KeySelector<T, K>, ResultTypeQueryable<K>, Serializable {
 
