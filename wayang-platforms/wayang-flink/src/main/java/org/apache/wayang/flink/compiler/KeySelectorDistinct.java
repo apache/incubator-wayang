@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.util.Base64;
 
 /**
- * Wrapper for {@Link KeySelector}
+ * Wrapper for {@link KeySelector}
  */
 public class KeySelectorDistinct<T> implements KeySelector<T, String>, Serializable {
 

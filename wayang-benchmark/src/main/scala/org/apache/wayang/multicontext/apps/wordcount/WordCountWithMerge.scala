@@ -21,6 +21,7 @@ package org.apache.wayang.multicontext.apps.wordcount
 
 import org.apache.wayang.api.{MultiContext, MultiContextPlanBuilder}
 import org.apache.wayang.core.api.{Configuration, WayangContext}
+import org.apache.wayang.flink.Flink
 import org.apache.wayang.java.Java
 import org.apache.wayang.multicontext.apps.loadConfig
 import org.apache.wayang.spark.Spark
@@ -36,9 +37,11 @@ object WordCountWithMerge {
 
     val context1 = new MultiContext(configuration1)
       .withPlugin(Java.basicPlugin())
+      .withPlugin(Flink.basicPlugin())
       .withMergeFileSink("file:///tmp/out11")   // The mergeContext will read the output of context 1 from here
     val context2 = new MultiContext(configuration2)
       .withPlugin(Java.basicPlugin())
+      .withPlugin(Spark.basicPlugin())
       .withMergeFileSink("file:///tmp/out12")   // The mergeContext will read the output of context 2 from here
 
     val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))

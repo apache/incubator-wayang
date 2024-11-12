@@ -23,7 +23,7 @@ import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.configuration.Configuration;
 
 /**
- * Class create a {@Link FilterFunction} for use inside of the LoopOperators
+ * Class create a {@link FilterFunction} for use inside of the LoopOperators
  */
 public class WayangFilterCriterion<T> extends AbstractRichFunction implements FilterFunction<T> {
 

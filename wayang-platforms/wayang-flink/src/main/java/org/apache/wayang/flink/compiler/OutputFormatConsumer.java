@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * Wrapper for {@Link OutputFormat}
+ * Wrapper for {@link OutputFormat}
  */
 public class OutputFormatConsumer<T> implements OutputFormat<T>, Serializable {
 

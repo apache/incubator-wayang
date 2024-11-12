@@ -23,7 +23,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 
 /**
- * Class create a {@Link MapFunction} that genereta only null as convertion
+ * Class create a {@link MapFunction} that genereta only null as convertion
  */
 public class DummyMap<InputType, OutputType> implements MapFunction<InputType, OutputType>, ResultTypeQueryable<OutputType> {
 

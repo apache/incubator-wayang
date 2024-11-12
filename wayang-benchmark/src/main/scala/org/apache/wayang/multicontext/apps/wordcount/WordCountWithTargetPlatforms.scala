@@ -36,11 +36,11 @@ object WordCountWithTargetPlatforms {
     val context1 = new MultiContext(configuration1)
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin())
-      .withTextFileSink("file:///tmp/out11")
+      .withTextFileSink("file:///tmp/out1")
     val context2 = new MultiContext(configuration2)
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin())
-      .withTextFileSink("file:///tmp/out12")
+      .withTextFileSink("file:///tmp/out2")
 
      val multiContextPlanBuilder = new MultiContextPlanBuilder(List(context1, context2))
       .withUdfJarsOf(this.getClass)

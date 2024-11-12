@@ -23,7 +23,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 
 /**
- * Create a {@Link FilterFunction} that remove the elements null
+ * Create a {@link FilterFunction} that remove the elements null
  */
 public class DummyFilter<InputType> implements FilterFunction<InputType>, ResultTypeQueryable<InputType> {
 
