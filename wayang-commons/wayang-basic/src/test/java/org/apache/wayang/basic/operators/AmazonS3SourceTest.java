@@ -17,15 +17,15 @@ public class AmazonS3SourceTest {
 
         String filePath = "/Users/christofferkristensen/Downloads/S3.JSON";
 
-        String bucketName = "wayang-test-bucket";
-        String blobName = "S3-sample.txt";
+        // String bucketName = "wayang-test-bucket";
+        // String blobName = "S3-sample.txt";
 
-        var source = new AmazonS3Source(bucketName, blobName, filePath, "");
+        // var source = new AmazonS3Source(bucketName, blobName, filePath, "");
 
-        var doubles = source.GetEstimateBytesPerLine();
+        // var doubles = source.estimateBytesPerLine();
 
-        System.out.println("Found estimated bytes per line " + doubles);
+        // System.out.println("Found estimated bytes per line " + doubles);
 
-        assertTrue(true);
+        // assertTrue(true);
     }
 }

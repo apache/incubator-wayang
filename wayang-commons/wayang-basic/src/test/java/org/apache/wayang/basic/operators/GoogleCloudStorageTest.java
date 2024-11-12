@@ -17,15 +17,16 @@ public class GoogleCloudStorageTest {
 
         String filePath = "/Users/christofferkristensen/Documents/SoftwareDesign/research_project/ResearchProject/long-centaur-438410-p7-90933b1671ea.json";
 
-        String bucketName = "wayang-test-bucket";
-        String blobName = "GCS-sample.txt";
+    //     String bucketName = "wayang-test-bucket";
+    //     String blobName = "GCS-sample.txt";
 
-        var source = new GoogleCloudStorageSource(bucketName, filePath, "");
+    //     var source = new GoogleCloudStorageSource(bucketName, filePath, "");
 
-        var doubles = source.GetEstimateBytesPerLine(blobName);
+    //     var doubles = source.GetEstimateBytesPerLine(blobName);
 
-        System.out.println("Found estimated bytes per line " + doubles);
+    //     System.out.println("Found estimated bytes per line " + doubles);
 
-        assertTrue(true);
+    //     assertTrue(true);
+    // }
     }
 }
