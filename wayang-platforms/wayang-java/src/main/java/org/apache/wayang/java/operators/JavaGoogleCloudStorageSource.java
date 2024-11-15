@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +46,7 @@ import org.slf4j.LoggerFactory;
 public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource implements JavaExecutionOperator {
     private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSource.class);
 
-    public JavaGoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile) throws IOException {
+    public JavaGoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile) {
         super(bucket, blobName, filePathToCredentialsFile);
     }
 
@@ -54,22 +55,6 @@ public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource imple
     }
 
 
-
-
-
-    @Override
-    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSupportedInputChannels'");
-    }
-
-
-    @Override
-    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        throw new UnsupportedOperationException("THIS METHOD DOES NOT EXISTS!!!!");
-        //assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
-        //return Collections.singletonList(StreamChannel.DESCRIPTOR);
-    }
 
 
     @Override
@@ -108,6 +93,27 @@ public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource imple
 
         return prepareLineageNode.collectAndMark();
     }
-    
+
+    @Override
+    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        return Arrays.asList("wayang.java.textfilesource.load.prepare", "wayang.java.textfilesource.load.main");
+    }
+
+    @Override
+    public JavaGoogleCloudStorageSource copy() {
+        return new JavaGoogleCloudStorageSource(this.getBucket(), this.getBlobName(), this.getfilePathToCredentialsFile());
+    }
+   
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        throw new UnsupportedOperationException(String.format("%s does not have input channels.", this));
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
+    }
+
     
 }

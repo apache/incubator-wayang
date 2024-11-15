@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +45,7 @@ import org.slf4j.LoggerFactory;
 public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionOperator {
     private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSource.class);
 
-    public JavaAmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile) throws IOException {
+    public JavaAmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile) {
         super(bucket, blobName, filePathToCredentialsFile);
     }
 
@@ -57,11 +58,19 @@ public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionO
 
 
     @Override
-    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSupportedInputChannels'");
+    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        return Arrays.asList("wayang.java.textfilesource.load.prepare", "wayang.java.textfilesource.load.main");
     }
 
+    @Override
+    public JavaAmazonS3Source copy() {
+        return new JavaAmazonS3Source(this.getBucket(), this.getBlobName(), this.getFilePathToCredentialsFile());
+    }
+   
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        throw new UnsupportedOperationException(String.format("%s does not have input channels.", this));
+    }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
