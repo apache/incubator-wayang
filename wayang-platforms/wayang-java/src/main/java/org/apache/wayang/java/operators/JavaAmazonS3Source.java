@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.kafka.common.utils.Java;
 import org.apache.wayang.basic.operators.AmazonS3Source;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -43,7 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionOperator {
-    private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSource.class);
+    private static final Logger logger = LoggerFactory.getLogger(JavaAmazonS3Source.class);
 
     public JavaAmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile) {
         super(bucket, blobName, filePathToCredentialsFile);
@@ -59,7 +60,7 @@ public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionO
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("wayang.java.textfilesource.load.prepare", "wayang.java.textfilesource.load.main");
+        return Arrays.asList("wayang.java.amazons3source.load.prepare", "wayang.java.amazons3source.load.main");
     }
 
     @Override
@@ -96,17 +97,13 @@ public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionO
         }
 
 
-    //TODO what to write here
      ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
         prepareLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                //TODO what to write here
 
                 "wayang.java.amazons3source.load.prepare", javaExecutor.getConfiguration()
         ));
         ExecutionLineageNode mainLineageNode = new ExecutionLineageNode(operatorContext);
         mainLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                //TODO what to write here
-
                 "wayang.java.amazons3source.load.main", javaExecutor.getConfiguration()
         ));
 

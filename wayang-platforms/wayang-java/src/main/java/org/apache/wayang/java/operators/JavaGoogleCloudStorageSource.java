@@ -44,7 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource implements JavaExecutionOperator {
-    private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSource.class);
+    private static final Logger logger = LoggerFactory.getLogger(JavaGoogleCloudStorageSource.class);
 
     public JavaGoogleCloudStorageSource(String bucket, String blobName, String filePathToCredentialsFile) {
         super(bucket, blobName, filePathToCredentialsFile);
@@ -96,7 +96,7 @@ public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource imple
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("wayang.java.textfilesource.load.prepare", "wayang.java.textfilesource.load.main");
+        return Arrays.asList("wayang.java.googlecloudstoragesource.load.prepare", "wayang.java.googlecloudstoragesource.load.main");
     }
 
     @Override
