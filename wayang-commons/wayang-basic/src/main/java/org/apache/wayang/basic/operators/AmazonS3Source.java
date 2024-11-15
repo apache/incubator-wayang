@@ -158,6 +158,7 @@ public class AmazonS3Source extends UnarySource<String> {
         return OptionalLong.of(headObjectResponse.contentLength()); // returns the size in bytes
         } 
         catch (Exception ex) {
+            ex.printStackTrace();
             return OptionalLong.empty();
         }
         
@@ -202,9 +203,6 @@ public class AmazonS3Source extends UnarySource<String> {
 
             // Otherwise calculate the cardinality.
             // First, inspect the size of the file and its line sizes.
-
-            //TODO: verify that filesize in FileSystems works with Cloud operator. Otherwise use built in method for Cloud operators to get filesize. Should we add to filesystems class or just use local method to get blob size. 
-            //TODO: AWS and GOOGLE has built in.
             OptionalLong fileSize = getBlobByteSize();
 
 

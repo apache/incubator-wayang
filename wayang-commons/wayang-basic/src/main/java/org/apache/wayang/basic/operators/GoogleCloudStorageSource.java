@@ -226,6 +226,7 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
         return OptionalLong.of(getBlob().getSize());
     } 
     catch (Exception ex) {
+        ex.printStackTrace();
         return OptionalLong.empty();
     }
     
