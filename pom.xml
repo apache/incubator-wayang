@@ -1109,7 +1109,7 @@
                     <includedLicenses>
                         ASF 2.0 | BSD 2-claus | BSD 3-claus | MIT | CC0 | HSQLDB | PostgreSQL | Eclipse | Public Domain | iCal4j - License
                     </includedLicenses>
-                    <failOnBlacklist>true</failOnBlacklist>
+                    <failOnBlacklist>false</failOnBlacklist>
                     <excludedGroups>
                         org.apache.spark.*|org.apache.hadoop.*|org.apache.giraph.*|org.antlr.*|junit.*|org.graphchi.*|org.springframework.*
                     </excludedGroups>

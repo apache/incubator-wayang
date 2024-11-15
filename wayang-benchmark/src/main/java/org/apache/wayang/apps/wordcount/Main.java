@@ -26,6 +26,8 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
+import org.apache.wayang.api.JavaPlanBuilder;
+
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -73,7 +75,7 @@ public class Main {
             /* Start building the Apache WayangPlan */
             Collection<Tuple2<String, Integer>> wordcounts = planBuilder
                     /* Read the text file */
-                    .readTextFile(args[1]).withName("Load file")
+                    .readGoogleCloudStorageFile(args[1], args[2], args[3]).withName("Load file")
 
                     /* Split each line by non-word characters */
                     .flatMap(line -> Arrays.asList(line.split("\\W+")))
