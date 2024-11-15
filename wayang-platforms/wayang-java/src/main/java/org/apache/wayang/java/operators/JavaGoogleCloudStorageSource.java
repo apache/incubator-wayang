@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -62,11 +63,14 @@ public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource imple
         throw new UnsupportedOperationException("Unimplemented method 'getSupportedInputChannels'");
     }
 
+
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSupportedOutputChannels'");
+        throw new UnsupportedOperationException("THIS METHOD DOES NOT EXISTS!!!!");
+        //assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        //return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
+
 
     @Override
     public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(ChannelInstance[] inputs,
