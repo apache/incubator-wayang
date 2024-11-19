@@ -39,6 +39,7 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [GraphChi](https://github.com/GraphChi/graphchi-java)
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
+- [Apache Kafka](https://kafka.apache.org)
 
 Apache Wayang (incubating) can be used via the following APIs:
 - Java native
