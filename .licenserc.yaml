@@ -42,5 +42,6 @@ header:
     - '**/.rat-excludes'
     - 'python/**/*.input'
     - '**/README.md'
+    - '**/docs/**'
 
   comment: on-failure

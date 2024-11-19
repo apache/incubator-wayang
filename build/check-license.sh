@@ -52,6 +52,7 @@ rat_opts+=("-e" "^.*.properties")
 rat_opts+=("-e" "Gemfile.lock")
 rat_opts+=("-e" ".gitignore")
 rat_opts+=("-e" ".gitmodules")
+rat_opts+=("-e" "/docs")
 rat_opts+=("-e" ".rat-excludes")
 
 
