@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.wayang.java.operators;
 
 import java.io.BufferedReader;
@@ -26,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.wayang.basic.operators.AmazonS3Source;
+import org.apache.wayang.basic.operators.AzureBlobStorageSource;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext.OperatorContext;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
@@ -40,13 +39,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is execution operator that implements the {@link AmazonS3Source}.
+ * This is execution operator that implements the {@link AzureBlobStorageSource}.
  */
-public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionOperator {
-    private static final Logger logger = LoggerFactory.getLogger(JavaAmazonS3Source.class);
 
-    public JavaAmazonS3Source(String bucket, String blobName, String filePathToCredentialsFile) {
-        super(bucket, blobName, filePathToCredentialsFile);
+public class JavaAzureBlobStorageSource extends AzureBlobStorageSource implements JavaExecutionOperator {
+    private static final Logger logger = LoggerFactory.getLogger(JavaAzureBlobStorageSource.class);
+
+    public JavaAzureBlobStorageSource(String storageContainer, String blobName, String filePathToCredentialsFile) {
+        super(storageContainer, blobName, filePathToCredentialsFile);
     }
 
     /**
@@ -55,22 +55,19 @@ public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionO
      * @param that that should be copied
      */
 
-    public JavaAmazonS3Source(AmazonS3Source that) {
+    public JavaAzureBlobStorageSource(AzureBlobStorageSource that) {
         super(that);
     }
 
 
-
-
-
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("wayang.java.amazons3source.load.prepare", "wayang.java.amazons3source.load.main");
+        return Arrays.asList("wayang.java.azureblobstoragesource.load.prepare", "wayang.java.azureblobstoragesource.load.main");
     }
 
     @Override
     public JavaAmazonS3Source copy() {
-        return new JavaAmazonS3Source(this.getBucket(), this.getBlobName(), this.getFilePathToCredentialsFile());
+        return new JavaAmazonS3Source(this.getStorageContainer(), this.getBlobName(), this.getFilePathToCredentialsFile());
     }
    
     @Override
@@ -83,6 +80,7 @@ public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionO
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
+
 
 
     @Override
@@ -105,11 +103,11 @@ public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionO
      ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
         prepareLineageNode.add(LoadProfileEstimators.createFromSpecification(
 
-                "wayang.java.amazons3source.load.prepare", javaExecutor.getConfiguration()
+                "wayang.java.azureblobstoragesource.load.prepare", javaExecutor.getConfiguration()
         ));
         ExecutionLineageNode mainLineageNode = new ExecutionLineageNode(operatorContext);
         mainLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "wayang.java.amazons3source.load.main", javaExecutor.getConfiguration()
+                "wayang.java.azureblobstoragesource.load.main", javaExecutor.getConfiguration()
         ));
 
 

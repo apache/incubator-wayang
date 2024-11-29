@@ -25,7 +25,7 @@ import java.util.{Collection => JavaCollection}
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api.util.DataQuantaBuilderCache
 import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.{TableSource, TextFileSource, KafkaTopicSource, GoogleCloudStorageSource, AmazonS3Source}
+import org.apache.wayang.basic.operators.{TableSource, TextFileSource, KafkaTopicSource, GoogleCloudStorageSource, AmazonS3Source, AzureBlobStorageSource}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
@@ -84,6 +84,16 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
   def readAmazonS3File(bucket: String, blobName: String, filePathToCredentialsFile: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
   createSourceBuilder(new AmazonS3Source(bucket, blobName, filePathToCredentialsFile))(ClassTag(classOf[String]))
 
+  /**
+    * Read a text file from a Azure Blob Storage container and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param storageContainer the storage container of the file
+    * @param blobName the name of the blob within the container, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuantaBuilder]] for the file
+    */
+  def readAzureBlobStorageFile(storageContainer: String, blobName: String, filePathToCredentialsFile: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+  createSourceBuilder(new AzureBlobStorageSource(storageContainer, blobName, filePathToCredentialsFile))(ClassTag(classOf[String]))
 
   /**
    * Read a textmessages from a Kafka topic and provide it as a dataset of [[String]]s, one per message.
