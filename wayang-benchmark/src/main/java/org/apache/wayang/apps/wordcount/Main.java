@@ -71,37 +71,76 @@ public class Main {
             JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
                     .withJobName("WordCount")
                     .withUdfJarOf(Main.class);
+                    
+            if(args[1].equals("AS3")){ 
+                long startTime = System.nanoTime();
+                /* Start building the Apache WayangPlan */
+                Collection<Tuple2<String, Integer>>wordcounts = planBuilder
+                /* Read the text file */
+                .readAmazonS3File(args[2], args[3], args[4]).withName("Load file")
+                /* Split each line by non-word characters */
+                .flatMap(line -> Arrays.asList(line.split("\\W+")))
+                .withSelectivity(1, 100, 0.9)
+                .withName("Split words")
 
-            /* Start building the Apache WayangPlan */
-            Collection<Tuple2<String, Integer>> wordcounts = planBuilder
-                    /* Read the text file */
-                    .readGoogleCloudStorageFile(args[1], args[2], args[3]).withName("Load file")
+                /* Filter empty tokens */
+                .filter(token -> !token.isEmpty())
+                .withName("Filter empty words")
 
-                    /* Split each line by non-word characters */
-                    .flatMap(line -> Arrays.asList(line.split("\\W+")))
-                    .withSelectivity(1, 100, 0.9)
-                    .withName("Split words")
+                /* Attach counter to each word */
+                .map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
 
-                    /* Filter empty tokens */
-                    .filter(token -> !token.isEmpty())
-                    .withName("Filter empty words")
+                // Sum up counters for every word.
+                .reduceByKey(
+                        Tuple2::getField0,
+                        (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
+                )
+                .withName("Add counters")
 
-                    /* Attach counter to each word */
-                    .map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
+                /* Execute the plan and collect the results */
+                .collect();
 
-                    // Sum up counters for every word.
-                    .reduceByKey(
-                            Tuple2::getField0,
-                            (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
-                    )
-                    .withName("Add counters")
+                long endTime = System.nanoTime();
+                long duration = (endTime - startTime) / 1_000_000;
+                System.out.println("running time:" + duration);
+                System.out.printf("Found %d words:\n", wordcounts.size());
+            }
 
-                    /* Execute the plan and collect the results */
-                    .collect();
+            else{
+                long startTime = System.nanoTime();
+                /* Start building the Apache WayangPlan */
+                Collection<Tuple2<String, Integer>>wordcounts = planBuilder
+                /* Read the text file */
+                .readTextFile(args[1]).withName("Load file")
+                /* Split each line by non-word characters */
+                .flatMap(line -> Arrays.asList(line.split("\\W+")))
+                .withSelectivity(1, 100, 0.9)
+                .withName("Split words")
 
+                /* Filter empty tokens */
+                .filter(token -> !token.isEmpty())
+                .withName("Filter empty words")
 
-            System.out.printf("Found %d words:\n", wordcounts.size());
-            wordcounts.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
+                /* Attach counter to each word */
+                .map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
+
+                // Sum up counters for every word.
+                .reduceByKey(
+                        Tuple2::getField0,
+                        (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
+                )
+                .withName("Add counters")
+
+                /* Execute the plan and collect the results */
+                .collect();
+
+                long endTime = System.nanoTime();
+                long duration = (endTime - startTime) / 1_000_000;
+                System.out.println("running time:" + duration);
+                System.out.printf("Found %d words:\n", wordcounts.size());
+            }
+
+            //wordcounts.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
         } catch (Exception e) {
             System.err.println("App failed.");
             e.printStackTrace();

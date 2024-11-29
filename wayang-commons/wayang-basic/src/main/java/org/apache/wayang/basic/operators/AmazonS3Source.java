@@ -164,7 +164,7 @@ public class AmazonS3Source extends UnarySource<String> {
         
         }
 
-        //TODO needs this for both cloud opeartors
+
         public InputStream getInputStream() throws Exception {
             return getS3Client(filePathToCredentialsFile).getObject(getGetObjectRequest(bucket, blobName));
         }
