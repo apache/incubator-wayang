@@ -33,6 +33,7 @@ public class Mappings {
     public static Collection<Mapping> BASIC_MAPPINGS = Arrays.asList(
             new TextFileSourceMapping(),
             new TextFileSinkMapping(),
+            new ParquetSourceMapping(),
             new ObjectFileSinkMapping(),
             new ObjectFileSourceMapping(),
             new MapMapping(),
