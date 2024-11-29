@@ -23,6 +23,7 @@ import org.apache.wayang.core.util.ReflectionUtils;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -34,6 +35,10 @@ public class Record implements Serializable, Copyable<Record> {
 
     public Record(Object... values) {
         this.values = values;
+    }
+
+    public Record(List<Object> values) {
+        this.values = values.toArray();
     }
 
     @Override
