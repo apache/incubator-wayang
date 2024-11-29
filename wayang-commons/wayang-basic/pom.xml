@@ -34,9 +34,9 @@
         This modules represents the base Wayang package with the default operators and functions.
     </description>
 
-    <!-- Google Cloud BOM version management -->
-    <dependencyManagement>
-        <dependencies>
+<dependencyManagement>
+    <dependencies>
+        <!-- Google Cloud Libraries BOM -->
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>libraries-bom</artifactId>
@@ -44,8 +44,17 @@
             <type>pom</type>
             <scope>import</scope>
         </dependency>
-        </dependencies>
-    </dependencyManagement>
+
+        <!-- Azure SDK BOM -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-sdk-bom</artifactId>
+            <version>1.2.10</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
 
     <dependencies>
     
@@ -105,6 +114,20 @@
             <artifactId>json</artifactId>
             <version>20230227</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-blob</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-security-keyvault-secrets</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+        </dependency>
+        
 
     </dependencies>
 

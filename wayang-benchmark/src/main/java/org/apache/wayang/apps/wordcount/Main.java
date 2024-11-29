@@ -75,7 +75,7 @@ public class Main {
             /* Start building the Apache WayangPlan */
             Collection<Tuple2<String, Integer>> wordcounts = planBuilder
                     /* Read the text file */
-                    .readGoogleCloudStorageFile(args[1], args[2], args[3]).withName("Load file")
+                    .readAzureBlobStorageFile(args[1], args[2], args[3]).withName("Load file")
 
                     /* Split each line by non-word characters */
                     .flatMap(line -> Arrays.asList(line.split("\\W+")))

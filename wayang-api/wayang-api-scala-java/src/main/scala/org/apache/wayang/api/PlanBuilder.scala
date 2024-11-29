@@ -142,6 +142,18 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
     */
   def readAmazonS3File(bucket: String, blobName: String, filePathToCredentialsFile: String ): DataQuanta[String] = load(new AmazonS3Source(bucket, blobName, filePathToCredentialsFile))
 
+
+/**
+    * Read a text file from a Azure Blob Storage storage container and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param storageContainer the bucket name of the file
+    * @param blobName the name of the blob within the storage container, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuanta]] for the file
+    */
+  def readAzureBlobStorageFile(storageContainer: String, blobName: String, filePathToCredentialsFile: String ): DataQuanta[String] = load(new GoogleCloudStorageSource(bucket, blobName, filePathToCredentialsFile))
+ 
+
   /**
     * Read a text file and provide it as a dataset of [[String]]s, one per line.
     *
