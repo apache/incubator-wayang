@@ -24,7 +24,7 @@ package org.apache.wayang.api
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api
 import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.{CollectionSource, ObjectFileSource, TableSource, TextFileSource, GoogleCloudStorageSource, AmazonS3Source}
+import org.apache.wayang.basic.operators.{CollectionSource, ObjectFileSource, TableSource, TextFileSource, GoogleCloudStorageSource, AmazonS3Source, AzureBlobStorageSource}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
@@ -151,7 +151,7 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
     * @param filePathToCredentialsFile the file path to credentials file
     * @return [[DataQuanta]] for the file
     */
-  def readAzureBlobStorageFile(storageContainer: String, blobName: String, filePathToCredentialsFile: String ): DataQuanta[String] = load(new GoogleCloudStorageSource(bucket, blobName, filePathToCredentialsFile))
+  def readAzureBlobStorageFile(storageContainer: String, blobName: String, filePathToCredentialsFile: String ): DataQuanta[String] = load(new AzureBlobStorageSource(storageContainer, blobName, filePathToCredentialsFile))
  
 
   /**
