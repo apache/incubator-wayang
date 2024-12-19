@@ -24,7 +24,7 @@
     <parent>
         <artifactId>wayang</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>0.7.1</version>
+        <version>1.0.0-RC3-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-docs</artifactId>
