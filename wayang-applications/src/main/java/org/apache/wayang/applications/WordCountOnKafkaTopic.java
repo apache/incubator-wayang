@@ -52,8 +52,8 @@ public class WordCountOnKafkaTopic {
         System.out.println( "    Process data from a Kafka topic using a 'Java Context'.");
 
         // Default topic name
-        String input_topicName = "banking-tx-small-csv";
-        String output_topicName = "word_count_contribution___banking-tx-small-csv";
+        String input_topicName = "t0";
+        String output_topicName = "t1";
 
         System.out.println( "    Topic: " + input_topicName );
 
@@ -118,7 +118,6 @@ public class WordCountOnKafkaTopic {
 
         //System.out.println( wordcounts_collection );
         System.out.println( "### Done. ***" );
-
 
     }
 

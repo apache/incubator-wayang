@@ -89,13 +89,10 @@ public class JavaKafkaTopicSource extends KafkaTopicSource implements JavaExecut
         try {
 
             // Poll messages from the topic
-            System.out.println("### 7 ... ");
 
             this.initConsumer( (KafkaTopicSource) this );
 
             ConsumerRecords<String, String> records = getConsumer().poll(Duration.ofMillis(15000));
-
-            System.out.println("### 8 ... ");
 
             // Convert the records into a Stream<String>
             Stream<String> messageStream = StreamSupport.stream(records.spliterator(), false)

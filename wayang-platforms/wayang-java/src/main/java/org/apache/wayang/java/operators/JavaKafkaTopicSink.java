@@ -79,15 +79,11 @@ public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExec
 
         logger.info("---> WRITE TO KAFKA SINK...");
 
-        logger.info("### 9 ... ");
-
         JavaChannelInstance input = (JavaChannelInstance) inputs[0];
 
         initProducer( (KafkaTopicSink<T>) this );
 
         final Function<T, String> formatter = javaExecutor.getCompiler().compile(this.formattingDescriptor);
-
-        logger.info("### 10 ... ");
 
         try ( KafkaProducer<String,String> producer = getProducer() ) {
             input.<T>provideStream().forEach(
@@ -120,8 +116,6 @@ public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExec
         } catch (Exception e) {
             throw new WayangException("Writing to Kafka topic failed.", e);
         }
-
-        logger.info("### 11 ... ");
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

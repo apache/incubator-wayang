@@ -86,6 +86,7 @@ public class SqlTest2 {
 
         person.connectTo(0,joinOperator,0);
         orders.connectTo(0,joinOperator,1);
+
         joinOperator.connectTo(0,sink,0);
 
         wayangPlan = new WayangPlan(sink);
