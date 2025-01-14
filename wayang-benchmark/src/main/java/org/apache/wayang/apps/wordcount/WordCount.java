@@ -41,7 +41,7 @@ public class WordCount {
         /* Get a plan builder */
         WayangContext wayangContext = new WayangContext(new Configuration())
 //                .withPlugin(Java.basicPlugin())
-//                .withPlugin(Spark.basicPlugin());
+                .withPlugin(Spark.basicPlugin())
                 .withPlugin(Flink.basicPlugin());
 
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
