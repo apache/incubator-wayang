@@ -1,3 +1,4 @@
 # Build files
 dist
+__pycache__
 

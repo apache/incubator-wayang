@@ -24,9 +24,9 @@ import com.fasterxml.jackson.databind.{DeserializationFeature, JsonNode}
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.OperatorNames
-import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson,UnionOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, DLTrainingOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
-import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TextFileInputFromJson}
+import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TextFileInputFromJson, ParquetInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.output.TextFileOutputFromJson
 import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOpeartorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
@@ -37,6 +37,7 @@ import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson,
 
     // Input operators
     new JsonSubTypes.Type(value = classOf[TextFileInputFromJson], name = OperatorNames.TextFileInput),
+    new JsonSubTypes.Type(value = classOf[ParquetInputFromJson], name = OperatorNames.ParquetInput),
     new JsonSubTypes.Type(value = classOf[InputCollectionFromJson], name = OperatorNames.InputCollection),
     new JsonSubTypes.Type(value = classOf[InputCollectionFromJson], name = OperatorNames.Table),
     new JsonSubTypes.Type(value = classOf[JDBCRemoteInputFromJson], name = OperatorNames.JDBCRemoteInput),
@@ -137,6 +138,7 @@ object OperatorFromJson {
   object OperatorNames {
     // Input
     final val TextFileInput = "textFileInput"
+    final val ParquetInput = "parquetInput"
     final val InputCollection = "inputCollection"
     final val Table = "table"
     final val JDBCRemoteInput = "jdbcRemoteInput"

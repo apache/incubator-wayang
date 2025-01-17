@@ -15,15 +15,16 @@
 #  limitations under the License.
 #
 
-from typing import Dict, Set, List, cast
+from typing import Dict, Set, List, Optional, cast
 
 from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
 from pywy.types import (GenericTco, Predicate, Function, BiFunction, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
-from pywy.basic.model.ops import Op
 from pywy.basic.model.option import Option
 from pywy.basic.model.models import Model
+
+from python.src.pywy.basic.data.record import Record
 
 
 class Configuration:
@@ -67,6 +68,11 @@ class WayangContext:
 
     def textfile(self, file_path: str) -> 'DataQuanta[str]':
         return DataQuanta(self, TextFileSource(file_path))
+
+    def parquet(
+        self, file_path: str, projection: Optional[List[str]] = None, column_names: Optional[List[str]] = None
+    ) -> 'DataQuanta[Record]':
+        return DataQuanta(self, ParquetSource(file_path, projection, column_names))
 
     def __str__(self):
         return "Plugins: {}".format(str(self.plugins))

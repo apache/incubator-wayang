@@ -22,7 +22,7 @@ import org.apache.wayang.api.json.parserutil.{SerializableIterable, Serializable
 import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
-import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson}
+import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson, ParquetInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.output.TextFileOutputFromJson
 import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOpeartorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, ReduceOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
@@ -42,15 +42,8 @@ import org.apache.wayang.flink.Flink
 import org.apache.wayang.tensorflow.Tensorflow
 import org.apache.wayang.genericjdbc.GenericJdbc
 import org.apache.wayang.sqlite3.Sqlite3
-import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.core.plugin.Plugin
 import org.apache.wayang.basic.model.DLModel;
-import org.apache.wayang.basic.model.optimizer.Adam;
-import org.apache.wayang.basic.model.op.nn._;
-import org.apache.wayang.basic.model.op._;
-import org.apache.wayang.basic.model.optimizer._;
-import org.apache.wayang.api.json.operatorfromjson.binary.{Op => JsonOp}
-import org.apache.wayang.api.util.NDimArray
 
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
@@ -160,6 +153,7 @@ class JsonPlanBuilder() {
     operator match {
       // input
       case inputOperator: TextFileInputFromJson => visit(inputOperator, planBuilder)
+      case inputOperator: ParquetInputFromJson => visit(inputOperator, planBuilder)
       case inputOperator: InputCollectionFromJson => visit(inputOperator, planBuilder)
       case inputOperator: TableInputFromJson => visit(inputOperator, planBuilder)
       case inputOperator: JDBCRemoteInputFromJson => visit(inputOperator, planBuilder)
@@ -208,6 +202,13 @@ class JsonPlanBuilder() {
       planBuilder.readTextFile(operator.data.filename).asInstanceOf[DataQuanta[Any]]
     else
       planBuilder.readTextFile(operator.data.filename).asInstanceOf[DataQuanta[Any]].withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+  }
+
+  private def visit(operator: ParquetInputFromJson, planBuilder: PlanBuilder): DataQuanta[Any] = {
+    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+      planBuilder.readParquet(new ParquetSource(operator.data.filename, operator.data.projection, operator.data.columnNames: _*)).asInstanceOf[DataQuanta[Any]]
+    else
+      planBuilder.readParquet(new ParquetSource(operator.data.filename, operator.data.projection, operator.data.columnNames: _*)).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
   }
 
   private def visit(operator: InputCollectionFromJson, planBuilder: PlanBuilder): DataQuanta[Any] = {

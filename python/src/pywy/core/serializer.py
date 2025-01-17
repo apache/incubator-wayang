@@ -86,6 +86,12 @@ class JSONSerializer:
             if hasattr(operator, "path"):
                 json_operator["data"]["filename"] =  operator.path
 
+            if hasattr(operator, "projection"):
+                json_operator["data"]["projection"] = operator.projection
+
+            if hasattr(operator, "column_names"):
+                json_operator["data"]["projection"] = operator.column_names
+
         return json_operator
 
     def serialize_pipeline(self, pipeline):

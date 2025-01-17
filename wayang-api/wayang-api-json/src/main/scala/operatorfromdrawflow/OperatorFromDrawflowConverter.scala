@@ -81,6 +81,7 @@ object OperatorFromDrawflowConverter {
       // input
       case "iBinary" => InputCollectionFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.InputCollection, InputCollectionFromJson.Data(operatorFromDrawflow.data("collectionGeneratorFunction").asInstanceOf[String]), executionPlatform)
       case "iTextFile" => TextFileInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.TextFileInput, TextFileInputFromJson.Data(operatorFromDrawflow.data("inputFileURL").asInstanceOf[String]), executionPlatform)
+      case "iParquet" => ParquetInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.ParquetInput, ParquetInputFromJson.Data(operatorFromDrawflow.data("inputFileURL").asInstanceOf[String], operatorFromDrawflow.data("projection").asInstanceOf[Array[String]], operatorFromDrawflow.data("columnNames").asInstanceOf[List[String]]), executionPlatform)
       case "iCsvFile" => TableInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.Table, TableInputFromJson.Data(operatorFromDrawflow.data("tableName").asInstanceOf[String], operatorFromDrawflow.data("columnNames").asInstanceOf[String].split(",").map(s => s.trim()).toList), executionPlatform)
       case "iJdbc" => JDBCRemoteInputFromJson(id, input, output, cat, OperatorFromJson.OperatorNames.JDBCRemoteInput,
         JDBCRemoteInputFromJson.Data(
