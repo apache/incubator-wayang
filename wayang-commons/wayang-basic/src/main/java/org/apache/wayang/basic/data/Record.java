@@ -120,6 +120,28 @@ public class Record implements Serializable, Copyable<Record> {
     }
 
     /**
+     * Set a field of this instance, at a given index.
+     *
+     * @param index the index of the field
+     * @param field the new value of the field to be set
+     */
+    public void setField(int index, Object field) {
+        this.values[index] = field;
+    }
+
+    /**
+     * Append a field to this instance.
+     *
+     * @param field the field to add
+     */
+    public void addField(Object field) {
+        int size = this.size();
+        Object[] newValues = Arrays.copyOf(this.values, size + 1);
+        newValues[size] = field;
+        this.values = newValues;
+    }
+
+    /**
      * Retrieve the size of this instance.
      *
      * @return the number of fields in this instance
