@@ -35,8 +35,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.ProtocolException;
-import java.net.URL;
+import java.net.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,7 +44,6 @@ import java.util.stream.Stream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.stream.Stream;
 
@@ -82,26 +80,15 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+
         String urlStr = this.getInputUrl().trim();
+        URL sourceUrl = null;
 
         try {
-
-            FileSystem fs = FileSystems.getFileSystem(urlStr).get(); //.orElseThrow(
-                    //() -> new WayangException(String.format("FileSystems.getFileSystem( urlStr ).get() => Cannot access file system of %s. ", urlStr))
-            //);
-
-            final InputStream inputStream = fs.open(urlStr);
-            Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
-            ((StreamChannel.Instance) outputs[0]).accept(lines);
-
-        }
-        catch (Exception e) {
-
-            try {
-
-                URL url = new URL(urlStr);
-
-                HttpURLConnection connection2 = (HttpURLConnection) url.openConnection();
+            sourceUrl = new URL(urlStr);
+            String protocol = sourceUrl.getProtocol();
+            if ( protocol.startsWith("https") || protocol.startsWith("http")  ) {
+                HttpURLConnection connection2 = (HttpURLConnection) sourceUrl.openConnection();
                 connection2.setRequestMethod("GET");
 
                 // Check if the response code indicates success (HTTP status code 200)
@@ -112,12 +99,21 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
                     ((StreamChannel.Instance) outputs[0]).accept(lines2);
                 }
             }
-            catch (IOException ioException) {
-                ioException.printStackTrace();
-                throw new WayangException(String.format("Reading from URL: %s failed.", urlStr), ioException);
-            }
+            else {
+                FileSystem fs = FileSystems.getFileSystem(urlStr).orElseThrow(
+                        () -> new WayangException(String.format("Cannot access file system of %s.", urlStr))
+                );
 
-            // connection2.disconnect();
+                final InputStream inputStream = fs.open(urlStr);
+                Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
+                ((StreamChannel.Instance) outputs[0]).accept(lines);
+            }
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        } catch (ProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+                throw new WayangException(String.format("Reading %s failed.", urlStr), e);
         }
 
         ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
