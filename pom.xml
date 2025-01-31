@@ -28,7 +28,7 @@
 
     <groupId>org.apache.wayang</groupId>
     <artifactId>wayang</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Apache Wayang (incubating)</name>
@@ -100,7 +100,7 @@
         <maven.kotlin.skip>false</maven.kotlin.skip>
 
         <!-- Timestamp for the reproducible builds -->
-        <project.build.outputTimestamp>2025-01-31T20:08:42Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-01-31T20:30:41Z</project.build.outputTimestamp>
 
         <scala.version>2.12.12</scala.version>
         <scala.mayor.version>2.12</scala.mayor.version>
@@ -159,7 +159,7 @@
                 <dependency>
                     <groupId>org.apache.wayang</groupId>
                     <artifactId>wayang-resources</artifactId>
-                    <version>1.0.1-SNAPSHOT</version>
+                    <version>1.0.0-SNAPSHOT</version>
                     <type>zip</type>
                     <optional>true</optional>
                 </dependency>
