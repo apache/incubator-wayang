@@ -22,7 +22,7 @@ public class ServerActor extends AbstractActor {
 //    private final String serializedPlan;
     private final BiFunction<Object, Object> accumulator;
     private final TriFunction<Operator, List<Double>, JavaPlanBuilder> planFunction;
-
+//  Add a hashmap key, function pairs and current values. Also add a function update_hashmap
 
     public static Props props(TriFunction<Operator, List<Double>, JavaPlanBuilder> planFunction, BiFunction<Object, Object> accumulator, int epochs, Object zero, Object init) {
         return Props.create(ServerActor.class, () -> new ServerActor(planFunction, accumulator, epochs, zero, init));
