@@ -189,7 +189,7 @@ The list of [contributors](https://github.com/apache/incubator-wayang/graphs/con
 ## License
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 - 2025 The Apache Software Foundation.
+Copyright 2020 - 2024 The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
