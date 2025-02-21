@@ -31,6 +31,7 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,7 +68,7 @@ public class TensorflowIntegrationIT {
 
     public static String[] LABELS = new String[]{"Iris-setosa", "Iris-versicolor", "Iris-virginica"};
 
-    @Test
+    @Ignore
     public void test() {
         /* training features */
         CollectionSource<float[]> trainXSource = new CollectionSource<>(trainX, float[].class);

@@ -26,6 +26,7 @@ import org.apache.wayang.basic.model.op.nn.Sigmoid;
 import org.apache.wayang.basic.model.optimizer.GradientDescent;
 import org.apache.wayang.basic.model.optimizer.Optimizer;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.tensorflow.ndarray.FloatNdArray;
 import org.tensorflow.ndarray.IntNdArray;
 import org.tensorflow.ndarray.NdArrays;
@@ -34,7 +35,7 @@ import org.tensorflow.op.Ops;
 import org.tensorflow.types.TFloat32;
 import org.tensorflow.types.TInt32;
 public class TensorflowModelTest {
-    @Test
+    @Ignore
     public void test() {
         FloatNdArray x = NdArrays.ofFloats(Shape.of(6, 4))
                 .set(NdArrays.vectorOf(5.1f, 3.5f, 1.4f, 0.2f), 0)

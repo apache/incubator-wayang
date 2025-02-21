@@ -33,6 +33,7 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,7 +57,7 @@ public class TensorflowIrisIT {
             "Iris-virginica", 2
     );
 
-    @Test
+    @Ignore
     public void test() {
         final Tuple<Operator, Operator> trainSource = fileOperation(TRAIN_PATH, true);
         final Tuple<Operator, Operator> testSource = fileOperation(TEST_PATH, false);

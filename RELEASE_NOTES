@@ -6,24 +6,22 @@ This is a major release of Apache Wayang (incubating).
 Based on this release the projects wants to continue the path towards becoming an
 Apache TLP.
 
-This release supports the following frameworks:
-- ...
+This release supports the following new features:
+- Support for Tensorflow Java as a platform (Note: this platform is not compatible with Apple's M1 chip)
+- Support for Kafka source/sink
+- Python API
+- MultiContext for federated data processing
+- Explain utility for displaying execution plans
+- Abstracted cost model to be pluggable
+- Retired Java 8/Scala 2.11
+- Added Join operator for JDBC and Postgres platforms
+- Support for any JDBC-supported database
+- Added ML4all abstraction 
 
-Previous updates that are included in this release:
-- ...
-
-NOTE: depending on the scala version the list of the supported platforms available
-could be different.
-
-
-New Features
-------------
-[WAYANG-...] ...
-
-Incompatible changes
---------------------
-NONE
-- ...
+Several bug fixes are also included:
+- Aligned Flink versions
+- Fixed CardinalityRepository to sample measured cardinalities
+- Copied cost models for different configurations
 
 
 ==============================================================
