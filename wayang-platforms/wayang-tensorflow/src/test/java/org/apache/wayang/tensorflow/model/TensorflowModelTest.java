@@ -35,7 +35,7 @@ import org.tensorflow.op.Ops;
 import org.tensorflow.types.TFloat32;
 import org.tensorflow.types.TInt32;
 public class TensorflowModelTest {
-    @Ignore
+    @Test
     public void test() {
         FloatNdArray x = NdArrays.ofFloats(Shape.of(6, 4))
                 .set(NdArrays.vectorOf(5.1f, 3.5f, 1.4f, 0.2f), 0)
