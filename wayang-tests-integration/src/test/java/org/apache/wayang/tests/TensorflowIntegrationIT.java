@@ -68,7 +68,7 @@ public class TensorflowIntegrationIT {
 
     public static String[] LABELS = new String[]{"Iris-setosa", "Iris-versicolor", "Iris-virginica"};
 
-    @Ignore
+    @Test
     public void test() {
         /* training features */
         CollectionSource<float[]> trainXSource = new CollectionSource<>(trainX, float[].class);

@@ -7,7 +7,7 @@ Based on this release the projects wants to continue the path towards becoming a
 Apache TLP.
 
 This release supports the following new features:
-- Support for Tensorflow Java as a platform (Note: this platform is not compatible with Apple's M1 chip)
+- Support for Tensorflow Java as a platform (Note: this platform is compatible with Apple's Silicon's chip only with the right arm-based java version)
 - Support for Kafka source/sink
 - Python API
 - MultiContext for federated data processing

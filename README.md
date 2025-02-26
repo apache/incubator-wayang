@@ -40,12 +40,13 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
 - [Apache Kafka](https://kafka.apache.org)
+- [Tensorflow](https://www.tensorflow.org/)
 
 Apache Wayang (incubating) can be used via the following APIs:
-- Java native
 - Java scala-like
 - Scala
-- SQL (limited support of simple select-project queries for now)
+- SQL
+- Java native (recommended only for low level)
 
 ## Quick Guide for Running Wayang
 
@@ -61,8 +62,8 @@ You first have to build the binaries as shown [here](guides/tutorial.md).
 Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
-tar -xvf wayang-1.0.0-snapshot.tar.gz
-cd wayang-1.0.0-SNAPSHOT
+tar -xvf wayang-1.0.1-SNAPSHOT.tar.gz
+cd wayang-1.0.1-SNAPSHOT
 ```
 
 In linux
