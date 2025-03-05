@@ -588,6 +588,18 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     predictOperator
   }
 
+  def predictJava[ThatOut: ClassTag, Result: ClassTag](
+    that: DataQuanta[ThatOut]
+    ): DataQuanta[Result] = {
+    val predictOperator = new PredictOperator(
+      implicitly[ClassTag[ThatOut]].runtimeClass,
+      implicitly[ClassTag[Result]].runtimeClass
+    )
+    this.connectTo(predictOperator, 0)
+    that.connectTo(predictOperator, 1)
+    predictOperator
+  }
+
   def dlTraining[ThatOut: ClassTag](
     model: DLModel,
     option: DLTrainingOperator.Option,
@@ -609,6 +621,24 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
       option,
       xType,
       yType
+    )
+
+    this.connectTo(dlTrainingOperator, 0)
+    that.connectTo(dlTrainingOperator, 1)
+    dlTrainingOperator
+  }
+
+
+  def dlTrainingJava[ThatOut: ClassTag](
+    model: DLModel,
+    option: DLTrainingOperator.Option,
+    that: DataQuanta[ThatOut]
+  ): DataQuanta[DLModel] = {
+    val dlTrainingOperator = new DLTrainingOperator(
+      model,
+      option,
+      implicitly[ClassTag[Out]].runtimeClass,
+      implicitly[ClassTag[ThatOut]].runtimeClass
     )
 
     this.connectTo(dlTrainingOperator, 0)

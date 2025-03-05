@@ -57,7 +57,7 @@ public class TensorflowIrisIT {
             "Iris-virginica", 2
     );
 
-    @Ignore
+    @Test
     public void test() {
         final Tuple<Operator, Operator> trainSource = fileOperation(TRAIN_PATH, true);
         final Tuple<Operator, Operator> testSource = fileOperation(TEST_PATH, false);
