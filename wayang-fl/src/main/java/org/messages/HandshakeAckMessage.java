@@ -1,4 +1,4 @@
 package org.messages;
 
-public class HandshakeAckMessage {
+public class HandshakeAckMessage implements Message{
 }

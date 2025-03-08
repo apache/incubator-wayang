@@ -12,7 +12,7 @@ public class Aggregator {
         this.aggregator = aggregator;
     }
 
-    public Object Aggregate(List<Object> ClientResponses, Map<String, Object> server_hyperparams){
+    public Object aggregate(List<Object> ClientResponses, Map<String, Object> server_hyperparams){
         return aggregator.apply(ClientResponses, server_hyperparams);
     }
 }

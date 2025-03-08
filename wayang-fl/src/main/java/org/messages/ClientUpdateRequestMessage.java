@@ -1,13 +1,13 @@
 package org.messages;
 
-public class ClientUpdateRequestMessage<T> implements Message {
-    private final T value;
+public class ClientUpdateRequestMessage implements Message {
+    private final Object value;
 
-    public ClientUpdateRequestMessage(T value) {
+    public ClientUpdateRequestMessage(Object value) {
         this.value = value;
     }
 
-    public T getValue() {
+    public Object getValue() {
         return value;
     }
 }

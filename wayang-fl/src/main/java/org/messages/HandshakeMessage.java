@@ -1,5 +1,5 @@
 package org.messages;
 
-public class HandshakeMessage {
+public class HandshakeMessage implements Message{
 
 }
