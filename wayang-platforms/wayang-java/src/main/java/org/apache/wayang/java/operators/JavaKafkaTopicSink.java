@@ -48,19 +48,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Implementation fo the {@link KafkaTopicSink} for the {@link JavaPlatform}.
  */
 public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExecutionOperator {
 
+    private static final Logger logger = LoggerFactory.getLogger(JavaKafkaTopicSink.class);
+
     public JavaKafkaTopicSink(String topicName, TransformationDescriptor<T, String> formattingDescriptor) {
         super(topicName, formattingDescriptor);
-        System.out.println("---> CREATE JavaKafkaTopicSink ... (2)");
+        logger.info("---> CREATE JavaKafkaTopicSink ... (Option 2)");
     }
 
     public JavaKafkaTopicSink(KafkaTopicSink<T> that) {
         super(that);
-        System.out.println("---> CREATE JavaKafkaTopicSink ... (1)");
+        logger.info("---> CREATE JavaKafkaTopicSink ... (Option 1)");
     }
 
     @Override
@@ -72,19 +77,13 @@ public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExec
         assert inputs.length == 1;
         assert outputs.length == 0;
 
-        System.out.println("---> WRITE TO KAFKA SINK...");
-
-        System.out.println("### 9 ... ");
+        logger.info("---> WRITE TO KAFKA SINK...");
 
         JavaChannelInstance input = (JavaChannelInstance) inputs[0];
 
         initProducer( (KafkaTopicSink<T>) this );
 
-        // File f = new File( "./" + this.topicName + ".txt" );
-
         final Function<T, String> formatter = javaExecutor.getCompiler().compile(this.formattingDescriptor);
-
-        System.out.println("### 10 ... ");
 
         try ( KafkaProducer<String,String> producer = getProducer() ) {
             input.<T>provideStream().forEach(
@@ -103,10 +102,10 @@ public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExec
                             producer.send(record, (metadata, exception) -> {
                                 if (exception != null) {
                                     // Handle any exceptions thrown during send
-                                    System.err.println("Failed to send message: " + exception.getMessage());
+                                    logger.error("Failed to send message: " + exception.getMessage());
                                 } else {
                                     // Optionally handle successful send, log metadata, etc.
-                                    System.out.println("Message sent successfully to " + metadata.topic() + " partition " + metadata.partition());
+                                    logger.info("Message sent successfully to " + metadata.topic() + " partition " + metadata.partition());
                                 }
                             });
                         } catch (Exception ex) {
@@ -117,8 +116,6 @@ public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExec
         } catch (Exception e) {
             throw new WayangException("Writing to Kafka topic failed.", e);
         }
-
-        System.out.println("### 11 ... ");
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

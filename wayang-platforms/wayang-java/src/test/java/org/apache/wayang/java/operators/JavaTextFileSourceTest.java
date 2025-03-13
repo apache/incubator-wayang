@@ -34,6 +34,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,7 +98,7 @@ public class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
         }
     }
 
-    // @Test
+    @Ignore
     /**
      * Requires a local HTTP Server running, in the project root ...
      *
@@ -128,7 +129,7 @@ public class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
         }
     }
 
-    @Test
+    @Ignore
     public void testReadRemoteFileHTTPS() throws IOException, URISyntaxException {
         final String testFileURL = "https://kamir.solidcommunity.net/public/ecolytiq-sustainability-profile/profile2.ttl";
 

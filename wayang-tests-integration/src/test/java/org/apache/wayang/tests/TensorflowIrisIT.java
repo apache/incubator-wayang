@@ -24,24 +24,27 @@ import org.apache.wayang.basic.model.op.nn.CrossEntropyLoss;
 import org.apache.wayang.basic.model.op.nn.Linear;
 import org.apache.wayang.basic.model.op.nn.Sigmoid;
 import org.apache.wayang.basic.model.optimizer.Adam;
-import org.apache.wayang.basic.model.optimizer.GradientDescent;
 import org.apache.wayang.basic.model.optimizer.Optimizer;
 import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Test the Tensorflow integration with Wayang.
+ * Note: this test fails on M1 Macs because of Tensorflow-Java incompatibility.
  */
 public class TensorflowIrisIT {
 

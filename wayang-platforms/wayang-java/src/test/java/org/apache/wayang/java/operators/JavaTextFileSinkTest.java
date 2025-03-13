@@ -50,10 +50,15 @@ import java.util.stream.Stream;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Test suite for {@link JavaTextFileSink}.
  */
 public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
+
+    private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSinkTest.class);
 
     private Locale defaultLocale;
 
@@ -70,6 +75,7 @@ public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
 
     @After
     public void teardownTest() {
+
         Locale.setDefault(defaultLocale);
     }
 
@@ -78,7 +84,7 @@ public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
         Configuration configuration = new Configuration();
 
         final File tempDir = LocalFileSystem.findTempDir();
-        final String targetUrl = LocalFileSystem.toURL(new File(tempDir, "testWritingLocalFile.txt"));
+        final String targetUrl = LocalFileSystem.toURL(new File(tempDir, "testWritingLocalFile_2.txt"));
         JavaTextFileSink<Float> sink = new JavaTextFileSink<>(
                 targetUrl,
                 new TransformationDescriptor<>(
@@ -105,5 +111,6 @@ public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
         );
 
     }
+
 
 }

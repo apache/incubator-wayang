@@ -70,13 +70,13 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
         Locale.setDefault(defaultLocale);
     }
 
-    // @Test
+    @Test
     public void testA() throws Exception {
         Assert.assertEquals(3, 3);
         logger.info(">>> Test A");
     }
 
-    // @Test
+    //@Test
     public void testReadFromKafkaTopic() {
 
         logger.info(">>> Test: testReadFromKafkaTopic()");
@@ -91,8 +91,7 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
 
         logger.info("> 1 ... ");
 
-        //Properties props = KafkaTopicSource.getDefaultProperties();
-        Properties props = new Properties();
+        Properties props = KafkaTopicSource.getDefaultProperties();
         
         logger.info("> 2 ... ");
 
@@ -129,8 +128,6 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
         }
 
     }
-
-
 
     private void processRecord(ConsumerRecord<String, String> record) {
         // Implement your record processing logic here
