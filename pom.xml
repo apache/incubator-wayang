@@ -1350,6 +1350,7 @@
         <module>wayang-applications</module>
         <module>wayang-benchmark</module>
         <module>wayang-tests-integration</module>
+        <!--module>wayang-fl</module-->
         <!--module>wayang-docs</module-->
     </modules>
 </project>
