@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.server;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,6 +44,9 @@ public class FLServer extends AbstractActor {
     private final Function<Pair<Object, Object>, Object> update_operand;
     private Map<ActorRef, Boolean> active_clients = new HashMap<>();
     private List<Object> client_responses = new ArrayList<>();
+    private int client_acks = 0;
+    private int active_client_count = 0;
+    private ActorRef jobRef;
 
     public static Props props(Server server, Aggregator aggregator,
                               Criterion criterion, Map<String, Object> hyperparams,
@@ -62,8 +83,17 @@ public class FLServer extends AbstractActor {
         Map<String, Object> client_hyperparams = msg.getClient_hyperparams();
         for(ActorRef client : active_clients.keySet()){
             if(!active_clients.get(client)) continue;
+            active_client_count++;
             client.tell(new PlanHyperparametersMessage(plan, client_hyperparams), getSelf());
         }
+//        while(client_acks < active_client_count){}
+        jobRef = getSender();
+    }
+
+    private void handlePlanHyperparametersAckMessage(PlanHyperparametersAckMessage msg){
+        System.out.println("Received plan hyperparemeters ack");
+        client_acks++;
+        if(client_acks == active_client_count) jobRef.tell("DONE", getSelf());
     }
 
     public void handleRunIterationMessage(RunIterationMessage msg){
@@ -113,6 +143,7 @@ public class FLServer extends AbstractActor {
                 .match(AggregateResponsesMessage.class, this::handleAggregateResponsesMessage)
                 .match(UpdateStateMessage.class, this::handleUpdateOperand)
                 .match(FinalOperandMessage.class, this::handleFinalOperandMessage)
+                .match(PlanHyperparametersAckMessage.class, this::handlePlanHyperparametersAckMessage)
                 .build();
     }
 
