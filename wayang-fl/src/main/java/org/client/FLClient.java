@@ -1,8 +1,28 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.client;
 
 
 import org.apache.pekko.actor.AbstractActor;
+import org.apache.pekko.actor.OneForOneStrategy;
 import org.apache.pekko.actor.Props;
+import org.apache.pekko.actor.SupervisorStrategy;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.core.api.Configuration;
@@ -19,6 +39,7 @@ import org.messages.*;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Optional;
 
 public class FLClient extends AbstractActor {
 
@@ -44,16 +65,10 @@ public class FLClient extends AbstractActor {
         this.client = client;
         this.wayangContext = new WayangContext(new Configuration()).withPlugin(getPlugin(platformType));
         this.planBuilder = new JavaPlanBuilder(wayangContext)
-                .withJobName("ClientActor")
+                .withJobName(client.getName()+"-job")
                 .withUdfJarOf(FLClient.class);
         this.collector = new LinkedList<>();
     }
-
-//    @Override
-//    public void preStart() {
-////        ActorSelection server = getContext().actorSelection(serverPath);
-////        server.tell(new JoinRequest(clientId), getSelf());
-//    }
 
     @Override
     public Receive createReceive() {
@@ -70,23 +85,38 @@ public class FLClient extends AbstractActor {
     }
 
     private void handlePlanHyperparametersMessage(PlanHyperparametersMessage msg) {
+        System.out.println(client.getName() + " receiving plan");
         planFunction = msg.getSerializedplan();
         hyperparams = msg.getHyperparams();
+        getSender().tell(new PlanHyperparametersAckMessage(), getSelf());
+        System.out.println(client.getName() + " initialised plan function");
     }
 
     private void buildPlan(Object operand){
+
         Operator op = planFunction.apply(operand, planBuilder, hyperparams);
+//        System.out.println(op);
         Class classType = op.getOutput(0).getType().getDataUnitType().getTypeClass();
         LocalCallbackSink<?> sink = LocalCallbackSink.createCollectingSink(collector, classType);
         op.connectTo(0, sink, 0);
         plan = new WayangPlan(sink);
+//        System.out.println(plan);
     }
 
+
+
     private void handleClientUpdateRequestMessage(ClientUpdateRequestMessage msg) {
+        System.out.println(client.getName() + " Received compute request");
+//        System.out.println(planFunction);
+//        System.out.println(client.getName() + " Printed planFunction");
         Object operand = msg.getValue();
         buildPlan(operand);
         wayangContext.execute(client.getName() + "-job", plan);
         getSender().tell(new ClientUpdateResponseMessage(new LinkedList<>(collector)), getSelf());
+//        System.out.println(client.getName());
+//        System.out.println(collector);
         collector.clear();
     }
+
+
 }

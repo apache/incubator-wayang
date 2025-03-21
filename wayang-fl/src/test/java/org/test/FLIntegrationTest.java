@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.test;
 
 import com.typesafe.config.Config;
@@ -26,12 +44,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class FLIntegrationTest {
     private static Config server_config;
-    private static Config client_config;
+    private Config client_config;
     @BeforeAll
     public static void setup() {
         // Setup any global resources if needed.
         server_config = ConfigFactory.load("server-application");
-        client_config = ConfigFactory.load("client-application");
 //        system = ActorSystem.create("server-system", config);
         System.out.println("Starting FLIntegrationTest...");
     }
@@ -48,11 +65,13 @@ public class FLIntegrationTest {
         Server server = new Server("pekko://server-system@127.0.0.1:2551", "server");
 
         // Define client names and URLs (adjust the URLs for your actual remote actors).
-        List<String> clientNames = Arrays.asList("client1");
+        List<String> clientNames = Arrays.asList("client1", "client2", "client3");
         List<String> clientUrls = Arrays.asList(
-                "pekko://client1-system@127.0.0.1:2552/user/client1"
-//                "pekko://client2-system@127.0.0.1:2553/user/client2"
+                "pekko://client1-system@127.0.0.1:2552/user/client1",
+                "pekko://client2-system@127.0.0.1:2553/user/client2",
+                "pekko://client3-system@127.0.0.1:2554/user/client3"
         );
+        List<String> clientConfigs = Arrays.asList("client1-application", "client2-application", "client3-application");
 
 
         AggregatorFunction aggregatorFunction = (clientResponses, serverHyperparams) -> {
@@ -78,8 +97,26 @@ public class FLIntegrationTest {
             return aggregated;
         };
 
-        FLClientApp client_app = new FLClientApp(clientUrls.get(0), clientNames.get(0), "java");
-        client_app.startFLClient(client_config);
+//        AggregatorFunction aggregatorFunction = (clientResponses, serverHyperparams) -> {
+//            // Check if there are no responses
+//            if (clientResponses == null || clientResponses.isEmpty()) {
+//                return List.of();
+//            }
+//            // Assume each response is a List<Double>
+//            // Initialize an aggregated list with zeros using the size of the first response
+//            Integer answer = 0;
+//            for(Object response : clientResponses) answer += (Integer) response;
+//            Object aggregated = (Object) answer;
+//            return aggregated;
+//        };
+
+//        for(int i = 0; i < clientNames.size(); i++){
+//            FLClientApp client_app = new FLClientApp(clientUrls.get(i), clientNames.get(i), "java");
+//            client_config = ConfigFactory.load(clientConfigs.get(i));
+//            client_app.startFLClient(client_config);
+//        }
+
+
         // A simple aggregator that just returns the responses as-is.
         Aggregator aggregator = new Aggregator(aggregatorFunction);
 
@@ -97,10 +134,13 @@ public class FLIntegrationTest {
                 .dataQuanta()
                 .operator();
 
+//        PlanFunction planFunction = (w, pb, m) -> (Integer)w + 1;
+
         // Dummy initial values and operand.
         Map<String, Object> initialValues = new HashMap<>();
         initialValues.put("epoch", 0);
         Object initialOperand = (Object) new ArrayList<>(Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0));
+//        Object initialOperand = (Object) 1;
 
         // Dummy update rules (empty in this case).
         Map<String, Function<Object, Object>> updateRules = new HashMap<>();

@@ -16,17 +16,25 @@
  * limitations under the License.
  */
 
-package org.messages;
+package org.test;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import org.client.FLClientApp;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-public class UpdateStateMessage implements Message{
-    private final Object aggregatedResult;
-
-    public UpdateStateMessage(Object aggregatedResult){
-        this.aggregatedResult = aggregatedResult;
+public class FLClientTest3 {
+    @BeforeAll
+    public static void setup() {
+        System.out.println("Starting FLClient test...");
     }
 
-    public Object getAggregatedResult(){
-        return aggregatedResult;
+    public static void main(String args[]) throws Exception {
+        FLClientApp client_app = new FLClientApp("pekko://client3-system@127.0.0.1:2554/user/client3", "client3", "java");
+        Config config = ConfigFactory.load("client3-application");
+        client_app.startFLClient(config);
     }
 }
