@@ -101,7 +101,6 @@ public class SqlToWayangRelTest {
                 relNode.getTraitSet().plus(WayangConvention.INSTANCE),
                 rules);
 
-        PrintUtils.print("Optimized tree: ", wayangRel);
         final Collection<Record> collector = new ArrayList<>();
         final WayangPlan wayangPlan = optimizer.convertWithConfig(wayangRel, context.getConfiguration(),
                 collector);
@@ -119,7 +118,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> collector = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
-        System.out.println("plan " + wayangPlan);
         // except reduce by
         PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
             node.addTargetPlatform(Java.platform());
@@ -127,8 +125,6 @@ public class SqlToWayangRelTest {
 
         sqlContext.execute(wayangPlan);
         final Collection<org.apache.wayang.basic.data.Record> result = collector;
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
 
         final Record rec = result.stream().findFirst().get();
     }
@@ -142,8 +138,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> collector = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
-        System.out.println("plan " + wayangPlan);
-
         // except reduce by
         PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
             node.addTargetPlatform(Java.platform());
@@ -151,8 +145,6 @@ public class SqlToWayangRelTest {
 
         sqlContext.execute(wayangPlan);
         final Collection<org.apache.wayang.basic.data.Record> result = collector;
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
 
         final Record rec = result.stream().findFirst().get();
         assert (rec.size() == 2);
@@ -169,16 +161,12 @@ public class SqlToWayangRelTest {
         final Collection<Record> collector = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
-        System.out.println("plan " + wayangPlan);
         // except reduce by
         PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
             node.addTargetPlatform(Java.platform());
         });
         sqlContext.execute(wayangPlan);
         final Collection<org.apache.wayang.basic.data.Record> result = collector;
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
-
         final Record rec = result.stream().findFirst().get();
         assert (rec.size() == 2);
         assert (rec.getInt(1) == 3);
@@ -195,9 +183,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
-
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
         assert (result.size() == 0);
     }
 
@@ -212,9 +197,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
-
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
         assert (!result.stream().anyMatch(record -> record.getField(0).equals("test1")));
     }
 
@@ -229,9 +211,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
-
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
         assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
     }
 
@@ -246,9 +225,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
-
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
         assert (!result.stream().anyMatch(record -> record.getString(0).equals("test1")));
     }
 
@@ -263,8 +239,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
     }
 
     // @Test
@@ -278,8 +252,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
     }
 
     // @Test
@@ -293,8 +265,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
     }
 
     // @Test
@@ -307,9 +277,6 @@ public class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
-
-        System.out.println("Printing results");
-        result.stream().forEach(System.out::println);
     }
 
     // @Test

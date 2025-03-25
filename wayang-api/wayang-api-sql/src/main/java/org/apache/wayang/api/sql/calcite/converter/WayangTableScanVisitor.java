@@ -54,7 +54,6 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
 
         if (tableSource.equals("fs")) {
             ModelParser modelParser;
-            System.out.println("this config: " + this.wayangRelConverter.getConfiguration());
             try {
                 modelParser = this.wayangRelConverter.getConfiguration() == null
                         ? new ModelParser()
