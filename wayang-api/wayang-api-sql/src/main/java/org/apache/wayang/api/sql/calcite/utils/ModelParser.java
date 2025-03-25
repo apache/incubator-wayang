@@ -39,10 +39,32 @@ public class ModelParser {
     }
 
     public ModelParser(Configuration configuration) throws IOException, ParseException {
-        this.configuration = configuration;
-        Object obj = new JSONParser().parse(new FileReader("wayang-api/wayang-api-sql/src/main/resources/model.json"));
-        this.json = (JSONObject) obj;
+        String calciteModel = "{\"calcite\"" + configuration.getStringProperty("wayang.calcite.model") + ",\"separator\":\";\"}";
 
+        this.configuration = configuration;
+        Object obj = new JSONParser().parse(calciteModel);
+        System.out.println("obj: " + obj);
+        this.json = (JSONObject) obj;
+    }
+
+    /**
+     * This method allows you to specify the Calcite path, useful for testing.
+     * See also {@link #ModelParser(Configuration)} and {@link #ModelParser()}.
+     *
+     * @param configuration    An empty configuration. Usage:
+     *                         {@code Configuration configuration = new ModelParser(new Configuration(), calciteModelPath).setProperties();}
+     * @param calciteModelPath Path to the JSON object containing the Calcite
+     *                         model/schema.
+     * @throws IOException    If an I/O error occurs.
+     * @throws ParseException If unable to parse the file at
+     *                        {@code calciteModelPath}.
+     */
+    public ModelParser(Configuration configuration, String calciteModelPath) throws IOException, ParseException {
+        this.configuration = configuration;
+        FileReader fr = new FileReader(calciteModelPath);
+        Object obj = new JSONParser().parse(fr);
+
+        this.json = (JSONObject) obj;
     }
 
     public Configuration setProperties() {
