@@ -106,6 +106,7 @@ public class FlinkFlatMapOperator<InputType, OutputType>
 
             dataSetOutput = dataSetInput
                     .flatMap(richFunction)
+                    .setParallelism(flinkExecutor.fee.getParallelism())
                     .returns(this.functionDescriptor.getOutputType().getTypeClass())
                     .withBroadcastSet(names.field1, names.field0);
 
@@ -114,7 +115,9 @@ public class FlinkFlatMapOperator<InputType, OutputType>
             final FlatMapFunction<InputType, OutputType> flatMapFunction =
                     flinkExecutor.getCompiler().compile((FunctionDescriptor.SerializableFunction<InputType, Iterable<OutputType>>)this.functionDescriptor.getJavaImplementation());
 
-            dataSetOutput = dataSetInput.flatMap(flatMapFunction).returns(this.functionDescriptor.getOutputType().getTypeClass());
+            dataSetOutput = dataSetInput.flatMap(flatMapFunction)
+                .setParallelism(flinkExecutor.fee.getParallelism())
+                .returns(this.functionDescriptor.getOutputType().getTypeClass());
         }
         output.accept(dataSetOutput, flinkExecutor);
 

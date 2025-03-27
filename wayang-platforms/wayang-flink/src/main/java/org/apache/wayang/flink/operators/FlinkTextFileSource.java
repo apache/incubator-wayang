@@ -67,7 +67,7 @@ public class FlinkTextFileSource extends TextFileSource implements FlinkExecutio
 
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
         flinkExecutor.fee.setParallelism(flinkExecutor.getNumDefaultPartitions());
-        final DataSet<String> dataSet = flinkExecutor.fee.readTextFile(this.getInputUrl()).setParallelism(flinkExecutor.getNumDefaultPartitions());
+        final DataSet<String> dataSet = flinkExecutor.fee.readTextFile(this.getInputUrl()).setParallelism(flinkExecutor.fee.getParallelism());
 
 
         output.accept(dataSet, flinkExecutor);

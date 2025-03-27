@@ -137,7 +137,6 @@ public class FunctionCompiler {
         return new MapPartitionFunction<I, O>() {
             @Override
             public void mapPartition(Iterable<I> iterable, Collector<O> collector) throws Exception {
-                System.out.println(collector.getClass());
                 Iterable<O> out = function.apply(iterable);
                 for(O element: out){
                     collector.collect(element);

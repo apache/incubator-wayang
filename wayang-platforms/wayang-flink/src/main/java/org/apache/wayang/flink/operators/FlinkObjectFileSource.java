@@ -86,13 +86,12 @@ public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implemen
             path = this.getInputUrl();
         }
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
-        flinkExecutor.fee.setParallelism(flinkExecutor.getNumDefaultPartitions());
 
         HadoopInputFormat<NullWritable, BytesWritable> _file = HadoopInputs.readSequenceFile(NullWritable.class, BytesWritable.class, path);
         final DataSet<Tuple2> dataSet =
                 flinkExecutor
                         .fee.createInput(_file)
-                        .setParallelism(flinkExecutor.getNumDefaultPartitions())
+                        .setParallelism(flinkExecutor.fee.getParallelism())
                         .flatMap(new FlatMapFunction<org.apache.flink.api.java.tuple.Tuple2<NullWritable,BytesWritable>, Tuple2>() {
                             @Override
                             public void flatMap(org.apache.flink.api.java.tuple.Tuple2<NullWritable, BytesWritable> value, Collector<Tuple2> out) throws Exception {
@@ -133,6 +132,10 @@ public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implemen
 
     @Override
     public boolean containsAction() {
+        return true;
+    }
+
+    @Override public boolean isConversion() {
         return true;
     }
 }

@@ -35,6 +35,7 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.compiler.FunctionCompiler;
 import org.apache.wayang.flink.operators.FlinkExecutionOperator;
 import org.apache.wayang.flink.platform.FlinkPlatform;
+import com.esotericsoftware.kryo.serializers.DefaultSerializers;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -76,7 +77,7 @@ public class FlinkExecutor extends PushExecutorTemplate {
         this.platform = flinkPlatform;
         this.flinkContextReference = this.platform.getFlinkContext(job);
         this.fee = this.flinkContextReference.get();
-        this.numDefaultPartitions = (int)this.getConfiguration().getLongProperty("wayang.flink.paralelism");
+        this.numDefaultPartitions = (int) this.getConfiguration().getLongProperty("wayang.flink.parallelism");
         this.fee.setParallelism(this.numDefaultPartitions);
         this.flinkContextReference.noteObtainedReference();
     }
@@ -133,7 +134,7 @@ public class FlinkExecutor extends PushExecutorTemplate {
             }else {
                 try {
                     //TODO validate the execute in different contexts
-                    //this.fee.execute();
+                    this.fee.execute();
                 } catch (Exception e) {
                     throw new WayangException(e);
                 }

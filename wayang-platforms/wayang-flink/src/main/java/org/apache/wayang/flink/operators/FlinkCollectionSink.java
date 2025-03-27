@@ -20,6 +20,8 @@ package org.apache.wayang.flink.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.util.Collector;
+import org.apache.flink.api.common.functions.MapPartitionFunction;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
@@ -34,10 +36,13 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.java.channels.CollectionChannel;
+import com.esotericsoftware.kryo.Serializer;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 
 
@@ -60,8 +65,15 @@ public class FlinkCollectionSink<Type> extends UnaryToUnaryOperator<Type, Type>
         final CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
 
         final DataSet<Type> dataSetInput = input.provideDataSet();
+        TypeInformation<Type> type = dataSetInput.getType();
 
-        output.accept(dataSetInput.filter(a -> true).setParallelism(1).collect());
+        if (type.getTypeClass().getName().contains("scala.Tuple")) {
+            flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(type.getTypeClass(), ScalaTupleSerializer.class);
+        }
+
+        output.accept(dataSetInput
+                .collect()
+        );
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
 
@@ -94,5 +106,9 @@ public class FlinkCollectionSink<Type> extends UnaryToUnaryOperator<Type, Type>
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
         return "wayang.flink.collect.load";
+    }
+
+    @Override public boolean isConversion() {
+        return true;
     }
 }
