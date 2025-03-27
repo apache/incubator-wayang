@@ -127,7 +127,9 @@ public class FlinkCoGroupOperator<InputType0, InputType1, TypeKey>
                     iterable1.forEach(list1::add);
                     collector.collect( new Tuple2<>(list0, list1));
                 }
-        }).returns(ReflectionUtils.specify(Tuple2.class));
+        })
+        .setParallelism(flinkExecutor.fee.getParallelism())
+        .returns(ReflectionUtils.specify(Tuple2.class));
 
         output.accept(datasetOutput, flinkExecutor);
 
@@ -159,5 +161,5 @@ public class FlinkCoGroupOperator<InputType0, InputType1, TypeKey>
     public boolean containsAction() {
         return false;
     }
-    
+
 }

@@ -108,13 +108,16 @@ public class FlinkMapPartitionsOperator<InputType, OutputType>
             dataSetOutput = dataSetInput
                     .mapPartition(richFunction)
                     .withBroadcastSet(names.field1, names.field0)
-                    .returns(class_output);
+                    .returns(class_output)
+                    .setParallelism(flinkExecutor.fee.getParallelism());
 
         }else{
             final MapPartitionFunction<InputType, OutputType> mapFunction =
                     flinkExecutor.compiler.compile(this.getFunctionDescriptor());
 
-            dataSetOutput = dataSetInput.mapPartition(mapFunction).returns(class_output);
+            dataSetOutput = dataSetInput.mapPartition(mapFunction)
+                .returns(class_output)
+                .setParallelism(flinkExecutor.fee.getParallelism());
         }
 
         output.accept(dataSetOutput, flinkExecutor);

@@ -89,18 +89,20 @@ public class FlinkMapOperator<InputType, OutputType> extends MapOperator<InputTy
                             fex
                     );
 
-            fex.setRichFunction(richFunction);;
+            fex.setRichFunction(richFunction);
 
             dataSetOutput = dataSetInput
                     .map(richFunction)
+                    .setParallelism(flinkExecutor.fee.getParallelism())
                     .returns(this.getOutputType().getDataUnitType().getTypeClass())
                     .name(this.getName())
-                    .withBroadcastSet(names.field1, names.field0)
-            ;
+                    .withBroadcastSet(names.field1, names.field0);
 
         }else {
             final MapFunction<InputType, OutputType> mapper = flinkExecutor.getCompiler().compile(this.functionDescriptor);
-            dataSetOutput = dataSetInput.map(mapper).returns(this.getOutputType().getDataUnitType().getTypeClass()).name(this.getName());
+            dataSetOutput = dataSetInput.map(mapper)
+                .setParallelism(flinkExecutor.fee.getParallelism())
+                .returns(this.getOutputType().getDataUnitType().getTypeClass()).name(this.getName());
         }
         output.accept(dataSetOutput, flinkExecutor);
 

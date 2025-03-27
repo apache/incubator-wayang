@@ -65,7 +65,8 @@ public class FlinkTextFileSink<Type> extends TextFileSink<Type> implements Flink
 
         DataSet<Type> inputDataset = ((DataSetChannel.Instance) inputs[0]).provideDataSet();
 
-        inputDataset.writeAsText(this.textFileUrl);
+        inputDataset.writeAsText(this.textFileUrl)
+            .setParallelism(flinkExecutor.fee.getParallelism());
 //        final TextOutputFormat.TextFormatter<Type> fileOutputFormat = flinkExecutor.getCompiler().compileOutput(this.formattingDescriptor);
 //
 //        inputDataset.writeAsFormattedText(this.textFileUrl, fileOutputFormat);
