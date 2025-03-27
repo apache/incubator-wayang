@@ -94,12 +94,6 @@ public class FlinkCollectionSource<Type> extends CollectionSource<Type> implemen
             flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(ExecutionLineageNode.class, DefaultSerializers.ClassSerializer.class);
             flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(ChannelInstance.class, DefaultSerializers.ClassSerializer.class);
             flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(CollectionSplittableIterator.class, DefaultSerializers.ClassSerializer.class);
-            /*
-            flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(scala.Tuple5.class, Tuple5Serializer.class);
-            flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(scala.Tuple4.class, Tuple4Serializer.class);
-            flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(scala.Tuple3.class, Tuple3Serializer.class);
-            flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(scala.Tuple2.class, Tuple2Serializer.class);
-            */
 
             System.out.println("Got type: " + firstValue.getClass());
             if (firstValue.getClass().getName().contains("scala.Tuple")) {
