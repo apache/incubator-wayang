@@ -72,8 +72,7 @@ public class FlinkUnionAllOperator<Type>
 
         final DataSet<Type> dataSetInput0  = input0.provideDataSet();
         final DataSet<Type> dataSetInput1  = input1.provideDataSet();
-        final DataSet<Type> dataSetOutput0 = dataSetInput0.union(dataSetInput1)
-            .setParallelism(flinkExecutor.fee.getParallelism());
+        final DataSet<Type> dataSetOutput0 = dataSetInput0.union(dataSetInput1);
 
         output.accept(dataSetOutput0, flinkExecutor);
 
