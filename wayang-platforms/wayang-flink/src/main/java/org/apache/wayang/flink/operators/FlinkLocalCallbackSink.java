@@ -77,14 +77,10 @@ public class FlinkLocalCallbackSink <Type extends Serializable> extends LocalCal
             if (this.collector != null) {
 
                 this.collector.addAll(inputDataSet
-                        //.filter(a -> true)
-                        //.setParallelism(flinkExecutor.fee.getParallelism())
                         .collect());
 
             } else {
                 inputDataSet.output(new PrintingOutputFormat<Type>());
-                    //.setParallelism(1);
-                    //.setParallelism(flinkExecutor.fee.getParallelism());
             }
         } catch (Exception e) {
             e.printStackTrace();

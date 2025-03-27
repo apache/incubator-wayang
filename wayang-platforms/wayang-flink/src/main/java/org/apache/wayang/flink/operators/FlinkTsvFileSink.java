@@ -83,9 +83,6 @@ public class FlinkTsvFileSink<Type extends Tuple2<?, ?>> extends UnarySink<Type>
         map.writeAsText(targetPath)
             .setParallelism(flinkExecutor.fee.getParallelism());
 
-            //.setParallelism(1);
-
-
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 

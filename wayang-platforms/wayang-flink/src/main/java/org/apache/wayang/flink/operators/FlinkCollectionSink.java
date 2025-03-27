@@ -67,19 +67,11 @@ public class FlinkCollectionSink<Type> extends UnaryToUnaryOperator<Type, Type>
         final DataSet<Type> dataSetInput = input.provideDataSet();
         TypeInformation<Type> type = dataSetInput.getType();
 
-        System.out.println("Got type: " + type.getTypeClass());
         if (type.getTypeClass().getName().contains("scala.Tuple")) {
             flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(type.getTypeClass(), ScalaTupleSerializer.class);
         }
 
-        //flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(dataSetInput.getType().getClass(), Serializer.class);
-
-        System.out.println("Getting flink parallelism: " + flinkExecutor.fee.getParallelism());
-
         output.accept(dataSetInput
-                //.setParallelism(flinkExecutor.getNumDefaultPartitions())
-                //.setParallelism(flinkExecutor.fee.getParallelism())
-                //.setParallelism(1)
                 .collect()
         );
 

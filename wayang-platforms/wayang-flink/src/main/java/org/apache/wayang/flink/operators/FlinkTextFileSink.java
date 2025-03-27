@@ -67,9 +67,6 @@ public class FlinkTextFileSink<Type> extends TextFileSink<Type> implements Flink
 
         inputDataset.writeAsText(this.textFileUrl)
             .setParallelism(flinkExecutor.fee.getParallelism());
-//        final TextOutputFormat.TextFormatter<Type> fileOutputFormat = flinkExecutor.getCompiler().compileOutput(this.formattingDescriptor);
-//
-//        inputDataset.writeAsFormattedText(this.textFileUrl, fileOutputFormat);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

@@ -75,8 +75,6 @@ public class FlinkCollectionSource<Type> extends CollectionSource<Type> implemen
             ChannelInstance[] outputs,
             FlinkExecutor flinkExecutor,
             OptimizationContext.OperatorContext operatorContext) {
-        //assert inputs.length == 0;
-        //assert outputs.length == 1;
 
         final Collection<Type> collection;
         if (this.collection != null) {
@@ -95,20 +93,13 @@ public class FlinkCollectionSource<Type> extends CollectionSource<Type> implemen
             flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(ChannelInstance.class, DefaultSerializers.ClassSerializer.class);
             flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(CollectionSplittableIterator.class, DefaultSerializers.ClassSerializer.class);
 
-            System.out.println("Got type: " + firstValue.getClass());
             if (firstValue.getClass().getName().contains("scala.Tuple")) {
                 flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(firstValue.getClass(), ScalaTupleSerializer.class);
             }
-            //flinkExecutor.fee.getConfig().registerPojoType(firstValue.getClass());
-            //flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(firstValue.getClass(), new KryoSerializer(firstValue.getClass(), flinkExecutor.fee.getConfig()));
-
 
 
             final DataSet<Type> datasetOutput = flinkExecutor.fee.fromCollection(collection.parallelStream().collect(Collectors.toList()))
                 .setParallelism(flinkExecutor.fee.getParallelism());
-            /*
-            final DataSet<Type> datasetOutput = flinkExecutor.fee.fromParallelCollection(iterator, type)
-                .setParallelism(flinkExecutor.fee.getParallelism());*/
 
             ((DataSetChannel.Instance) outputs[0]).accept(datasetOutput, flinkExecutor);
 

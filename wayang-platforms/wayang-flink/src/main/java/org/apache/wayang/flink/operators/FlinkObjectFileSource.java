@@ -86,7 +86,6 @@ public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implemen
             path = this.getInputUrl();
         }
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
-        //flinkExecutor.fee.setParallelism(flinkExecutor.getParallelism());
 
         HadoopInputFormat<NullWritable, BytesWritable> _file = HadoopInputs.readSequenceFile(NullWritable.class, BytesWritable.class, path);
         final DataSet<Tuple2> dataSet =
