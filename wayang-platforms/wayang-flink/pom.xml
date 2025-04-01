@@ -51,6 +51,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
+            <artifactId>wayang-api-sql</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-java</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
@@ -61,6 +66,11 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-core</artifactId>
+            <version>${flink.version}</version>
         </dependency>
         <!-- depencies of flink -->
         <dependency>
@@ -110,6 +120,16 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
             <version>3.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware</groupId>
+            <artifactId>kryo</artifactId>
+            <version>5.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.altoo</groupId>
+            <artifactId>akka-kryo-serialization_2.12</artifactId>
+            <version>2.5.2</version>
         </dependency>
     </dependencies>
 </project>

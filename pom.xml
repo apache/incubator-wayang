@@ -1058,7 +1058,7 @@
 
                         <!--RAT files-->
                         <exclude>**/apache-rat-0.13/**</exclude>
-                      
+
                         <!--Javadoc files-->
                         <exclude>**/docs/**</exclude>
 

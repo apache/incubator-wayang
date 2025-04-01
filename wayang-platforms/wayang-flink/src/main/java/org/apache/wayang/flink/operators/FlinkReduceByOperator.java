@@ -99,7 +99,7 @@ public class FlinkReduceByOperator<InputType, KeyType>
                 dataSetInput
                         .groupBy(keySelector)
                         .reduce(reduceFunction)
-                        .setParallelism(flinkExecutor.getNumDefaultPartitions());
+                        .setParallelism(flinkExecutor.fee.getParallelism());
 
         output.accept(dataSetOutput, flinkExecutor);
 
