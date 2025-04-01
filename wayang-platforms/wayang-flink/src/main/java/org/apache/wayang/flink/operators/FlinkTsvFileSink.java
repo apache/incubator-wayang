@@ -78,10 +78,10 @@ public class FlinkTsvFileSink<Type extends Tuple2<?, ?>> extends UnarySink<Type>
                         this.dataQuantum = dataQuantum;
                         Tuple2 tuple2 = (Tuple2) dataQuantum;
                         return String.valueOf(tuple2.field0) + '\t' + String.valueOf(tuple2.field1);                    }
-                }).setParallelism(flinkExecutor.getNumDefaultPartitions());
+                }).setParallelism(flinkExecutor.fee.getParallelism());
 
-        map.writeAsText(targetPath).setParallelism(1);
-
+        map.writeAsText(targetPath)
+            .setParallelism(flinkExecutor.fee.getParallelism());
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
@@ -111,4 +111,7 @@ public class FlinkTsvFileSink<Type extends Tuple2<?, ?>> extends UnarySink<Type>
         return true;
     }
 
+    @Override public boolean isConversion() {
+        return true;
+    }
 }

@@ -1,0 +1,20 @@
+{
+    "calcite": {
+      "version": "1.0",
+      "defaultSchema": "wayang",
+      "schemas": [
+        {
+          "name": "fs",
+          "type": "custom",
+          "factory": "org.apache.calcite.adapter.file.FileSchemaFactory",
+          "operand": {
+            "directory": "//var/www/html/wayang-api/wayang-api-sql/src/test/resources/data"
+          }
+        }
+      ]
+    },
+    "separator": ";"
+  }
+  
+  
+  

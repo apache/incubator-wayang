@@ -26,6 +26,8 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityPusher;
 import org.apache.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
 import org.apache.wayang.core.platform.Platform;
 
+import java.io.Serializable;
+
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,7 +59,7 @@ import java.util.stream.Collectors;
  * provided <i>before</i> the regular data.</li>
  * </ol>
  */
-public interface Operator {
+public interface Operator extends Serializable {
 
     /**
      * @return the number of {@link InputSlot}s of this instance; inclusive of broadcast {@link InputSlot}s
@@ -464,6 +466,13 @@ public interface Operator {
     }
 
     /**
+     * @return whether this is a conversion operator
+     */
+    default boolean isConversion() {
+        return false;
+    }
+
+    /**
      * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
      */
     <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload);
@@ -641,5 +650,15 @@ public interface Operator {
         return properties;
     }
 
+    /*
+     * Collects all in and outputs of this operator instance and connects
+     * the operator given as parameter to them, effectively rendering this
+     * instance useless
+     *
+     * @param operator the operator to replace this one with
+     */
+    default void replaceWith(Operator operator) {
+        InputSlot.stealConnections(this, operator);
+        OutputSlot.stealConnections(this, operator);
+    }
 }
-

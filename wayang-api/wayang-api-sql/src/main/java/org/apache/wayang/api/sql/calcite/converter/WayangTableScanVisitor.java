@@ -28,52 +28,56 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.postgres.operators.PostgresTableSource;
 import org.apache.wayang.basic.data.Record;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
+import java.util.stream.Collectors;
 
 //TODO: create tablesource with column types
 //TODO: support other sources
 public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan> {
-    WayangTableScanVisitor(WayangRelConverter wayangRelConverter) {
+    WayangTableScanVisitor(final WayangRelConverter wayangRelConverter) {
         super(wayangRelConverter);
     }
 
     @Override
-    Operator visit(WayangTableScan wayangRelNode) {
+    Operator visit(final WayangTableScan wayangRelNode) {
 
-        String tableName = wayangRelNode.getTableName();
-        List<String> columnNames = wayangRelNode.getColumnNames();
+        final String tableName = wayangRelNode.getTableName();
+        final List<String> columnNames = wayangRelNode.getColumnNames();
 
         // Get the source platform for this table
-        String tableSource = wayangRelNode.getTable().getQualifiedName().get(0);
+        final String tableSource = wayangRelNode.getTable().getQualifiedName().get(0);
+
         if (tableSource.equals("postgres")) {
             return new PostgresTableSource(tableName, columnNames.toArray(new String[]{}));
         }
+
         if (tableSource.equals("fs")) {
             ModelParser modelParser;
             try {
-                modelParser = new ModelParser();
-            } catch (Exception e) {
+                modelParser = this.wayangRelConverter.getConfiguration() == null
+                        ? new ModelParser()
+                        : new ModelParser(this.wayangRelConverter.getConfiguration());
+            } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
-            RelDataType rowType = wayangRelNode.getRowType();
-            List<RelDataType> fieldTypes = new ArrayList<>();
-            for (RelDataTypeField field : rowType.getFieldList()) {
-                fieldTypes.add(field.getType());
-            }
-            String url = String.format("file:/%s/%s.csv", modelParser.getFsPath(), wayangRelNode.getTableName());
 
-            String separator = modelParser.getSeparator();
+            final List<RelDataType> fieldTypes = wayangRelNode.getRowType().getFieldList().stream()
+                    .map(RelDataTypeField::getType)
+                    .collect(Collectors.toList());
+
+            final String url = String.format("file:/%s/%s.csv", modelParser.getFsPath(), wayangRelNode.getTableName());
+
+            final String separator = modelParser.getSeparator();
 
             if (Objects.equals(separator, "")) {
-                return new JavaCSVTableSource(url,
+                return new JavaCSVTableSource<>(url,
                         DataSetType.createDefault(Record.class), fieldTypes);
             } else {
-                return new JavaCSVTableSource(url,
+                return new JavaCSVTableSource<>(url,
                         DataSetType.createDefault(Record.class), fieldTypes, separator.charAt(0));
             }
-        } else throw new RuntimeException("Source not supported");
+        } else
+            throw new RuntimeException("Source not supported");
     }
 }

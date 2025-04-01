@@ -83,7 +83,8 @@ public class FlinkSortOperator<InputType, KeyType>
 
         final KeySelector<InputType, KeyType> keyExtractor = compiler.compileKeySelector(this.keyDescriptor);
 
-        final DataSet<InputType> dataSetOutput = dataSetInput.sortPartition(keyExtractor, Order.ASCENDING);
+        final DataSet<InputType> dataSetOutput = dataSetInput.sortPartition(keyExtractor, Order.ASCENDING)
+            .setParallelism(flinkExecutor.fee.getParallelism());
 
         output.accept(dataSetOutput, flinkExecutor);
 
