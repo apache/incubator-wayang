@@ -43,7 +43,6 @@ public class ModelParser {
 
         this.configuration = configuration;
         Object obj = new JSONParser().parse(calciteModel);
-        System.out.println("obj: " + obj);
         this.json = (JSONObject) obj;
     }
 
