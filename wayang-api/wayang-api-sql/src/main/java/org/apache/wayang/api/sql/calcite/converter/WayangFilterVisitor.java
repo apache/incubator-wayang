@@ -19,9 +19,14 @@
 package org.apache.wayang.api.sql.calcite.converter;
 
 import org.apache.calcite.rel.core.Filter;
-import org.apache.calcite.rex.*;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexLiteral;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.runtime.SqlFunctions;
 import org.apache.calcite.sql.SqlKind;
+
 import org.apache.wayang.api.sql.calcite.rel.WayangFilter;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.operators.FilterOperator;
