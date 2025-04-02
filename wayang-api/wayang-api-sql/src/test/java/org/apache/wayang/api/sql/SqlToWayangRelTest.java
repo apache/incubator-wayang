@@ -38,7 +38,6 @@ import org.apache.wayang.api.sql.calcite.schema.WayangSchemaBuilder;
 import org.apache.wayang.api.sql.calcite.schema.WayangTable;
 import org.apache.wayang.api.sql.calcite.schema.WayangTableBuilder;
 import org.apache.wayang.api.sql.calcite.utils.ModelParser;
-import org.apache.wayang.api.sql.calcite.utils.PrintUtils;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Configuration;
@@ -208,13 +207,15 @@ public class SqlToWayangRelTest {
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA IS NOT NULL)" //
         );
+        
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
+
         assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
     }
 
-    // @Test
+    @Test
     public void filterWithNotLike() throws Exception {
         final SqlContext sqlContext = createSqlContext("/model-example-min.json",
                 "/data/largeLeftTableIndex.csv");
@@ -222,23 +223,28 @@ public class SqlToWayangRelTest {
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA NOT LIKE '_est1')" //
         );
+
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
+
         assert (!result.stream().anyMatch(record -> record.getString(0).equals("test1")));
     }
 
-    // @Test
+    @Test
     public void filterWithLike() throws Exception {
         final SqlContext sqlContext = createSqlContext("/model-example-min.json",
                 "/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
-                "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA LIKE '_est1' OR largeLeftTableIndex.NAMEA LIKE 't%')" //
+                "SELECT * FROM fs.largeLeftTableIndex WHERE largeLeftTableIndex.NAMEA LIKE '_est1'" //
         );
+
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
+
+        assert (result.stream().findFirst().get().equals(new Record("test1", "test1", "test2")));
     }
 
     // @Test
