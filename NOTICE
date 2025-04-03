@@ -9,5 +9,10 @@ Some of the files under
 wayang-commons/wayang-utils-profile-db/src/main/java/org/apache/wayang/commons/util/profiledb
 are licensed under the Apache License, Version 2.0.
 Copyright 2016 Sebastian Kruse
-
 --
+
+The following dependencies (not code) are used:
+Group: javax.annotation  Name: javax.annotation-api  Version: 1.3.2
+Project URL (from manifest): https://javaee.github.io/glassfish
+Project URL (from POM): http://jcp.org/en/jsr/detail?id=250
+License (from POM): CDDL + GPLv2 with classpath exception - https://github.com/javaee/javax.annotation/blob/master/LICENSE

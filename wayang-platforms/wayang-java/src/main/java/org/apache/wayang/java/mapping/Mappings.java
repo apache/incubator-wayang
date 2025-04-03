@@ -59,7 +59,10 @@ public class Mappings {
             new SampleMapping(),
             new ZipWithIdMapping(),
             new KafkaTopicSourceMapping(),
-            new KafkaTopicSinkMapping()
+            new KafkaTopicSinkMapping(),
+            new AmazonS3SourceMapping(),
+            new GoogleCloudStorageSourceMapping(),
+            new AzureBlobStorageSourceMapping()
     );
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
