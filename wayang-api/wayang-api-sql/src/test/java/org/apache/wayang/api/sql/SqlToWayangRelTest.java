@@ -352,7 +352,6 @@ public class SqlToWayangRelTest {
 
     private SqlContext createSqlContext(final String tableResourceName)
             throws IOException, ParseException, SQLException {
-
         final String calciteModel = "{\r\n" + //
                 "    \"calcite\": {\r\n" + //
                 "      \"version\": \"1.0\",\r\n" + //
@@ -363,7 +362,7 @@ public class SqlToWayangRelTest {
                 "          \"type\": \"custom\",\r\n" + //
                 "          \"factory\": \"org.apache.calcite.adapter.file.FileSchemaFactory\",\r\n" + //
                 "          \"operand\": {\r\n" + //
-                "            \"directory\": \"//var/www/html/wayang-api/wayang-api-sql/src/test/resources/data\"\r\n" + //
+                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath() + "\"\r\n" + //
                 "          }\r\n" + //
                 "        }\r\n" + //
                 "      ]\r\n" + //
@@ -373,7 +372,8 @@ public class SqlToWayangRelTest {
                 "  \r\n" + //
                 "  \r\n" + //
                 "";
-
+        
+        System.out.println("model " + calciteModel);
         final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
         final Configuration configuration = new ModelParser(new Configuration(), calciteModelJSON)
                 .setProperties();
