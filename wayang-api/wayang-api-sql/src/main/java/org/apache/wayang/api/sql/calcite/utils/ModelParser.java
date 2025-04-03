@@ -72,8 +72,7 @@ public class ModelParser {
      *
      * @param configuration    An empty configuration. Usage:
      *                         {@code Configuration configuration = new ModelParser(new Configuration(), calciteModelPath).setProperties();}
-     * @param calciteModelPath Path to the JSON object containing the Calcite
-     *                         model/schema.
+     * @param calciteModel    JSONized object of your calcite model
      * @throws IOException    If an I/O error occurs.
      * @throws ParseException If unable to parse the file at
      *                        {@code calciteModelPath}.
