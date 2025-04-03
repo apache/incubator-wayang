@@ -66,6 +66,24 @@ public class ModelParser {
         this.json = (JSONObject) obj;
     }
 
+     /**
+     * This method allows you to specify the Calcite path, useful for testing.
+     * See also {@link #ModelParser(Configuration)} and {@link #ModelParser()}.
+     *
+     * @param configuration    An empty configuration. Usage:
+     *                         {@code Configuration configuration = new ModelParser(new Configuration(), calciteModelPath).setProperties();}
+     * @param calciteModelPath Path to the JSON object containing the Calcite
+     *                         model/schema.
+     * @throws IOException    If an I/O error occurs.
+     * @throws ParseException If unable to parse the file at
+     *                        {@code calciteModelPath}.
+     */
+    public ModelParser(Configuration configuration, JSONObject calciteModel) throws IOException, ParseException {
+        this.configuration = configuration;
+        this.json = calciteModel;
+    }
+
+
     public Configuration setProperties() {
         JSONObject calciteObj = (JSONObject) json.get("calcite");
         String calciteModel = calciteObj.toString();
