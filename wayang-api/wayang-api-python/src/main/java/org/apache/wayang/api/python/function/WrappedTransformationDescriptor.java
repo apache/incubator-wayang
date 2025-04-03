@@ -39,7 +39,12 @@ public class WrappedTransformationDescriptor<Input, Output> extends Transformati
                 input.add(item);
                 final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
                 final Iterable<Output> output = manager.execute();
-                return output.iterator().next();
+
+                if (output.iterator().hasNext()) {
+                    return output.iterator().next();
+                }
+
+                return null;
             },
             inputTypeClass,
             outputTypeClass

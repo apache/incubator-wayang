@@ -39,12 +39,14 @@ Apache Wayang (incubating) aims at freeing data engineers and software developer
 - [GraphChi](https://github.com/GraphChi/graphchi-java)
 - [Postgres](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
+- [Apache Kafka](https://kafka.apache.org)
+- [Tensorflow](https://www.tensorflow.org/)
 
 Apache Wayang (incubating) can be used via the following APIs:
-- Java native
 - Java scala-like
 - Scala
-- SQL (limited support of simple select-project queries for now)
+- SQL
+- Java native (recommended only for low level)
 
 ## Quick Guide for Running Wayang
 
@@ -60,8 +62,8 @@ You first have to build the binaries as shown [here](guides/tutorial.md).
 Once you have the binaries built, follow these steps to install Wayang:
 
 ```shell
-tar -xvf wayang-0.7.1-snapshot.tar.gz
-cd wayang-0.7.1-SNAPSHOT
+tar -xvf wayang-1.0.1-SNAPSHOT.tar.gz
+cd wayang-1.0.1-SNAPSHOT
 ```
 
 In linux
@@ -100,7 +102,7 @@ Wayang is available via Maven Central. To use it with Maven, include the followi
 <dependency>
   <groupId>org.apache.wayang</groupId>
   <artifactId>wayang-***</artifactId>
-  <version>0.7.1</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
@@ -188,7 +190,7 @@ The list of [contributors](https://github.com/apache/incubator-wayang/graphs/con
 ## License
 All files in this repository are licensed under the Apache Software License 2.0
 
-Copyright 2020 - 2024 The Apache Software Foundation.
+Copyright 2020 - 2025 The Apache Software Foundation.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

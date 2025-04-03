@@ -81,7 +81,9 @@ public class FlinkCartesianOperator<InputType0, InputType1>
                 (dataInput0, dataInput1) -> {
                     return new Tuple2<>(dataInput0, dataInput1);
                 }
-        ).returns(ReflectionUtils.specify(Tuple2.class));
+        )
+        .setParallelism(flinkExecutor.fee.getParallelism())
+        .returns(ReflectionUtils.specify(Tuple2.class));
 
         output.accept(datasetOutput, flinkExecutor);
 

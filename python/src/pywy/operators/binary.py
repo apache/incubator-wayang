@@ -63,10 +63,11 @@ class JoinOperator(BinaryToUnaryOperator):
             output_type: GenericTco
         ):
         super().__init__("Join", input_type, output_type)
-        self.this_key_function = lambda g: this_key_function(next(g))
+        self.this_key_function = lambda g: this_key_function(ast.literal_eval(next(g)))
         self.that = that
-        self.that_key_function = lambda g: that_key_function(next(g))
+        self.that_key_function = lambda g: that_key_function(ast.literal_eval(next(g)))
         self.json_name = "join"
+
 
 
 class DLTrainingOperator(BinaryToUnaryOperator):

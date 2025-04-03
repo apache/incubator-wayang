@@ -86,13 +86,14 @@ public class FlinkGroupByOperator<InputType, KeyType> extends GroupByOperator<In
         final DataSet<InputType> dataSetInput  = input.provideDataSet();
 
 
-        final DataSet<Iterable<InputType>> dataSetOutput = dataSetInput.groupBy(keySelector).reduceGroup(
+        final DataSet<Iterable<InputType>> dataSetOutput = dataSetInput.groupBy(keySelector)
+            .reduceGroup(
                 (GroupReduceFunction<InputType, Iterable<InputType>>) (iterable, collector) -> {
                     Collection<InputType> dataUnitGroup = new ArrayList<>();
                     iterable.forEach(dataUnitGroup::add);
                     collector.collect(dataUnitGroup);
                 }
-        );
+            );
 
         output.accept(dataSetOutput, flinkExecutor);
 
