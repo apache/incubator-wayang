@@ -360,7 +360,7 @@ public class SqlToWayangRelTest {
     private SqlContext createSqlContext(final String calciteResourceName, final String tableResourceName)
             throws IOException, ParseException, SQLException {
 
-        final String calciteModelPath = SqlAPI.class.getResource(calciteResourceName).getPath();
+        final String calciteModelPath = this.getClass().getResource(calciteResourceName).getPath();
         assert (calciteModelPath != null && calciteModelPath != "")
                 : "Could not get calcite model resource from path: " + calciteResourceName;
 
@@ -369,7 +369,7 @@ public class SqlToWayangRelTest {
         assert (configuration != null)
                 : "Could not get configuration with calcite model path: " + calciteModelPath;
 
-        final String dataPath = SqlAPI.class.getResource(tableResourceName).getPath();
+        final String dataPath = this.getClass().getResource(tableResourceName).getPath();
         assert (dataPath != null && dataPath != "")
                 : "Could not get table resource from path: " + tableResourceName;
 
