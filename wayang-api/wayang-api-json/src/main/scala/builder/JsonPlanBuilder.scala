@@ -191,8 +191,6 @@ class JsonPlanBuilder() {
 
       // Other
       case operator: KMeansFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
-
-      // TODO: case operator: CollectSinkOperator => return dataquanta of last operator!
     }
   }
 
@@ -352,7 +350,6 @@ class JsonPlanBuilder() {
 
   private def visit(operator: DistinctOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform)) {
-      print("hello")
       dataQuanta.distinct
     } else
       dataQuanta.distinct.withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
