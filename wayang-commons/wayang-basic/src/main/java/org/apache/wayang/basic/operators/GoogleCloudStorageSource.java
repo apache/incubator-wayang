@@ -53,7 +53,6 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
 
     private final Logger logger = LogManager.getLogger(this.getClass());
 
-    //TODO is this needed?
     private final String encoding;
     private final String bucket;
     private final String blobName;
@@ -83,9 +82,6 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
         this.encoding = that.getEncoding();
         this.bucket = that.getBucket();
         this.blobName =that.getBlobName();
-    
-
-
     }
 
     /**
@@ -134,8 +130,6 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
             timeMeasurement.stop();
             return new CardinalityEstimate(0L, 0L, 1d);
         }
-
-        //TODO how to pass down blob name? Should maybe be in consutrctor?
 
         OptionalDouble bytesPerLine = this.estimateBytesPerLine();
         if (!bytesPerLine.isPresent()) {
@@ -186,10 +180,7 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
                     // Read as much as possible.
                     char[] cbuf = new char[1024];
                     int numReadChars, numLineFeeds = 0;
-                    while ((numReadChars = bufferedReader.read(cbuf)) != -1) {
-
-                        System.out.println("PRINTING NUM READ CHARS: " + numReadChars);
-                        
+                    while ((numReadChars = bufferedReader.read(cbuf)) != -1) {                        
                         for (int i = 0; i < numReadChars; i++) {
                             if (cbuf[i] == '\n') {
                                 System.out.println("PRINTING new line character: " + cbuf[i]);
@@ -267,7 +258,5 @@ public class GoogleCloudStorageSource extends UnarySource<String> {
             .setCredentials(serviceAccountCredentiels)
             .build()
             .getService();
-
     }
-    
 }
