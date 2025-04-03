@@ -19,6 +19,7 @@
 package org.apache.wayang.spark.execution;
 
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.SparkSession;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -58,6 +59,11 @@ public class SparkExecutor extends PushExecutorTemplate {
     public final JavaSparkContext sc;
 
     /**
+     * The {@link SparkSession} to be used by this instance.
+     */
+    public final SparkSession ss;
+
+    /**
      * Compiler to create Spark UDFs.
      */
     public FunctionCompiler compiler = new FunctionCompiler();
@@ -83,6 +89,7 @@ public class SparkExecutor extends PushExecutorTemplate {
         this.sparkContextReference = this.platform.getSparkContext(job);
         this.sparkContextReference.noteObtainedReference();
         this.sc = this.sparkContextReference.get();
+        this.ss = SparkSession.builder().sparkContext(this.sc.sc()).getOrCreate();
         if (this.sc.getConf().contains("spark.executor.cores")) {
             this.numDefaultPartitions = 2 * this.sc.getConf().getInt("spark.executor.cores", -1);
         } else {
