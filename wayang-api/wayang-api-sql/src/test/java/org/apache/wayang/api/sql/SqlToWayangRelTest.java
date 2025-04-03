@@ -373,7 +373,6 @@ public class SqlToWayangRelTest {
                 "  \r\n" + //
                 "";
         
-        System.out.println("model " + calciteModel);
         final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
         final Configuration configuration = new ModelParser(new Configuration(), calciteModelJSON)
                 .setProperties();
