@@ -95,7 +95,7 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
    * @return [[DataQuantaBuilder]] for the file
    */
   def readParquet(source: ParquetSource): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, Record], Record] =
-    createSourceBuilder(source)(ClassTag(classOf[Record])) // TODO: make this get url and projection?
+    createSourceBuilder(source)(ClassTag(classOf[Record]))
 
   /**
     * Load [[DataQuanta]] from an arbitrary [[UnarySource]].
