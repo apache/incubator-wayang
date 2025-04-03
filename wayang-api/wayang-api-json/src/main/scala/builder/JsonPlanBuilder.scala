@@ -25,7 +25,7 @@ import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
 import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson, ParquetInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.output.TextFileOutputFromJson
-import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOpeartorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, ReduceOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOperatorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, ReduceOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.PlanFromJson
 import org.apache.wayang.api._
 import org.apache.wayang.basic.operators._
@@ -44,6 +44,7 @@ import org.apache.wayang.genericjdbc.GenericJdbc
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.core.plugin.Plugin
 import org.apache.wayang.basic.model.DLModel;
+import org.apache.wayang.basic.data.Record;
 
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
@@ -167,7 +168,7 @@ class JsonPlanBuilder() {
       case operator: FlatMapOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: ReduceByOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: CountOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
-      case operator: GroupByOpeartorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
+      case operator: GroupByOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: SortOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: DistinctOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: ReduceOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
@@ -190,6 +191,8 @@ class JsonPlanBuilder() {
 
       // Other
       case operator: KMeansFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
+
+      // TODO: case operator: CollectSinkOperator => return dataquanta of last operator!
     }
   }
 
@@ -330,7 +333,7 @@ class JsonPlanBuilder() {
       dataQuanta.count.asInstanceOf[DataQuanta[Any]].withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 
-  private def visit(operator: GroupByOpeartorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
+  private def visit(operator: GroupByOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     val lambda = SerializableLambda.createLambda[Any, Any](operator.data.keyUdf)
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
       dataQuanta.groupByKey(lambda).map(arrayList => arrayList.asScala.toList)
@@ -348,9 +351,10 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: DistinctOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+    if (!ExecutionPlatforms.All.contains(operator.executionPlatform)) {
+      print("hello")
       dataQuanta.distinct
-    else
+    } else
       dataQuanta.distinct.withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 

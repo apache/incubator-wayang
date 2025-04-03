@@ -21,10 +21,9 @@ from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
 from pywy.types import (GenericTco, Predicate, Function, BiFunction, FlatmapFunction, IterableOut, T, In, Out)
 from pywy.operators import *
+from pywy.basic.data.record import Record
 from pywy.basic.model.option import Option
 from pywy.basic.model.models import Model
-
-from python.src.pywy.basic.data.record import Record
 
 
 class Configuration:
@@ -51,7 +50,6 @@ class WayangContext:
     """
     add a :class:`Plugin` to the :class:`Context`
     """
-
     def register(self, *plugins: Plugin):
         for p in plugins:
             self.plugins.update(p)
@@ -60,18 +58,17 @@ class WayangContext:
     """
     remove a :class:`Plugin` from the :class:`Context`
     """
-
     def unregister(self, *plugins: Plugin):
         for p in plugins:
             self.plugins.remove(p)
         return self
 
-    def textfile(self, file_path: str) -> 'DataQuanta[str]':
+    def textfile(self, file_path: str) -> "DataQuanta[str]":
         return DataQuanta(self, TextFileSource(file_path))
 
     def parquet(
         self, file_path: str, projection: Optional[List[str]] = None, column_names: Optional[List[str]] = None
-    ) -> 'DataQuanta[Record]':
+    ) -> "DataQuanta[Record]":
         return DataQuanta(self, ParquetSource(file_path, projection, column_names))
 
     def __str__(self):
@@ -94,25 +91,31 @@ class DataQuanta(GenericTco):
     def filter(self: "DataQuanta[T]", p: Predicate, input_type: GenericTco = None) -> "DataQuanta[T]":
         return DataQuanta(self.context, self._connect(FilterOperator(p, input_type)))
 
-    def map(self: "DataQuanta[In]", f: Function, input_type: GenericTco = None, output_type: GenericTco = None) -> "DataQuanta[Out]":
+    def map(
+        self: "DataQuanta[In]",
+        f: Function,
+        input_type: GenericTco = None,
+        output_type: GenericTco = None
+    ) -> "DataQuanta[Out]":
         return DataQuanta(self.context, self._connect(MapOperator(f, input_type, output_type)))
 
-    def flatmap(self: "DataQuanta[In]", f: FlatmapFunction, input_type: GenericTco = None, output_type: GenericTco = None) -> "DataQuanta[IterableOut]":
+    def flatmap(
+        self: "DataQuanta[In]",
+        f: FlatmapFunction,
+        input_type: GenericTco = None,
+        output_type: GenericTco = None
+    ) -> "DataQuanta[IterableOut]":
         return DataQuanta(self.context, self._connect(FlatmapOperator(f, input_type, output_type)))
 
-    def reduce_by_key(self: "DataQuanta[In]",
-                      key_f: Function,
-                      f: BiFunction,
-                      input_type: GenericTco = None
-                      ) -> "DataQuanta[IterableOut]":
-
+    def reduce_by_key(
+        self: "DataQuanta[In]",
+        key_f: Function,
+        f: BiFunction,
+        input_type: GenericTco = None
+    ) -> "DataQuanta[IterableOut]":
         return DataQuanta(self.context, self._connect(ReduceByKeyOperator(key_f, f, input_type)))
 
-    def sort(self: "DataQuanta[In]",
-                      key_f: Function,
-                      input_type: GenericTco = None
-                      ) -> "DataQuanta[IterableOut]":
-
+    def sort(self: "DataQuanta[In]", key_f: Function, input_type: GenericTco = None) -> "DataQuanta[IterableOut]":
         return DataQuanta(self.context, self._connect(SortOperator(key_f, input_type)))
 
     def join(
@@ -121,22 +124,38 @@ class DataQuanta(GenericTco):
         that: "DataQuanta[In]",
         that_key_f: Function,
         input_type: GenericTco = None,
-        output_type: GenericTco = None
-        ) -> "DataQuanta[Out]":
-
+    ) -> "DataQuanta[Out]":
         op = JoinOperator(
             this_key_f,
             that,
             that_key_f,
-            input_type,
-            output_type
+            input_type
         )
 
         self._connect(op),
         return DataQuanta(
             self.context,
-            that._connect(op,1)
+            that._connect(op, 1)
         )
+
+    def cartesian(
+        self: "DataQuanta[In]",
+        that: "DataQuanta[In]",
+        input_type: GenericTco = None,
+    ) -> "DataQuanta[Out]":
+        op = CartesianOperator(
+            that,
+            input_type
+        )
+
+        self._connect(op),
+        return DataQuanta(
+            self.context,
+            that._connect(op, 1)
+        )
+
+    def distinct(self: "DataQuanta[In]", input_type: GenericTco = None) -> "DataQuanta[IterableOut]":
+        return DataQuanta(self.context, self._connect(DistinctOperator(input_type)))
 
     def dlTraining(
         self: "DataQuanta[In]",
@@ -146,7 +165,6 @@ class DataQuanta(GenericTco):
         input_type: GenericTco,
         output_type: GenericTco
     ) -> "DataQuanta[Out]":
-
         op = DLTrainingOperator(
             model,
             option,
@@ -157,7 +175,7 @@ class DataQuanta(GenericTco):
 
         return DataQuanta(
             self.context,
-            that._connect(op,1)
+            that._connect(op, 1)
         )
 
     def predict(
@@ -175,10 +193,10 @@ class DataQuanta(GenericTco):
 
         return DataQuanta(
             self.context,
-            that._connect(op,1)
+            that._connect(op, 1)
         )
 
-    def store_textfile(self: "DataQuanta[In]", path: str, input_type: GenericTco = None):
+    def store_textfile(self: "DataQuanta[In]", path: str, input_type: GenericTco = None) -> None:
         last: List[SinkOperator] = [
             cast(
                 SinkOperator,
@@ -190,7 +208,6 @@ class DataQuanta(GenericTco):
                 )
             )
         ]
-        #print(PywyPlan(self.context.plugins, last))
         PywyPlan(self.context.plugins, self.context.configuration.entries, last).execute()
 
     def _connect(self, op: PO_T, port_op: int = 0) -> PywyOperator:

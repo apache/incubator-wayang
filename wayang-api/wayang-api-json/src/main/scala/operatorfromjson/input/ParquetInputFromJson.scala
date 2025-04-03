@@ -22,7 +22,7 @@ import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeName(OperatorFromJson.OperatorNames.TextFileInput)
+@JsonTypeName(OperatorFromJson.OperatorNames.ParquetInput)
 case class ParquetInputFromJson(override val id: Long,
                                  override val input: Array[Long],
                                  override val output: Array[Long],

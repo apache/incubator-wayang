@@ -16,7 +16,7 @@
 #
 
 from typing import (TypeVar, Optional, List)
-from pywy.types import (typecheck, ConstrainedOperatorType)
+from pywy.types import (typecheck, ConstrainedOperatorType, serialize_iterator_to_operator_type)
 
 
 class PywyOperator:
@@ -29,15 +29,15 @@ class PywyOperator:
     output_type: ConstrainedOperatorType
 
     def __init__(self,
-                 name: str,
-                 cat: str,
-                 input_type: ConstrainedOperatorType = None,
-                 output_type: ConstrainedOperatorType = None,
-                 input_length: Optional[int] = 1,
-                 output_length: Optional[int] = 1,
-                 *args,
-                 **kwargs
-                 ):
+        name: str,
+        cat: str,
+        input_type: ConstrainedOperatorType = None,
+        output_type: ConstrainedOperatorType = None,
+        input_length: Optional[int] = 1,
+        output_length: Optional[int] = 1,
+        *args,
+        **kwargs
+    ):
         typecheck(input_type)
         typecheck(output_type)
         self.name = (self.prefix() + name + self.postfix()).strip()
@@ -48,6 +48,9 @@ class PywyOperator:
         self.outputOperator = [None] * self.outputs
         self.input_type = input_type
         self.output_type = output_type
+
+    def serialize_iterator(self, iterator):
+        return serialize_iterator_to_operator_type(self.input_type, iterator)
 
     def validate_inputs(self, vec):
         if len(vec) != self.inputs:
@@ -91,5 +94,6 @@ class PywyOperator:
 
     def __repr__(self):
         return self.__str__()
+
 
 PO_T = TypeVar('PO_T', bound=PywyOperator)

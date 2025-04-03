@@ -16,22 +16,19 @@
 #
 
 from itertools import chain, groupby
-from collections import defaultdict
-import ast
 
 from pywy.operators.base import PywyOperator
 from pywy.types import (
-                            GenericTco,
-                            GenericUco,
-                            Predicate,
-                            get_type_predicate,
-                            Function,
-                            BiFunction,
-                            get_type_function,
-                            get_type_bifunction,
-                            FlatmapFunction,
-                            get_type_flatmap_function
-                        )
+    GenericTco,
+    Predicate,
+    get_type_predicate,
+    Function,
+    BiFunction,
+    get_type_function,
+    get_type_bifunction,
+    FlatmapFunction,
+    get_type_flatmap_function
+)
 
 
 class UnaryToUnaryOperator(PywyOperator):
@@ -40,7 +37,7 @@ class UnaryToUnaryOperator(PywyOperator):
         super().__init__(name, "unary", input_type, output_type, 1, 1)
 
     def postfix(self) -> str:
-        return 'OperatorUnary'
+        return "OperatorUnary"
 
     def __str__(self):
         return super().__str__()
@@ -50,7 +47,6 @@ class UnaryToUnaryOperator(PywyOperator):
 
 
 class FilterOperator(UnaryToUnaryOperator):
-
     predicate: Predicate
     json_name: str
 
@@ -65,6 +61,7 @@ class FilterOperator(UnaryToUnaryOperator):
         return self.predicate(next(iterator))
 
     def get_udf(self, iterator):
+        iterator = self.serialize_iterator(iterator)
         return filter(self.predicate, iterator)
 
     def __str__(self):
@@ -75,7 +72,6 @@ class FilterOperator(UnaryToUnaryOperator):
 
 
 class MapOperator(UnaryToUnaryOperator):
-
     function: Function
     json_name: str
 
@@ -87,6 +83,7 @@ class MapOperator(UnaryToUnaryOperator):
         self.json_name = "map"
 
     def get_udf(self, iterator):
+        iterator = self.serialize_iterator(iterator)
         return map(lambda x: self.function(x), iterator)
 
     def __str__(self):
@@ -95,8 +92,8 @@ class MapOperator(UnaryToUnaryOperator):
     def __repr__(self):
         return super().__repr__()
 
-class MapPartitionsOperator(UnaryToUnaryOperator):
 
+class MapPartitionsOperator(UnaryToUnaryOperator):
     function: Function
     json_name: str
 
@@ -108,6 +105,7 @@ class MapPartitionsOperator(UnaryToUnaryOperator):
         self.json_name = "mapPartitions"
 
     def get_udf(self, iterator):
+        iterator = self.serialize_iterator(iterator)
         return map(lambda x: self.function(x), iterator)
 
     def __str__(self):
@@ -118,10 +116,8 @@ class MapPartitionsOperator(UnaryToUnaryOperator):
 
 
 class FlatmapOperator(UnaryToUnaryOperator):
-
     fm_function: FlatmapFunction
     json_name: str
-
 
     def __init__(self, fm_function: FlatmapFunction, input_type: GenericTco = None, output_type: GenericTco = None):
         if input_type is None or output_type is None:
@@ -131,6 +127,7 @@ class FlatmapOperator(UnaryToUnaryOperator):
         self.json_name = "flatMap"
 
     def get_udf(self, iterator):
+        iterator = self.serialize_iterator(iterator)
         return chain.from_iterable(map(lambda x: self.fm_function(x), iterator))
 
     def __str__(self):
@@ -139,17 +136,18 @@ class FlatmapOperator(UnaryToUnaryOperator):
     def __repr__(self):
         return super().__repr__()
 
+
 class ReduceByKeyOperator(UnaryToUnaryOperator):
     key_function: Function
     reduce_function: BiFunction
     json_name: str
 
     def __init__(
-            self,
-            key_function: Function,
-            reduce_function: BiFunction,
-            input_type: GenericTco = None,
-        ):
+        self,
+        key_function: Function,
+        reduce_function: BiFunction,
+        input_type: GenericTco = None,
+    ):
         if input_type is None:
             input_type = get_type_bifunction(reduce_function) if reduce_function else (None, None, None)
         super().__init__("ReduceByKey", (input_type[0], input_type[1]))
@@ -158,14 +156,9 @@ class ReduceByKeyOperator(UnaryToUnaryOperator):
         self.json_name = "reduceBy"
 
     def get_udf(self, iterator):
-        # Use ast.literal_eval() to safely evaluate the string as a Python literal
-        #print(", ".join(iterator))
-        #list_of_tuples = ast.literal_eval("[" + ", ".join(iterator)  + "]")
+        iterator = self.serialize_iterator(iterator)
+        grouped_data = groupby(sorted(iterator, key=self.key_function), key=self.key_function)
 
-        tuples = [(str(item[0]), str(item[1])) for item in iterator]
-        grouped_data = groupby(sorted(tuples, key=self.key_function), key=self.key_function)
-
-        # Create a defaultdict to store the sums
         sums = {}
 
         for key, group in grouped_data:
@@ -183,19 +176,37 @@ class ReduceByKeyOperator(UnaryToUnaryOperator):
 
 
 class SortOperator(UnaryToUnaryOperator):
-
     key_udf: Function
     json_name: str
 
     def __init__(self, function: Function, input_type: GenericTco = None):
         if input_type is None:
             input_type, output_type = get_type_function(function) if function else (None, None)
-        super().__init__("Sort", input_type, None)
+        super().__init__("Sort", input_type, input_type)
         self.key_udf = function
         self.json_name = "sort"
 
     def get_udf(self, iterator):
+        iterator = self.serialize_iterator(iterator)
         return sorted(iterator, key=self.key_udf)
+
+    def __str__(self):
+        return super().__str__()
+
+    def __repr__(self):
+        return super().__repr__()
+
+
+class DistinctOperator(UnaryToUnaryOperator):
+    json_name: str
+
+    def __init__(self, input_type: GenericTco = None):
+        super().__init__("Distinct", input_type, input_type)
+        self.json_name = "distinct"
+
+    def get_udf(self, iterator):
+        iterator = self.serialize_iterator(iterator)
+        return iter(set(iterator))
 
     def __str__(self):
         return super().__str__()

@@ -16,26 +16,30 @@
 #
 
 from pywy.operators.base import PywyOperator
+from pywy.operators.binary import BinaryToUnaryOperator, JoinOperator, DLTrainingOperator, PredictOperator, \
+    CartesianOperator
 from pywy.operators.sink import TextFileSink, SinkOperator
 from pywy.operators.source import TextFileSource, ParquetSource, SourceUnaryOperator
-from pywy.operators.unary import UnaryToUnaryOperator, FilterOperator, MapOperator, FlatmapOperator, ReduceByKeyOperator, SortOperator
-from pywy.operators.binary import BinaryToUnaryOperator, JoinOperator, DLTrainingOperator, PredictOperator
+from pywy.operators.unary import UnaryToUnaryOperator, FilterOperator, MapOperator, FlatmapOperator, \
+    ReduceByKeyOperator, SortOperator, DistinctOperator
 
 __ALL__ = [
-     PywyOperator,
-     UnaryToUnaryOperator,
-     BinaryToUnaryOperator,
-     TextFileSink,
-     TextFileSource,
-     ParquetSource,
-     FilterOperator,
-     SinkOperator,
-     SortOperator,
-     SourceUnaryOperator,
-     MapOperator,
-     ReduceByKeyOperator,
-     FlatmapOperator,
-     JoinOperator,
-     DLTrainingOperator,
-     PredictOperator
+    PywyOperator,
+    UnaryToUnaryOperator,
+    BinaryToUnaryOperator,
+    TextFileSink,
+    TextFileSource,
+    ParquetSource,
+    FilterOperator,
+    SinkOperator,
+    SortOperator,
+    DistinctOperator,
+    SourceUnaryOperator,
+    MapOperator,
+    ReduceByKeyOperator,
+    FlatmapOperator,
+    JoinOperator,
+    CartesianOperator,
+    DLTrainingOperator,
+    PredictOperator,
 ]

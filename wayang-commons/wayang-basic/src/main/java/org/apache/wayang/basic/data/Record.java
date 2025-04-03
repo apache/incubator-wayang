@@ -61,7 +61,7 @@ public class Record implements Serializable, Copyable<Record> {
 
     @Override
     public String toString() {
-        return "Record" + Arrays.toString(this.values);
+        return Arrays.toString(this.values).replace("[", "").replace("]", "").replace(" ", "");
     }
 
     public Object getField(int index) {
@@ -77,7 +77,7 @@ public class Record implements Serializable, Copyable<Record> {
     public double getDouble(int index) {
         Object field = this.values[index];
         return ReflectionUtils.toDouble(field);
-       }
+    }
 
     /**
      * Retrieve a field as a {@code long}. It must be castable as such.
