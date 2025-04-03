@@ -65,4 +65,4 @@ cd wayang-1.0.1-SNAPSHOT
 ```
 Then you should be able to see outputs like this:
 
-![img.png](images/wordcount_result.png)
+![img.png](../images/wordcount_result.png)

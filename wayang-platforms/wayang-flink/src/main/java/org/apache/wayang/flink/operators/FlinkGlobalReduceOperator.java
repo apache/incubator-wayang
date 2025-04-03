@@ -89,7 +89,8 @@ public class FlinkGlobalReduceOperator<Type>
 
         DataSet<Type> datasetOutput = null;
         try {
-            datasetOutput = dataSetInput.reduce(reduceFunction);
+            datasetOutput = dataSetInput.reduce(reduceFunction)
+                .setParallelism(flinkExecutor.fee.getParallelism());
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -86,25 +86,29 @@ public class FlinkPlatform extends Platform {
      */
     public FlinkContextReference getFlinkContext(Job job) {
         Configuration conf = job.getConfiguration();
+        String[] jars = getJars(job);
+
         if(this.flinkContextReference == null)
             switch (conf.getStringProperty("wayang.flink.mode.run")) {
             case "local":
                 this.flinkContextReference = new FlinkContextReference(
                         job.getCrossPlatformExecutor(),
-                        ExecutionEnvironment.createLocalEnvironment(),
-                        (int)conf.getLongProperty("wayang.flink.paralelism")
+                        ExecutionEnvironment.getExecutionEnvironment(),
+                        (int) conf.getLongProperty("wayang.flink.parallelism")
                 );
                 break;
             case "distribution":
-                String[] jars = getJars(job);
+                org.apache.flink.configuration.Configuration flinkConfig = new org.apache.flink.configuration.Configuration();
+                flinkConfig.setString("rest.client.max-content-length", "1000000000");
                 this.flinkContextReference = new FlinkContextReference(
                         job.getCrossPlatformExecutor(),
                         ExecutionEnvironment.createRemoteEnvironment(
                                 conf.getStringProperty("wayang.flink.master"),
                                 Integer.parseInt(conf.getStringProperty("wayang.flink.port")),
+                                flinkConfig,
                                 jars
                         ),
-                        (int)conf.getLongProperty("wayang.flink.paralelism")
+                        (int)conf.getLongProperty("wayang.flink.parallelism")
                 );
                 break;
             case "collection":
@@ -133,7 +137,7 @@ public class FlinkPlatform extends Platform {
     @Override
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
         int cpuMhz = (int) configuration.getLongProperty("wayang.flink.cpu.mhz");
-        int numCores = (int) ( configuration.getLongProperty("wayang.flink.paralelism"));
+        int numCores = (int) ( configuration.getLongProperty("wayang.flink.parallelism"));
         double hdfsMsPerMb = configuration.getDoubleProperty("wayang.flink.hdfs.ms-per-mb");
         double networkMsPerMb = configuration.getDoubleProperty("wayang.flink.network.ms-per-mb");
         double stretch = configuration.getDoubleProperty("wayang.flink.stretch");
@@ -156,7 +160,7 @@ public class FlinkPlatform extends Platform {
 
 
     private String[] getJars(Job job){
-        List<String> jars = new ArrayList<>(5);
+        List<String> jars = new ArrayList<>();
         List<Class> clazzs = Arrays.asList(new Class[]{FlinkPlatform.class, WayangBasic.class, WayangContext.class});
 
         clazzs.stream().map(

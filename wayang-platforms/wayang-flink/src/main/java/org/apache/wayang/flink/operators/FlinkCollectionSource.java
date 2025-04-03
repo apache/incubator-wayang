@@ -19,6 +19,14 @@
 package org.apache.wayang.flink.operators;
 
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeutils.TypeSerializer;
+import org.apache.flink.api.java.io.CollectionInputFormat;
+import io.altoo.akka.serialization.kryo.KryoSerializer;
+import org.apache.flink.util.SplittableIterator;
+import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.wayang.basic.operators.CollectionSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -30,10 +38,14 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.java.channels.CollectionChannel;
+import com.esotericsoftware.kryo.serializers.DefaultSerializers;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.Collections;
 
 /**
  * This is execution operator implements the {@link CollectionSource}.
@@ -63,8 +75,6 @@ public class FlinkCollectionSource<Type> extends CollectionSource<Type> implemen
             ChannelInstance[] outputs,
             FlinkExecutor flinkExecutor,
             OptimizationContext.OperatorContext operatorContext) {
-        assert inputs.length == 0;
-        assert outputs.length == 1;
 
         final Collection<Type> collection;
         if (this.collection != null) {
@@ -73,8 +83,38 @@ public class FlinkCollectionSource<Type> extends CollectionSource<Type> implemen
             collection = ((CollectionChannel.Instance)inputs[0]).provideCollection();
         }
 
-        final DataSet<Type> datasetOutput = flinkExecutor.fee.fromCollection(collection);
-        ((DataSetChannel.Instance) outputs[0]).accept(datasetOutput, flinkExecutor);
+        SplittableIterator<Type> iterator = new CollectionSplittableIterator<Type>(new ArrayList(collection), flinkExecutor.fee.getParallelism());
+        if (collection.iterator().hasNext()) {
+            Type firstValue = collection.iterator().next();
+
+            TypeInformation<Type> type = TypeExtractor.getForObject(firstValue);
+
+            flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(ExecutionLineageNode.class, DefaultSerializers.ClassSerializer.class);
+            flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(ChannelInstance.class, DefaultSerializers.ClassSerializer.class);
+            flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(CollectionSplittableIterator.class, DefaultSerializers.ClassSerializer.class);
+
+            if (firstValue.getClass().getName().contains("scala.Tuple")) {
+                flinkExecutor.fee.getConfig().registerTypeWithKryoSerializer(firstValue.getClass(), ScalaTupleSerializer.class);
+            }
+
+
+            final DataSet<Type> datasetOutput = flinkExecutor.fee.fromCollection(collection.parallelStream().collect(Collectors.toList()))
+                .setParallelism(flinkExecutor.fee.getParallelism());
+
+            ((DataSetChannel.Instance) outputs[0]).accept(datasetOutput, flinkExecutor);
+
+        } else {
+            //Extremely hacky for empty lists - lord forgive me
+            //This needs to be done as .fromCollection throws exceptions
+            //on an empty list, but in Wayang we can operate on empty results.
+            final DataSet<int[]> datasetOutput = flinkExecutor.fee
+                .fromCollection(List.of(new int[]{0}))
+                .setParallelism(flinkExecutor.fee.getParallelism());
+
+            ((DataSetChannel.Instance) outputs[0]).accept(
+                datasetOutput.filter(x -> false)
+                ,flinkExecutor);
+        }
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
@@ -105,6 +145,10 @@ public class FlinkCollectionSource<Type> extends CollectionSource<Type> implemen
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Arrays.asList(DataSetChannel.DESCRIPTOR, DataSetChannel.DESCRIPTOR_MANY);
+    }
+
+    @Override public boolean isConversion() {
+        return true;
     }
 
 }

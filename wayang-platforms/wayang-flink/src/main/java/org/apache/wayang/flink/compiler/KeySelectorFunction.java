@@ -23,13 +23,12 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.wayang.core.function.TransformationDescriptor;
 
-import java.io.Serializable;
 import java.util.function.Function;
 
 /**
- * Wrapper for {@Link KeySelector}
+ * Wrapper for {@link KeySelector}
  */
-public class KeySelectorFunction<T, K> implements KeySelector<T, K>, ResultTypeQueryable<K>, Serializable {
+public class KeySelectorFunction<T, K> implements KeySelector<T, K>, ResultTypeQueryable<K> {
 
     public Function<T, K> impl;
 
