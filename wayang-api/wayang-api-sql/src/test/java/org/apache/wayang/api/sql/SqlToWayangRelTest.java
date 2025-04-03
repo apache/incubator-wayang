@@ -38,7 +38,6 @@ import org.apache.wayang.api.sql.calcite.schema.WayangSchemaBuilder;
 import org.apache.wayang.api.sql.calcite.schema.WayangTable;
 import org.apache.wayang.api.sql.calcite.schema.WayangTableBuilder;
 import org.apache.wayang.api.sql.calcite.utils.ModelParser;
-import org.apache.wayang.api.sql.calcite.utils.PrintUtils;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Configuration;
@@ -47,7 +46,8 @@ import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.basic.data.Record;
-
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import org.junit.Test;
@@ -108,10 +108,9 @@ public class SqlToWayangRelTest {
         return new Tuple2<>(collector, wayangPlan);
     }
 
-    //@Test
+    // @Test
     public void javaMultiConditionJoin() throws Exception {
-        final SqlContext sqlContext = this.createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
         // SELECT acc.location, count(*) FROM postgres.site
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex JOIN fs.exampleRefToRef ON largeLeftTableIndex.NAMEA = exampleRefToRef.NAMEA AND largeLeftTableIndex.NAMEB = exampleRefToRef.NAMEB");
@@ -129,9 +128,9 @@ public class SqlToWayangRelTest {
         final Record rec = result.stream().findFirst().get();
     }
 
-    //@Test
+    // @Test
     public void aggregateCountInJavaWithIntegers() throws Exception {
-        final SqlContext sqlContext = this.createSqlContext("/model-example-min.json", "/data/exampleInt.csv");
+        final SqlContext sqlContext = this.createSqlContext("/data/exampleInt.csv");
         // SELECT acc.location, count(*) FROM postgres.site
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT exampleInt.NAMEC, COUNT(*) FROM fs.exampleInt GROUP BY NAMEC");
@@ -151,10 +150,9 @@ public class SqlToWayangRelTest {
         assert (rec.getInt(1) == 3);
     }
 
-    //@Test
+    // @Test
     public void aggregateCountInJava() throws Exception {
-        final SqlContext sqlContext = this.createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
         // SELECT acc.location, count(*) FROM postgres.site
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT largeLeftTableIndex.NAMEC, COUNT(*) FROM fs.largeLeftTableIndex GROUP BY NAMEC");
@@ -165,6 +163,7 @@ public class SqlToWayangRelTest {
         PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
             node.addTargetPlatform(Java.platform());
         });
+
         sqlContext.execute(wayangPlan);
         final Collection<org.apache.wayang.basic.data.Record> result = collector;
         final Record rec = result.stream().findFirst().get();
@@ -172,10 +171,9 @@ public class SqlToWayangRelTest {
         assert (rec.getInt(1) == 3);
     }
 
-    //@Test
+    // @Test
     public void filterIsNull() throws Exception {
-        final SqlContext sqlContext = this.createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA IS NULL)" //
@@ -186,10 +184,9 @@ public class SqlToWayangRelTest {
         assert (result.size() == 0);
     }
 
-    //@Test
+    // @Test
     public void filterIsNotValue() throws Exception {
-        final SqlContext sqlContext = this.createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA <> 'test1')" //
@@ -202,49 +199,52 @@ public class SqlToWayangRelTest {
 
     // @Test
     public void filterIsNotNull() throws Exception {
-        final SqlContext sqlContext = createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA IS NOT NULL)" //
         );
+
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
+
         assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
     }
 
-    // @Test
+    @Test
     public void filterWithNotLike() throws Exception {
-        final SqlContext sqlContext = createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA NOT LIKE '_est1')" //
         );
+
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
+
         assert (!result.stream().anyMatch(record -> record.getString(0).equals("test1")));
     }
 
-    // @Test
+    @Test
     public void filterWithLike() throws Exception {
-        final SqlContext sqlContext = createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
-                "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA LIKE '_est1' OR largeLeftTableIndex.NAMEA LIKE 't%')" //
+                "SELECT * FROM fs.largeLeftTableIndex WHERE largeLeftTableIndex.NAMEA LIKE '_est1'" //
         );
+
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
+
+        assert (result.stream().findFirst().get().equals(new Record("test1", "test1", "test2")));
     }
 
     // @Test
     public void joinWithLargeLeftTableIndexCorrect() throws Exception {
-        final SqlContext sqlContext = createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex AS na INNER JOIN fs.largeLeftTableIndex AS nb ON na.NAMEB = nb.NAMEA " //
@@ -256,8 +256,7 @@ public class SqlToWayangRelTest {
 
     // @Test
     public void joinWithLargeLeftTableIndexMirrorAlias() throws Exception {
-        final SqlContext sqlContext = createSqlContext("/model-example-min.json",
-                "/data/largeLeftTableIndex.csv");
+        final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex AS na INNER JOIN fs.largeLeftTableIndex AS nb ON nb.NAMEB = na.NAMEA " //
@@ -269,7 +268,7 @@ public class SqlToWayangRelTest {
 
     // @Test
     public void exampleFilterTableRefToTableRef() throws Exception {
-        final SqlContext sqlContext = createSqlContext("/model-example-min.json", "/data/exampleRefToRef.csv");
+        final SqlContext sqlContext = createSqlContext("/data/exampleRefToRef.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.exampleRefToRef WHERE exampleRefToRef.NAMEA = exampleRefToRef.NAMEB" //
@@ -281,7 +280,7 @@ public class SqlToWayangRelTest {
 
     // @Test
     public void exampleMinWithStrings() throws Exception {
-        final SqlContext sqlContext = createSqlContext("/model-example-min.json", "/data/exampleMin.csv");
+        final SqlContext sqlContext = createSqlContext("/data/exampleMin.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT MIN(exampleMin.NAME) FROM fs.exampleMin" //
@@ -351,19 +350,36 @@ public class SqlToWayangRelTest {
 
     }
 
-    private SqlContext createSqlContext(final String calciteResourceName, final String tableResourceName)
+    private SqlContext createSqlContext(final String tableResourceName)
             throws IOException, ParseException, SQLException {
-
-        final String calciteModelPath = SqlAPI.class.getResource(calciteResourceName).getPath();
-        assert (calciteModelPath != null && calciteModelPath != "")
-                : "Could not get calcite model resource from path: " + calciteResourceName;
-
-        final Configuration configuration = new ModelParser(new Configuration(), calciteModelPath)
+        final String calciteModel = "{\r\n" + //
+                "    \"calcite\": {\r\n" + //
+                "      \"version\": \"1.0\",\r\n" + //
+                "      \"defaultSchema\": \"wayang\",\r\n" + //
+                "      \"schemas\": [\r\n" + //
+                "        {\r\n" + //
+                "          \"name\": \"fs\",\r\n" + //
+                "          \"type\": \"custom\",\r\n" + //
+                "          \"factory\": \"org.apache.calcite.adapter.file.FileSchemaFactory\",\r\n" + //
+                "          \"operand\": {\r\n" + //
+                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath() + "\"\r\n" + //
+                "          }\r\n" + //
+                "        }\r\n" + //
+                "      ]\r\n" + //
+                "    },\r\n" + //
+                "    \"separator\": \";\"\r\n" + //
+                "  }\r\n" + //
+                "  \r\n" + //
+                "  \r\n" + //
+                "";
+        
+        final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
+        final Configuration configuration = new ModelParser(new Configuration(), calciteModelJSON)
                 .setProperties();
         assert (configuration != null)
-                : "Could not get configuration with calcite model path: " + calciteModelPath;
+                : "Could not get configuration with calcite model: " + calciteModel;
 
-        final String dataPath = SqlAPI.class.getResource(tableResourceName).getPath();
+        final String dataPath = this.getClass().getResource(tableResourceName).getPath();
         assert (dataPath != null && dataPath != "")
                 : "Could not get table resource from path: " + tableResourceName;
 
