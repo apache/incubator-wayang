@@ -23,6 +23,7 @@ import org.apache.wayang.core.util.ReflectionUtils;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -34,6 +35,10 @@ public class Record implements Serializable, Copyable<Record> {
 
     public Record(Object... values) {
         this.values = values;
+    }
+
+    public Record(List<Object> values) {
+        this.values = values.toArray();
     }
 
     @Override
@@ -112,6 +117,28 @@ public class Record implements Serializable, Copyable<Record> {
     public String getString(int index) {
         Object field = this.values[index];
         return field == null ? null : field.toString();
+    }
+
+    /**
+     * Set a field of this instance, at a given index.
+     *
+     * @param index the index of the field
+     * @param field the new value of the field to be set
+     */
+    public void setField(int index, Object field) {
+        this.values[index] = field;
+    }
+
+    /**
+     * Append a field to this instance.
+     *
+     * @param field the field to add
+     */
+    public void addField(Object field) {
+        int size = this.size();
+        Object[] newValues = Arrays.copyOf(this.values, size + 1);
+        newValues[size] = field;
+        this.values = newValues;
     }
 
     /**

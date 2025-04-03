@@ -24,7 +24,7 @@ package org.apache.wayang.api
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api
 import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.{CollectionSource, ObjectFileSource, TableSource, TextFileSource, GoogleCloudStorageSource, AmazonS3Source, AzureBlobStorageSource}
+import org.apache.wayang.basic.operators.{CollectionSource, ObjectFileSource, TableSource, TextFileSource, ParquetSource, GoogleCloudStorageSource, AmazonS3Source, AzureBlobStorageSource}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
@@ -152,7 +152,7 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
     * @return [[DataQuanta]] for the file
     */
   def readAzureBlobStorageFile(storageContainer: String, blobName: String, filePathToCredentialsFile: String ): DataQuanta[String] = load(new AzureBlobStorageSource(storageContainer, blobName, filePathToCredentialsFile))
- 
+
 
   /**
     * Read a text file and provide it as a dataset of [[String]]s, one per line.
@@ -178,6 +178,14 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
     * @return [[DataQuanta]] of [[Record]]s in the table
     */
   def readTable(source: TableSource): DataQuanta[Record] = load(source)
+
+  /**
+   * Read a parquet file and provide it as a dataset of [[Record]]s.
+   *
+   * @param source from that the [[Record]]s should be read
+   * @return [[DataQuanta]] of [[Record]]s in the file
+   */
+  def readParquet(source: ParquetSource): DataQuanta[Record] = load(source)
 
   /**
     * Loads a [[java.util.Collection]] into Wayang and represents them as [[DataQuanta]].
