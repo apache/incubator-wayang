@@ -58,7 +58,10 @@ import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class SqlToWayangRelTest {
 
@@ -210,6 +213,34 @@ public class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
 
         assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
+    }
+
+    @Test
+    public void javaCrossJoin() throws Exception {
+        final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(
+                sqlContext,
+                "select * from fs.exampleSmallA cross join fs.exampleSmallB");
+
+        final Collection<Record> result = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+
+        sqlContext.execute(wayangPlan);
+
+        final List<Record> shouldBe = List.of(
+                new Record("item1", "item2", "item1", "item2", "item3"),
+                new Record("item1", "item2", "item1", "item2", "item3"),
+                new Record("item1", "item2", "item1", "item2", "item3"),
+                new Record("item1", "item2", "item1", "item2", "item3"),
+                new Record("item1", "item2", "x"    , "x"    , "x"),
+                new Record("item1", "item2", "x"    , "x"    , "x")
+        );
+
+        final Map<Record, Integer> resultTally = result.stream().collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
+        final Map<Record, Integer> shouldBeTally = shouldBe.stream().collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
+
+        assert (resultTally.equals(shouldBeTally));
     }
 
     @Test
