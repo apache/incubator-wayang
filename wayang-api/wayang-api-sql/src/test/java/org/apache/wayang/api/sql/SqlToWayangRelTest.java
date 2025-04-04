@@ -131,7 +131,7 @@ public class SqlToWayangRelTest {
         final Record rec = result.stream().findFirst().get();
     }
 
-    // @Test
+    @Test
     public void aggregateCountInJavaWithIntegers() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/exampleInt.csv");
         // SELECT acc.location, count(*) FROM postgres.site
@@ -153,7 +153,7 @@ public class SqlToWayangRelTest {
         assert (rec.getInt(1) == 3);
     }
 
-    // @Test
+    @Test
     public void aggregateCountInJava() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
         // SELECT acc.location, count(*) FROM postgres.site
@@ -168,7 +168,8 @@ public class SqlToWayangRelTest {
         });
 
         sqlContext.execute(wayangPlan);
-        final Collection<org.apache.wayang.basic.data.Record> result = collector;
+        final Collection<Record> result = collector;
+
         final Record rec = result.stream().findFirst().get();
         assert (rec.size() == 2);
         assert (rec.getInt(1) == 3);
@@ -213,6 +214,27 @@ public class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
 
         assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
+    }
+
+    @Test
+    public void javaReduceBy() throws Exception {
+        final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(
+                        sqlContext,
+                "select exampleSmallA.COLA, count(*) from fs.exampleSmallA group by exampleSmallA.COLA");
+
+        final Collection<Record> collector = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
+            node.addTargetPlatform(Java.platform());
+        });
+
+        sqlContext.execute(wayangPlan);
+        final Collection<Record> result = collector;
+
+        assert (result.stream().findFirst().get().equals(new Record("item1", 2)));
     }
 
     @Test
@@ -309,7 +331,7 @@ public class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
     }
 
-    // @Test
+    @Test
     public void exampleMinWithStrings() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/exampleMin.csv");
 
