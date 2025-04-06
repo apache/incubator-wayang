@@ -23,23 +23,27 @@ import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.parquet.hadoop.ParquetFileReader;
+import org.apache.parquet.hadoop.metadata.BlockMetaData;
+import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.hadoop.util.HadoopInputFile;
+import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.Type;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.types.RecordType;
 import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
 import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.fs.FileSystems;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.OptionalLong;
 
 /**
- * This source reads a parquet file and outputs the lines as data units.
+ * This source reads a parquet file and outputs the lines as {@link Record} units.
  */
 public class ParquetSource extends UnarySource<Record> {
 
@@ -49,16 +53,34 @@ public class ParquetSource extends UnarySource<Record> {
 
     private final String[] projection;
 
+    private ParquetMetadata metadata;
+
+    private MessageType schema;
+
     /**
      * Creates a new instance.
      *
      * @param inputUrl   name of the file to be read
      * @param projection names of the columns to filter; can be omitted but allows for an early projection
-     * @param columnNames names of the columns in the tables; can be omitted but allows to inject schema information
-     *                    into Wayang, so as to allow specific optimizations
      */
-    public ParquetSource(String inputUrl, String[] projection, String... columnNames) {
-        this(inputUrl, projection, createOutputDataSetType(columnNames));
+    public static ParquetSource create(String inputUrl, String[] projection) {
+        ParquetMetadata metadata = readMetadata(inputUrl);
+        MessageType schema = metadata.getFileMetaData().getSchema();
+
+        String[] columnNames = schema.getFields().stream()
+                .map(Type::getName)
+                .toArray(String[]::new);
+
+        ParquetSource instance = new ParquetSource(inputUrl, projection, createOutputDataSetType(columnNames));
+
+        instance.metadata = metadata;
+        instance.schema = schema;
+
+        return instance;
+    }
+
+    public ParquetSource(String inputUrl, String[] projection, String... fieldNames) {
+        this(inputUrl, projection, createOutputDataSetType(fieldNames));
     }
 
     public ParquetSource(String inputUrl, String[] projection, DataSetType<Record> type) {
@@ -67,9 +89,23 @@ public class ParquetSource extends UnarySource<Record> {
         this.projection = projection;
     }
 
+    private static ParquetMetadata readMetadata(String inputUrl) {
+        Path path = new Path(inputUrl);
+
+        try (ParquetFileReader reader = ParquetFileReader.open(HadoopInputFile.fromPath(path, new org.apache.hadoop.conf.Configuration()))) {
+            return reader.getFooter();
+        } catch (Exception e) {
+            throw new WayangException("Could not read metadata.", e);
+        }
+    }
+
     public String getInputUrl() { return this.inputUrl; }
 
     public String[] getProjection() { return this.projection; }
+
+    public ParquetMetadata getMetadata() { return this.metadata; }
+
+    public MessageType getSchema() { return this.schema; }
 
     private static DataSetType<Record> createOutputDataSetType(String[] columnNames) {
         return columnNames.length == 0 ?
@@ -86,6 +122,8 @@ public class ParquetSource extends UnarySource<Record> {
         super(that);
         this.inputUrl = that.getInputUrl();
         this.projection = that.getProjection();
+        this.metadata = that.getMetadata();
+        this.schema = that.getSchema();
     }
 
     @Override
@@ -156,22 +194,15 @@ public class ParquetSource extends UnarySource<Record> {
          * @return the number of rows in the file
          */
         private OptionalLong extractNumberRows() {
-            Path path = new Path(ParquetSource.this.inputUrl);
+            long rowCount = ParquetSource.this.metadata.getBlocks().stream()
+                    .mapToLong(BlockMetaData::getRowCount)
+                    .sum();
 
-            try (ParquetFileReader reader = ParquetFileReader.open(HadoopInputFile.fromPath(path, new org.apache.hadoop.conf.Configuration()))) {
-
-                long rowCount = reader.getRecordCount();
-
-                if (rowCount == 0) {
-                    ParquetSource.this.logger.warn("Could not find any row in {}.", ParquetSource.this.inputUrl);
-                        return OptionalLong.empty();
-                }
-                return OptionalLong.of(rowCount);
-            } catch (IOException e) {
-                ParquetSource.this.logger.error("Could not extract the number of rows in the input file.", e);
+            if (rowCount == 0) {
+                ParquetSource.this.logger.warn("Could not find any row in {}.", ParquetSource.this.inputUrl);
+                return OptionalLong.empty();
             }
-
-            return OptionalLong.empty();
+            return OptionalLong.of(rowCount);
         }
     }
 
