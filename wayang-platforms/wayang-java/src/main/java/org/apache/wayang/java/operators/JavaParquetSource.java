@@ -18,20 +18,22 @@
 
 package org.apache.wayang.java.operators;
 
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
+import org.apache.avro.data.TimeConversions;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.avro.AvroSchemaConverter;
-import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.ParquetReader;
-import org.apache.parquet.hadoop.util.HadoopInputFile;
+import org.apache.hadoop.fs.Path;
 
+import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.apache.parquet.io.InputFile;
-import org.apache.parquet.schema.MessageType;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.operators.ParquetSource;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -52,8 +54,8 @@ import java.util.stream.Collectors;
  */
 public class JavaParquetSource extends ParquetSource implements JavaExecutionOperator {
 
-    public JavaParquetSource(String inputUrl, String[] projection, String... columnNames) {
-        super(inputUrl, projection, columnNames);
+    public JavaParquetSource(String inputUrl, String[] projection) {
+        super(ParquetSource.create(inputUrl, projection));
     }
 
     /**
@@ -73,29 +75,39 @@ public class JavaParquetSource extends ParquetSource implements JavaExecutionOpe
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        String urlStr = this.getInputUrl().trim();
-        Path filePath = new Path(urlStr);
-
-        Configuration conf = new Configuration();
+        String urlStr = this.getInputUrl();
 
         try {
-            InputFile file = HadoopInputFile.fromPath(filePath, conf);
+            Configuration conf = new Configuration();
 
             // Define a projection schema, if any (uses default schema if no projection defined)
-            Schema schema = createProjectionSchema(file);
+            Schema schema = getSchemaToRead();
+            AvroReadSupport.setAvroReadSchema(conf, schema);
             AvroReadSupport.setRequestedProjection(conf, schema);
 
-            try (ParquetReader<GenericRecord> reader = AvroParquetReader.<GenericRecord>builder(file).build()) {
-                List<Record> records = new ArrayList<>();
-                GenericRecord record;
+            InputFile file = HadoopInputFile.fromPath(new Path(urlStr), conf);
 
-                while ((record = reader.read()) != null) {
-                    records.add(convertGenericRecordToRecord(record));
-                }
+            // Parse dates as logical types
+            GenericData model = new GenericData();
+            model.addLogicalTypeConversion(new TimeConversions.TimestampMicrosConversion());
+            model.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion());
+            model.addLogicalTypeConversion(new TimeConversions.DateConversion());
+            model.addLogicalTypeConversion(new TimeConversions.TimeMicrosConversion());
+            model.addLogicalTypeConversion(new TimeConversions.TimeMillisConversion());
 
-                ((StreamChannel.Instance) outputs[0]).accept(records);
+            ParquetReader<GenericRecord> reader = AvroParquetReader.<GenericRecord>builder(file)
+                    .withDataModel(model)
+                    .build();
 
+            List<Record> records = new ArrayList<>();
+            GenericRecord record;
+
+            while ((record = reader.read()) != null) {
+                records.add(convertGenericRecordToRecord(record));
             }
+
+            ((StreamChannel.Instance) outputs[0]).accept(records);
+
         } catch (Exception e) {
             throw new WayangException(String.format("Reading from Parquet file %s failed.", urlStr), e);
         }
@@ -114,50 +126,35 @@ public class JavaParquetSource extends ParquetSource implements JavaExecutionOpe
         return prepareLineageNode.collectAndMark();
     }
 
-    private Schema inferSchema(InputFile file) {
-        try (ParquetFileReader reader = ParquetFileReader.open(file)) {
-            MessageType parquetSchema = reader.getFileMetaData().getSchema();
-
-            reader.setRequestedSchema(parquetSchema);
-            return new AvroSchemaConverter().convert(parquetSchema);
-        } catch (Exception e) {
-            throw new WayangException("Could not infer schema.", e);
-        }
-    }
-
-    private Schema createProjectionSchema(InputFile file) {
+    private Schema getSchemaToRead() {
         String[] projection = this.getProjection();
-        Schema originalSchema = inferSchema(file);
+        Schema avroSchema = new AvroSchemaConverter().convert(this.getSchema());
 
         if (projection == null || projection.length == 0) {
-            return originalSchema;
+            return avroSchema;
         }
 
         Set<String> projectionSet = Set.of(projection);
-        List<Schema.Field> filteredFields = originalSchema.getFields().stream()
+
+        List<Schema.Field> filteredFields = avroSchema.getFields().stream()
                 .filter(field -> projectionSet.contains(field.name()))
-                .map(field -> new Schema.Field(
-                        field.name(),
-                        field.schema(),
-                        field.doc(),
-                        field.defaultVal()
-                ))
                 .collect(Collectors.toList());
 
-        return Schema.createRecord(
-                originalSchema.getName() + "_Projection",
-                originalSchema.getDoc(),
-                originalSchema.getNamespace(),
-                false,
-                filteredFields
-        );
+        SchemaBuilder.FieldAssembler<Schema> fieldAssembler = SchemaBuilder.record(avroSchema.getName())
+                .namespace(avroSchema.getNamespace())
+                .fields();
+
+        for (Field field : filteredFields) {
+            fieldAssembler = fieldAssembler.name(field.name()).type(field.schema()).noDefault();
+        }
+
+        return fieldAssembler.endRecord();
     }
 
     private Record convertGenericRecordToRecord(GenericRecord record) {
-        List<Object> values = new ArrayList<>();
-        for (int i = 0; i < record.getSchema().getFields().size(); i++) {
-            values.add(record.get(i));
-        }
+        List<Object> values = record.getSchema().getFields().stream()
+                .map(field -> record.get(field.name()))
+                .collect(Collectors.toList());
         return new Record(values);
     }
 

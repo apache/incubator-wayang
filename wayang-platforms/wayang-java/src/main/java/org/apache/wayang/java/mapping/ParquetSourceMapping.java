@@ -45,7 +45,7 @@ public class ParquetSourceMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "source", new org.apache.wayang.basic.operators.ParquetSource((String) null, (String[]) null), false
+                "source", new ParquetSource((String) null, (String[]) null), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }
