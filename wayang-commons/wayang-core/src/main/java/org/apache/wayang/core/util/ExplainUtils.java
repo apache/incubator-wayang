@@ -18,7 +18,7 @@
 
 package org.apache.wayang.core.util;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
