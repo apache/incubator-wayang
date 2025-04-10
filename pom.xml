@@ -637,9 +637,8 @@
                 <plugins>
                     <!-- Make some additional properties available to simplify keeping some content up to date -->
                     <plugin>
-                        <groupId>org.codehaus.gmaven</groupId>
-                        <artifactId>groovy-maven-plugin</artifactId>
-                        <version>2.1.1</version>
+                        <groupId>org.codehaus.gmavenplus</groupId>
+                        <artifactId>gmavenplus-plugin</artifactId>
                         <executions>
                             <!-- Do some pre-build checks and report any findings to the user -->
                             <execution>
@@ -977,6 +976,11 @@
                     <version>2.7.0</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.codehaus.gmavenplus</groupId>
+                    <artifactId>gmavenplus-plugin</artifactId>
+                    <version>4.1.1</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.7</version>
@@ -991,9 +995,8 @@
         <plugins>
             <!-- Make some additional properties available to simplify keeping some content up to date -->
             <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>groovy-maven-plugin</artifactId>
-                <version>2.1.1</version>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
                 <executions>
                     <!-- Do some pre-build checks and report any findings to the user -->
                     <execution>

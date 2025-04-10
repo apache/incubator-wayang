@@ -32,25 +32,28 @@ jobs:
   check-license:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Check License Header
         uses: apache/skywalking-eyes/header@main
   build:
     name: Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [11, 17]
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 11
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v2
         with:
-          java-version:  11
-          distribution: 'adopt'      
+          java-version: ${{ matrix.java }}
+          distribution: 'adopt'
       - name: Install Protoc
         run: sudo apt install -y protobuf-compiler
       - uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven
+          key: ${{ runner.os }}-maven-${{ matrix.java }}
       - name: Build And Install
         run: ./mvnw clean install -B -Dmaven.test.skip=true
       - name: Run Unit tests
