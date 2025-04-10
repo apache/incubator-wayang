@@ -91,12 +91,6 @@ class JSONSerializer:
             if hasattr(operator, "column_names"):
                 json_operator["data"]["column_names"] = operator.column_names
 
-            if hasattr(operator, "projection"):
-                json_operator["data"]["projection"] = operator.projection
-
-            if hasattr(operator, "column_names"):
-                json_operator["data"]["projection"] = operator.column_names
-
         return json_operator
 
     def serialize_pipeline(self, pipeline):

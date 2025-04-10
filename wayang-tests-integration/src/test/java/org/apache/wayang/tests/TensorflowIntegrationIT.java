@@ -31,6 +31,7 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +39,7 @@ import java.util.List;
 
 /**
  * Test the Tensorflow integration with Wayang.
+ * Note: this test fails on M1 Macs because of Tensorflow-Java incompatibility.
  */
 public class TensorflowIntegrationIT {
 

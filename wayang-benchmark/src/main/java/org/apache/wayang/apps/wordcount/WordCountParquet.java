@@ -61,8 +61,7 @@ public class WordCountParquet {
         /* Start building the Apache WayangPlan */
         Collection<Tuple2<String, Integer>> wordcounts = planBuilder
                 /* Read the text file */
-                // .readParquet(new ParquetSource(args[1], new String[] { projectionColumns }, Arrays.copyOfRange(args, 2, args.length))) // In case of projection
-                .readParquet(new ParquetSource(args[1], null, Arrays.copyOfRange(args, 2, args.length)))
+                .readParquet(args[1], Arrays.copyOfRange(args, 2, args.length))
                 .withName("Load file")
 
                 /* Split each line by non-word characters */

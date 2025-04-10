@@ -24,7 +24,7 @@ package org.apache.wayang.api
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api
 import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.{CollectionSource, ObjectFileSource, ParquetSource, TableSource, TextFileSource}
+import org.apache.wayang.basic.operators.{AmazonS3Source, AzureBlobStorageSource, CollectionSource, GoogleCloudStorageSource, ObjectFileSource, ParquetSource, TableSource, TextFileSource}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
@@ -123,13 +123,51 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
   def readTextFile(url: String): DataQuanta[String] = load(new TextFileSource(url))
 
   /**
+   * Read a parquet file and provide it as a dataset of [[Record]]s.
+   *
+   * @param url the URL of the Parquet file
+   * @param projection the projection, if any
+   * @return [[DataQuanta]] of [[Record]]s representing the file
+   */
+  def readParquet(url: String, projection: Array[String]): RecordDataQuanta = load(ParquetSource.create(url, projection))
+
+ /**
+    * Read a text file from a Google Cloud Storage bucket and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param bucket the bucket name of the file
+    * @param blobName the name of the blob within the bucket, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuanta]] for the file
+    */
+  def readGoogleCloudStorageFile(bucket: String, blobName: String, filePathToCredentialsFile: String ): DataQuanta[String] = load(new GoogleCloudStorageSource(bucket, blobName, filePathToCredentialsFile))
+
+ /**
+    * Read a text file from an Amazon S3 bucket and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param bucket the bucket name of the file
+    * @param blobName the name of the blob within the bucket, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuanta]] for the file
+    */
+  def readAmazonS3File(bucket: String, blobName: String, filePathToCredentialsFile: String ): DataQuanta[String] = load(new AmazonS3Source(bucket, blobName, filePathToCredentialsFile))
+
+/**
+    * Read a text file from a Azure Blob Storage storage container and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param storageContainer the bucket name of the file
+    * @param blobName the name of the blob within the storage container, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuanta]] for the file
+    */
+  def readAzureBlobStorageFile(storageContainer: String, blobName: String, filePathToCredentialsFile: String ): DataQuanta[String] = load(new AzureBlobStorageSource(storageContainer, blobName, filePathToCredentialsFile))
+
+  /**
     * Read a text file and provide it as a dataset of [[String]]s, one per line.
     *
     * @param url the URL of the text file
     * @return [[DataQuanta]] representing the file
     */
   def readRemoteTextFile(url: String): DataQuanta[String] = load(new TextFileSource(url))
-
 
   /**
    * Read a object's file and provide it as a dataset of [[Object]]s.
@@ -146,14 +184,6 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
     * @return [[DataQuanta]] of [[Record]]s in the table
     */
   def readTable(source: TableSource): DataQuanta[Record] = load(source)
-
-  /**
-   * Read a parquet file and provide it as a dataset of [[Record]]s.
-   *
-   * @param source from that the [[Record]]s should be read
-   * @return [[DataQuanta]] of [[Record]]s in the file
-   */
-  def readParquet(source: ParquetSource): DataQuanta[Record] = load(source)
 
   /**
     * Loads a [[java.util.Collection]] into Wayang and represents them as [[DataQuanta]].

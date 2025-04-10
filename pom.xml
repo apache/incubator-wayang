@@ -28,7 +28,7 @@
 
     <groupId>org.apache.wayang</groupId>
     <artifactId>wayang</artifactId>
-    <version>0.7.1</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Apache Wayang (incubating)</name>
@@ -66,7 +66,7 @@
         <connection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-wayang.git</developerConnection>
         <url>https://github.com/apache/incubator-wayang</url>
-        <tag>rel/1.0.0-SNAPSHOT</tag>
+        <tag>v1.0.0-rc5</tag>
     </scm>
 
     <issueManagement>
@@ -100,7 +100,7 @@
         <maven.kotlin.skip>false</maven.kotlin.skip>
 
         <!-- Timestamp for the reproducible builds -->
-        <project.build.outputTimestamp>2024-02-05T12:46:07Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-02-04T20:09:34Z</project.build.outputTimestamp>
 
         <scala.version>2.12.12</scala.version>
         <scala.mayor.version>2.12</scala.mayor.version>
@@ -159,7 +159,7 @@
                 <dependency>
                     <groupId>org.apache.wayang</groupId>
                     <artifactId>wayang-resources</artifactId>
-                    <version>0.7.1</version>
+                    <version>1.0.1-SNAPSHOT</version>
                     <type>zip</type>
                     <optional>true</optional>
                 </dependency>
@@ -1058,7 +1058,7 @@
 
                         <!--RAT files-->
                         <exclude>**/apache-rat-0.13/**</exclude>
-                      
+
                         <!--Javadoc files-->
                         <exclude>**/docs/**</exclude>
 
@@ -1102,15 +1102,14 @@
                 </executions>
                 <configuration>
                     <licenseMerges>
-                        <licenseMerge>ASF 2.0 | The Apache Software License, Version 2.0 | Apache License, Version 2.0 | Apache 2.0 License | Apache License Version 2.0 | Apache 2.0 | Apache-2.0 | The Apache License, Version 2.0 | Apache License Version 2 | Apache 2 | http://www.apache.org/licenses/LICENSE-2.0.txt | Apache License 2.0 | Apache Software License - Version 2.0</licenseMerge>
-                        <licenseMerge>BSD 3-claus | 3-Clause BSD License | BSD 3 Clause License | BSD 3 Clause | BSD 3-Clause "New" or "Revised" License (BSD-3-Clause) | BSD licence | BSD | New BSD License | Revised BSD | The BSD 3-Clause License | The BSD License | The New BSD License | New BSD license | BSD 3-clause | BSD 3-Clause | BSD-3-Clause </licenseMerge>
-                        <licenseMerge>MIT | MIT License | The MIT License </licenseMerge>
-                        <licenseMerge>BSD 2-claus | BSD 2-Clause License | BSD 2-Clause | BSD-2-Clause</licenseMerge>
+                        <licenseMerge>ASF 2.0 | The Apache Software License, Version 2.0 | Apache License, Version 2.0 | Apache 2.0 License | Apache License Version 2.0 | Apache 2.0 | Apache-2.0 | The Apache License, Version 2.0 | Apache License Version 2 | Apache 2 | http://www.apache.org/licenses/LICENSE-2.0.txt | Apache License 2.0 | Apache Software License - Version 2.0 | Apache License, version 2.0 | Apache License v2.0 </licenseMerge>
+                        <licenseMerge>BSD 3-claus | 3-Clause BSD License | BSD 3 Clause License | BSD 3 Clause | BSD 3-Clause "New" or "Revised" License (BSD-3-Clause) | BSD licence | BSD | New BSD License | Revised BSD | The BSD 3-Clause License | The BSD License | The New BSD License | New BSD license | BSD 3-clause | BSD 3-Clause | BSD-3-Clause | BSD New license | Go License </licenseMerge>
+                        <licenseMerge>MIT | MIT License | The MIT License | The MIT License (MIT) | MIT license </licenseMerge>
+                        <licenseMerge>BSD 2-claus | BSD 2-Clause License | BSD 2-Clause | BSD-2-Clause </licenseMerge>
                         <licenseMerge>HSQLDB | HSQLDB License, a BSD open source license</licenseMerge>
-                        <licenseMerge>Eclipse | EPL 2.0 |  EPL 1.0 | Eclipse Public License, Version 2.0 | Eclipse Distribution License - v 1.0</licenseMerge>
-                    </licenseMerges>
+                        <licenseMerge>Eclipse | EPL 2.0 |  EPL 1.0 | Eclipse Public License, Version 2.0 | Eclipse Distribution License - v 1.0 | EDL 1.0</licenseMerge></licenseMerges>
                     <includedLicenses>
-                        ASF 2.0 | BSD 2-claus | BSD 3-claus | MIT | CC0 | HSQLDB | PostgreSQL | Eclipse | Public Domain | iCal4j - License
+                        ASF 2.0 | BSD 2-claus | BSD 3-claus | MIT | CC0 | HSQLDB | PostgreSQL | Eclipse | Public Domain | iCal4j - License | CDDL + GPLv2 with classpath exception
                     </includedLicenses>
                     <failOnBlacklist>true</failOnBlacklist>
                     <excludedGroups>
@@ -1126,16 +1125,15 @@
                 <executions>
                     <execution>
                         <id>process-resource-bundles</id>
-                        <phase>prepare-package</phase>
                         <goals>
                             <goal>process</goal>
                         </goals>
                         <configuration>
                             <resourceBundles>
                                 <!-- Will generate META-INF/{DEPENDENCIES,LICENSE,NOTICE} -->
-                                <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
+                                <resourceBundle>org.apache.apache.resources:apache-jar-resource-bundle:1.7</resourceBundle>
                                 <!-- Will generate META-INF/DISCLAIMER  -->
-                                <resourceBundle>org.apache:apache-incubator-disclaimer-resource-bundle:1.1</resourceBundle>
+                                <resourceBundle>org.apache.apache.resources:apache-incubator-disclaimer-resource-bundle:1.7</resourceBundle>
                             </resourceBundles>
                             <!-- Content in this directory will be appended to generated resources -->
                             <appendedResourcesDirectory>${basedir}/src/remote-resources</appendedResourcesDirectory>
@@ -1327,11 +1325,11 @@
                     <releaseProfiles>apache-release</releaseProfiles>
                     <!--<pushChanges>false</pushChanges>-->
                     <!--<dryRun>true</dryRun>-->
-                    <releaseVersion>0.7.1</releaseVersion>
+                    <releaseVersion>1.0.0</releaseVersion>
                     <updateWorkingCopyVersions>true</updateWorkingCopyVersions>
                     <updateDependencies>true</updateDependencies>
-                    <tag>wayang-0.7.1</tag>
-                    <scmReleaseCommitComment>@{prefix} prepare release 0.7.1</scmReleaseCommitComment>
+                    <tag>v1.0.0-rc5</tag>
+                    <scmReleaseCommitComment>@{prefix} prepare release 1.0.0</scmReleaseCommitComment>
                     <tagNameFormat>apache-@{project.artifactId}-@{project.version}-incubating</tagNameFormat>
                     <tagNameFormat>v${project.version}</tagNameFormat>
                 </configuration>
