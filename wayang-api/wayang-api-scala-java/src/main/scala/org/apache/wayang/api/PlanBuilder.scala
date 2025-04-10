@@ -109,9 +109,13 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
   /**
     * Build the [[org.apache.wayang.core.api.Job]] and explain it.
     */
-  def buildAndExplain(): Unit = {
+  def buildAndExplain(toJson: Boolean = false): Unit = {
     val plan: WayangPlan = new WayangPlan(this.sinks.toArray: _*)
-    this.wayangContext.explain(plan, this.udfJars.toArray: _*)
+    if (toJson) {
+      this.wayangContext.explain(plan, toJson, this.udfJars.toArray: _*)
+    } else {
+      this.wayangContext.explain(plan, this.udfJars.toArray: _*)
+    }
   }
 
   /**
