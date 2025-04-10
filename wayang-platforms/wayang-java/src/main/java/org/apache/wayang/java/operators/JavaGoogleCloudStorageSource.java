@@ -74,16 +74,14 @@ public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource imple
         }
 
 
-    //TODO what to write here
+
      ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
         prepareLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                //TODO what to write here
 
                 "wayang.java.googlecloudstoragesource.load.prepare", javaExecutor.getConfiguration()
         ));
         ExecutionLineageNode mainLineageNode = new ExecutionLineageNode(operatorContext);
         mainLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                //TODO what to write here
 
                 "wayang.java.googlecloudstoragesource.load.main", javaExecutor.getConfiguration()
         ));
