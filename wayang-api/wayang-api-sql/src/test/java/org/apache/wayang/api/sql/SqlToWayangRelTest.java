@@ -111,7 +111,7 @@ public class SqlToWayangRelTest {
         return new Tuple2<>(collector, wayangPlan);
     }
 
-    // @Test
+    @Test
     public void javaMultiConditionJoin() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
         // SELECT acc.location, count(*) FROM postgres.site

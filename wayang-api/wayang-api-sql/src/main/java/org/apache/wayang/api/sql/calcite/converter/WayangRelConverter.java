@@ -20,6 +20,7 @@
 package org.apache.wayang.api.sql.calcite.converter;
 
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.wayang.api.sql.calcite.rel.*;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plan.wayangplan.Operator;
@@ -54,6 +55,8 @@ public class WayangRelConverter {
             return new WayangProjectVisitor(this).visit((WayangProject) node);
         } else if (node instanceof WayangFilter) {
             return new WayangFilterVisitor(this).visit((WayangFilter) node);
+        } else if (node instanceof WayangJoin && ((WayangJoin) node).getCondition().isA(SqlKind.AND)) {
+            return new WayangMultiConditionJoinVisitor(this).visit((WayangJoin) node);
         } else if (node instanceof WayangJoin && WayangJoin.class.cast(node).getCondition().isAlwaysTrue()) {
             return new WayangCrossJoinVisitor(this).visit((WayangJoin) node);
         } else if (node instanceof WayangJoin) {
