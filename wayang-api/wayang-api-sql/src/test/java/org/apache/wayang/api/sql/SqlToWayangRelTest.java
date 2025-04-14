@@ -112,12 +112,12 @@ public class SqlToWayangRelTest {
     }
 
     @Test
-    public void javaMultiConditionJoin() throws Exception {
+    public void javaJoinTest() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
         // SELECT acc.location, count(*) FROM postgres.site
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
-                "SELECT * FROM fs.largeLeftTableIndex JOIN fs.exampleRefToRef ON largeLeftTableIndex.NAMEA = exampleRefToRef.NAMEA AND largeLeftTableIndex.NAMEB = exampleRefToRef.NAMEB");
-        final Collection<Record> collector = t.field0;
+                "SELECT * FROM fs.largeLeftTableIndex JOIN fs.exampleRefToRef ON largeLeftTableIndex.NAMEA = exampleRefToRef.NAMEA");
+        final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
         // except reduce by
@@ -126,9 +126,30 @@ public class SqlToWayangRelTest {
         });
 
         sqlContext.execute(wayangPlan);
-        final Collection<org.apache.wayang.basic.data.Record> result = collector;
 
         final Record rec = result.stream().findFirst().get();
+        assert (rec.equals(new Record("test1", "test1", "test2", "test1", "test1")));
+    }
+
+    @Test
+    public void javaMultiConditionJoin() throws Exception {
+        final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
+        // SELECT acc.location, count(*) FROM postgres.site
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT * FROM fs.largeLeftTableIndex JOIN fs.exampleRefToRef ON largeLeftTableIndex.NAMEB = exampleRefToRef.NAMEB AND largeLeftTableIndex.NAMEC = exampleRefToRef.NAMEB");
+        final Collection<Record> result = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+
+        // except reduce by
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
+            node.addTargetPlatform(Java.platform());
+        });
+
+        sqlContext.execute(wayangPlan);
+
+        final boolean checkEq = result.stream().allMatch(rec -> rec.equals(new Record("", "test2", "test2", "", "test2")));
+
+        assert (checkEq);
     }
 
     @Test
@@ -137,7 +158,7 @@ public class SqlToWayangRelTest {
         // SELECT acc.location, count(*) FROM postgres.site
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT exampleInt.NAMEC, COUNT(*) FROM fs.exampleInt GROUP BY NAMEC");
-        final Collection<Record> collector = t.field0;
+        final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
         // except reduce by
@@ -146,7 +167,6 @@ public class SqlToWayangRelTest {
         });
 
         sqlContext.execute(wayangPlan);
-        final Collection<org.apache.wayang.basic.data.Record> result = collector;
 
         final Record rec = result.stream().findFirst().get();
         assert (rec.size() == 2);
@@ -159,7 +179,7 @@ public class SqlToWayangRelTest {
         // SELECT acc.location, count(*) FROM postgres.site
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT largeLeftTableIndex.NAMEC, COUNT(*) FROM fs.largeLeftTableIndex GROUP BY NAMEC");
-        final Collection<Record> collector = t.field0;
+        final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
         // except reduce by
@@ -168,7 +188,6 @@ public class SqlToWayangRelTest {
         });
 
         sqlContext.execute(wayangPlan);
-        final Collection<Record> result = collector;
 
         final Record rec = result.stream().findFirst().get();
         assert (rec.size() == 2);
@@ -195,9 +214,12 @@ public class SqlToWayangRelTest {
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex WHERE (largeLeftTableIndex.NAMEA <> 'test1')" //
         );
+
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
+
         sqlContext.execute(wayangPlan);
+
         assert (!result.stream().anyMatch(record -> record.getField(0).equals("test1")));
     }
 
@@ -214,7 +236,7 @@ public class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
 
         assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
-    }
+    }   
 
     @Test
     public void javaReduceBy() throws Exception {
@@ -224,7 +246,7 @@ public class SqlToWayangRelTest {
                         sqlContext,
                 "select exampleSmallA.COLA, count(*) from fs.exampleSmallA group by exampleSmallA.COLA");
 
-        final Collection<Record> collector = t.field0;
+        final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
         PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
@@ -232,7 +254,6 @@ public class SqlToWayangRelTest {
         });
 
         sqlContext.execute(wayangPlan);
-        final Collection<Record> result = collector;
 
         assert (result.stream().findFirst().get().equals(new Record("item1", 2)));
     }
