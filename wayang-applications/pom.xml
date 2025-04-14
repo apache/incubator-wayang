@@ -38,7 +38,7 @@
         <DATA_REPO_002>https://kamir.solidcommunity.net/public/ecolytiq-sustainability-profile</DATA_REPO_002>
         <DIST_WAYANG_HOME>${project.basedir}/../wayang-assembly/target/apache-wayang-assembly-0.7.1-incubating-dist/wayang-0.7.1</DIST_WAYANG_HOME>
 
-        <spark.version>3.4.1</spark.version>
+        <spark.version>3.4.4</spark.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.13</version>
+            <version>2.0.6</version>
         </dependency>
 
         <dependency>
