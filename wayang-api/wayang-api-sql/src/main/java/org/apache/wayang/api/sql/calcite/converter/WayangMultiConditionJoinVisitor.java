@@ -25,7 +25,7 @@ import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
-import org.apache.wayang.api.sql.calcite.converter.functions.MultiConditionJoinFuncImpl;
+import org.apache.wayang.api.sql.calcite.converter.functions.JoinFlattenResult;
 import org.apache.wayang.api.sql.calcite.converter.functions.MultiConditionJoinKeyExtractor;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
 import org.apache.wayang.basic.data.Record;
@@ -119,7 +119,7 @@ public class WayangMultiConditionJoinVisitor extends WayangRelNodeVisitor<Wayang
         childOpRight.connectTo(0, join, 1);
 
         // Join returns Tuple2 - map to a Record
-        final SerializableFunction<Tuple2<Record, Record>, Record> mp = new MultiConditionJoinFuncImpl();
+        final SerializableFunction<Tuple2<Record, Record>, Record> mp = new JoinFlattenResult();
 
         final MapOperator<Tuple2<Record, Record>, Record> mapOperator = new MapOperator<Tuple2<Record, Record>, Record>(
                 mp,

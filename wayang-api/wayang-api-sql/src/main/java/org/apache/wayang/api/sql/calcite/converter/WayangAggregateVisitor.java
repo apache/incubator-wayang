@@ -18,7 +18,6 @@
 
 package org.apache.wayang.api.sql.calcite.converter;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 

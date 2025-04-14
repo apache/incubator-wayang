@@ -26,7 +26,7 @@ import org.apache.wayang.core.function.FunctionDescriptor;
  * Flattens the result of a join i.e. a {@link Tuple2} of a left and a right
  * {@link Record} to a single {@link Record}.
  */
-public class FlattenJoinResult implements FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
+public class JoinFlattenResult implements FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
 
     @Override
     public Record apply(final Tuple2<Record, Record> tuple2) {
