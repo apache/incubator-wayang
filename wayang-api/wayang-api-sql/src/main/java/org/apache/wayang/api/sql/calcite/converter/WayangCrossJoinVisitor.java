@@ -20,7 +20,7 @@ package org.apache.wayang.api.sql.calcite.converter;
 
 import java.io.Serializable;
 
-import org.apache.wayang.api.sql.calcite.converter.functions.FlattenJoinResult;
+import org.apache.wayang.api.sql.calcite.converter.functions.JoinFlattenResult;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;
@@ -48,7 +48,7 @@ public class WayangCrossJoinVisitor extends WayangRelNodeVisitor<WayangJoin> imp
         childOpLeft.connectTo(0, join, 0);
         childOpRight.connectTo(0, join, 1);
 
-        final SerializableFunction<Tuple2<Record, Record>, Record> mp = new FlattenJoinResult();
+        final SerializableFunction<Tuple2<Record, Record>, Record> mp = new JoinFlattenResult();
 
         final MapOperator<Tuple2<Record, Record>, Record> mapOperator = new MapOperator<Tuple2<Record, Record>, Record>(
                 mp,
