@@ -24,14 +24,13 @@ import java.util.stream.Collectors;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.sql.SqlKind;
 
 import org.apache.wayang.api.sql.calcite.converter.functions.JoinFlattenResult;
 import org.apache.wayang.api.sql.calcite.converter.functions.JoinKeyExtractor;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
+
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.JoinOperator;

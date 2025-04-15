@@ -20,6 +20,7 @@ package org.apache.wayang.api.sql.calcite.converter;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
 import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.sources.fs.JavaCSVTableSource;

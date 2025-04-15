@@ -21,10 +21,12 @@ package org.apache.wayang.api.sql.calcite.converter;
 import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+
 import org.apache.wayang.api.sql.calcite.converter.functions.JoinFlattenResult;
 import org.apache.wayang.api.sql.calcite.converter.functions.MultiConditionJoinKeyExtractor;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;

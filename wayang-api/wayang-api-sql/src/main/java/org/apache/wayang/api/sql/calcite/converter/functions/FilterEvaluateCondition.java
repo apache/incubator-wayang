@@ -70,7 +70,7 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean>  {
             final int index = rexInputRef.getIndex();
             final Object field = record.getField(index);
             final RexLiteral rexLiteral = (RexLiteral) rightOperand;
-            
+
             switch (kind) {
                 case LIKE:
                     return SqlFunctions.like(field.toString(), rexLiteral.toString().replace("'", ""));
@@ -86,7 +86,6 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean>  {
                     return isLessThan(field, rexLiteral) || isEqualTo(field, rexLiteral);
                 default:
                     throw new IllegalStateException("Predicate not supported yet");
-
             }
 
         } else {
