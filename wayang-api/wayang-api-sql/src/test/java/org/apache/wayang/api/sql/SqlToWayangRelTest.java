@@ -323,6 +323,7 @@ public class SqlToWayangRelTest {
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.largeLeftTableIndex AS na INNER JOIN fs.largeLeftTableIndex AS nb ON na.NAMEB = nb.NAMEA " //
         );
+
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
@@ -340,16 +341,19 @@ public class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
     }
 
-    // @Test
+    @Test
     public void exampleFilterTableRefToTableRef() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/exampleRefToRef.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                 "SELECT * FROM fs.exampleRefToRef WHERE exampleRefToRef.NAMEA = exampleRefToRef.NAMEB" //
         );
+
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
+
+        assert (result.stream().findFirst().get().equals(new Record("test1","test1")));
     }
 
     @Test

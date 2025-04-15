@@ -29,13 +29,13 @@ import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.wayang.api.sql.calcite.converter.WayangFilterVisitor;
 import org.apache.wayang.basic.data.Record;
 
-public class FilterEvaluateCondition extends RexVisitorImpl<Boolean>  {
+public class FilterEvaluateCondition extends RexVisitorImpl<Boolean> {
     final Record record;
 
     protected FilterEvaluateCondition(final boolean deep, final Record record) {
-            super(deep);
-            this.record = record;
-        }
+        super(deep);
+        this.record = record;
+    }
 
     @Override
     public Boolean visitCall(final RexCall call) {
@@ -64,7 +64,6 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean>  {
 
     public boolean eval(final Record record, final SqlKind kind, final RexNode leftOperand,
             final RexNode rightOperand) {
-
         if (leftOperand instanceof RexInputRef && rightOperand instanceof RexLiteral) {
             final RexInputRef rexInputRef = (RexInputRef) leftOperand;
             final int index = rexInputRef.getIndex();
@@ -85,13 +84,25 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean>  {
                 case LESS_THAN_OR_EQUAL:
                     return isLessThan(field, rexLiteral) || isEqualTo(field, rexLiteral);
                 default:
-                    throw new IllegalStateException("Predicate not supported yet");
+                    throw new IllegalStateException("Predicate not supported yet: " + kind);
             }
+        } else if (leftOperand instanceof RexInputRef && rightOperand instanceof RexInputRef) {
+            final RexInputRef leftRexInputRef = (RexInputRef) leftOperand;
+            final int leftIndex = leftRexInputRef.getIndex();
+            final RexInputRef righRexInputRef = (RexInputRef) rightOperand;
+            final int rightIndex = righRexInputRef.getIndex();
 
+            switch (kind) {
+                case EQUALS:
+                    return isEqualTo(record.getField(leftIndex), record.getField(rightIndex));
+                default:
+                    throw new IllegalStateException("Predicate not supported yet, kind: " + kind + " left field: "
+                            + record.getField(leftIndex) + " right field: " + record.getField(rightIndex));
+            }
         } else {
-            throw new IllegalStateException("Predicate not supported yet");
+            throw new IllegalStateException("Predicate not supported with types yet, predicate: " + kind + ", type1: "
+                    + leftOperand.getClass() + ", type2: " + rightOperand.getClass());
         }
-
     }
 
     private boolean isGreaterThan(final Object o, final RexLiteral rexLiteral) {
@@ -107,6 +118,16 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean>  {
     private boolean isEqualTo(final Object o, final RexLiteral rexLiteral) {
         try {
             return ((Comparable) o).compareTo(rexLiteral.getValueAs(o.getClass())) == 0;
+        } catch (final Exception e) {
+            throw new IllegalStateException("Predicate not supported yet");
+        }
+    }
+
+    private boolean isEqualTo(final Object o1, final Object o2) {
+        System.out.println("comparing: " + o1 + " with " + o2);
+        System.out.println("true: " + ((Comparable) o1).compareTo(o2));
+        try {
+            return ((Comparable) o1).compareTo(o2) == 0;
         } catch (final Exception e) {
             throw new IllegalStateException("Predicate not supported yet");
         }
