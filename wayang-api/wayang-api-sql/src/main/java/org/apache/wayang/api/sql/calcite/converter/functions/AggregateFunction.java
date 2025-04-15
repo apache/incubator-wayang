@@ -30,7 +30,7 @@ public class AggregateFunction
         implements FunctionDescriptor.SerializableBinaryOperator<Record> {
 
     final List<AggregateCall> aggregateCalls;
-    
+
     public AggregateFunction(final List<AggregateCall> aggregateCalls) {
         this.aggregateCalls = aggregateCalls;
     }
@@ -62,10 +62,11 @@ public class AggregateFunction
                     resValues[counter] = this.castAndMap(field1, field2, SqlFunctions::greatest, SqlFunctions::greatest,
                             SqlFunctions::greatest, SqlFunctions::greatest);
                 case COUNT:
-                    // since aggregates inject an extra column for counting before, 
-                    // see AggregateAddCols. the column we operate on are integer counts, 
+                    // since aggregates inject an extra column for counting before,
+                    // see AggregateAddCols. the column we operate on are integer counts,
                     // which means we can eagerly get the fields as integers and simply sum
-                    assert (field1 instanceof Integer && field2 instanceof Integer) : "Expected to find integers for count but found: " + field1 + " and " + field2;
+                    assert (field1 instanceof Integer && field2 instanceof Integer)
+                            : "Expected to find integers for count but found: " + field1 + " and " + field2;
                     Object obj = Integer.class.cast(field1) + Integer.class.cast(field2);
                     resValues[counter] = obj;
                     break;
@@ -82,7 +83,7 @@ public class AggregateFunction
         return new Record(resValues);
     }
 
-        /**
+    /**
      * Handles casts for the record class for each interior type.
      * 
      * @param a          field of first record
