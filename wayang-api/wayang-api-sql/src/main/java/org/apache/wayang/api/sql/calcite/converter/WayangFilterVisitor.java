@@ -54,6 +54,6 @@ public class WayangFilterVisitor extends WayangRelNodeVisitor<WayangFilter> {
     public static final EnumSet<SqlKind> SUPPORTED_OPS = EnumSet.of(SqlKind.AND, SqlKind.OR, SqlKind.NOT,
             SqlKind.EQUALS, SqlKind.NOT_EQUALS,
             SqlKind.LESS_THAN, SqlKind.GREATER_THAN,
-            SqlKind.GREATER_THAN_OR_EQUAL, SqlKind.LESS_THAN_OR_EQUAL, SqlKind.LIKE);
+            SqlKind.GREATER_THAN_OR_EQUAL, SqlKind.LESS_THAN_OR_EQUAL, SqlKind.LIKE, SqlKind.IS_NOT_NULL, SqlKind.IS_NULL);
 
 }
