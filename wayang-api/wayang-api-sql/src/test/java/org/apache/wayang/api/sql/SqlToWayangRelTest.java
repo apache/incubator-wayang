@@ -147,7 +147,8 @@ public class SqlToWayangRelTest {
 
         sqlContext.execute(wayangPlan);
 
-        final boolean checkEq = result.stream().allMatch(rec -> rec.equals(new Record("", "test2", "test2", "", "test2")));
+        final boolean checkEq = result.stream()
+                .allMatch(rec -> rec.equals(new Record("", "test2", "test2", "", "test2")));
 
         assert (checkEq);
     }
@@ -194,7 +195,7 @@ public class SqlToWayangRelTest {
         assert (rec.getInt(1) == 3);
     }
 
-    // @Test
+    @Test
     public void filterIsNull() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -207,7 +208,7 @@ public class SqlToWayangRelTest {
         assert (result.size() == 0);
     }
 
-    // @Test
+    @Test
     public void filterIsNotValue() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -221,9 +222,10 @@ public class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
 
         assert (!result.stream().anyMatch(record -> record.getField(0).equals("test1")));
-    }
+    }   
 
-    // @Test
+
+    @Test
     public void filterIsNotNull() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -236,14 +238,14 @@ public class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
 
         assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
-    }   
+    }
 
     @Test
     public void javaReduceBy() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(
-                        sqlContext,
+                sqlContext,
                 "select exampleSmallA.COLA, count(*) from fs.exampleSmallA group by exampleSmallA.COLA");
 
         final Collection<Record> result = t.field0;
@@ -276,12 +278,13 @@ public class SqlToWayangRelTest {
                 new Record("item1", "item2", "item1", "item2", "item3"),
                 new Record("item1", "item2", "item1", "item2", "item3"),
                 new Record("item1", "item2", "item1", "item2", "item3"),
-                new Record("item1", "item2", "x"    , "x"    , "x"),
-                new Record("item1", "item2", "x"    , "x"    , "x")
-        );
+                new Record("item1", "item2", "x", "x", "x"),
+                new Record("item1", "item2", "x", "x", "x"));
 
-        final Map<Record, Integer> resultTally = result.stream().collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
-        final Map<Record, Integer> shouldBeTally = shouldBe.stream().collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
+        final Map<Record, Integer> resultTally = result.stream()
+                .collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
+        final Map<Record, Integer> shouldBeTally = shouldBe.stream()
+                .collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
 
         assert (resultTally.equals(shouldBeTally));
     }
@@ -353,7 +356,7 @@ public class SqlToWayangRelTest {
         final WayangPlan wayangPlan = t.field1;
         sqlContext.execute(wayangPlan);
 
-        assert (result.stream().findFirst().get().equals(new Record("test1","test1")));
+        assert (result.stream().findFirst().get().equals(new Record("test1", "test1")));
     }
 
     @Test
@@ -440,7 +443,8 @@ public class SqlToWayangRelTest {
                 "          \"type\": \"custom\",\r\n" + //
                 "          \"factory\": \"org.apache.calcite.adapter.file.FileSchemaFactory\",\r\n" + //
                 "          \"operand\": {\r\n" + //
-                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath() + "\"\r\n" + //
+                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath()
+                + "\"\r\n" + //
                 "          }\r\n" + //
                 "        }\r\n" + //
                 "      ]\r\n" + //
@@ -450,7 +454,7 @@ public class SqlToWayangRelTest {
                 "  \r\n" + //
                 "  \r\n" + //
                 "";
-        
+
         final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
         final Configuration configuration = new ModelParser(new Configuration(), calciteModelJSON)
                 .setProperties();

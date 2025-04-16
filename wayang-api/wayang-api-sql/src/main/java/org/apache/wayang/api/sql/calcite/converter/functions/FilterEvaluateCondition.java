@@ -46,11 +46,17 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean> {
                     "Cannot handle this filter predicate yet: " + kind + " during RexCall: " + call);
 
         switch (kind) {
-            // Since NOT captures only one operand we just get
-            // the first
+            case IS_NOT_NULL:
+                assert (call.getOperands().size() == 1);
+                return eval(record, kind, call.getOperands().get(0), null);
+            case IS_NULL:
+                assert (call.getOperands().size() == 1);
+                return eval(record, kind, call.getOperands().get(0), null);
             case NOT:
                 assert (call.getOperands().size() == 1) : "SqlKind.NOT should only have 1 operand in call got: "
                         + call.getOperands().size() + ", call: " + call;
+                // Since NOT captures only one operand we just get
+                // the first
                 return !(call.getOperands().get(0).accept(this));
             case AND:
                 return call.getOperands().stream().allMatch(operator -> operator.accept(this));
@@ -78,7 +84,9 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean> {
                 case LESS_THAN:
                     return isLessThan(field, rexLiteral);
                 case EQUALS:
-                    return isEqualTo(field, rexLiteral);
+                    return isEqualTo(field, rexLiteral.getValueAs(field.getClass()));
+                case NOT_EQUALS:
+                    return !isEqualTo(field, rexLiteral.getValueAs(field.getClass()));
                 case GREATER_THAN_OR_EQUAL:
                     return isGreaterThan(field, rexLiteral) || isEqualTo(field, rexLiteral);
                 case LESS_THAN_OR_EQUAL:
@@ -99,9 +107,23 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean> {
                     throw new IllegalStateException("Predicate not supported yet, kind: " + kind + " left field: "
                             + record.getField(leftIndex) + " right field: " + record.getField(rightIndex));
             }
+        } else if (leftOperand instanceof RexInputRef && rightOperand == null) {
+            final RexInputRef leftRexInputRef = (RexInputRef) leftOperand;
+            final int leftIndex = leftRexInputRef.getIndex();
+            final Object leftField = record.getField(leftIndex);
+
+            switch (kind) {
+                case IS_NOT_NULL:
+                    return !isEqualTo(leftField, null);
+                case IS_NULL:
+                    return isEqualTo(leftField, null);
+                default:
+                    throw new IllegalStateException(
+                            "Predicate not supported yet, kind: " + kind + " left field: " + leftField);
+            }
         } else {
             throw new IllegalStateException("Predicate not supported with types yet, predicate: " + kind + ", type1: "
-                    + leftOperand.getClass() + ", type2: " + rightOperand.getClass());
+                    + leftOperand + ", type2: " + rightOperand);
         }
     }
 
@@ -115,21 +137,11 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean> {
         return ((Comparable) o).compareTo(rexLiteral.getValueAs(o.getClass())) < 0;
     }
 
-    private boolean isEqualTo(final Object o, final RexLiteral rexLiteral) {
-        try {
-            return ((Comparable) o).compareTo(rexLiteral.getValueAs(o.getClass())) == 0;
-        } catch (final Exception e) {
-            throw new IllegalStateException("Predicate not supported yet");
-        }
-    }
-
     private boolean isEqualTo(final Object o1, final Object o2) {
-        System.out.println("comparing: " + o1 + " with " + o2);
-        System.out.println("true: " + ((Comparable) o1).compareTo(o2));
         try {
-            return ((Comparable) o1).compareTo(o2) == 0;
+            return o1.equals(o2);
         } catch (final Exception e) {
-            throw new IllegalStateException("Predicate not supported yet");
+            throw new IllegalStateException("Predicate not supported yet, " + e);
         }
     }
 }
