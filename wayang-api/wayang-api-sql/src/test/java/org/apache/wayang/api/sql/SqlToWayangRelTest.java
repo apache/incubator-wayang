@@ -220,9 +220,11 @@ public class SqlToWayangRelTest {
         final WayangPlan wayangPlan = t.field1;
 
         sqlContext.execute(wayangPlan);
+        System.out.println("result: "  + result);
 
         assert (!result.stream().anyMatch(record -> record.getField(0).equals("test1")));
-    }
+    }   
+    
 
     @Test
     public void filterIsNotNull() throws Exception {

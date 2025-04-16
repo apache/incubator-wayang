@@ -84,7 +84,9 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean> {
                 case LESS_THAN:
                     return isLessThan(field, rexLiteral);
                 case EQUALS:
-                    return isEqualTo(field, rexLiteral);
+                    return isEqualTo(field, rexLiteral.getValueAs(field.getClass()));
+                case NOT_EQUALS:
+                    return !isEqualTo(field, rexLiteral.getValueAs(field.getClass()));
                 case GREATER_THAN_OR_EQUAL:
                     return isGreaterThan(field, rexLiteral) || isEqualTo(field, rexLiteral);
                 case LESS_THAN_OR_EQUAL:
