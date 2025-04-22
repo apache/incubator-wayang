@@ -383,8 +383,9 @@ public class SqlToWayangRelTest {
         assert (resultTally.equals(shouldBeTally));
     }
 
-    //@Test
-    public void flinkInnerJoin() throws Exception {
+    // tests sql-apis ability to serialize projections and joins
+    @Test
+    public void sparkInnerJoin() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
