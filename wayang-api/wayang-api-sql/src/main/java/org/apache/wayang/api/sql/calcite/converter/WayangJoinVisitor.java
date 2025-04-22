@@ -67,8 +67,8 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         // offset of the index in the right child
         final int offset = wayangRelNode.getInput(0).getRowType().getFieldCount();
 
-        final int leftKeyIndex = keys.get(0);
-        final int rightKeyIndex = keys.get(1) - offset;
+        final int leftKeyIndex = keys.get(0) < keys.get(1) ? keys.get(0) : keys.get(0) - offset;
+        final int rightKeyIndex = keys.get(0) < keys.get(1) ? keys.get(1) - offset : keys.get(1);
 
         final JoinOperator<Record, Record, Object> join = new JoinOperator<>(
                 new TransformationDescriptor<>(new JoinKeyExtractor(leftKeyIndex), Record.class, Object.class),
