@@ -21,6 +21,7 @@ package org.apache.wayang.api.sql.calcite.converter.functions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
@@ -30,36 +31,30 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
 import org.apache.wayang.basic.data.Record;
-
 
 public class ProjectMapFuncImpl implements
         FunctionDescriptor.SerializableFunction<Record, Record> {
-    private final List<RexNode> projects;
+    final List<SerializableFunction<Record, Object>> projections;
 
     public ProjectMapFuncImpl(final List<RexNode> projects) {
-            this.projects = projects;
-        }
-
-    @Override
-    public Record apply(final Record record) {
-
-        final List<Object> projectedRecord = new ArrayList<>();
-        for (int i = 0; i < projects.size(); i++) {
-            final RexNode exp = projects.get(i);
+        this.projections = projects.stream().map(exp -> {
             if (exp instanceof RexInputRef) {
-                projectedRecord.add(record.getField(((RexInputRef) exp).getIndex()));
+                final int key = ((RexInputRef) exp).getIndex();
+                return (SerializableFunction<Record, Object>) record -> record.getField(key);
             } else if (exp instanceof RexLiteral) {
-                final RexLiteral literal = (RexLiteral) exp;
-                projectedRecord.add(literal.getValue());
+                final Object literalValue = ((RexLiteral) exp).getValue();
+                return (SerializableFunction<Record, Object>) record -> literalValue;
             } else if (exp instanceof RexCall) {
-                projectedRecord.add(evaluateRexCall(record, (RexCall) exp));
+                return (SerializableFunction<Record, Object>) record -> evaluateRexCall(record, (RexCall) exp);
+            } else {
+                throw new UnsupportedOperationException("Could not resolve record for exp: " + exp);
             }
-        }
-        return new Record(projectedRecord.toArray(new Object[0]));
+        }).collect(Collectors.toList());
     }
 
-    public static Object evaluateRexCall(final Record record, final RexCall rexCall) {
+    public Object evaluateRexCall(final Record record, final RexCall rexCall) {
         if (rexCall == null) {
             return null;
         }
@@ -70,7 +65,7 @@ public class ProjectMapFuncImpl implements
 
         if (operator == SqlStdOperatorTable.PLUS) {
             // Handle addition
-            return evaluateNaryOperation(record, operands, Double::sum);
+            return evaluateNaryOperation(record, operands, (a, b) -> a + b);
         } else if (operator == SqlStdOperatorTable.MINUS) {
             // Handle subtraction
             return evaluateNaryOperation(record, operands, (a, b) -> a - b);
@@ -85,7 +80,7 @@ public class ProjectMapFuncImpl implements
         }
     }
 
-    public static Object evaluateNaryOperation(final Record record, final List<RexNode> operands,
+    public Object evaluateNaryOperation(final Record record, final List<RexNode> operands,
             final BinaryOperator<Double> operation) {
         if (operands.isEmpty()) {
             return null;
@@ -110,7 +105,7 @@ public class ProjectMapFuncImpl implements
         return result;
     }
 
-    public static Object evaluateRexNode(final Record record, final RexNode rexNode) {
+    public Object evaluateRexNode(final Record record, final RexNode rexNode) {
         if (rexNode instanceof RexCall) {
             // Recursively evaluate a RexCall
             return evaluateRexCall(record, (RexCall) rexNode);
@@ -123,5 +118,10 @@ public class ProjectMapFuncImpl implements
         } else {
             return null; // Unsupported or unknown expression
         }
+    }
+
+    @Override
+    public Record apply(final Record record) {
+        return new Record(projections.stream().map(func -> func.apply(record)).toArray());
     }
 }
