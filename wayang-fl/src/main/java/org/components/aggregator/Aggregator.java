@@ -20,6 +20,7 @@ package org.components.aggregator;
 
 import org.functions.AggregatorFunction;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +32,13 @@ public class Aggregator {
     }
 
     public Object aggregate(List<Object> ClientResponses, Map<String, Object> server_hyperparams){
+//        for(Object response : ClientResponses){
+//            System.out.println("printing client response");
+//            System.out.println(response);
+//            for (double o : (double[]) response) {
+//                System.out.println("  Element: " + o);
+//            }
+//        }
         return aggregator.apply(ClientResponses, server_hyperparams);
     }
 }
