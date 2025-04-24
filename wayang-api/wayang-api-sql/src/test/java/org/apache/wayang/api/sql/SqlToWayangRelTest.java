@@ -324,6 +324,21 @@ public class SqlToWayangRelTest {
         assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1", "test2"))));
     }
 
+    //@Test
+    public void javaSort() throws Exception {
+        final SqlContext sqlContext = createSqlContext("/data/exampleSmallA.csv");
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT COLA, count(*) AS total FROM fs.exampleSmallA GROUP BY exampleSmallA.COLA ORDER BY total DESC LIMIT 2" //
+        );
+
+        final Collection<Record> result = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+        sqlContext.execute(wayangPlan);
+
+        assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1", "test2"))));
+    }
+
     @Test
     public void joinWithLargeLeftTableIndexCorrect() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
