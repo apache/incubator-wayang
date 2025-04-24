@@ -17,7 +17,6 @@
 
 package org.apache.wayang.api.sql;
 
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
@@ -46,7 +45,6 @@ import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
 import org.apache.wayang.core.function.FunctionDescriptor.SerializablePredicate;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
@@ -54,6 +52,7 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.basic.data.Record;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -339,9 +338,8 @@ public class SqlToWayangRelTest {
 
         final List<Record> shouldBe = List.of(
                 new Record("test1", "test1", "test2", "test1", "test1", "test2"),
-                new Record("test2", ""     , "test2", ""     , "test2", "test2"),
-                new Record(""     , "test2", "test2", "test2", ""     , "test2")
-        );
+                new Record("test2", "", "test2", "", "test2", "test2"),
+                new Record("", "test2", "test2", "test2", "", "test2"));
 
         final Map<Record, Integer> resultTally = result.stream()
                 .collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
@@ -371,9 +369,8 @@ public class SqlToWayangRelTest {
 
         final List<Record> shouldBe = List.of(
                 new Record("test1", "test1", "test2", "test1", "test1", "test2"),
-                new Record("test2", ""     , "test2", ""     , "test2", "test2"),
-                new Record(""     , "test2", "test2", "test2", ""     , "test2")
-        );
+                new Record("test2", "", "test2", "", "test2", "test2"),
+                new Record("", "test2", "test2", "test2", "", "test2"));
 
         final Map<Record, Integer> resultTally = result.stream()
                 .collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
@@ -381,6 +378,26 @@ public class SqlToWayangRelTest {
                 .collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
 
         assert (resultTally.equals(shouldBeTally));
+    }
+
+    //@Test
+    public void sparkFilter() throws Exception {
+        final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT * FROM fs.largeLeftTableIndex AS na WHERE na.NAMEA = 'test1'" //
+        );
+
+        final Collection<Record> result = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
+            node.addTargetPlatform(Spark.platform());
+        });
+
+        sqlContext.execute(wayangPlan);
+
+        assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1"))));
     }
 
     // tests sql-apis ability to serialize projections and joins
@@ -403,9 +420,8 @@ public class SqlToWayangRelTest {
 
         final List<Record> shouldBe = List.of(
                 new Record("test1", "test1", "test2", "test1", "test1", "test2"),
-                new Record("test2", ""     , "test2", ""     , "test2", "test2"),
-                new Record(""     , "test2", "test2", "test2", ""     , "test2")
-        );
+                new Record("test2", "", "test2", "", "test2", "test2"),
+                new Record("", "test2", "test2", "test2", "", "test2"));
 
         final Map<Record, Integer> resultTally = result.stream()
                 .collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
