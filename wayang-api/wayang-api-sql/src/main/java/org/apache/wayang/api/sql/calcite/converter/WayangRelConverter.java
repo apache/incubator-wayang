@@ -56,6 +56,8 @@ public class WayangRelConverter {
             return new WayangProjectVisitor(this).visit((WayangProject) node);
         } else if (node instanceof WayangFilter) {
             return new WayangFilterVisitor(this).visit((WayangFilter) node);
+        } else if (node instanceof WayangSort) {
+            return new WayangSortVisitor(this).visit((WayangSort) node);
         } else if (node instanceof WayangJoin && ((WayangJoin) node).getCondition().isA(SqlKind.AND)) {
             return new WayangMultiConditionJoinVisitor(this).visit((WayangJoin) node);
         } else if (node instanceof WayangJoin && WayangJoin.class.cast(node).getCondition().isAlwaysTrue()) {

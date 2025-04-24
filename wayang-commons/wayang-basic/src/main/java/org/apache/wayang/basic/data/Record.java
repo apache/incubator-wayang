@@ -27,17 +27,22 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * A Type that represents a record with a schema, might be replaced with something standard like JPA entity.
+ * A Type that represents a record with a schema, might be replaced with
+ * something standard like JPA entity.
  */
-public class Record implements Serializable, Copyable<Record> {
+public class Record implements Serializable, Copyable<Record>, Comparable<Record> {
 
     private Object[] values;
 
-    public Record(Object... values) {
+    public Object[] getValues() {
+        return values;
+    }
+
+    public Record(final Object... values) {
         this.values = values;
     }
 
-    public Record(List<Object> values) {
+    public Record(final List<Object> values) {
         this.values = values.toArray();
     }
 
@@ -47,10 +52,12 @@ public class Record implements Serializable, Copyable<Record> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || this.getClass() != o.getClass()) return false;
-        Record record2 = (Record) o;
+    public boolean equals(final Object o) {
+        if (this == o)
+            return true;
+        if (o == null || this.getClass() != o.getClass())
+            return false;
+        final Record record2 = (Record) o;
         return Arrays.equals(this.values, record2.values);
     }
 
@@ -64,7 +71,7 @@ public class Record implements Serializable, Copyable<Record> {
         return "Record" + Arrays.toString(this.values);
     }
 
-    public Object getField(int index) {
+    public Object getField(final int index) {
         return this.values[index];
     }
 
@@ -74,10 +81,10 @@ public class Record implements Serializable, Copyable<Record> {
      * @param index the index of the field
      * @return the {@code double} representation of the field
      */
-    public double getDouble(int index) {
-        Object field = this.values[index];
+    public double getDouble(final int index) {
+        final Object field = this.values[index];
         return ReflectionUtils.toDouble(field);
-       }
+    }
 
     /**
      * Retrieve a field as a {@code long}. It must be castable as such.
@@ -85,12 +92,16 @@ public class Record implements Serializable, Copyable<Record> {
      * @param index the index of the field
      * @return the {@code long} representation of the field
      */
-    public long getLong(int index) {
-        Object field = this.values[index];
-        if (field instanceof Integer) return (Integer) field;
-        else if (field instanceof Long) return (Long) field;
-        else if (field instanceof Short) return (Short) field;
-        else if (field instanceof Byte) return (Byte) field;
+    public long getLong(final int index) {
+        final Object field = this.values[index];
+        if (field instanceof Integer)
+            return (Integer) field;
+        else if (field instanceof Long)
+            return (Long) field;
+        else if (field instanceof Short)
+            return (Short) field;
+        else if (field instanceof Byte)
+            return (Byte) field;
         throw new IllegalStateException(String.format("%s cannot be retrieved as long.", field));
     }
 
@@ -100,11 +111,14 @@ public class Record implements Serializable, Copyable<Record> {
      * @param index the index of the field
      * @return the {@code int} representation of the field
      */
-    public int getInt(int index) {
-        Object field = this.values[index];
-        if (field instanceof Integer) return (Integer) field;
-        else if (field instanceof Short) return (Short) field;
-        else if (field instanceof Byte) return (Byte) field;
+    public int getInt(final int index) {
+        final Object field = this.values[index];
+        if (field instanceof Integer)
+            return (Integer) field;
+        else if (field instanceof Short)
+            return (Short) field;
+        else if (field instanceof Byte)
+            return (Byte) field;
         throw new IllegalStateException(String.format("%s cannot be retrieved as int.", field));
     }
 
@@ -112,10 +126,12 @@ public class Record implements Serializable, Copyable<Record> {
      * Retrieve a field as a {@link String}.
      *
      * @param index the index of the field
-     * @return the field as a {@link String} (obtained via {@link Object#toString()}) or {@code null} if the field is {@code null}
+     * @return the field as a {@link String} (obtained via
+     *         {@link Object#toString()}) or {@code null} if the field is
+     *         {@code null}
      */
-    public String getString(int index) {
-        Object field = this.values[index];
+    public String getString(final int index) {
+        final Object field = this.values[index];
         return field == null ? null : field.toString();
     }
 
@@ -125,7 +141,7 @@ public class Record implements Serializable, Copyable<Record> {
      * @param index the index of the field
      * @param field the new value of the field to be set
      */
-    public void setField(int index, Object field) {
+    public void setField(final int index, final Object field) {
         this.values[index] = field;
     }
 
@@ -134,9 +150,9 @@ public class Record implements Serializable, Copyable<Record> {
      *
      * @param field the field to add
      */
-    public void addField(Object field) {
-        int size = this.size();
-        Object[] newValues = Arrays.copyOf(this.values, size + 1);
+    public void addField(final Object field) {
+        final int size = this.size();
+        final Object[] newValues = Arrays.copyOf(this.values, size + 1);
         newValues[size] = field;
         this.values = newValues;
     }
@@ -150,4 +166,26 @@ public class Record implements Serializable, Copyable<Record> {
         return this.values.length;
     }
 
+    /**
+     * Compares the fields of this record to the fields of another record.
+     * 
+     * @param that another record not null
+     * @return
+     * @throws IllegalStateException if the two records do not have the same types in {@link #values}
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Override
+    public int compareTo(final Record that) throws IllegalStateException {
+        for (int i = 0; i < values.length; i++) {
+            if (!this.values[i].getClass().equals(that.values[i].getClass()))
+                throw new IllegalStateException("Tried compare records with dissimilar classes had, this values: "
+                        + this.values + ", that values: " + that.values + ", this item class: "
+                        + this.values[i].getClass() + ", that item class: " + that.values[i].getClass());
+        }
+
+        final Comparable[] thisComparables = (Comparable<?>[]) values;
+        final Comparable[] thatComparables = (Comparable<?>[]) that.values;
+
+        return Arrays.compare(thisComparables, thatComparables);
+    }
 }
