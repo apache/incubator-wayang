@@ -134,14 +134,12 @@ public class WayangMultiConditionJoinVisitor extends WayangRelNodeVisitor<Wayang
     }
 
     /**
-     * This method handles the {@link JoinOperator} creation, used in conjunction
-     * with:
-     * {@link #determineKeyExtractionDirection(Integer, Integer, WayangJoin)}
+     * This method handles the {@link JoinOperator} creation
      * 
      * @param wayangRelNode
      * @param leftKeyIndex
      * @param rightKeyIndex
-     * @return a {@link JoinOperator} with {@link KeyExtractors} set
+     * @return 
      */
     protected JoinOperator<Record, Record, Record> getJoinOperator(final Integer[] leftKeyIndexes,
             final Integer[] rightKeyIndexes,
