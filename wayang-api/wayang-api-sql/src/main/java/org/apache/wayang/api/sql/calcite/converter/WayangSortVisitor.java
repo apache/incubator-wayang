@@ -24,7 +24,7 @@ import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelFieldCollation.Direction;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
-import org.apache.calcite.rex.RexNode;
+
 import org.apache.wayang.api.sql.calcite.converter.functions.SortFilter;
 import org.apache.wayang.api.sql.calcite.converter.functions.SortKeyExtractor;
 import org.apache.wayang.api.sql.calcite.rel.WayangSort;
