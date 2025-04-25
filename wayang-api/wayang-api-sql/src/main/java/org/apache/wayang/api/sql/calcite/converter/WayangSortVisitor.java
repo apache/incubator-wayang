@@ -22,12 +22,14 @@ import java.util.stream.Collectors;
 
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelFieldCollation.Direction;
+import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
-
+import org.apache.wayang.api.sql.calcite.converter.functions.SortFilter;
 import org.apache.wayang.api.sql.calcite.converter.functions.SortKeyExtractor;
 import org.apache.wayang.api.sql.calcite.rel.WayangSort;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.SortOperator;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
@@ -45,12 +47,14 @@ public class WayangSortVisitor extends WayangRelNodeVisitor<WayangSort> {
 
         final Operator childOp = wayangRelConverter.convert(wayangRelNode.getInput());
 
-        //TODO: implement fetch & offset for java
-        final RexNode fetch = wayangRelNode.fetch;
-        final RexLiteral offset = (RexLiteral) wayangRelNode.offset;
+        // TODO: implement fetch & offset for java
+        final RexLiteral fetch = (RexLiteral) wayangRelNode.fetch;
+        final RexInputRef offset =  (RexInputRef) wayangRelNode.offset;
 
-        if (fetch != null || offset != null) throw new UnsupportedOperationException("Offset and fetch currently not supported, these appear via LIMIT statements in SQL");
-        
+        // if (fetch != null || offset != null) throw new
+        // UnsupportedOperationException("Offset and fetch currently not supported,
+        // these appear via LIMIT statements in SQL");
+
         final RelCollation collation = wayangRelNode.getCollation();
 
         final List<Direction> collationDirections = collation.getFieldCollations().stream()
@@ -71,7 +75,16 @@ public class WayangSortVisitor extends WayangRelNodeVisitor<WayangSort> {
 
         childOp.connectTo(0, sort, 0);
 
-        return sort;
+
+        final SortFilter sortFilter = new SortFilter(
+                fetch != null ? RexLiteral.intValue(fetch) : Integer.MAX_VALUE,
+                offset != null ? RexLiteral.intValue(offset) : 0);
+
+        final FilterOperator<Record> filter = new FilterOperator<Record>(sortFilter, Record.class);
+
+        sort.connectTo(0, filter, 0);
+
+        return filter;
     }
 
 }

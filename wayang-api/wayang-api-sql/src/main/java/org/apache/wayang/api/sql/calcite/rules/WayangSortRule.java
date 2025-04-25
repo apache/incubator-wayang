@@ -54,7 +54,7 @@ public class WayangSortRule extends ConverterRule {
                 sort.getHints(),
                 newInput,
                 sort.collation,
-                sort.fetch,
-                sort.offset);
+                sort.offset,
+                sort.fetch);
     }
 }
