@@ -328,7 +328,7 @@ public class SqlToWayangRelTest {
                 assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1", "test2"))));
         }
 
-        //@Test
+        @Test
         public void javaLimit() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/exampleSort.csv");
 
