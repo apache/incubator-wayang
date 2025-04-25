@@ -31,7 +31,6 @@ import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
-
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
 import org.apache.wayang.api.sql.calcite.converter.functions.FilterPredicateImpl;
 import org.apache.wayang.api.sql.calcite.optimizer.Optimizer;
@@ -42,7 +41,6 @@ import org.apache.wayang.api.sql.calcite.schema.WayangSchemaBuilder;
 import org.apache.wayang.api.sql.calcite.schema.WayangTable;
 import org.apache.wayang.api.sql.calcite.schema.WayangTableBuilder;
 import org.apache.wayang.api.sql.calcite.utils.ModelParser;
-import org.apache.wayang.api.sql.calcite.utils.PrintUtils;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Configuration;
@@ -53,12 +51,10 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.basic.data.Record;
-
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -75,13 +71,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-public class SqlToWayangRelTest {
+class SqlToWayangRelTest {
 
         /**
          * Method for building {@link WayangPlan}s useful for testing, benchmarking and
          * other
          * usages where you want to handle the intermediate {@link WayangPlan}
-         * 
+         *
          * @param sql     sql query string with the {@code ;} cut off
          * @param udfJars
          * @return a {@link WayangPlan} of a given sql string
@@ -125,8 +121,8 @@ public class SqlToWayangRelTest {
                 return new Tuple2<>(collector, wayangPlan);
         }
 
-        @Test
-        public void javaJoinTest() throws Exception {
+    @Test
+    void javaJoinTest() throws Exception {
                 final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                                 "SELECT * FROM fs.largeLeftTableIndex JOIN fs.exampleRefToRef ON largeLeftTableIndex.NAMEA = exampleRefToRef.NAMEA");
@@ -134,9 +130,8 @@ public class SqlToWayangRelTest {
                 final WayangPlan wayangPlan = t.field1;
 
                 // except reduce by
-                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
-                        node.addTargetPlatform(Java.platform());
-                });
+                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node ->
+                        node.addTargetPlatform(Java.platform()));
 
                 sqlContext.execute(wayangPlan);
 
@@ -144,8 +139,8 @@ public class SqlToWayangRelTest {
                                 .anyMatch(rec -> rec.equals(new Record("test1", "test1", "test2", "test1", "test1"))));
         }
 
-        @Test
-        public void javaMultiConditionJoin() throws Exception {
+    @Test
+    void javaMultiConditionJoin() throws Exception {
                 final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                                 "SELECT * FROM fs.largeLeftTableIndex JOIN fs.exampleRefToRef ON largeLeftTableIndex.NAMEB = exampleRefToRef.NAMEB AND largeLeftTableIndex.NAMEC = exampleRefToRef.NAMEB");
@@ -153,9 +148,8 @@ public class SqlToWayangRelTest {
                 final WayangPlan wayangPlan = t.field1;
 
                 // except reduce by
-                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
-                        node.addTargetPlatform(Java.platform());
-                });
+                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node ->
+                        node.addTargetPlatform(Java.platform()));
 
                 sqlContext.execute(wayangPlan);
 
@@ -165,8 +159,8 @@ public class SqlToWayangRelTest {
                 assert (checkEq);
         }
 
-        @Test
-        public void aggregateCountInJavaWithIntegers() throws Exception {
+    @Test
+    void aggregateCountInJavaWithIntegers() throws Exception {
                 final SqlContext sqlContext = this.createSqlContext("/data/exampleInt.csv");
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                                 "SELECT exampleInt.NAMEC, COUNT(*) FROM fs.exampleInt GROUP BY NAMEC");
@@ -174,9 +168,8 @@ public class SqlToWayangRelTest {
                 final WayangPlan wayangPlan = t.field1;
 
                 // except reduce by
-                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
-                        node.addTargetPlatform(Java.platform());
-                });
+                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node ->
+                        node.addTargetPlatform(Java.platform()));
 
                 sqlContext.execute(wayangPlan);
 
@@ -185,8 +178,8 @@ public class SqlToWayangRelTest {
                 assert (rec.getInt(1) == 3);
         }
 
-        @Test
-        public void aggregateCountInJava() throws Exception {
+    @Test
+    void aggregateCountInJava() throws Exception {
                 final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
                                 "SELECT largeLeftTableIndex.NAMEC, COUNT(*) FROM fs.largeLeftTableIndex GROUP BY NAMEC");
@@ -194,9 +187,8 @@ public class SqlToWayangRelTest {
                 final WayangPlan wayangPlan = t.field1;
 
                 // except reduce by
-                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
-                        node.addTargetPlatform(Java.platform());
-                });
+                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node ->
+                        node.addTargetPlatform(Java.platform()));
 
                 sqlContext.execute(wayangPlan);
 
@@ -205,8 +197,8 @@ public class SqlToWayangRelTest {
                 assert (rec.getInt(1) == 3);
         }
 
-        @Test
-        public void filterIsNull() throws Exception {
+    @Test
+    void filterIsNull() throws Exception {
                 final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -218,8 +210,8 @@ public class SqlToWayangRelTest {
                 assert (result.size() == 0);
         }
 
-        @Test
-        public void filterIsNotValue() throws Exception {
+    @Test
+    void filterIsNotValue() throws Exception {
                 final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -234,8 +226,8 @@ public class SqlToWayangRelTest {
                 assert (!result.stream().anyMatch(record -> record.getField(0).equals("test1")));
         }
 
-        @Test
-        public void filterIsNotNull() throws Exception {
+    @Test
+    void filterIsNotNull() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -249,8 +241,8 @@ public class SqlToWayangRelTest {
                 assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
         }
 
-        @Test
-        public void javaReduceBy() throws Exception {
+    @Test
+    void javaReduceBy() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(
@@ -260,17 +252,16 @@ public class SqlToWayangRelTest {
                 final Collection<Record> result = t.field0;
                 final WayangPlan wayangPlan = t.field1;
 
-                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
-                        node.addTargetPlatform(Java.platform());
-                });
+                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node ->
+                        node.addTargetPlatform(Java.platform()));
 
                 sqlContext.execute(wayangPlan);
 
                 assert (result.stream().anyMatch(rec -> rec.equals(new Record("item1", 2))));
         }
 
-        @Test
-        public void javaCrossJoin() throws Exception {
+    @Test
+    void javaCrossJoin() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(
@@ -298,8 +289,8 @@ public class SqlToWayangRelTest {
                 assert (resultTally.equals(shouldBeTally));
         }
 
-        @Test
-        public void filterWithNotLike() throws Exception {
+    @Test
+    void filterWithNotLike() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -313,8 +304,8 @@ public class SqlToWayangRelTest {
                 assert (!result.stream().anyMatch(record -> record.getString(0).equals("test1")));
         }
 
-        @Test
-        public void filterWithLike() throws Exception {
+    @Test
+    void filterWithLike() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -328,8 +319,8 @@ public class SqlToWayangRelTest {
                 assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1", "test2"))));
         }
 
-        @Test
-        public void javaLimit() throws Exception {
+    @Test
+    void javaLimit() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/exampleSort.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -345,8 +336,8 @@ public class SqlToWayangRelTest {
                 assert (result.get(0).equals(new Record(2, "a", "a", 2)));
         }
 
-        @Test
-        public void javaSort() throws Exception {
+    @Test
+    void javaSort() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/exampleSort.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -368,8 +359,8 @@ public class SqlToWayangRelTest {
                 assert (result.get(6).equals(new Record(0, "b", "b", 1)));
         }
 
-        @Test
-        public void joinWithLargeLeftTableIndexCorrect() throws Exception {
+    @Test
+    void joinWithLargeLeftTableIndexCorrect() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -393,14 +384,14 @@ public class SqlToWayangRelTest {
                 assert (resultTally.equals(shouldBeTally));
         }
 
-        // Imagine case: l = {item1, item2}, r = {item3,item4}, j = {item1, item2,
-        // item3, item4} join on =($1,$3) would be =(item2, item4) in the join set
-        // however from the r set we need to factor in the
-        // offset, $3 -> 3 - l.size() = $1, r($1) = "item4" we cannot naively assume
-        // that it is always ordered as =(lRef,rRef), lRef < rRef.
-        // it may also be =($3,$1)
-        @Test
-        public void joinWithLargeLeftTableIndexMirrorAlias() throws Exception {
+    // Imagine case: l = {item1, item2}, r = {item3,item4}, j = {item1, item2,
+    // item3, item4} join on =($1,$3) would be =(item2, item4) in the join set
+    // however from the r set we need to factor in the
+    // offset, $3 -> 3 - l.size() = $1, r($1) = "item4" we cannot naively assume
+    // that it is always ordered as =(lRef,rRef), lRef < rRef.
+    // it may also be =($3,$1)
+    @Test
+    void joinWithLargeLeftTableIndexMirrorAlias() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -435,18 +426,17 @@ public class SqlToWayangRelTest {
                 final Collection<Record> result = t.field0;
                 final WayangPlan wayangPlan = t.field1;
 
-                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
-                        node.addTargetPlatform(Spark.platform());
-                });
+                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node ->
+                        node.addTargetPlatform(Spark.platform()));
 
                 sqlContext.execute(wayangPlan);
 
                 assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1"))));
         }
 
-        // tests sql-apis ability to serialize projections and joins
-        @Test
-        public void sparkInnerJoin() throws Exception {
+    // tests sql-apis ability to serialize projections and joins
+    @Test
+    void sparkInnerJoin() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -456,9 +446,8 @@ public class SqlToWayangRelTest {
                 final Collection<Record> result = t.field0;
                 final WayangPlan wayangPlan = t.field1;
 
-                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
-                        node.addTargetPlatform(Spark.platform());
-                });
+                PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node ->
+                        node.addTargetPlatform(Spark.platform()));
 
                 sqlContext.execute(wayangPlan);
 
@@ -499,8 +488,8 @@ public class SqlToWayangRelTest {
                 assert (((FilterPredicateImpl) deserializedObject).test(new Record("test")));
         }
 
-        @Test
-        public void exampleFilterTableRefToTableRef() throws Exception {
+    @Test
+    void exampleFilterTableRefToTableRef() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/exampleRefToRef.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -514,8 +503,8 @@ public class SqlToWayangRelTest {
                 assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1"))));
         }
 
-        @Test
-        public void exampleMinWithStrings() throws Exception {
+    @Test
+    void exampleMinWithStrings() throws Exception {
                 final SqlContext sqlContext = createSqlContext("/data/exampleMin.csv");
 
                 final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -528,7 +517,8 @@ public class SqlToWayangRelTest {
                 assert (result.stream().findAny().get().getString(0).equals("AA"));
         }
 
-        public void test_simple_sql() throws Exception {
+        @Test
+        void test_simple_sql() throws Exception {
                 final WayangTable customer = WayangTableBuilder.build("customer")
                                 .addField("id", SqlTypeName.INTEGER)
                                 .addField("name", SqlTypeName.VARCHAR)

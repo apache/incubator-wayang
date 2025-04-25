@@ -18,9 +18,6 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.configuration.FunctionalKeyValueProvider;
@@ -35,18 +32,22 @@ import org.apache.wayang.core.plan.wayangplan.test.TestMapOperator;
 import org.apache.wayang.core.plan.wayangplan.test.TestSource;
 import org.apache.wayang.core.test.MockFactory;
 import org.apache.wayang.core.types.DataSetType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for {@link SubplanCardinalityPusher}.
  */
-public class SubplanCardinalityPusherTest {
+class SubplanCardinalityPusherTest {
 
     private Job job;
 
     private Configuration configuration;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.configuration = new Configuration();
         KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimatorProvider =
                 new FunctionalKeyValueProvider<>(
@@ -64,7 +65,7 @@ public class SubplanCardinalityPusherTest {
 
 
     @Test
-    public void testSimpleSubplan() {
+    void testSimpleSubplan() {
         TestMapOperator<String, String> op1 = new TestMapOperator<>(
                 DataSetType.createDefault(String.class),
                 DataSetType.createDefault(String.class)
@@ -86,11 +87,11 @@ public class SubplanCardinalityPusherTest {
         final CardinalityPusher pusher = SubplanCardinalityPusher.createFor(subplan, this.configuration);
         pusher.push(subplanCtx, this.configuration);
 
-        Assert.assertEquals(inputCardinality, subplanCtx.getOutputCardinality(0));
+        assertEquals(inputCardinality, subplanCtx.getOutputCardinality(0));
     }
 
     @Test
-    public void testSourceSubplan() {
+    void testSourceSubplan() {
         TestSource<String> source = new TestSource<>(DataSetType.createDefault(String.class));
         final CardinalityEstimate sourceCardinality = new CardinalityEstimate(123, 321, 0.123d);
         source.setCardinalityEstimators((optimizationContext, inputEstimates) -> sourceCardinality);
@@ -109,12 +110,12 @@ public class SubplanCardinalityPusherTest {
         final CardinalityPusher pusher = SubplanCardinalityPusher.createFor(subplan, this.configuration);
         pusher.push(subplanCtx, this.configuration);
 
-        Assert.assertEquals(sourceCardinality, subplanCtx.getOutputCardinality(0));
+        assertEquals(sourceCardinality, subplanCtx.getOutputCardinality(0));
     }
 
 
     @Test
-    public void testDAGShapedSubplan() {
+    void testDAGShapedSubplan() {
         // _/-\_
         //  \ /
         final DataSetType<String> stringDataSetType = DataSetType.createDefault(String.class);
@@ -147,7 +148,7 @@ public class SubplanCardinalityPusherTest {
 
         final CardinalityEstimate outputCardinality = subplanCtx.getOutputCardinality(0);
         final CardinalityEstimate expectedCardinality = new CardinalityEstimate(10 * 10, 100 * 100, 0.9d * 0.7d);
-        Assert.assertEquals(expectedCardinality, outputCardinality);
+        assertEquals(expectedCardinality, outputCardinality);
     }
 
 }

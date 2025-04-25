@@ -18,8 +18,6 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.CollectionSource;
@@ -39,6 +37,7 @@ import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tests.platform.MyMadeUpPlatform;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -55,13 +54,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 /**
  * Test the Java integration with Wayang.
  */
-public class JavaIntegrationIT {
+class JavaIntegrationIT {
 
     @Test
-    public void testReadAndWrite() throws URISyntaxException, IOException {
+    void testReadAndWrite() throws URISyntaxException, IOException {
         // Build a Wayang plan.
         List<String> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.readWrite(WayangPlans.FILE_SOME_LINES_TXT, collector);
@@ -74,11 +76,11 @@ public class JavaIntegrationIT {
 
         // Verify the plan result.
         final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
-        Assert.assertEquals(lines, collector);
+        assertEquals(lines, collector);
     }
 
     @Test
-    public void testReadAndTransformAndWrite() throws URISyntaxException {
+    void testReadAndTransformAndWrite() throws URISyntaxException {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -89,54 +91,42 @@ public class JavaIntegrationIT {
         wayangContext.execute(wayangPlan);
     }
 
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration1() throws URISyntaxException {
-        // Build a Wayang plan.
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration1() {
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
-        // ILLEGAL: This platform is not registered, so this operator will find no implementation.
         wayangPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
-
-        // Instantiate Wayang and activate the Java backend.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
-
-        // Have Wayang execute the plan.
         wayangContext.execute(wayangPlan);
+        assertThrows(WayangException.class, () ->
 
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
+            // Have Wayang execute the plan.
+            wayangContext.execute(wayangPlan));
     }
 
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration2() throws URISyntaxException {
-        // Build a Wayang plan.
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration2() {
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
-
         WayangContext wayangContext = new WayangContext();
-        // ILLEGAL: This dummy platform is not sufficient to execute the plan.
         wayangContext.register(MyMadeUpPlatform.getInstance());
+        assertThrows(WayangException.class, () ->
 
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
+            // Have Wayang execute the plan.
+            wayangContext.execute(wayangPlan));
     }
 
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration3() throws URISyntaxException {
-        // Build a Wayang plan.
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration3() {
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
-
-        // Instantiate Wayang and activate the Java backend.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
-
-        // Have Wayang execute the plan.
         final Job job = wayangContext.createJob(null, wayangPlan);
-        // ILLEGAL: We blacklist the Java platform, although we need it.
         job.getConfiguration().getPlatformProvider().addToBlacklist(Java.platform());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
-        job.execute();
+        assertThrows(WayangException.class, () ->
+            job.execute());
     }
 
     @Test
-    public void testMultiSourceAndMultiSink() throws URISyntaxException {
+    void testMultiSourceAndMultiSink() throws URISyntaxException {
         // Define some input data.
         final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
         final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
@@ -160,12 +150,12 @@ public class JavaIntegrationIT {
         Collections.sort(expectedOutcome2);
         Collections.sort(collector1);
         Collections.sort(collector2);
-        Assert.assertEquals(expectedOutcome1, collector1);
-        Assert.assertEquals(expectedOutcome2, collector2);
+        assertEquals(expectedOutcome1, collector1);
+        assertEquals(expectedOutcome2, collector2);
     }
 
     @Test
-    public void testMultiSourceAndHoleAndMultiSink() throws URISyntaxException {
+    void testMultiSourceAndHoleAndMultiSink() throws URISyntaxException {
         // Define some input data.
         final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
         final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
@@ -186,12 +176,12 @@ public class JavaIntegrationIT {
         Collections.sort(expectedOutcome);
         Collections.sort(collector1);
         Collections.sort(collector2);
-        Assert.assertEquals(expectedOutcome, collector1);
-        Assert.assertEquals(expectedOutcome, collector2);
+        assertEquals(expectedOutcome, collector1);
+        assertEquals(expectedOutcome, collector2);
     }
 
     @Test
-    public void testGlobalMaterializedGroup() throws URISyntaxException {
+    void testGlobalMaterializedGroup() throws URISyntaxException {
         // Build the WayangPlan.
         List<Iterable<Integer>> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.globalMaterializedGroup(collector, 1, 2, 3);
@@ -201,12 +191,12 @@ public class JavaIntegrationIT {
 
         wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
+        assertEquals(1, collector.size());
+        assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
     }
 
     @Test
-    public void testIntersect() throws URISyntaxException {
+    void testIntersect() throws URISyntaxException {
         // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
@@ -217,11 +207,11 @@ public class JavaIntegrationIT {
 
         wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
+        assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
     }
 
     @Test
-    public void testRepeat() {
+    void testRepeat() {
         // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
@@ -232,12 +222,12 @@ public class JavaIntegrationIT {
 
         wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(5, collector.size());
-        Assert.assertEquals(WayangCollections.asSet(5, 15, 25, 35, 50), WayangCollections.asSet(collector));
+        assertEquals(5, collector.size());
+        assertEquals(WayangCollections.asSet(5, 15, 25, 35, 50), WayangCollections.asSet(collector));
     }
 
     @Test
-    public void testPageRankWithGraphBasic() {
+    void testPageRankWithGraphBasic() {
         // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
@@ -260,14 +250,14 @@ public class JavaIntegrationIT {
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
         final List<Long> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
-        Assert.assertEquals(
+        assertEquals(
                 Arrays.asList(3L, 0L, 2L, 1L),
                 vertexOrder
         );
     }
 
     @Test
-    public void testPageRankWithJavaGraph() {
+    void testPageRankWithJavaGraph() {
         // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
@@ -290,28 +280,28 @@ public class JavaIntegrationIT {
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
         final List<Long> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
-        Assert.assertEquals(
+        assertEquals(
                 Arrays.asList(3L, 0L, 2L, 1L),
                 vertexOrder
         );
     }
 
     @Test
-    public void testMapPartitions() throws URISyntaxException {
+    void testMapPartitions() throws URISyntaxException {
         // Instantiate Wayang and activate the Java backend.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
         // Execute the Wayang plan.
         final Collection<Tuple2<String, Integer>> result = WayangPlans.mapPartitions(wayangContext, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
 
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
                 WayangCollections.asSet(result)
         );
     }
 
     @Test
-    public void testZipWithId() throws URISyntaxException {
+    void testZipWithId() throws URISyntaxException {
         // Build the WayangPlan.
         List<Long> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.zipWithId(collector, 0, 10, 20, 30, 30);
@@ -321,12 +311,12 @@ public class JavaIntegrationIT {
 
         wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(Long.valueOf(5L), collector.get(0));
+        assertEquals(1, collector.size());
+        assertEquals(Long.valueOf(5L), collector.get(0));
     }
 
     @Test
-    public void testDiverseScenario1() throws URISyntaxException {
+    void testDiverseScenario1() throws URISyntaxException {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario1(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -338,7 +328,7 @@ public class JavaIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario2() throws URISyntaxException {
+    void testDiverseScenario2() throws URISyntaxException {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario2(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -349,7 +339,7 @@ public class JavaIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario3() throws URISyntaxException {
+    void testDiverseScenario3() throws URISyntaxException {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario3(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -360,7 +350,7 @@ public class JavaIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario4() throws URISyntaxException {
+    void testDiverseScenario4() throws URISyntaxException {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario4(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -371,7 +361,7 @@ public class JavaIntegrationIT {
     }
 
     @Test
-    public void testSimpleLoop() throws URISyntaxException {
+    void testSimpleLoop() throws URISyntaxException {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleLoop(3, collector, 0, 1, 2);
@@ -384,7 +374,7 @@ public class JavaIntegrationIT {
     }
 
     @Test
-    public void testSample() throws URISyntaxException {
+    void testSample() throws URISyntaxException {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -397,7 +387,7 @@ public class JavaIntegrationIT {
     }
 
     @Test
-    public void testLargerSample() throws URISyntaxException {
+    void testLargerSample() throws URISyntaxException {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleSample(15, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -410,22 +400,22 @@ public class JavaIntegrationIT {
     }
 
     @Test
-    public void testCurrentIterationNumber() {
+    void testCurrentIterationNumber() {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         final Collection<Integer> result = WayangPlans.loopWithIterationNumber(wayangContext, 15, 5, -1, 1, 5);
         int expectedOffset = 5 * 4 / 2;
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
                 WayangCollections.asSet(result)
         );
     }
 
     @Test
-    public void testCurrentIterationNumberWithTooFewExpectedIterations() {
+    void testCurrentIterationNumberWithTooFewExpectedIterations() {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         final Collection<Integer> result = WayangPlans.loopWithIterationNumber(wayangContext, 15, 2, -1, 1, 5);
         int expectedOffset = 5 * 4 / 2;
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
                 WayangCollections.asSet(result)
         );
@@ -433,7 +423,7 @@ public class JavaIntegrationIT {
 
 
     @Test
-    public void testBroadcasts() {
+    void testBroadcasts() {
         Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);
         Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);
         List<Integer> collectedValues = new ArrayList<>();
@@ -476,11 +466,11 @@ public class JavaIntegrationIT {
         wayangContext.execute(wayangPlan);
 
         Collections.sort(collectedValues);
-        Assert.assertEquals(expectedValues, collectedValues);
+        assertEquals(expectedValues, collectedValues);
     }
 
     @Test
-    public void testBroadcasts2() {
+    void testBroadcasts2() {
         Collection<Integer> broadcastedValues = Arrays.asList(9);
         Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);
         List<Integer> collectedValues = new ArrayList<>();
@@ -528,6 +518,6 @@ public class JavaIntegrationIT {
         wayangContext.execute(wayangPlan);
 
         Collections.sort(collectedValues);
-        Assert.assertEquals(expectedValues, collectedValues);
+        assertEquals(expectedValues, collectedValues);
     }
 }

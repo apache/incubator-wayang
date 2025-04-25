@@ -22,21 +22,22 @@ import org.apache.wayang.core.function.MapPartitionsDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link FlinkMapPartitionsOperator}.
  */
-public class FlinkMapPartitionsOperatorTest extends FlinkOperatorTestBase {
+class FlinkMapPartitionsOperatorTest extends FlinkOperatorTestBase {
 
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input = this.createDataSetChannelInstance(Arrays.asList(0, 1, 1, 2, 6));
         DataSetChannel.Instance output = this.createDataSetChannelInstance();
@@ -64,8 +65,8 @@ public class FlinkMapPartitionsOperatorTest extends FlinkOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> result = output.<Integer>provideDataSet().collect();
-        Assert.assertEquals(5, result.size());
-        Assert.assertEquals(Arrays.asList(1, 2, 2, 3, 7), result);
+        assertEquals(5, result.size());
+        assertEquals(Arrays.asList(1, 2, 2, 3, 7), result);
 
     }
 

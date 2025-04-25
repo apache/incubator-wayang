@@ -19,11 +19,10 @@
 package org.apache.wayang.java.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.execution.JavaExecutor;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URL;
@@ -33,13 +32,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test suite for {@link JavaObjectFileSource}.
  */
-public class JavaObjectFileSourceTest extends JavaExecutionOperatorTestBase {
+class JavaObjectFileSourceTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testReading() throws IOException {
+    void testReading() throws IOException {
         JavaExecutor javaExecutor = null;
         try {
             // Prepare the source.
@@ -59,9 +61,9 @@ public class JavaObjectFileSourceTest extends JavaExecutionOperatorTestBase {
             final List<Integer> result = outputs[0].<Integer>provideStream()
                     .collect(Collectors.toList());
             for (Object value : result) {
-                Assert.assertTrue("Value: " + value, expectedValues.remove(value));
+                assertTrue(expectedValues.remove(value), "Value: " + value);
             }
-            Assert.assertEquals(0, expectedValues.size());
+            assertEquals(0, expectedValues.size());
         } finally {
             if (javaExecutor != null) javaExecutor.dispose();
         }

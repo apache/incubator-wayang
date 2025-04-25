@@ -18,28 +18,29 @@
 
 package org.apache.wayang.iejoin.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link JavaIEJoinOperator}.
  */
-public class JavaIEJoinOperatorTest extends JavaExecutionOperatorTestBase {
+class JavaIEJoinOperatorTest extends JavaExecutionOperatorTestBase {
 
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         Record r1 = new Record(100, 10);
         Record r2 = new Record(200, 20);
         Record r3 = new Record(300, 30);
@@ -84,7 +85,7 @@ public class JavaIEJoinOperatorTest extends JavaExecutionOperatorTestBase {
 
         // Verify the outcome.
         final List<Tuple2<Record, Record>> result = outputs[0].<Tuple2<Record, Record>>provideStream().collect(Collectors.toList());
-        Assert.assertEquals(2, result.size());
+        assertEquals(2, result.size());
         //Assert.assertEquals(result.get(0), new Tuple2(1, "a"));
 
     }

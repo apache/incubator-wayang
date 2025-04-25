@@ -18,8 +18,6 @@
 
 package org.apache.wayang.giraph.operators;
 
-import org.junit.Before;
-import org.junit.Test;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -33,6 +31,9 @@ import org.apache.wayang.giraph.Giraph;
 import org.apache.wayang.giraph.execution.GiraphExecutor;
 import org.apache.wayang.giraph.platform.GiraphPlatform;
 import org.apache.wayang.java.channels.StreamChannel;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -42,17 +43,19 @@ import static org.mockito.Mockito.when;
 /**
  * Test For GiraphPageRank
  */
-public class GiraphPagaRankOperatorTest {
+class GiraphPagaRankOperatorTest {
 
     private static GiraphExecutor giraphExecutor;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         giraphExecutor = mock(GiraphExecutor.class);
     }
 
-    //TODO Validate the mock of GiraphExecutor @Test
-    public void testExecution() throws IOException {
+    //TODO Validate the mock of GiraphExecutor
+    @Disabled
+    @Test
+    void testExecution() throws IOException {
         // Ensure that the GraphChiPlatform is initialized.
         GiraphPlatform.getInstance();
         final Configuration configuration = new Configuration();

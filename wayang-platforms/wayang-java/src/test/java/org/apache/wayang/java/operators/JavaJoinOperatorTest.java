@@ -18,13 +18,12 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,13 +31,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link JavaJoinOperator}.
  */
-public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
+class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         Stream<Tuple2<Integer, String>> inputStream0 = Arrays.asList(
                 new Tuple2<>(1, "b"), new Tuple2<>(1, "c"), new Tuple2<>(2, "d"), new Tuple2<>(3, "e")
@@ -94,7 +95,7 @@ public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
                 new Tuple2<>(new Tuple2<>(2, "d"), new Tuple2<>("z", 2))
         );
 
-        Assert.assertEquals(expectedResult, result);
+        assertEquals(expectedResult, result);
 
 
     }

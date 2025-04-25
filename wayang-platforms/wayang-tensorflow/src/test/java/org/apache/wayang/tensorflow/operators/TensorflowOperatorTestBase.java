@@ -30,7 +30,7 @@ import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.tensorflow.channels.TensorChannel;
 import org.apache.wayang.tensorflow.execution.TensorflowExecutor;
 import org.apache.wayang.tensorflow.platform.TensorflowPlatform;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.tensorflow.ndarray.NdArray;
 
 import java.util.Collection;
@@ -41,13 +41,13 @@ import static org.mockito.Mockito.when;
 /**
  * Test base for {@link TensorflowExecutionOperator} tests.
  */
-public class TensorflowOperatorTestBase {
+class TensorflowOperatorTestBase {
     protected Configuration configuration;
 
     protected TensorflowExecutor tensorflowExecutor;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.configuration = new Configuration();
         if(tensorflowExecutor == null)
             this.tensorflowExecutor = (TensorflowExecutor) TensorflowPlatform.getInstance().getExecutorFactory().create(this.mockJob());

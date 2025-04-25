@@ -18,20 +18,20 @@
 
 package org.apache.wayang.basic.operators;
 
-import org.junit.Test;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
+import org.junit.jupiter.api.Test;
 
 import java.util.stream.StreamSupport;
 
 /**
  * Tests for the {@link MaterializedGroupByOperator}.
  */
-public class MaterializedGroupByOperatorTest {
+class MaterializedGroupByOperatorTest {
 
     @Test
-    public void testConnectingToMap() {
+    void testConnectingToMap() {
         final MaterializedGroupByOperator<String, Integer> materializedGroupByOperator =
                 new MaterializedGroupByOperator<>(String::length, String.class, Integer.class);
         final MapOperator<Iterable<String>, Integer> mapOperator = new MapOperator<>(

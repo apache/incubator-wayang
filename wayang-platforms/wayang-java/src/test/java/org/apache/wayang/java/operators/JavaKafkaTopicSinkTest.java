@@ -18,49 +18,37 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.platform.ChannelInstance;
-import org.apache.wayang.core.util.fs.LocalFileSystem;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
-
 import org.apache.wayang.basic.operators.KafkaTopicSource;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.Properties;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Test suite for {@link JavaKafkaTopicSink}.
  */
-public class JavaKafkaTopicSinkTest extends JavaExecutionOperatorTestBase {
+class JavaKafkaTopicSinkTest extends JavaExecutionOperatorTestBase {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSinkTest.class);
 
@@ -71,21 +59,21 @@ public class JavaKafkaTopicSinkTest extends JavaExecutionOperatorTestBase {
      * Therefore we ensure it's run in a pre-defined locale and we make sure it's
      * reset after the test.
      */
-    @Before
-    public void setupTest() {
+    @BeforeEach
+    void setupTest() {
         defaultLocale = Locale.getDefault();
         Locale.setDefault(Locale.US);
     }
 
-    @After
-    public void teardownTest() {
+    @AfterEach
+    void teardownTest() {
         Locale.setDefault(defaultLocale);
     }
 
 
-
-    //@Test
-    public void testWritingToKafkaTopic() throws Exception {
+    @Disabled
+    @Test
+    void testWritingToKafkaTopic() throws Exception {
 
         Configuration configuration = new Configuration();
 
@@ -107,9 +95,9 @@ public class JavaKafkaTopicSinkTest extends JavaExecutionOperatorTestBase {
         props.list(System.out);
 
         logger.info("> 2 ... ");
-        
+
         JavaExecutor javaExecutor = null;
-        
+
         try {
 
             JavaKafkaTopicSink<Float> sink = new JavaKafkaTopicSink<>(
@@ -121,7 +109,7 @@ public class JavaKafkaTopicSinkTest extends JavaExecutionOperatorTestBase {
             );
 
             logger.info("> 3 ... ");
-            
+
             Job job = mock(Job.class);
             when(job.getConfiguration()).thenReturn(configuration);
             javaExecutor = (JavaExecutor) JavaPlatform.getInstance().createExecutor(job);
@@ -136,16 +124,16 @@ public class JavaKafkaTopicSinkTest extends JavaExecutionOperatorTestBase {
 
         }
         catch (Exception ex ) {
-            
+
             ex.printStackTrace();
 
             logger.info("##5## ... ");
 
-            Assert.fail();
-        
+            fail();
+
         }
 
-        Assert.assertTrue( true );
+        assertTrue( true );
 
         logger.info("> *6*");
 

@@ -23,8 +23,8 @@ import org.apache.wayang.basic.operators.TextFileSink
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan.{LoopHeadOperator, Operator, WayangPlan}
 import org.apache.wayang.core.util.ReflectionUtils
-import org.junit.rules.TestName
-import org.junit.{Assert, Rule}
+import org.junit.jupiter.api.Assertions._
+import org.junit.jupiter.api.Test
 
 import java.io.{File, FileWriter}
 import java.nio.file.{Files, Paths}
@@ -33,19 +33,6 @@ import scala.jdk.CollectionConverters.asScalaBufferConverter
 
 
 trait SerializationTestBase {
-
-  //
-  // Some magic from https://stackoverflow.com/a/36152864/5589918 in order to get the current test name
-  //
-  var _testName: TestName = new TestName
-
-  @Rule
-  def testName: TestName = _testName
-
-  def testName_=(aTestName: TestName): Unit = {
-    _testName = aTestName
-  }
-
 
   def serializeDeserializeExecuteAssert(operator: Operator, wayangContext: WayangContext, expectedLines: List[String], log: Boolean = false): Unit = {
     var tempFileOut: Option[String] = None
@@ -106,11 +93,11 @@ object SerializationTestBase {
     val lines = Files.lines(Paths.get(outputFilename)).collect(Collectors.toList[String]).asScala
 
     // Assert number of lines
-    Assert.assertEquals("Number of lines in the file should match", expectedLines.size, lines.size)
+    assertEquals("Number of lines in the file should match", expectedLines.size, lines.size)
 
     // Assert content of lines
     lines.zip(expectedLines).foreach { case (actual, expected) =>
-      Assert.assertEquals("Line content should match", expected, actual)
+      assertEquals("Line content should match", expected, actual)
     }
   }
 
@@ -120,7 +107,7 @@ object SerializationTestBase {
     val lines = Files.lines(Paths.get(outputFilename)).collect(Collectors.toList[String]).asScala
 
     // Assert number of lines
-    Assert.assertEquals("Number of lines in the file should match", expectedNumberOfLines, lines.size)
+    assertEquals("Number of lines in the file should match", expectedNumberOfLines, lines.size)
   }
 
 

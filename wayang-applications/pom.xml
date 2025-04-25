@@ -53,7 +53,6 @@
         <jacoco.version>0.8.5</jacoco.version>
         <jodatime.version>2.10.6</jodatime.version>
         <jsonpath.version>2.4.0</jsonpath.version>
-        <junit5.version>5.6.1</junit5.version>
         <mockito.version>3.5.10</mockito.version>
     </properties>
 
@@ -114,9 +113,9 @@
 
         <!-- Test -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

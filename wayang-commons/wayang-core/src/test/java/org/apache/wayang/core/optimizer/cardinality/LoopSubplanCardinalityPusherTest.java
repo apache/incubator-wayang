@@ -18,10 +18,9 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
 import org.apache.wayang.core.api.Configuration;
+
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.configuration.FunctionalKeyValueProvider;
 import org.apache.wayang.core.api.configuration.KeyValueProvider;
@@ -38,18 +37,24 @@ import org.apache.wayang.core.plan.wayangplan.test.TestLoopHead;
 import org.apache.wayang.core.plan.wayangplan.test.TestSource;
 import org.apache.wayang.core.test.MockFactory;
 import org.apache.wayang.core.util.WayangCollections;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test suite for {@link LoopSubplanCardinalityPusher}.
  */
-public class LoopSubplanCardinalityPusherTest {
+class LoopSubplanCardinalityPusherTest {
 
     private Job job;
 
     private Configuration configuration;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.configuration = new Configuration();
         KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimatorProvider =
                 new FunctionalKeyValueProvider<>(
@@ -66,7 +71,7 @@ public class LoopSubplanCardinalityPusherTest {
     }
 
     @Test
-    public void testWithSingleLoopAndSingleIteration() {
+    void testWithSingleLoopAndSingleIteration() {
 
         TestLoopHead<Integer> loopHead = new TestLoopHead<>(Integer.class);
         loopHead.setNumExpectedIterations(1);
@@ -78,7 +83,7 @@ public class LoopSubplanCardinalityPusherTest {
         inLoopFilter.connectTo("out", loopHead, "loopInput");
 
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
-        Assert.assertNotNull(loop);
+        assertNotNull(loop);
         OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, loop);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
@@ -93,12 +98,12 @@ public class LoopSubplanCardinalityPusherTest {
                 Math.round(inputCardinality.getUpperEstimate() * filterSelectivity),
                 inputCardinality.getCorrectnessProbability()
         );
-        Assert.assertEquals(expectedCardinality, loopCtx.getOutputCardinality(0));
+        assertEquals(expectedCardinality, loopCtx.getOutputCardinality(0));
 
     }
 
     @Test
-    public void testWithSingleLoopAndManyIteration() {
+    void testWithSingleLoopAndManyIteration() {
 
         TestLoopHead<Integer> loopHead = new TestLoopHead<>(Integer.class);
         loopHead.setNumExpectedIterations(1000);
@@ -110,7 +115,7 @@ public class LoopSubplanCardinalityPusherTest {
         inLoopFilter.connectTo("out", loopHead, "loopInput");
 
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
-        Assert.assertNotNull(loop);
+        assertNotNull(loop);
         OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, loop);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
@@ -125,12 +130,12 @@ public class LoopSubplanCardinalityPusherTest {
                 Math.round(inputCardinality.getUpperEstimate() * Math.pow(filterSelectivity, 1000)),
                 inputCardinality.getCorrectnessProbability()
         );
-        Assert.assertTrue(expectedCardinality.equalsWithinDelta(loopCtx.getOutputCardinality(0), 0.0001, 1, 1));
+        assertTrue(expectedCardinality.equalsWithinDelta(loopCtx.getOutputCardinality(0), 0.0001, 1, 1));
 
     }
 
     @Test
-    public void testWithSingleLoopWithConstantInput() {
+    void testWithSingleLoopWithConstantInput() {
 
         TestSource<Integer> mainSource = new TestSource<>(Integer.class);
         TestSource<Integer> sideSource = new TestSource<>(Integer.class);
@@ -146,7 +151,7 @@ public class LoopSubplanCardinalityPusherTest {
         inLoopJoin.connectTo("out", loopHead, "loopInput");
 
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
-        Assert.assertNotNull(loop);
+        assertNotNull(loop);
 
         OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, loop);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
@@ -171,13 +176,13 @@ public class LoopSubplanCardinalityPusherTest {
                         * Math.pow(TestJoin.ESTIMATION_CERTAINTY, numIterations)
         );
         final CardinalityEstimate outputCardinality = loopCtx.getOutputCardinality(0);
-        Assert.assertTrue(
-                String.format("Expected %s, got %s.", expectedCardinality, outputCardinality),
-                expectedCardinality.equalsWithinDelta(outputCardinality, 0.0001, 0, 0));
+        assertTrue(
+                expectedCardinality.equalsWithinDelta(outputCardinality, 0.0001, 0, 0),
+                String.format("Expected %s, got %s.", expectedCardinality, outputCardinality));
     }
 
     @Test
-    public void testNestedLoops() {
+    void testNestedLoops() {
 
         TestLoopHead<Integer> outerLoopHead = new TestLoopHead<>(Integer.class);
         outerLoopHead.setNumExpectedIterations(100);
@@ -197,9 +202,9 @@ public class LoopSubplanCardinalityPusherTest {
         inInnerLoopFilter.setSelectivity(0.1d);
 
         LoopSubplan innerLoop = LoopIsolator.isolate(innerLoopHead);
-        Assert.assertNotNull(innerLoop);
+        assertNotNull(innerLoop);
         LoopSubplan outerLoop = LoopIsolator.isolate(outerLoopHead);
-        Assert.assertNotNull(outerLoop);
+        assertNotNull(outerLoop);
 
         OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, outerLoop);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(outerLoop);
@@ -220,7 +225,7 @@ public class LoopSubplanCardinalityPusherTest {
                 Math.round(inputCardinality.getUpperEstimate() * loopSelectivity),
                 inputCardinality.getCorrectnessProbability()
         );
-        Assert.assertTrue(expectedCardinality.equalsWithinDelta(loopCtx.getOutputCardinality(0), 0.0001, 1, 1));
+        assertTrue(expectedCardinality.equalsWithinDelta(loopCtx.getOutputCardinality(0), 0.0001, 1, 1));
 
     }
 

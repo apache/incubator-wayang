@@ -18,24 +18,25 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 /**
  * Test suite for {@link SparkCountOperator}.
  */
-public class SparkCountOperatorTest extends SparkOperatorTestBase {
+class SparkCountOperatorTest extends SparkOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(1, 2, 3, 4, 5));
         CollectionChannel.Instance output = this.createCollectionChannelInstance();
@@ -53,8 +54,8 @@ public class SparkCountOperatorTest extends SparkOperatorTestBase {
 
         // Verify the outcome.
         final Collection<Integer> result = output.provideCollection();
-        Assert.assertEquals(1, result.size());
-        Assert.assertEquals(Long.valueOf(5), result.iterator().next());
+        assertEquals(1, result.size());
+        assertEquals(Long.valueOf(5), result.iterator().next());
 
     }
 

@@ -19,12 +19,12 @@
 package org.apache.wayang.spark.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.junit.Test;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,12 +35,12 @@ import java.util.List;
 /**
  * Test suite for {@link SparkObjectFileSink}.
  */
-public class SparkObjectFileSinkTest extends SparkOperatorTestBase {
+class SparkObjectFileSinkTest extends SparkOperatorTestBase {
 
     // If this test fails, make sure you have Hadoop installed and it's HADOOP_HOME is set.
     // Also, if on Windows: Make sure you installed the winutils binaries (https://github.com/cdarlint/winutils)
     @Test
-    public void testWritingDoesNotFail() throws IOException {
+    void testWritingDoesNotFail() throws IOException {
         SparkExecutor sparkExecutor = null;
         try {
 

@@ -18,9 +18,6 @@
 
 package org.apache.wayang.core.optimizer.costs;
 
-import java.util.HashMap;
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.optimizer.OptimizationUtils;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -28,16 +25,20 @@ import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.types.DataSetType;
+import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the {@link NestableLoadProfileEstimator}.
  */
-public class NestableLoadProfileEstimatorTest {
+class NestableLoadProfileEstimatorTest {
 
     @Test
-    public void testFromJuelSpecification() {
+    void testFromJuelSpecification() {
         String specification = "{" +
                 "\"type\":\"juel\"," +
                 "\"in\":2," +
@@ -59,18 +60,18 @@ public class NestableLoadProfileEstimatorTest {
                 1
         ));
 
-        Assert.assertEquals(3 * 10 + 2 * 100 + 7 * 200, estimate.getCpuUsage().getLowerEstimate(), 0.01);
-        Assert.assertEquals(3 * 10 + 2 * 100 + 7 * 300, estimate.getCpuUsage().getUpperEstimate(), 0.01);
-        Assert.assertEquals(
+        assertEquals(3 * 10 + 2 * 100 + 7 * 200, estimate.getCpuUsage().getLowerEstimate(), 0.01);
+        assertEquals(3 * 10 + 2 * 100 + 7 * 300, estimate.getCpuUsage().getUpperEstimate(), 0.01);
+        assertEquals(
                 OptimizationUtils.logisticGrowth(0.1, 0.1, 10000, 100 + 10),
                 estimate.getResourceUtilization(),
                 0.000000001
         );
-        Assert.assertEquals(143, estimate.getOverheadMillis());
+        assertEquals(143, estimate.getOverheadMillis());
     }
 
     @Test
-    public void testFromMathExSpecification() {
+    void testFromMathExSpecification() {
         String specification = "{" +
                 "\"type\":\"mathex\"," +
                 "\"in\":2," +
@@ -92,18 +93,18 @@ public class NestableLoadProfileEstimatorTest {
                 1
         ));
 
-        Assert.assertEquals(3 * 10 + 2 * 100 + 7 * 200, estimate.getCpuUsage().getLowerEstimate(), 0.01);
-        Assert.assertEquals(3 * 10 + 2 * 100 + 7 * 300, estimate.getCpuUsage().getUpperEstimate(), 0.01);
-        Assert.assertEquals(
+        assertEquals(3 * 10 + 2 * 100 + 7 * 200, estimate.getCpuUsage().getLowerEstimate(), 0.01);
+        assertEquals(3 * 10 + 2 * 100 + 7 * 300, estimate.getCpuUsage().getUpperEstimate(), 0.01);
+        assertEquals(
                 OptimizationUtils.logisticGrowth(0.1, 0.1, 10000, 100 + 10),
                 estimate.getResourceUtilization(),
                 0.000000001
         );
-        Assert.assertEquals(143, estimate.getOverheadMillis());
+        assertEquals(143, estimate.getOverheadMillis());
     }
 
     @Test
-    public void testFromJuelSpecificationWithImport() {
+    void testFromJuelSpecificationWithImport() {
         String specification = "{" +
                 "\"in\":2," +
                 "\"out\":1," +
@@ -128,18 +129,18 @@ public class NestableLoadProfileEstimatorTest {
                 1
         ));
 
-        Assert.assertEquals((3 * 10 + 2 * 100 + 7 * 200)  * execOp.getNumIterations(), estimate.getCpuUsage().getLowerEstimate(), 0.01);
-        Assert.assertEquals((3 * 10 + 2 * 100 + 7 * 300)  * execOp.getNumIterations(), estimate.getCpuUsage().getUpperEstimate(), 0.01);
-        Assert.assertEquals(
+        assertEquals((3 * 10 + 2 * 100 + 7 * 200)  * execOp.getNumIterations(), estimate.getCpuUsage().getLowerEstimate(), 0.01);
+        assertEquals((3 * 10 + 2 * 100 + 7 * 300)  * execOp.getNumIterations(), estimate.getCpuUsage().getUpperEstimate(), 0.01);
+        assertEquals(
                 OptimizationUtils.logisticGrowth(0.1, 0.1, 10000, 100 + 10),
                 estimate.getResourceUtilization(),
                 0.000000001
         );
-        Assert.assertEquals(143, estimate.getOverheadMillis());
+        assertEquals(143, estimate.getOverheadMillis());
     }
 
     @Test
-    public void testMathExFromSpecificationWithImport() {
+    void testMathExFromSpecificationWithImport() {
         String specification = "{" +
                 "\"type\":\"mathex\"," +
                 "\"in\":2," +
@@ -165,14 +166,14 @@ public class NestableLoadProfileEstimatorTest {
                 1
         ));
 
-        Assert.assertEquals((3 * 10 + 2 * 100 + 7 * 200)  * execOp.getNumIterations(), estimate.getCpuUsage().getLowerEstimate(), 0.01);
-        Assert.assertEquals((3 * 10 + 2 * 100 + 7 * 300)  * execOp.getNumIterations(), estimate.getCpuUsage().getUpperEstimate(), 0.01);
-        Assert.assertEquals(
+        assertEquals((3 * 10 + 2 * 100 + 7 * 200)  * execOp.getNumIterations(), estimate.getCpuUsage().getLowerEstimate(), 0.01);
+        assertEquals((3 * 10 + 2 * 100 + 7 * 300)  * execOp.getNumIterations(), estimate.getCpuUsage().getUpperEstimate(), 0.01);
+        assertEquals(
                 OptimizationUtils.logisticGrowth(0.1, 0.1, 10000, 100 + 10),
                 estimate.getResourceUtilization(),
                 0.000000001
         );
-        Assert.assertEquals(143, estimate.getOverheadMillis());
+        assertEquals(143, estimate.getOverheadMillis());
     }
 
     public static class SomeOperator extends UnaryToUnaryOperator<Object, Object> {
