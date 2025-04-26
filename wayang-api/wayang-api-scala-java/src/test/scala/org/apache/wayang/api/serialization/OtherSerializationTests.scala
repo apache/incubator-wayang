@@ -77,19 +77,19 @@ class OtherSerializationTests extends SerializationTestBase {
     try {
       val serialized = SerializationUtils.serializeAsString(planBuilder)
       val deserialized = SerializationUtils.deserializeFromString[PlanBuilder](serialized)
-      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName.getMethodName + ".log.json")
+      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName + ".log.json")
 
       assertEquals(
         planBuilder.udfJars,
         deserialized.udfJars
       )
       assertEquals(
-        deserialized.wayangContext.asInstanceOf[MultiContext].getConfiguration.getStringProperty("spark.master"),
-        "master1"
+        "master1",
+        deserialized.wayangContext.asInstanceOf[MultiContext].getConfiguration.getStringProperty("spark.master")
       )
       assertEquals(
+        "file:///tmp/out11",
         deserialized.wayangContext.asInstanceOf[MultiContext].getSink.get.asInstanceOf[MultiContext.TextFileSink].url,
-        "file:///tmp/out11"
       )
     }
     catch {
@@ -117,7 +117,7 @@ class OtherSerializationTests extends SerializationTestBase {
     try {
       val serialized = SerializationUtils.serializeAsString(multiContextPlanBuilder)
       val deserialized = SerializationUtils.deserializeFromString[MultiContextPlanBuilder](serialized)
-      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName.getMethodName + ".log.json")
+      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName + ".log.json")
 
       assertEquals(
         multiContextPlanBuilder.udfJars,
@@ -170,7 +170,7 @@ class OtherSerializationTests extends SerializationTestBase {
     val operator = TempFileUtils.readFromTempFileFromString[Operator](tempfile)
 
     // Attach an output sink to deserialized plan
-    val tempFileOut = s"/tmp/${testName.getMethodName}.out"
+    val tempFileOut = s"/tmp/$testName.out"
     val sink = new TextFileSink[AnyRef](s"file://$tempFileOut", classOf[AnyRef])
     operator.connectTo(0, sink, 0)
 
