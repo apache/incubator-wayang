@@ -17,7 +17,6 @@
  */
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.calcite.rel.core.AggregateCall;
@@ -55,7 +54,6 @@ public class AggregateAddCols implements FunctionDescriptor.SerializableFunction
         }
 
         resValues[newRecordSize - 1] = 1;
-        System.out.println("AddCols: returning res valueS: " + Arrays.toString(resValues) + ", vs rec: " + record);
         return new Record(resValues);
     }
 }

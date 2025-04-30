@@ -76,26 +76,19 @@ public class AggregateFunction
                     assert (field1 instanceof Integer && field2 instanceof Integer)
                             : "Expected to find integers for count but found: " + field1 + " and " + field2;
                     final Object avg = Integer.class.cast(field1) + Integer.class.cast(field2);
-                    
-                    resValues[counter] = avg; 
 
-                    if(!countDone) {
-                        resValues[l-1] = record1.getInt(l-1) + record2.getInt(l-1);
+                    resValues[counter] = avg;
+
+                    if (!countDone) {
+                        resValues[l - 1] = record1.getInt(l - 1) + record2.getInt(l - 1);
                         countDone = true;
                     }
-
-                    System.out.println("AggregateFunction: putting avg: " + avg + ", using fields: " + field1 + ", and: " + field2);
-                    System.out.println("AggregateFunction: resvalues[counter]: " + resValues[counter]);
-                    System.out.println("AggregateFunction resvalues after mutation: " + Arrays.toString(resValues));
                     break;
                 default:
                     throw new IllegalStateException("Unsupported operation: " + aggregateCall.getAggregation().kind);
             }
             counter++;
         }
-
-        System.out.println("AggregateFunction: records: " + record1 + ", and: " + record2);
-        System.out.println("AggregateFunction: returning resvalues: " + Arrays.toString(resValues));
         return new Record(resValues);
     }
 

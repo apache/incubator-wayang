@@ -21,8 +21,11 @@ package org.apache.wayang.api.sql.calcite.converter.functions;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
@@ -37,41 +40,22 @@ public class AggregateGetResult implements FunctionDescriptor.SerializableFuncti
 
     @Override
     public Record apply(final Record record) {
-        System.out.println("GetResult: rec: " + record);
-        System.out.println("GetResult: aggCall: " + aggregateCallList);
-
         final int recordSize = record.size();
-        final int outputRecordSize = aggregateCallList.size() + groupingfields.size();
-        final Object[] resValues = new Object[outputRecordSize];
+        final int aggregateCallOffset = recordSize - aggregateCallList.size() - 1;
 
-        int i = 0;
-        int j = 0;
-        
-        groupingfields.stream().forEach(System.out::println);
+        final Object[] fields = groupingfields.stream()
+                .map(record::getField)
+                .toArray();
 
-        System.out.println("GetResult: grouping fields: " + groupingfields);
-        for (i = 0; j < groupingfields.size(); i++) {
-            if (groupingfields.contains(i)) {
-                resValues[j] = record.getField(i);
-                j++;
-            }
-        }
+        final Object[] aggregateCallFields = IntStream.range(0, aggregateCallList.size())
+                .mapToObj(i -> aggregateCallList.get(i).getAggregation().getKind().equals(SqlKind.AVG)
+                        ? record.getDouble(i + aggregateCallOffset) / record.getDouble(recordSize - 1)
+                        : record.getField(i + aggregateCallOffset))
+                .toArray();
 
-        System.out.println("GetResult: resvalues post calc: " + Arrays.toString(resValues));
-        
-        i = recordSize - aggregateCallList.size() - 1;
-        for (final AggregateCall aggregateCall : aggregateCallList) {
-            final String name = aggregateCall.getAggregation().getName();
-            if (name.equals("AVG")) {
-                System.out.println("GetResult: avg: " + record.getField(i) + " and " + record.getField(recordSize - 1));
-                resValues[j] = record.getDouble(i) / record.getDouble(recordSize - 1);
-            } else {
-                resValues[j] = record.getField(i);
-            }
-            j++;
-            i++;
-        }
-
-        return new Record(resValues);
+        final Object[] combinedFields = Stream.concat(Arrays.stream(fields), Arrays.stream(aggregateCallFields))
+                .toArray();
+                
+        return new Record(combinedFields);
     }
 }

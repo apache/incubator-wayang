@@ -125,7 +125,7 @@ public class SqlToWayangRelTest {
         return new Tuple2<>(collector, wayangPlan);
     }
 
-    //@Test
+    @Test
     public void javaJoinTest() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -144,7 +144,7 @@ public class SqlToWayangRelTest {
                 .anyMatch(rec -> rec.equals(new Record("test1", "test1", "test2", "test1", "test1"))));
     }
 
-    //@Test
+    @Test
     public void javaMultiConditionJoin() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -165,7 +165,7 @@ public class SqlToWayangRelTest {
         assert (checkEq);
     }
 
-    //@Test
+    @Test
     public void aggregateCountInJavaWithIntegers() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/exampleInt.csv");
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -185,7 +185,7 @@ public class SqlToWayangRelTest {
         assert (rec.getInt(1) == 3);
     }
 
-    //@Test
+    @Test
     public void aggregateCountInJava() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
         final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
@@ -205,7 +205,7 @@ public class SqlToWayangRelTest {
         assert (rec.getInt(1) == 3);
     }
 
-    //@Test
+    @Test
     public void filterIsNull() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -227,14 +227,14 @@ public class SqlToWayangRelTest {
         );
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
-        
+
         sqlContext.execute(wayangPlan);
 
         assert (result.size() == 1);
         assert (result.stream().findFirst().get().getDouble(0) == 0.875f);
     }
 
-    //@Test
+    @Test
     public void filterNotEqualsValue() throws Exception {
         final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -250,7 +250,7 @@ public class SqlToWayangRelTest {
         assert (!result.stream().anyMatch(record -> record.getField(0).equals("test1")));
     }
 
-    //@Test
+    @Test
     public void filterIsNotNull() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -265,7 +265,7 @@ public class SqlToWayangRelTest {
         assert (!result.stream().anyMatch(record -> record.getField(0).equals(null)));
     }
 
-    //@Test
+    @Test
     public void javaReduceBy() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -285,7 +285,7 @@ public class SqlToWayangRelTest {
         assert (result.stream().anyMatch(rec -> rec.equals(new Record("item1", 2))));
     }
 
-    //@Test
+    @Test
     public void javaCrossJoin() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -314,7 +314,7 @@ public class SqlToWayangRelTest {
         assert (resultTally.equals(shouldBeTally));
     }
 
-    //@Test
+    @Test
     public void filterWithNotLike() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -329,7 +329,7 @@ public class SqlToWayangRelTest {
         assert (!result.stream().anyMatch(record -> record.getString(0).equals("test1")));
     }
 
-    //@Test
+    @Test
     public void filterWithLike() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -344,7 +344,7 @@ public class SqlToWayangRelTest {
         assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1", "test2"))));
     }
 
-    //@Test
+    @Test
     public void javaLimit() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/exampleSort.csv");
 
@@ -361,7 +361,7 @@ public class SqlToWayangRelTest {
         assert (result.get(0).equals(new Record(2, "a", "a", 2)));
     }
 
-    //@Test
+    @Test
     public void javaSort() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/exampleSort.csv");
 
@@ -384,7 +384,7 @@ public class SqlToWayangRelTest {
         assert (result.get(6).equals(new Record(0, "b", "b", 1)));
     }
 
-    //@Test
+    @Test
     public void joinWithLargeLeftTableIndexCorrect() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -415,7 +415,7 @@ public class SqlToWayangRelTest {
     // offset, $3 -> 3 - l.size() = $1, r($1) = "item4" we cannot naively assume
     // that it is always ordered as =(lRef,rRef), lRef < rRef.
     // it may also be =($3,$1)
-    //@Test
+    @Test
     public void joinWithLargeLeftTableIndexMirrorAlias() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -440,7 +440,7 @@ public class SqlToWayangRelTest {
         assert (resultTally.equals(shouldBeTally));
     }
 
-    // //@Test
+    // @Test
     public void sparkFilter() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -461,7 +461,7 @@ public class SqlToWayangRelTest {
     }
 
     // tests sql-apis ability to serialize projections and joins
-    //@Test
+    @Test
     public void sparkInnerJoin() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -491,7 +491,7 @@ public class SqlToWayangRelTest {
         assert (resultTally.equals(shouldBeTally));
     }
 
-    // //@Test
+    // @Test
     public void rexSerializationTest() throws Exception {
         // create filterPredicateImpl for serialisation
         final RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
@@ -515,7 +515,7 @@ public class SqlToWayangRelTest {
         assert (((FilterPredicateImpl) deserializedObject).test(new Record("test")));
     }
 
-    //@Test
+    @Test
     public void exampleFilterTableRefToTableRef() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/exampleRefToRef.csv");
 
@@ -530,7 +530,7 @@ public class SqlToWayangRelTest {
         assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1"))));
     }
 
-    //@Test
+    @Test
     public void exampleMinWithStrings() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/exampleMin.csv");
 
