@@ -18,6 +18,7 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -36,12 +37,19 @@ public class AggregateGetResult implements FunctionDescriptor.SerializableFuncti
 
     @Override
     public Record apply(final Record record) {
-        final int l = record.size();
+        System.out.println("GetResult: rec: " + record);
+        System.out.println("GetResult: aggCall: " + aggregateCallList);
+
+        final int recordSize = record.size();
         final int outputRecordSize = aggregateCallList.size() + groupingfields.size();
         final Object[] resValues = new Object[outputRecordSize];
 
         int i = 0;
         int j = 0;
+        
+        groupingfields.stream().forEach(System.out::println);
+
+        System.out.println("GetResult: grouping fields: " + groupingfields);
         for (i = 0; j < groupingfields.size(); i++) {
             if (groupingfields.contains(i)) {
                 resValues[j] = record.getField(i);
@@ -49,11 +57,14 @@ public class AggregateGetResult implements FunctionDescriptor.SerializableFuncti
             }
         }
 
-        i = l - aggregateCallList.size() - 1;
+        System.out.println("GetResult: resvalues post calc: " + Arrays.toString(resValues));
+        
+        i = recordSize - aggregateCallList.size() - 1;
         for (final AggregateCall aggregateCall : aggregateCallList) {
             final String name = aggregateCall.getAggregation().getName();
             if (name.equals("AVG")) {
-                resValues[j] = record.getDouble(i) / record.getDouble(l - 1);
+                System.out.println("GetResult: avg: " + record.getField(i) + " and " + record.getField(recordSize - 1));
+                resValues[j] = record.getDouble(i) / record.getDouble(recordSize - 1);
             } else {
                 resValues[j] = record.getField(i);
             }

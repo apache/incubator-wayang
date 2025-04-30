@@ -17,6 +17,7 @@
  */
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -39,7 +40,7 @@ public class AggregateFunction
     public Record apply(final Record record1, final Record record2) {
         final int l = record1.size();
         final Object[] resValues = new Object[l];
-        final boolean countDone = false;
+        boolean countDone = false;
 
         for (int i = 0; i < l - aggregateCalls.size() - 1; i++) {
             resValues[i] = record1.getField(i);
@@ -61,25 +62,40 @@ public class AggregateFunction
                 case MAX:
                     resValues[counter] = this.castAndMap(field1, field2, SqlFunctions::greatest, SqlFunctions::greatest,
                             SqlFunctions::greatest, SqlFunctions::greatest);
+                    break;
                 case COUNT:
                     // since aggregates inject an extra column for counting before,
                     // see AggregateAddCols. the column we operate on are integer counts,
                     // which means we can eagerly get the fields as integers and simply sum
                     assert (field1 instanceof Integer && field2 instanceof Integer)
                             : "Expected to find integers for count but found: " + field1 + " and " + field2;
-                    Object obj = Integer.class.cast(field1) + Integer.class.cast(field2);
-                    resValues[counter] = obj;
+                    final Object count = Integer.class.cast(field1) + Integer.class.cast(field2);
+                    resValues[counter] = count;
                     break;
                 case AVG:
-                    throw new UnsupportedOperationException("Averages not currently supported");
-                // resValues[counter] = this.castAndMap(field1, field2, null, null, null, null);
-                // break;
+                    assert (field1 instanceof Integer && field2 instanceof Integer)
+                            : "Expected to find integers for count but found: " + field1 + " and " + field2;
+                    final Object avg = Integer.class.cast(field1) + Integer.class.cast(field2);
+                    
+                    resValues[counter] = avg; 
+
+                    if(!countDone) {
+                        resValues[l-1] = record1.getInt(l-1) + record2.getInt(l-1);
+                        countDone = true;
+                    }
+
+                    System.out.println("AggregateFunction: putting avg: " + avg + ", using fields: " + field1 + ", and: " + field2);
+                    System.out.println("AggregateFunction: resvalues[counter]: " + resValues[counter]);
+                    System.out.println("AggregateFunction resvalues after mutation: " + Arrays.toString(resValues));
+                    break;
                 default:
                     throw new IllegalStateException("Unsupported operation: " + aggregateCall.getAggregation().kind);
             }
             counter++;
         }
 
+        System.out.println("AggregateFunction: records: " + record1 + ", and: " + record2);
+        System.out.println("AggregateFunction: returning resvalues: " + Arrays.toString(resValues));
         return new Record(resValues);
     }
 
