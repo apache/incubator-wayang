@@ -26,8 +26,8 @@ import org.apache.wayang.core.function.FunctionDescriptor;
 
 public class AggregateAddCols implements FunctionDescriptor.SerializableFunction<Record, Record> {
     final List<AggregateCall> aggregateCalls;
-    
-    public AggregateAddCols(final List<AggregateCall> aggregateCalls){
+
+    public AggregateAddCols(final List<AggregateCall> aggregateCalls) {
         this.aggregateCalls = aggregateCalls;
     }
 
@@ -36,7 +36,7 @@ public class AggregateAddCols implements FunctionDescriptor.SerializableFunction
         final int l = record.size();
         final int newRecordSize = l + aggregateCalls.size() + 1;
         final Object[] resValues = new Object[newRecordSize];
-        
+
         for (int i = 0; i < l; i++) {
             resValues[i] = record.getField(i);
         }
