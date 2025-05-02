@@ -21,6 +21,7 @@ package org.apache.wayang.api.sql.calcite.converter.functions;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -30,32 +31,35 @@ import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
 public class AggregateGetResult implements FunctionDescriptor.SerializableFunction<Record, Record> {
-    private final List<AggregateCall> aggregateCallList;
-    private final Set<Integer> groupingfields;
+        private final List<SqlKind> aggregateKindList;
+        private final Set<Integer> groupingfields;
 
-    public AggregateGetResult(final List<AggregateCall> aggregateCalls, final Set<Integer> groupingfields) {
-        this.aggregateCallList = aggregateCalls;
-        this.groupingfields = groupingfields;
-    }
+        public AggregateGetResult(final List<AggregateCall> aggregateCalls, final Set<Integer> groupingfields) {
+                this.aggregateKindList = aggregateCalls.stream()
+                                .map(call -> call.getAggregation().getKind())
+                                .collect(Collectors.toList());
+                this.groupingfields = groupingfields;
+        }
 
-    @Override
-    public Record apply(final Record record) {
-        final int recordSize = record.size();
-        final int aggregateCallOffset = recordSize - aggregateCallList.size() - 1;
+        @Override
+        public Record apply(final Record record) {
+                final int recordSize = record.size();
+                final int aggregateCallOffset = recordSize - aggregateKindList.size() - 1;
 
-        final Object[] fields = groupingfields.stream()
-                .map(record::getField)
-                .toArray();
+                final Object[] fields = groupingfields.stream()
+                                .map(record::getField)
+                                .toArray();
 
-        final Object[] aggregateCallFields = IntStream.range(0, aggregateCallList.size())
-                .mapToObj(i -> aggregateCallList.get(i).getAggregation().getKind().equals(SqlKind.AVG)
-                        ? record.getDouble(i + aggregateCallOffset) / record.getDouble(recordSize - 1)
-                        : record.getField(i + aggregateCallOffset))
-                .toArray();
+                final Object[] aggregateCallFields = IntStream.range(0, aggregateKindList.size())
+                                .mapToObj(i -> aggregateKindList.get(i).equals(SqlKind.AVG)
+                                                ? record.getDouble(i + aggregateCallOffset)
+                                                                / record.getDouble(recordSize - 1)
+                                                : record.getField(i + aggregateCallOffset))
+                                .toArray();
 
-        final Object[] combinedFields = Stream.concat(Arrays.stream(fields), Arrays.stream(aggregateCallFields))
-                .toArray();
-                
-        return new Record(combinedFields);
-    }
+                final Object[] combinedFields = Stream.concat(Arrays.stream(fields), Arrays.stream(aggregateCallFields))
+                                .toArray();
+
+                return new Record(combinedFields);
+        }
 }

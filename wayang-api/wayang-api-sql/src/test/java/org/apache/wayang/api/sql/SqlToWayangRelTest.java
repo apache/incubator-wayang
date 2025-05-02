@@ -358,7 +358,25 @@ public class SqlToWayangRelTest {
 
         final List<Record> result = r.stream().collect(Collectors.toList());
 
+        assert (result.size() == 1);
         assert (result.get(0).equals(new Record(2, "a", "a", 2)));
+    }
+
+    @Test
+    public void javaLimitNoSort() throws Exception {
+        final SqlContext sqlContext = createSqlContext("/data/exampleSort.csv");
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT col1, col2, col3 from fs.exampleSort LIMIT 2");
+
+        final Collection<Record> r = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+
+        sqlContext.execute(wayangPlan);
+
+        final List<Record> result = r.stream().collect(Collectors.toList());
+
+        assert (result.size() == 2);
     }
 
     @Test
@@ -458,6 +476,26 @@ public class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
 
         assert (result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1"))));
+    }
+
+    @Test
+    public void sparkAggregate() throws Exception {
+        final SqlContext sqlContext = this.createSqlContext("/data/largeLeftTableIndex.csv");
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT largeLeftTableIndex.NAMEC, COUNT(*) FROM fs.largeLeftTableIndex GROUP BY NAMEC");
+        final Collection<Record> result = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+
+        // except reduce by
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> {
+            node.addTargetPlatform(Spark.platform());
+        });
+
+        sqlContext.execute(wayangPlan);
+
+        final Record rec = result.stream().findFirst().get();
+        assert (rec.size() == 2);
+        assert (rec.getInt(1) == 3);
     }
 
     // tests sql-apis ability to serialize projections and joins
