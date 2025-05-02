@@ -358,7 +358,26 @@ public class SqlToWayangRelTest {
 
         final List<Record> result = r.stream().collect(Collectors.toList());
 
+        System.out.println("limit srot: " + result);
+        assert (result.size() == 1);
         assert (result.get(0).equals(new Record(2, "a", "a", 2)));
+    }
+
+    @Test
+    public void javaLimitNoSort() throws Exception {
+        final SqlContext sqlContext = createSqlContext("/data/exampleSort.csv");
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT col1, col2, col3 from fs.exampleSort LIMIT 2");
+
+        final Collection<Record> r = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+
+        sqlContext.execute(wayangPlan);
+
+        final List<Record> result = r.stream().collect(Collectors.toList());
+
+        assert (result.size() == 2);
     }
 
     @Test

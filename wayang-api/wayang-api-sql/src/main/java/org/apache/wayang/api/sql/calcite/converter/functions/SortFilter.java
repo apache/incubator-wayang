@@ -39,9 +39,9 @@ public class SortFilter implements FunctionDescriptor.SerializablePredicate<Reco
 
     @Override
     public boolean test(final Record record) {
-        final boolean test = increment >= offset && increment <= fetch;
         increment++;
-
+        final boolean test = increment >= offset && increment <= fetch;
+        
         return test;
     }
 }
