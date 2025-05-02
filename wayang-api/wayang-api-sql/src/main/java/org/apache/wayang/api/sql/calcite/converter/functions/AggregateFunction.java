@@ -21,19 +21,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.runtime.SqlFunctions;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
 public class AggregateFunction
         implements FunctionDescriptor.SerializableBinaryOperator<Record> {
-
-    final List<AggregateCall> aggregateCalls;
+    final List<SqlKind> aggregateKinds;
 
     public AggregateFunction(final List<AggregateCall> aggregateCalls) {
-        this.aggregateCalls = aggregateCalls;
+        this.aggregateKinds = aggregateCalls.stream()
+            .map(call -> call.getAggregation().getKind())
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -42,16 +45,16 @@ public class AggregateFunction
         final Object[] resValues = new Object[l];
         boolean countDone = false;
 
-        for (int i = 0; i < l - aggregateCalls.size() - 1; i++) {
+        for (int i = 0; i < l - aggregateKinds.size() - 1; i++) {
             resValues[i] = record1.getField(i);
         }
 
-        int counter = l - aggregateCalls.size() - 1;
-        for (final AggregateCall aggregateCall : aggregateCalls) {
+        int counter = l - aggregateKinds.size() - 1;
+        for (final SqlKind kind : aggregateKinds) {
             final Object field1 = record1.getField(counter);
             final Object field2 = record2.getField(counter);
 
-            switch (aggregateCall.getAggregation().kind) {
+            switch (kind) {
                 case SUM:
                     resValues[counter] = this.castAndMap(field1, field2, null, Long::sum, Integer::sum, Double::sum);
                     break;
@@ -85,7 +88,7 @@ public class AggregateFunction
                     }
                     break;
                 default:
-                    throw new IllegalStateException("Unsupported operation: " + aggregateCall.getAggregation().kind);
+                    throw new IllegalStateException("Unsupported operation: " + kind);
             }
             counter++;
         }

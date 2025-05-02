@@ -18,6 +18,7 @@
 
 package org.apache.wayang.api.sql.calcite.converter;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -51,7 +52,7 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
 
         final List<AggregateCall> aggregateCalls = ((Aggregate) wayangRelNode).getAggCallList();
         final int groupCount = wayangRelNode.getGroupCount();
-        final Set<Integer> groupingFields = wayangRelNode.getGroupSet().asSet();
+        final HashSet<Integer> groupingFields = new HashSet<>(wayangRelNode.getGroupSet().asSet());
 
         final MapOperator<Record, Record> mapOperator = new MapOperator<>(
                 new AggregateAddCols(aggregateCalls),
