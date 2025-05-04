@@ -129,7 +129,7 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
   /**
    * Read a parquet file and provide it as a dataset of [[Record]]s.
    *
-   * @param url        the URL of the Parquet file
+   * @param url the URL of the Parquet file
    * @param projection the projection, if any
    * @return [[DataQuanta]] of [[Record]]s representing the file
    */
