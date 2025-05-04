@@ -61,7 +61,7 @@ class Record:
         return len(self.values)
 
     def __str__(self):
-        return str(self.values).replace("[", "").replace("]", "").replace(" ", "")
+        return "Record" + str(self.values)
 
     def __repr__(self):
         return self.__str__()

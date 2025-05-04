@@ -67,9 +67,7 @@ public class Record implements Serializable, Copyable<Record>, Comparable<Record
     }
 
     @Override
-    public String toString() {
-        return Arrays.toString(this.values).replace("[", "").replace("]", "").replace(" ", "");
-    }
+    public String toString() { return "Record" + Arrays.toString(this.values); }
 
     public Object getField(final int index) {
         return this.values[index];
