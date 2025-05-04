@@ -18,25 +18,33 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
-public class AggregateKeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
-    private final HashSet<Integer> indexSet;
+/**
+ * Flattens the result of a join i.e. a {@link Tuple2} of a left and a right
+ * {@link Record} to a single {@link Record}.
+ */
+public class JoinFlattenResult implements FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
 
-    public AggregateKeyExtractor(final HashSet<Integer> indexSet) {
-        this.indexSet = indexSet;
-    }
+    @Override
+    public Record apply(final Tuple2<Record, Record> tuple2) {
+        final int length0 = tuple2.getField0().size();
+        final int length1 = tuple2.getField1().size();
 
-    public Object apply(final Record record) {
-        final List<Object> keys = new ArrayList<>();
-        for (final Integer index : indexSet) {
-            keys.add(record.getField(index));
+        final int totalLength = length0 + length1;
+
+        final Object[] fields = new Object[totalLength];
+
+        for (int i = 0; i < length0; i++) {
+            fields[i] = tuple2.getField0().getField(i);
         }
-        return keys;
+
+        for (int i = length0; i < totalLength; i++) {
+            fields[i] = tuple2.getField1().getField(i - length0);
+        }
+
+        return new Record(fields);
     }
 }

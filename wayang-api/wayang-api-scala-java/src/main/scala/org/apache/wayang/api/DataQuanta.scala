@@ -942,7 +942,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     collector
   }
 
-  def explain(): Unit = {
+  def explain(toJson: Boolean = false): Unit = {
     // Set up the sink.
     val collector = new java.util.LinkedList[Out]()
     val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
@@ -951,7 +951,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
 
     // Do the explanation.
     this.planBuilder.sinks += sink
-    this.planBuilder.buildAndExplain()
+    this.planBuilder.buildAndExplain(toJson)
   }
 
 

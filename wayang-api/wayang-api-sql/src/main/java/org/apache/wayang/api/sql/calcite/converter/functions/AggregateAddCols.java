@@ -18,17 +18,19 @@
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.calcite.rel.core.AggregateCall;
-
+import org.apache.calcite.sql.SqlKind;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
 public class AggregateAddCols implements FunctionDescriptor.SerializableFunction<Record, Record> {
-    final List<AggregateCall> aggregateCalls;
-    
-    public AggregateAddCols(final List<AggregateCall> aggregateCalls){
-        this.aggregateCalls = aggregateCalls;
+    final List<Tuple2<SqlKind, List<Integer>>> aggregateCalls;
+
+    public AggregateAddCols(final List<AggregateCall> aggregateCalls) {
+        this.aggregateCalls = aggregateCalls.stream().map(call -> new Tuple2<>(call.getAggregation().getKind(), call.getArgList())).collect(Collectors.toList());
     }
 
     @Override
@@ -36,19 +38,22 @@ public class AggregateAddCols implements FunctionDescriptor.SerializableFunction
         final int l = record.size();
         final int newRecordSize = l + aggregateCalls.size() + 1;
         final Object[] resValues = new Object[newRecordSize];
-        
+
         for (int i = 0; i < l; i++) {
             resValues[i] = record.getField(i);
         }
 
         int i = l;
-        for (final AggregateCall aggregateCall : aggregateCalls) {
-            switch (aggregateCall.getAggregation().kind) {
+        for (final Tuple2<SqlKind, List<Integer>> aggregateCall : aggregateCalls) {
+            final SqlKind kind = aggregateCall.field0;
+            final List<Integer> argList = aggregateCall.field1;
+
+            switch (kind) {
                 case COUNT:
                     resValues[i] = 1;
                     break;
                 default:
-                    resValues[i] = record.getField(aggregateCall.getArgList().get(0));
+                    resValues[i] = record.getField(argList.get(0));
             }
             i++;
         }

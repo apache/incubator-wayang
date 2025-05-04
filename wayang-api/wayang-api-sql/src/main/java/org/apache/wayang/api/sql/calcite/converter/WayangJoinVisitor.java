@@ -18,131 +18,74 @@
 
 package org.apache.wayang.api.sql.calcite.converter;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.sql.SqlKind;
+
+import org.apache.wayang.api.sql.calcite.converter.functions.JoinFlattenResult;
+import org.apache.wayang.api.sql.calcite.converter.functions.JoinKeyExtractor;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
+
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.JoinOperator;
 import org.apache.wayang.basic.operators.MapOperator;
-import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
 
-    WayangJoinVisitor(WayangRelConverter wayangRelConverter) {
+    WayangJoinVisitor(final WayangRelConverter wayangRelConverter) {
         super(wayangRelConverter);
     }
 
     @Override
-    Operator visit(WayangJoin wayangRelNode) {
-        Operator childOpLeft = wayangRelConverter.convert(wayangRelNode.getInput(0));
-        Operator childOpRight = wayangRelConverter.convert(wayangRelNode.getInput(1));
+    Operator visit(final WayangJoin wayangRelNode) {
+        final Operator childOpLeft = wayangRelConverter.convert(wayangRelNode.getInput(0));
+        final Operator childOpRight = wayangRelConverter.convert(wayangRelNode.getInput(1));
 
-        RexNode condition = ((Join) wayangRelNode).getCondition();
+        final RexNode condition = ((Join) wayangRelNode).getCondition();
+        final RexCall call = (RexCall) condition;
 
+        final List<Integer> keys = call.getOperands().stream()
+            .map(RexInputRef.class::cast)
+            .map(RexInputRef::getIndex)
+            .collect(Collectors.toList());
+
+        assert (keys.size() == 2) : "Amount of keys found in join was not 2, got: " + keys.size();
+        
         if (!condition.isA(SqlKind.EQUALS)) {
             throw new UnsupportedOperationException("Only equality joins supported");
         }
 
-        //offset of the index in the right child
-        int offset = wayangRelNode.getInput(0).getRowType().getFieldCount();
+        // offset of the index in the right child
+        final int offset = wayangRelNode.getInput(0).getRowType().getFieldCount();
 
-        int leftKeyIndex = condition.accept(new KeyIndex(false, Child.LEFT));
-        int rightKeyIndex = condition.accept(new KeyIndex(false, Child.RIGHT)) - offset;
+        final int leftKeyIndex = keys.get(0) < keys.get(1) ? keys.get(0) : keys.get(0) - offset;
+        final int rightKeyIndex = keys.get(0) < keys.get(1) ? keys.get(1) - offset : keys.get(1);
 
-        JoinOperator<Record, Record, Object> join = new JoinOperator<>(
-                new TransformationDescriptor<>(new KeyExtractor(leftKeyIndex), Record.class, Object.class),
-                new TransformationDescriptor<>(new KeyExtractor(rightKeyIndex), Record.class, Object.class)
-        );
+        final JoinOperator<Record, Record, Object> join = new JoinOperator<>(
+                new TransformationDescriptor<>(new JoinKeyExtractor(leftKeyIndex), Record.class, Object.class),
+                new TransformationDescriptor<>(new JoinKeyExtractor(rightKeyIndex), Record.class, Object.class));
 
-        //call connectTo on both operators (left and right)
+        // call connectTo on both operators (left and right)
         childOpLeft.connectTo(0, join, 0);
         childOpRight.connectTo(0, join, 1);
 
         // Join returns Tuple2 - map to a Record
-        MapOperator<Tuple2, Record> mapOperator = new MapOperator(
-                new MapFunctionImpl(),
-                Tuple2.class,
-                Record.class
-        );
+        final MapOperator<Tuple2<Record, Record>, Record> mapOperator = new MapOperator<Tuple2<Record, Record>, Record>(
+                new JoinFlattenResult(),
+                ReflectionUtils.specify(Tuple2.class),
+                Record.class);
+                
         join.connectTo(0, mapOperator, 0);
 
         return mapOperator;
-    }
-
-    /**
-     * Extracts key index from the call
-     */
-    private class KeyIndex extends RexVisitorImpl<Integer> {
-        final Child child;
-
-        protected KeyIndex(boolean deep, Child child) {
-            super(deep);
-            this.child = child;
-        }
-
-        @Override
-        public Integer visitCall(RexCall call) {
-            RexNode operand = call.getOperands().get(child.ordinal());
-            if (!(operand instanceof RexInputRef)) {
-                throw new UnsupportedOperationException("Unsupported operation");
-            }
-            RexInputRef rexInputRef = (RexInputRef) operand;
-            return rexInputRef.getIndex();
-        }
-    }
-
-    /**
-     * Extracts the key
-     */
-    private class KeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
-        private final int index;
-
-        public KeyExtractor(int index) {
-            this.index = index;
-        }
-
-        public Object apply(final Record record) {
-            return record.getField(index);
-        }
-    }
-
-    /**
-     * Flattens Tuple2<Record, Record> to Record
-     */
-    private class MapFunctionImpl implements FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
-        public MapFunctionImpl() {
-            super();
-        }
-
-        @Override
-        public Record apply(final Tuple2<Record, Record> tuple2) {
-            int length1 = tuple2.getField0().size();
-            int length2 = tuple2.getField1().size();
-
-            int totalLength = length1 + length2;
-
-            Object[] fields = new Object[totalLength];
-
-            for (int i = 0; i < length1; i++) {
-                fields[i] = tuple2.getField0().getField(i);
-            }
-            for (int j = length1; j < totalLength; j++) {
-                fields[j] = tuple2.getField1().getField(j - length1);
-            }
-            return new Record(fields);
-
-        }
-    }
-
-    // Helpers
-    private enum Child {
-        LEFT, RIGHT
     }
 }

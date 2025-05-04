@@ -18,25 +18,35 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
-public class AggregateKeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
-    private final HashSet<Integer> indexSet;
+/**
+ * Flattens Tuple2<Record, Record> to Record
+ */
+public class MultiConditionJoinFuncImpl implements FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
+    
+    public MultiConditionJoinFuncImpl() {
 
-    public AggregateKeyExtractor(final HashSet<Integer> indexSet) {
-        this.indexSet = indexSet;
     }
 
-    public Object apply(final Record record) {
-        final List<Object> keys = new ArrayList<>();
-        for (final Integer index : indexSet) {
-            keys.add(record.getField(index));
+    @Override
+    public Record apply(final Tuple2<Record, Record> tuple2) {
+        final int length1 = ((Tuple2<Record, Record>) tuple2).getField0().size();
+        final int length2 = ((Tuple2<Record, Record>) tuple2).getField1().size();
+        
+        final int totalLength = length1 + length2;
+
+        final Object[] fields = new Object[totalLength];
+
+        for (int i = 0; i < length1; i++) {
+            fields[i] = ((Tuple2<Record, Record>) tuple2).getField0().getField(i);
         }
-        return keys;
+        for (int j = length1; j < totalLength; j++) {
+            fields[j] = ((Tuple2<Record, Record>) tuple2).getField1().getField(j - length1);
+        }
+
+        return new Record(fields);
     }
 }

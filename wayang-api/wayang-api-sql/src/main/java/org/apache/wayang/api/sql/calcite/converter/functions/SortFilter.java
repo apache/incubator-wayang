@@ -18,25 +18,30 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
-public class AggregateKeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
-    private final HashSet<Integer> indexSet;
+public class SortFilter implements FunctionDescriptor.SerializablePredicate<Record> {
+    final int offset;
+    final int fetch;
+    int increment;
 
-    public AggregateKeyExtractor(final HashSet<Integer> indexSet) {
-        this.indexSet = indexSet;
+    /**
+     * The filter for a calcite/sql sort operator
+     * usually triggered by "LIMIT x", "OFFSET x", "FETCH x" statements
+     * @param offset amount of records ignored before accepting
+     * @param fetch amount of records accepted
+     */
+    public SortFilter(final int fetch, final int offset) {
+        this.fetch = fetch;
+        this.offset = offset;
     }
 
-    public Object apply(final Record record) {
-        final List<Object> keys = new ArrayList<>();
-        for (final Integer index : indexSet) {
-            keys.add(record.getField(index));
-        }
-        return keys;
+    @Override
+    public boolean test(final Record record) {
+        increment++;
+        final boolean test = increment >= offset && increment <= fetch;
+        
+        return test;
     }
 }

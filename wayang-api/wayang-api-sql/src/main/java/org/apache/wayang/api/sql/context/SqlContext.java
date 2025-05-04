@@ -56,7 +56,7 @@ public class SqlContext extends WayangContext {
         this(new Configuration());
     }
 
-    public SqlContext(Configuration configuration) throws SQLException {
+    public SqlContext(final Configuration configuration) throws SQLException {
         super(configuration.fork(String.format("SqlContext(%s)", configuration.getName())));
 
         this.withPlugin(Java.basicPlugin());
@@ -66,58 +66,55 @@ public class SqlContext extends WayangContext {
         calciteSchema = SchemaUtils.getSchema(configuration);
     }
 
-    public SqlContext(Configuration configuration, List<Plugin> plugins) throws SQLException {
+    public SqlContext(final Configuration configuration, final List<Plugin> plugins) throws SQLException {
         super(configuration.fork(String.format("SqlContext(%s)", configuration.getName())));
 
-        for (Plugin plugin : plugins) {
+        for (final Plugin plugin : plugins) {
             this.withPlugin(plugin);
         }
 
         calciteSchema = SchemaUtils.getSchema(configuration);
     }
 
-    public Collection<Record> executeSql(String sql) throws SqlParseException {
+    public Collection<Record> executeSql(final String sql) throws SqlParseException {
 
-        Properties configProperties = Optimizer.ConfigProperties.getDefaults();
-        RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
+        final Properties configProperties = Optimizer.ConfigProperties.getDefaults();
+        final RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
 
-        Optimizer optimizer = Optimizer.create(calciteSchema, configProperties,
+        final Optimizer optimizer = Optimizer.create(calciteSchema, configProperties,
                 relDataTypeFactory);
 
-        SqlNode sqlNode = optimizer.parseSql(sql);
-        SqlNode validatedSqlNode = optimizer.validate(sqlNode);
-        RelNode relNode = optimizer.convert(validatedSqlNode);
+        final SqlNode sqlNode = optimizer.parseSql(sql);
+        final SqlNode validatedSqlNode = optimizer.validate(sqlNode);
+        final RelNode relNode = optimizer.convert(validatedSqlNode);
 
         PrintUtils.print("After parsing sql query", relNode);
 
-
-        RuleSet rules = RuleSets.ofList(
+        final RuleSet rules = RuleSets.ofList(
                 WayangRules.WAYANG_TABLESCAN_RULE,
                 WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
                 WayangRules.WAYANG_PROJECT_RULE,
                 WayangRules.WAYANG_FILTER_RULE,
                 WayangRules.WAYANG_JOIN_RULE,
-                WayangRules.WAYANG_AGGREGATE_RULE
-        );
-        RelNode wayangRel = optimizer.optimize(
+                WayangRules.WAYANG_AGGREGATE_RULE,
+                WayangRules.WAYANG_SORT_RULE);
+                
+        final RelNode wayangRel = optimizer.optimize(
                 relNode,
                 relNode.getTraitSet().plus(WayangConvention.INSTANCE),
-                rules
-        );
+                rules);
 
         PrintUtils.print("After translating logical intermediate plan", wayangRel);
 
-
-        Collection<Record> collector = new ArrayList<>();
-        WayangPlan wayangPlan = optimizer.convert(wayangRel, collector);
+        final Collection<Record> collector = new ArrayList<>();
+        final WayangPlan wayangPlan = optimizer.convert(wayangRel, collector);
         this.execute(getJobName(), wayangPlan);
 
         return collector;
     }
 
     private static String getJobName() {
-        return "SQL["+jobId.incrementAndGet()+"]";
+        return "SQL[" + jobId.incrementAndGet() + "]";
     }
-
 
 }

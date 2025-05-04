@@ -18,25 +18,27 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Arrays;
+import java.util.function.Function;
 
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
-public class AggregateKeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
-    private final HashSet<Integer> indexSet;
+public class MultiConditionJoinKeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Record> {
+        private final Integer[] indexes;
 
-    public AggregateKeyExtractor(final HashSet<Integer> indexSet) {
-        this.indexSet = indexSet;
+    /**
+     * Extracts a key for a {@link WayangMultiConditionJoinVisitor}.
+     * is a subtype of {@link Function}, {@link Serializable} (as required by engines which use serialisation i.e. flink/spark)
+     * Takes an input {@link Record} & {@link Integer} key and maps it to a generic field object T.
+     * Performs an unchecked cast when applied.
+     * @param index key
+     */
+    public MultiConditionJoinKeyExtractor(final Integer... indexes) {
+        this.indexes = indexes;
     }
 
-    public Object apply(final Record record) {
-        final List<Object> keys = new ArrayList<>();
-        for (final Integer index : indexSet) {
-            keys.add(record.getField(index));
-        }
-        return keys;
+    public Record apply(final Record record) {
+        return new Record(Arrays.stream(indexes).map(record::getField).toArray());
     }
 }
