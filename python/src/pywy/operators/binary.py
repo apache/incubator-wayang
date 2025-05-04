@@ -15,6 +15,8 @@
 #  limitations under the License.
 #
 
+import ast
+
 from pywy.basic.model.models import Model
 from pywy.basic.model.option import Option
 from pywy.operators.base import PywyOperator
@@ -53,9 +55,9 @@ class JoinOperator(BinaryToUnaryOperator):
         input_type: GenericTco,
     ):
         super().__init__("Join", input_type, (input_type, input_type))
-        self.this_key_function = this_key_function
+        self.this_key_function = lambda g: this_key_function(ast.literal_eval(next(g)))
         self.that = that
-        self.that_key_function = that_key_function
+        self.that_key_function = lambda g: that_key_function(ast.literal_eval(next(g)))
         self.json_name = "join"
 
     def get_left_key_udf(self, iterator):
@@ -64,9 +66,6 @@ class JoinOperator(BinaryToUnaryOperator):
 
     def get_right_key_udf(self, iterator):
         iterator = self.serialize_iterator(iterator)
-        print("right")
-        print(iterator)
-        print(list(map(lambda x: self.that_key_function(x), iterator)))
         return map(lambda x: self.that_key_function(x), iterator)
 
 
