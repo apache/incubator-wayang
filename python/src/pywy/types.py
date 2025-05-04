@@ -242,39 +242,3 @@ def get_type_str(py_type: Any) -> str:
         return origin_str
 
     return str(py_type)
-
-
-def serialize_iterator_to_operator_type(
-    operator_type: ConstrainedOperatorType, iterator: Iterable[Union[str, ConstrainedOperatorType]]
-) -> Iterable[ConstrainedOperatorType]:
-    def _cast_value_to_type(value: Any, type: ConstrainedOperatorType):
-        if type is ndarray:
-            return ndarray(value)
-        elif type is IterableT:
-            return iter(value)
-        elif type is Record:
-            return Record(list(value))
-        else:
-            return value
-
-    if operator_type is str:
-        return iterator
-
-    typed_iterator = list()
-    for x in iterator:
-        if not isinstance(x, str):
-            typed_iterator.append(x)
-            continue
-
-        x = literal_eval(x)
-
-        if isinstance(operator_type, Tuple):
-            args = get_args(operator_type)
-            for i, arg_type in enumerate(args):
-                x[i] = _cast_value_to_type(value=x[i], type=arg_type)
-        else:
-            x = _cast_value_to_type(x, operator_type)
-
-        typed_iterator.append(x)
-
-    return iter(typed_iterator)
