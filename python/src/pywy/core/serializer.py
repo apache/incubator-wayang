@@ -68,8 +68,8 @@ class JSONSerializer:
             json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.reduce_function)).decode('utf-8')
 
         elif operator.json_name == "join":
-            json_operator["data"]["thisKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.get_left_key_udf)).decode('utf-8')
-            json_operator["data"]["thatKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.get_right_key_udf)).decode('utf-8')
+            json_operator["data"]["thisKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.this_key_function)).decode('utf-8')
+            json_operator["data"]["thatKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.that_key_function)).decode('utf-8')
 
         elif operator.json_name == "cartesian":
             del json_operator["data"]

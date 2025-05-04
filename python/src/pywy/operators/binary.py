@@ -60,14 +60,6 @@ class JoinOperator(BinaryToUnaryOperator):
         self.that_key_function = lambda g: that_key_function(ast.literal_eval(next(g)))
         self.json_name = "join"
 
-    def get_left_key_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
-        return map(lambda x: self.this_key_function(x), iterator)
-
-    def get_right_key_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
-        return map(lambda x: self.that_key_function(x), iterator)
-
 
 class CartesianOperator(BinaryToUnaryOperator):
     that: PywyOperator

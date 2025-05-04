@@ -61,7 +61,6 @@ class FilterOperator(UnaryToUnaryOperator):
         return self.predicate(next(iterator))
 
     def get_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
         return filter(self.predicate, iterator)
 
     def __str__(self):
@@ -83,7 +82,6 @@ class MapOperator(UnaryToUnaryOperator):
         self.json_name = "map"
 
     def get_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
         return map(lambda x: self.function(x), iterator)
 
     def __str__(self):
@@ -105,7 +103,6 @@ class MapPartitionsOperator(UnaryToUnaryOperator):
         self.json_name = "mapPartitions"
 
     def get_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
         return map(lambda x: self.function(x), iterator)
 
     def __str__(self):
@@ -127,7 +124,6 @@ class FlatmapOperator(UnaryToUnaryOperator):
         self.json_name = "flatMap"
 
     def get_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
         return chain.from_iterable(map(lambda x: self.fm_function(x), iterator))
 
     def __str__(self):
@@ -156,7 +152,6 @@ class ReduceByKeyOperator(UnaryToUnaryOperator):
         self.json_name = "reduceBy"
 
     def get_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
         grouped_data = groupby(sorted(iterator, key=self.key_function), key=self.key_function)
 
         sums = {}
@@ -187,7 +182,6 @@ class SortOperator(UnaryToUnaryOperator):
         self.json_name = "sort"
 
     def get_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
         return sorted(iterator, key=self.key_udf)
 
     def __str__(self):
@@ -205,7 +199,6 @@ class DistinctOperator(UnaryToUnaryOperator):
         self.json_name = "distinct"
 
     def get_udf(self, iterator):
-        iterator = self.serialize_iterator(iterator)
         return iter(set(iterator))
 
     def __str__(self):

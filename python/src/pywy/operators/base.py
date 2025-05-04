@@ -15,8 +15,8 @@
 #  limitations under the License.
 #
 
-from typing import (TypeVar, Optional, List)
-from pywy.types import (typecheck, ConstrainedOperatorType, serialize_iterator_to_operator_type)
+from typing import TypeVar, Optional, List
+from pywy.types import typecheck, ConstrainedOperatorType
 
 
 class PywyOperator:
@@ -48,9 +48,6 @@ class PywyOperator:
         self.outputOperator = [None] * self.outputs
         self.input_type = input_type
         self.output_type = output_type
-
-    def serialize_iterator(self, iterator):
-        return serialize_iterator_to_operator_type(self.input_type, iterator)
 
     def validate_inputs(self, vec):
         if len(vec) != self.inputs:
