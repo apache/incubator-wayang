@@ -189,21 +189,3 @@ class SortOperator(UnaryToUnaryOperator):
 
     def __repr__(self):
         return super().__repr__()
-
-
-class DistinctOperator(UnaryToUnaryOperator):
-    json_name: str
-
-    def __init__(self, input_type: GenericTco = None):
-        super().__init__("Distinct", input_type, input_type)
-        self.json_name = "distinct"
-
-    def get_udf(self, iterator):
-        return iter(set(iterator))
-
-    def __str__(self):
-        return super().__str__()
-
-    def __repr__(self):
-        return super().__repr__()
-
