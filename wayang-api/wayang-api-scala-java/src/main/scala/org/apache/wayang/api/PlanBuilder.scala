@@ -133,7 +133,7 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
    * @param projection the projection, if any
    * @return [[DataQuanta]] of [[Record]]s representing the file
    */
-  def readParquet(url: String, projection: Array[String]): RecordDataQuanta = load(ParquetSource.create(url, projection))
+  def readParquet(url: String, projection: Array[String] = null): RecordDataQuanta = load(ParquetSource.create(url, projection))
 
  /**
     * Read a text file from a Google Cloud Storage bucket and provide it as a dataset of [[String]]s, one per line.

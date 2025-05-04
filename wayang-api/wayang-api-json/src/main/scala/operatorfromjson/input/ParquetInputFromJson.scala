@@ -36,5 +36,5 @@ case class ParquetInputFromJson(override val id: Long,
 @JsonIgnoreProperties(ignoreUnknown = true)
 object ParquetInputFromJson {
   @JsonIgnoreProperties(ignoreUnknown = true)
-  case class Data(filename: String, projection: Array[String] = null, columnNames: List[String] = Nil)
+  case class Data(filename: String, projection: Array[String] = null)
 }

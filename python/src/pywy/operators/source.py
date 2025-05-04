@@ -18,9 +18,7 @@
 from typing import List, Optional
 
 from pywy.operators.base import PywyOperator
-
 from pywy.basic.data.record import Record
-
 from pywy.types import GenericTco
 
 
@@ -65,14 +63,12 @@ class TextFileSource(SourceUnaryOperator):
 class ParquetSource(SourceUnaryOperator):
     path: str
     projection: Optional[List[str]]
-    column_names: Optional[List[str]]
     json_name: str
 
-    def __init__(self, path: str, projection: Optional[List[str]] = None, column_names: Optional[List[str]] = None):
+    def __init__(self, path: str, projection: Optional[List[str]] = None):
         super(ParquetSource, self).__init__('Parquet', output_type=Record)
         self.path = path
         self.projection = projection
-        self.column_names = column_names
         self.json_name = "parquetInput"
 
     def __str__(self):
