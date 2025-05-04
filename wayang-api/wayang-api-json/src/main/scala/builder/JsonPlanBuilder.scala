@@ -207,9 +207,9 @@ class JsonPlanBuilder() {
 
   private def visit(operator: ParquetInputFromJson, planBuilder: PlanBuilder): DataQuanta[Any] = {
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
-      planBuilder.readParquet(new ParquetSource(operator.data.filename, operator.data.projection, operator.data.columnNames: _*)).asInstanceOf[DataQuanta[Any]]
+      planBuilder.readParquet(operator.data.filename, operator.data.projection).asInstanceOf[DataQuanta[Any]]
     else
-      planBuilder.readParquet(new ParquetSource(operator.data.filename, operator.data.projection, operator.data.columnNames: _*)).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
+      planBuilder.readParquet(operator.data.filename, operator.data.projection).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
   }
 
   private def visit(operator: InputCollectionFromJson, planBuilder: PlanBuilder): DataQuanta[Any] = {
