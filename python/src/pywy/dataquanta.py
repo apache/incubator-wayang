@@ -154,9 +154,6 @@ class DataQuanta(GenericTco):
             that._connect(op, 1)
         )
 
-    def distinct(self: "DataQuanta[In]", input_type: GenericTco = None) -> "DataQuanta[IterableOut]":
-        return DataQuanta(self.context, self._connect(DistinctOperator(input_type)))
-
     def dlTraining(
         self: "DataQuanta[In]",
         model: Model,
