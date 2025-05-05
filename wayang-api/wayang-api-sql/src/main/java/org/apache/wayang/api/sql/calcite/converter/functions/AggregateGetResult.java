@@ -18,49 +18,48 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
 public class AggregateGetResult implements FunctionDescriptor.SerializableFunction<Record, Record> {
-    private final List<AggregateCall> aggregateCallList;
-    private final Set<Integer> groupingfields;
+        private final List<SqlKind> aggregateKindList;
+        private final Set<Integer> groupingfields;
 
-    public AggregateGetResult(final List<AggregateCall> aggregateCalls, final Set<Integer> groupingfields) {
-        this.aggregateCallList = aggregateCalls;
-        this.groupingfields = groupingfields;
-    }
-
-    @Override
-    public Record apply(final Record record) {
-        final int l = record.size();
-        final int outputRecordSize = aggregateCallList.size() + groupingfields.size();
-        final Object[] resValues = new Object[outputRecordSize];
-
-        int i = 0;
-        int j = 0;
-        for (i = 0; j < groupingfields.size(); i++) {
-            if (groupingfields.contains(i)) {
-                resValues[j] = record.getField(i);
-                j++;
-            }
+        public AggregateGetResult(final List<AggregateCall> aggregateCalls, final Set<Integer> groupingfields) {
+                this.aggregateKindList = aggregateCalls.stream()
+                                .map(call -> call.getAggregation().getKind())
+                                .collect(Collectors.toList());
+                this.groupingfields = groupingfields;
         }
 
-        i = l - aggregateCallList.size() - 1;
-        for (final AggregateCall aggregateCall : aggregateCallList) {
-            final String name = aggregateCall.getAggregation().getName();
-            if (name.equals("AVG")) {
-                resValues[j] = record.getDouble(i) / record.getDouble(l - 1);
-            } else {
-                resValues[j] = record.getField(i);
-            }
-            j++;
-            i++;
-        }
+        @Override
+        public Record apply(final Record record) {
+                final int recordSize = record.size();
+                final int aggregateCallOffset = recordSize - aggregateKindList.size() - 1;
 
-        return new Record(resValues);
-    }
+                final Object[] fields = groupingfields.stream()
+                                .map(record::getField)
+                                .toArray();
+
+                final Object[] aggregateCallFields = IntStream.range(0, aggregateKindList.size())
+                                .mapToObj(i -> aggregateKindList.get(i).equals(SqlKind.AVG)
+                                                ? record.getDouble(i + aggregateCallOffset)
+                                                                / record.getDouble(recordSize - 1)
+                                                : record.getField(i + aggregateCallOffset))
+                                .toArray();
+
+                final Object[] combinedFields = Stream.concat(Arrays.stream(fields), Arrays.stream(aggregateCallFields))
+                                .toArray();
+
+                return new Record(combinedFields);
+        }
 }

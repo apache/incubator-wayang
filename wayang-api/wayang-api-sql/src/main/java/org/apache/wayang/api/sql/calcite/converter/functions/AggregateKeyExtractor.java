@@ -19,16 +19,16 @@
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
 public class AggregateKeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
-    private final Set<Integer> indexSet;
+    private final HashSet<Integer> indexSet;
 
-    public AggregateKeyExtractor(final Set<Integer> indexSet) {
+    public AggregateKeyExtractor(final HashSet<Integer> indexSet) {
         this.indexSet = indexSet;
     }
 

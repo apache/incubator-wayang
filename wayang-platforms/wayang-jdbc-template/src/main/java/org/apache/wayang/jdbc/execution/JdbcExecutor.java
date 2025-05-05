@@ -19,6 +19,7 @@
 package org.apache.wayang.jdbc.execution;
 
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.TableSource;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -69,32 +70,110 @@ public class JdbcExecutor extends ExecutorTemplate {
 
     private final FunctionCompiler functionCompiler = new FunctionCompiler();
 
-    public JdbcExecutor(JdbcPlatformTemplate platform, Job job) {
+    public JdbcExecutor(final JdbcPlatformTemplate platform, final Job job) {
         super(job.getCrossPlatformExecutor());
         this.platform = platform;
         this.connection = this.platform.createDatabaseDescriptor(job.getConfiguration()).createJdbcConnection();
     }
 
     @Override
-    public void execute(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
-        // TODO: Load ChannelInstances from executionState? (as of now there is no input into PostgreSQL).
-        Collection<?> startTasks = stage.getStartTasks();
-        Collection<?> termTasks = stage.getTerminalTasks();
+    public void execute(final ExecutionStage stage, final OptimizationContext optimizationContext, final ExecutionState executionState) {
+        final Tuple2<String, SqlQueryChannel.Instance> pair = this.createSqlQuery(stage, optimizationContext);
+        final String query = pair.field0;
+        final SqlQueryChannel.Instance queryChannel = pair.field1;
+
+        queryChannel.setSqlQuery(query);
+
+        // Return the tipChannelInstance.
+        executionState.register(queryChannel);
+    }
+
+    /**
+     * Retrieves the follow-up {@link ExecutionTask} of the given {@code task}
+     * unless it is not comprising a
+     * {@link JdbcExecutionOperator} and/or not in the given {@link ExecutionStage}.
+     *
+     * @param task  whose follow-up {@link ExecutionTask} is requested; should have
+     *              a single follower
+     * @param stage in which the follow-up {@link ExecutionTask} should be
+     * @return the said follow-up {@link ExecutionTask} or {@code null} if none
+     */
+    private ExecutionTask findJdbcExecutionOperatorTaskInStage(final ExecutionTask task, final ExecutionStage stage) {
+        assert task.getNumOuputChannels() == 1;
+        final Channel outputChannel = task.getOutputChannel(0);
+        final ExecutionTask consumer = WayangCollections.getSingle(outputChannel.getConsumers());
+        return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator ? consumer
+                : null;
+    }
+
+    /**
+     * Instantiates the outbound {@link SqlQueryChannel} of an
+     * {@link ExecutionTask}.
+     *
+     * @param task                whose outbound {@link SqlQueryChannel} should be
+     *                            instantiated
+     * @param optimizationContext provides information about the
+     *                            {@link ExecutionTask}
+     * @return the {@link SqlQueryChannel.Instance}
+     */
+    private SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
+            final OptimizationContext optimizationContext) {
+        assert task.getNumOuputChannels() == 1 : String.format("Illegal task: %s.", task);
+        assert task.getOutputChannel(0) instanceof SqlQueryChannel : String.format("Illegal task: %s.", task);
+
+        final SqlQueryChannel outputChannel = (SqlQueryChannel) task.getOutputChannel(0);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext
+                .getOperatorContext(task.getOperator());
+        return outputChannel.createInstance(this, operatorContext, 0);
+    }
+
+    /**
+     * Instantiates the outbound {@link SqlQueryChannel} of an
+     * {@link ExecutionTask}.
+     *
+     * @param task                       whose outbound {@link SqlQueryChannel}
+     *                                   should be instantiated
+     * @param optimizationContext        provides information about the
+     *                                   {@link ExecutionTask}
+     * @param predecessorChannelInstance preceeding {@link SqlQueryChannel.Instance}
+     *                                   to keep track of lineage
+     * @return the {@link SqlQueryChannel.Instance}
+     */
+    private SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
+            final OptimizationContext optimizationContext,
+            final SqlQueryChannel.Instance predecessorChannelInstance) {
+        final SqlQueryChannel.Instance newInstance = this.instantiateOutboundChannel(task, optimizationContext);
+        newInstance.getLineage().addPredecessor(predecessorChannelInstance.getLineage());
+        return newInstance;
+    }
+
+    /**
+     * Creates a query channel and the sql statement
+     * 
+     * @param stage
+     * @param context
+     * @return a tuple containing the sql statement
+     */
+    protected Tuple2<String, SqlQueryChannel.Instance> createSqlQuery(final ExecutionStage stage,
+            final OptimizationContext context) {
+        final Collection<?> startTasks = stage.getStartTasks();
+        final Collection<?> termTasks = stage.getTerminalTasks();
 
         // Verify that we can handle this instance.
         assert startTasks.size() == 1 : "Invalid jdbc stage: multiple sources are not currently supported";
-        ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
+        final ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
         assert termTasks.size() == 1 : "Invalid JDBC stage: multiple terminal tasks are not currently supported.";
-        ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
-        assert startTask.getOperator() instanceof TableSource : "Invalid JDBC stage: Start task has to be a TableSource";
+        final ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
+        assert startTask.getOperator() instanceof TableSource
+                : "Invalid JDBC stage: Start task has to be a TableSource";
 
         // Extract the different types of ExecutionOperators from the stage.
-        TableSource tableOp = (TableSource) startTask.getOperator();
-        SqlQueryChannel.Instance tipChannelInstance = this.instantiateOutboundChannel(startTask, optimizationContext);
-        Collection<ExecutionTask> filterTasks = new ArrayList<>(4);
+        final TableSource tableOp = (TableSource) startTask.getOperator();
+        SqlQueryChannel.Instance tipChannelInstance = this.instantiateOutboundChannel(startTask, context);
+        final Collection<ExecutionTask> filterTasks = new ArrayList<>(4);
         ExecutionTask projectionTask = null;
-        Collection<ExecutionTask> joinTasks = new ArrayList<>();
-        Set<ExecutionTask> allTasks = stage.getAllTasks();
+        final Collection<ExecutionTask> joinTasks = new ArrayList<>();
+        final Set<ExecutionTask> allTasks = stage.getAllTasks();
         assert allTasks.size() <= 3;
         ExecutionTask nextTask = this.findJdbcExecutionOperatorTaskInStage(startTask, stage);
         while (nextTask != null) {
@@ -102,7 +181,7 @@ public class JdbcExecutor extends ExecutorTemplate {
             if (nextTask.getOperator() instanceof JdbcFilterOperator) {
                 filterTasks.add(nextTask);
             } else if (nextTask.getOperator() instanceof JdbcProjectionOperator) {
-                assert projectionTask == null; //Allow one projection operator per stage for now.
+                assert projectionTask == null; // Allow one projection operator per stage for now.
                 projectionTask = nextTask;
             } else if (nextTask.getOperator() instanceof JdbcJoinOperator) {
                 joinTasks.add(nextTask);
@@ -111,108 +190,42 @@ public class JdbcExecutor extends ExecutorTemplate {
             }
 
             // Move the tipChannelInstance.
-            tipChannelInstance = this.instantiateOutboundChannel(nextTask, optimizationContext, tipChannelInstance);
+            tipChannelInstance = this.instantiateOutboundChannel(nextTask, context, tipChannelInstance);
 
             // Go to the next nextTask.
             nextTask = this.findJdbcExecutionOperatorTaskInStage(nextTask, stage);
         }
 
         // Create the SQL query.
-        String tableName = this.getSqlClause(tableOp);
-        Collection<String> conditions = filterTasks.stream()
+        final String tableName = this.getSqlClause(tableOp);
+        final Collection<String> conditions = filterTasks.stream()
                 .map(ExecutionTask::getOperator)
                 .map(this::getSqlClause)
                 .collect(Collectors.toList());
-        String projection = projectionTask == null ? "*" : this.getSqlClause(projectionTask.getOperator());
-        Collection<String> joins = joinTasks.stream()
+        final String projection = projectionTask == null ? "*" : this.getSqlClause(projectionTask.getOperator());
+        final Collection<String> joins = joinTasks.stream()
                 .map(ExecutionTask::getOperator)
                 .map(this::getSqlClause)
                 .collect(Collectors.toList());
-        String query = this.createSqlQuery(tableName, conditions, projection, joins);
-        tipChannelInstance.setSqlQuery(query);
 
-        // Return the tipChannelInstance.
-        executionState.register(tipChannelInstance);
-    }
-
-    /**
-     * Retrieves the follow-up {@link ExecutionTask} of the given {@code task} unless it is not comprising a
-     * {@link JdbcExecutionOperator} and/or not in the given {@link ExecutionStage}.
-     *
-     * @param task  whose follow-up {@link ExecutionTask} is requested; should have a single follower
-     * @param stage in which the follow-up {@link ExecutionTask} should be
-     * @return the said follow-up {@link ExecutionTask} or {@code null} if none
-     */
-    private ExecutionTask findJdbcExecutionOperatorTaskInStage(ExecutionTask task, ExecutionStage stage) {
-        assert task.getNumOuputChannels() == 1;
-        final Channel outputChannel = task.getOutputChannel(0);
-        final ExecutionTask consumer = WayangCollections.getSingle(outputChannel.getConsumers());
-        return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator ?
-                consumer :
-                null;
-    }
-
-    /**
-     * Instantiates the outbound {@link SqlQueryChannel} of an {@link ExecutionTask}.
-     *
-     * @param task                whose outbound {@link SqlQueryChannel} should be instantiated
-     * @param optimizationContext provides information about the {@link ExecutionTask}
-     * @return the {@link SqlQueryChannel.Instance}
-     */
-    private SqlQueryChannel.Instance instantiateOutboundChannel(ExecutionTask task,
-                                                                OptimizationContext optimizationContext) {
-        assert task.getNumOuputChannels() == 1 : String.format("Illegal task: %s.", task);
-        assert task.getOutputChannel(0) instanceof SqlQueryChannel : String.format("Illegal task: %s.", task);
-
-        SqlQueryChannel outputChannel = (SqlQueryChannel) task.getOutputChannel(0);
-        OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(task.getOperator());
-        return outputChannel.createInstance(this, operatorContext, 0);
-    }
-
-    /**
-     * Instantiates the outbound {@link SqlQueryChannel} of an {@link ExecutionTask}.
-     *
-     * @param task                       whose outbound {@link SqlQueryChannel} should be instantiated
-     * @param optimizationContext        provides information about the {@link ExecutionTask}
-     * @param predecessorChannelInstance preceeding {@link SqlQueryChannel.Instance} to keep track of lineage
-     * @return the {@link SqlQueryChannel.Instance}
-     */
-    private SqlQueryChannel.Instance instantiateOutboundChannel(ExecutionTask task,
-                                                                OptimizationContext optimizationContext,
-                                                                SqlQueryChannel.Instance predecessorChannelInstance) {
-        final SqlQueryChannel.Instance newInstance = this.instantiateOutboundChannel(task, optimizationContext);
-        newInstance.getLineage().addPredecessor(predecessorChannelInstance.getLineage());
-        return newInstance;
-    }
-
-    /**
-     * Creates a SQL query.
-     *
-     * @param tableName  the table to be queried
-     * @param conditions conditions for the {@code WHERE} clause
-     * @param projection projection for the {@code SELECT} clause
-     * @param joins join clauses for multiple {@code JOIN} clauses
-     * @return the SQL query
-     */
-    protected String createSqlQuery(String tableName, Collection<String> conditions, String projection, Collection<String> joins) {
-        StringBuilder sb = new StringBuilder(1000);
+        final StringBuilder sb = new StringBuilder(1000);
         sb.append("SELECT ").append(projection).append(" FROM ").append(tableName);
         if (!joins.isEmpty()) {
-            String separator = " ";
-            for (String join : joins) {
+            final String separator = " ";
+            for (final String join : joins) {
                 sb.append(separator).append(join);
             }
         }
         if (!conditions.isEmpty()) {
             sb.append(" WHERE ");
             String separator = "";
-            for (String condition : conditions) {
+            for (final String condition : conditions) {
                 sb.append(separator).append(condition);
                 separator = " AND ";
             }
         }
         sb.append(';');
-        return sb.toString();
+        return new Tuple2<>(sb.toString(), tipChannelInstance);
     }
 
     /**
@@ -221,7 +234,7 @@ public class JdbcExecutor extends ExecutorTemplate {
      * @param operator for that the SQL clause should be generated
      * @return the SQL clause
      */
-    private String getSqlClause(Operator operator) {
+    private String getSqlClause(final Operator operator) {
         return ((JdbcExecutionOperator) operator).createSqlClause(this.connection, this.functionCompiler);
     }
 
@@ -229,7 +242,7 @@ public class JdbcExecutor extends ExecutorTemplate {
     public void dispose() {
         try {
             this.connection.close();
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             this.logger.error("Could not close JDBC connection to PostgreSQL correctly.", e);
         }
     }
@@ -239,14 +252,15 @@ public class JdbcExecutor extends ExecutorTemplate {
         return this.platform;
     }
 
-
-    private void saveResult(FileChannel.Instance outputFileChannelInstance, ResultSet rs) throws IOException, SQLException {
+    private void saveResult(final FileChannel.Instance outputFileChannelInstance, final ResultSet rs)
+            throws IOException, SQLException {
         // Output results.
         final FileSystem outFs = FileSystems.getFileSystem(outputFileChannelInstance.getSinglePath()).get();
-        try (final OutputStreamWriter writer = new OutputStreamWriter(outFs.create(outputFileChannelInstance.getSinglePath()))) {
+        try (final OutputStreamWriter writer = new OutputStreamWriter(
+                outFs.create(outputFileChannelInstance.getSinglePath()))) {
             while (rs.next()) {
-                //System.out.println(rs.getInt(1) + " " + rs.getString(2));
-                ResultSetMetaData rsmd = rs.getMetaData();
+                // System.out.println(rs.getInt(1) + " " + rs.getString(2));
+                final ResultSetMetaData rsmd = rs.getMetaData();
                 for (int i = 1; i <= rsmd.getColumnCount(); i++) {
                     writer.write(rs.getString(i));
                     if (i < rsmd.getColumnCount()) {
@@ -257,7 +271,7 @@ public class JdbcExecutor extends ExecutorTemplate {
                     writer.write('\n');
                 }
             }
-        } catch (UncheckedIOException e) {
+        } catch (final UncheckedIOException e) {
             throw e.getCause();
         }
     }

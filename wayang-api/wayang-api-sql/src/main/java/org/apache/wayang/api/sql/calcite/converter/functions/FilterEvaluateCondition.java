@@ -78,7 +78,7 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean> {
 
             switch (kind) {
                 case LIKE:
-                    return SqlFunctions.like(field.toString(), rexLiteral.toString().replace("'", ""));
+                    return like(field.toString(), rexLiteral.toString().replace("'", ""));
                 case GREATER_THAN:
                     return isGreaterThan(field, rexLiteral);
                 case LESS_THAN:
@@ -125,6 +125,13 @@ public class FilterEvaluateCondition extends RexVisitorImpl<Boolean> {
             throw new IllegalStateException("Predicate not supported with types yet, predicate: " + kind + ", type1: "
                     + leftOperand + ", type2: " + rightOperand);
         }
+    }
+
+    private boolean like(final String s1, final String s2) {
+        final SqlFunctions.LikeFunction likeFunction = new SqlFunctions.LikeFunction();
+        final boolean isMatch = likeFunction.like(s1, s2);
+
+        return isMatch;
     }
 
     private boolean isGreaterThan(final Object o, final RexLiteral rexLiteral) {
