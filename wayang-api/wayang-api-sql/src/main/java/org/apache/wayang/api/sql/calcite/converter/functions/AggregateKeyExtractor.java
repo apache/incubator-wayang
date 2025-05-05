@@ -16,19 +16,27 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.api.sql.calcite.converter;
+package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import org.apache.calcite.rel.RelNode;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
-import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.core.function.FunctionDescriptor;
 
-abstract class WayangRelNodeVisitor<T extends RelNode> {
+public class AggregateKeyExtractor implements FunctionDescriptor.SerializableFunction<Record, Object> {
+    private final HashSet<Integer> indexSet;
 
-    final WayangRelConverter wayangRelConverter;
-
-    WayangRelNodeVisitor(WayangRelConverter wayangRelConverter) {
-        this.wayangRelConverter = wayangRelConverter;
+    public AggregateKeyExtractor(final HashSet<Integer> indexSet) {
+        this.indexSet = indexSet;
     }
 
-    abstract Operator visit(T wayangRelNode);
+    public Object apply(final Record record) {
+        final List<Object> keys = new ArrayList<>();
+        for (final Integer index : indexSet) {
+            keys.add(record.getField(index));
+        }
+        return keys;
+    }
 }

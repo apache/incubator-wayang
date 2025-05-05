@@ -16,19 +16,22 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.api.sql.calcite.converter;
+package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rex.RexNode;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.core.function.FunctionDescriptor;
 
-import org.apache.wayang.core.plan.wayangplan.Operator;
+public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredicate<Record> {
 
-abstract class WayangRelNodeVisitor<T extends RelNode> {
+    private final RexNode condition;
 
-    final WayangRelConverter wayangRelConverter;
-
-    WayangRelNodeVisitor(WayangRelConverter wayangRelConverter) {
-        this.wayangRelConverter = wayangRelConverter;
+    public FilterPredicateImpl(final RexNode condition) {
+        this.condition = condition;
     }
 
-    abstract Operator visit(T wayangRelNode);
+    @Override
+    public boolean test(final Record record) {
+        return condition.accept(new FilterEvaluateCondition(true, record));
+    }
 }

@@ -26,22 +26,26 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <properties>
+        <calcite.version>1.39.0</calcite.version>       
+    </properties>
+    
     <artifactId>wayang-api-sql</artifactId>
     <dependencies>
         <dependency>
             <groupId>org.apache.calcite</groupId>
             <artifactId>calcite-core</artifactId>
-            <version>1.32.0</version>
+            <version>${calcite.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.calcite</groupId>
             <artifactId>calcite-linq4j</artifactId>
-            <version>1.32.0</version>
+            <version>${calcite.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.calcite</groupId>
             <artifactId>calcite-file</artifactId>
-            <version>1.29.0</version>
+            <version>${calcite.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>

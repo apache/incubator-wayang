@@ -29,12 +29,14 @@ import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableScan;
+
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
 import org.apache.wayang.api.sql.calcite.rel.WayangFilter;
 import org.apache.wayang.api.sql.calcite.rel.WayangJoin;
 import org.apache.wayang.api.sql.calcite.rel.WayangProject;
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
 import org.apache.wayang.api.sql.calcite.rel.WayangAggregate;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.ArrayList;
@@ -43,18 +45,17 @@ import java.util.List;
 //TODO: split into multiple classes
 public class WayangRules {
 
-    private WayangRules(){
+    private WayangRules() {
     }
-
 
     public static final RelOptRule WAYANG_JOIN_RULE = new WayangJoinRule(WayangJoinRule.DEFAULT_CONFIG);
     public static final RelOptRule WAYANG_PROJECT_RULE = new WayangProjectRule(WayangProjectRule.DEFAULT_CONFIG);
-    public static final RelOptRule WAYANG_FILTER_RULE =  new WayangFilterRule(WayangFilterRule.DEFAULT_CONFIG);
+    public static final RelOptRule WAYANG_FILTER_RULE = new WayangFilterRule(WayangFilterRule.DEFAULT_CONFIG);
     public static final RelOptRule WAYANG_TABLESCAN_RULE = new WayangTableScanRule(WayangTableScanRule.DEFAULT_CONFIG);
-    public static final RelOptRule WAYANG_TABLESCAN_ENUMERABLE_RULE =
-            new WayangTableScanRule(WayangTableScanRule.ENUMERABLE_CONFIG);
-    public static final RelOptRule WAYANG_AGGREGATE_RULE =  new WayangAggregateRule(WayangAggregateRule.DEFAULT_CONFIG);
-
+    public static final RelOptRule WAYANG_TABLESCAN_ENUMERABLE_RULE = new WayangTableScanRule(
+            WayangTableScanRule.ENUMERABLE_CONFIG);
+    public static final RelOptRule WAYANG_AGGREGATE_RULE = new WayangAggregateRule(WayangAggregateRule.DEFAULT_CONFIG);
+    public static final RelOptRule WAYANG_SORT_RULE = new WayangSortRule(WayangSortRule.DEFAULT_CONFIG);
 
     private static class WayangProjectRule extends ConverterRule {
 
@@ -64,12 +65,11 @@ public class WayangRules {
                         "WayangProjectRule")
                 .withRuleFactory(WayangProjectRule::new);
 
-
-        protected WayangProjectRule(Config config) {
+        protected WayangProjectRule(final Config config) {
             super(config);
         }
 
-        public RelNode convert(RelNode rel) {
+        public RelNode convert(final RelNode rel) {
             final LogicalProject project = (LogicalProject) rel;
             return new WayangProject(
                     project.getCluster(),
@@ -81,7 +81,6 @@ public class WayangRules {
         }
     }
 
-
     private static class WayangFilterRule extends ConverterRule {
 
         public static final Config DEFAULT_CONFIG = Config.INSTANCE
@@ -90,19 +89,17 @@ public class WayangRules {
                         "WayangFilterRule")
                 .withRuleFactory(WayangFilterRule::new);
 
-
-        protected WayangFilterRule(Config config) {
+        protected WayangFilterRule(final Config config) {
             super(config);
         }
 
         @Override
-        public RelNode convert(RelNode rel) {
+        public RelNode convert(final RelNode rel) {
             final LogicalFilter filter = (LogicalFilter) rel;
             return new WayangFilter(
                     rel.getCluster(),
                     rel.getTraitSet().replace(WayangConvention.INSTANCE),
-                    convert(filter.getInput(), filter.getInput().getTraitSet().
-                            replace(WayangConvention.INSTANCE)),
+                    convert(filter.getInput(), filter.getInput().getTraitSet().replace(WayangConvention.INSTANCE)),
                     filter.getCondition());
         }
 
@@ -122,27 +119,26 @@ public class WayangRules {
                         "WayangTableScanRule1")
                 .withRuleFactory(WayangTableScanRule::new);
 
-        protected WayangTableScanRule(Config config) {
+        protected WayangTableScanRule(final Config config) {
             super(config);
         }
 
         @Override
-        public @Nullable RelNode convert(RelNode relNode) {
+        public @Nullable RelNode convert(final RelNode relNode) {
 
-            TableScan scan = (TableScan) relNode;
+            final TableScan scan = (TableScan) relNode;
             final RelOptTable relOptTable = scan.getTable();
 
             /**
              * This is quick hack to prevent volcano from merging projects on to TableScans
              * TODO: a cleaner way to handle this
              */
-            if(relOptTable.getRowType() == scan.getRowType()) {
+            if (relOptTable.getRowType() == scan.getRowType()) {
                 return WayangTableScan.create(scan.getCluster(), relOptTable);
             }
             return null;
         }
     }
-
 
     private static class WayangJoinRule extends ConverterRule {
 
@@ -151,16 +147,16 @@ public class WayangRules {
                         WayangConvention.INSTANCE, "WayangJoinRule")
                 .withRuleFactory(WayangJoinRule::new);
 
-        protected WayangJoinRule(Config config) {
+        protected WayangJoinRule(final Config config) {
             super(config);
         }
 
         @Override
-        public @Nullable RelNode convert(RelNode relNode) {
-            LogicalJoin join = (LogicalJoin) relNode;
-            List<RelNode> newInputs = new ArrayList<>();
-            for(RelNode input : join.getInputs()) {
-                if(!(input.getConvention() instanceof WayangConvention)) {
+        public @Nullable RelNode convert(final RelNode relNode) {
+            final LogicalJoin join = (LogicalJoin) relNode;
+            final List<RelNode> newInputs = new ArrayList<>();
+            for (RelNode input : join.getInputs()) {
+                if (!(input.getConvention() instanceof WayangConvention)) {
                     input = convert(input, input.getTraitSet().replace(WayangConvention.INSTANCE));
                 }
                 newInputs.add(input);
@@ -173,10 +169,10 @@ public class WayangRules {
                     newInputs.get(1),
                     join.getCondition(),
                     join.getVariablesSet(),
-                    join.getJoinType()
-            );
+                    join.getJoinType());
         }
     }
+
     private static class WayangAggregateRule extends ConverterRule {
 
         public static final Config DEFAULT_CONFIG = Config.INSTANCE
@@ -185,14 +181,15 @@ public class WayangRules {
                         "WayangAggregateRule")
                 .withRuleFactory(WayangAggregateRule::new);
 
-        protected WayangAggregateRule(Config config) {
+        protected WayangAggregateRule(final Config config) {
             super(config);
         }
 
         @Override
-        public @Nullable RelNode convert(RelNode relNode) {
-            LogicalAggregate aggregate = (LogicalAggregate) relNode;
-            RelNode input = convert(aggregate.getInput(), aggregate.getInput().getTraitSet().replace(WayangConvention.INSTANCE));
+        public @Nullable RelNode convert(final RelNode relNode) {
+            final LogicalAggregate aggregate = (LogicalAggregate) relNode;
+            final RelNode input = convert(aggregate.getInput(),
+                    aggregate.getInput().getTraitSet().replace(WayangConvention.INSTANCE));
 
             return new WayangAggregate(
                     aggregate.getCluster(),
@@ -201,10 +198,7 @@ public class WayangRules {
                     input,
                     aggregate.getGroupSet(),
                     aggregate.getGroupSets(),
-                    aggregate.getAggCallList()
-            );
+                    aggregate.getAggCallList());
         }
     }
-
-
 }

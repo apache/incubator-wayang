@@ -20,8 +20,6 @@ package org.apache.wayang.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoder;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.operators.ParquetSource;
@@ -43,8 +41,8 @@ import java.util.stream.IntStream;
  */
 public class SparkParquetSource extends ParquetSource implements SparkExecutionOperator {
 
-    public SparkParquetSource(String inputUrl, String[] projection, String... columnNames) {
-        super(inputUrl, projection, columnNames);
+    public SparkParquetSource(String inputUrl, String[] projection) {
+        super(inputUrl, projection);
     }
 
     /**
