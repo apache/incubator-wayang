@@ -67,15 +67,17 @@ cd wayang-1.0.1-SNAPSHOT
 Update your `wayang-submit` (wayang-assembly/target/wayang-1.0.1-SNAPSHOT/bin/wayang-submit) script (or command) with:
 
 ```shell 
---add-exports=java.base/sun.nio.ch=ALL-UNNAMED \
---add-opens=java.base/java.nio=ALL-UNNAMED \
---add-opens=java.base/java.lang=ALL-UNNAMED \
---add-opens=java.base/java.util=ALL-UNNAMED \
---add-opens=java.base/java.io=ALL-UNNAMED \
---add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
---add-opens=java.base/java.util.concurrent=ALL-UNNAMED \
---add-opens=java.base/java.net=ALL-UNNAMED \
---add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+eval "$RUNNER \
+  --add-exports=java.base/sun.nio.ch=ALL-UNNAMED \
+  --add-opens=java.base/java.nio=ALL-UNNAMED \
+  --add-opens=java.base/java.lang=ALL-UNNAMED \
+  --add-opens=java.base/java.util=ALL-UNNAMED \
+  --add-opens=java.base/java.io=ALL-UNNAMED \
+  --add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
+  --add-opens=java.base/java.util.concurrent=ALL-UNNAMED \
+  --add-opens=java.base/java.net=ALL-UNNAMED \
+  --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+  $FLAGS -cp \"${WAYANG_CLASSPATH}\" $CLASS ${ARGS}"
 ```
 
 Then you should be able to see outputs like this:
