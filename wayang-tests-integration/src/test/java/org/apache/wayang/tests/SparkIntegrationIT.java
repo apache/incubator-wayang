@@ -450,6 +450,50 @@ public class SparkIntegrationIT {
     }
 
     @Test
+    public void testLogisticRegressionOperator() {
+        CollectionSource<double[]> xSource = new CollectionSource<>(
+                Arrays.asList(
+                        new double[]{0.0, 1.0},
+                        new double[]{1.0, 0.0},
+                        new double[]{1.0, 1.0},
+                        new double[]{0.0, 0.0}
+                ), double[].class
+        );
+        CollectionSource<Double> ySource = new CollectionSource<>(
+                Arrays.asList(1.0, 1.0, 0.0, 0.0), Double.class
+        );
+
+        xSource.addTargetPlatform(Spark.platform());
+        ySource.addTargetPlatform(Spark.platform());
+
+        LogisticRegressionOperator train = new LogisticRegressionOperator(true);
+        PredictOperator<double[], Double> predict = PredictOperators.logisticRegression();
+
+        List<Double> results = new ArrayList<>();
+        LocalCallbackSink<Double> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Double.class));
+
+        xSource.connectTo(0, train, 0);
+        ySource.connectTo(0, train, 1);
+        train.connectTo(0, predict, 0);
+        xSource.connectTo(0, predict, 1);
+        predict.connectTo(0, sink, 0);
+
+        WayangPlan plan = new WayangPlan(sink);
+
+        WayangContext context = new WayangContext()
+                .with(Spark.basicPlugin())
+                .with(Spark.mlPlugin());
+
+        context.execute(plan);
+
+        Assert.assertEquals(4, results.size());
+        for (double pred : results) {
+            Assert.assertTrue(pred == 0.0 || pred == 1.0);
+        }
+    }
+
+
+    @Test
     public void testKMeans() {
         CollectionSource<double[]> collectionSource = new CollectionSource<>(
                 Arrays.asList(

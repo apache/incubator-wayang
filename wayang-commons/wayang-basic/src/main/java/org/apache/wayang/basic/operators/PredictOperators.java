@@ -35,4 +35,7 @@ public class PredictOperators {
     public static PredictOperator<double[], Integer> decisionTreeClassification() {
         return new PredictOperator<>(new TypeReference<double[]>() {}, new TypeReference<Integer>() {});
     }
+    public static PredictOperator<double[], Double> logisticRegression() {
+        return new PredictOperator<>(new TypeReference<double[]>() {}, new TypeReference<Double>() {});
+    }
 }
