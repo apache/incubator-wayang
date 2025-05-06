@@ -50,13 +50,15 @@ class GraphNode(Generic[K, T]):
 
         return map(wrap, adjacent)
 
-    def visit(self,
-              parent: 'GraphNode[K, T]',
-              udf: Callable[['GraphNode[K, T]', 'GraphNode[K, T]'], Any],
-              visit_status: bool = True):
+    def visit(
+        self,
+        parent: 'GraphNode[K, T]',
+        udf: Callable[['GraphNode[K, T]', 'GraphNode[K, T]'], Any],
+        visit_status: bool = True
+    ):
         if self.visited == visit_status:
             return
-        self.visited = ~ visit_status
+        self.visited = ~visit_status
         return udf(self, parent)
 
 
@@ -77,11 +79,11 @@ class WayangGraph(Generic[K, T]):
         pass
 
     def traversal(
-            self,
-            nodes: Iterable[GraphNode[K, T]],
-            udf: Callable[[GraphNode[K, T], GraphNode[K, T]], Any],
-            origin: Optional[GraphNode[K, T]] = None,
-            visit_status: bool = True
+        self,
+        nodes: Iterable[GraphNode[K, T]],
+        udf: Callable[[GraphNode[K, T], GraphNode[K, T]], Any],
+        origin: Optional[GraphNode[K, T]] = None,
+        visit_status: bool = True
     ):
         for node in nodes:
             adjacent = node.walk(self.created_nodes)

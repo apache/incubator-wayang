@@ -22,10 +22,10 @@ import org.apache.wayang.api.json.parserutil.{SerializableIterable, Serializable
 import org.apache.wayang.api.json.operatorfromjson.{ComposedOperatorFromJson, OperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson, UnionOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
-import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson}
+import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TableInputFromJson, TextFileInputFromJson, ParquetInputFromJson}
 import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.output.TextFileOutputFromJson
-import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOpeartorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, ReduceOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOperatorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, ReduceOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
 import org.apache.wayang.api.json.operatorfromjson.PlanFromJson
 import org.apache.wayang.api._
 import org.apache.wayang.basic.operators._
@@ -42,15 +42,9 @@ import org.apache.wayang.flink.Flink
 import org.apache.wayang.tensorflow.Tensorflow
 import org.apache.wayang.genericjdbc.GenericJdbc
 import org.apache.wayang.sqlite3.Sqlite3
-import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.core.plugin.Plugin
 import org.apache.wayang.basic.model.DLModel;
-import org.apache.wayang.basic.model.optimizer.Adam;
-import org.apache.wayang.basic.model.op.nn._;
-import org.apache.wayang.basic.model.op._;
-import org.apache.wayang.basic.model.optimizer._;
-import org.apache.wayang.api.json.operatorfromjson.binary.{Op => JsonOp}
-import org.apache.wayang.api.util.NDimArray
+import org.apache.wayang.basic.data.Record;
 
 import java.nio.file.{Files, Paths}
 import scala.collection.JavaConverters._
@@ -160,6 +154,7 @@ class JsonPlanBuilder() {
     operator match {
       // input
       case inputOperator: TextFileInputFromJson => visit(inputOperator, planBuilder)
+      case inputOperator: ParquetInputFromJson => visit(inputOperator, planBuilder)
       case inputOperator: InputCollectionFromJson => visit(inputOperator, planBuilder)
       case inputOperator: TableInputFromJson => visit(inputOperator, planBuilder)
       case inputOperator: JDBCRemoteInputFromJson => visit(inputOperator, planBuilder)
@@ -173,7 +168,7 @@ class JsonPlanBuilder() {
       case operator: FlatMapOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: ReduceByOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: CountOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
-      case operator: GroupByOpeartorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
+      case operator: GroupByOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: SortOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: DistinctOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
       case operator: ReduceOperatorFromJson => this.visit(operator, executeRecursive(this.operators(operator.input(0)), planBuilder))
@@ -208,6 +203,13 @@ class JsonPlanBuilder() {
       planBuilder.readTextFile(operator.data.filename).asInstanceOf[DataQuanta[Any]]
     else
       planBuilder.readTextFile(operator.data.filename).asInstanceOf[DataQuanta[Any]].withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
+  }
+
+  private def visit(operator: ParquetInputFromJson, planBuilder: PlanBuilder): DataQuanta[Any] = {
+    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+      planBuilder.readParquet(operator.data.filename, operator.data.projection).asInstanceOf[DataQuanta[Any]]
+    else
+      planBuilder.readParquet(operator.data.filename, operator.data.projection).withTargetPlatforms(getExecutionPlatform(operator.executionPlatform)).asInstanceOf[DataQuanta[Any]]
   }
 
   private def visit(operator: InputCollectionFromJson, planBuilder: PlanBuilder): DataQuanta[Any] = {
@@ -329,7 +331,7 @@ class JsonPlanBuilder() {
       dataQuanta.count.asInstanceOf[DataQuanta[Any]].withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 
-  private def visit(operator: GroupByOpeartorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
+  private def visit(operator: GroupByOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
     val lambda = SerializableLambda.createLambda[Any, Any](operator.data.keyUdf)
     if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
       dataQuanta.groupByKey(lambda).map(arrayList => arrayList.asScala.toList)
@@ -347,9 +349,9 @@ class JsonPlanBuilder() {
   }
 
   private def visit(operator: DistinctOperatorFromJson, dataQuanta: DataQuanta[Any]): DataQuanta[Any] = {
-    if (!ExecutionPlatforms.All.contains(operator.executionPlatform))
+    if (!ExecutionPlatforms.All.contains(operator.executionPlatform)) {
       dataQuanta.distinct
-    else
+    } else
       dataQuanta.distinct.withTargetPlatforms(getExecutionPlatform(operator.executionPlatform))
   }
 

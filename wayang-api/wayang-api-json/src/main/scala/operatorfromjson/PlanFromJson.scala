@@ -17,19 +17,11 @@
  */
 package org.apache.wayang.api.json.operatorfromjson
 
-import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.databind.{DeserializationFeature, JsonNode}
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.OperatorNames
-import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, UnionOperatorFromJson}
-import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
-import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TextFileInputFromJson}
-import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
-import org.apache.wayang.api.json.operatorfromjson.output.TextFileOutputFromJson
-import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOpeartorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
 
 class PlanFromJson(val context: ContextFromJson,
                    val operators: List[OperatorFromJson]

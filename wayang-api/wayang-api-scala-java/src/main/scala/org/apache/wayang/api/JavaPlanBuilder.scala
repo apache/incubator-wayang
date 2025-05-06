@@ -31,7 +31,6 @@ import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.types.DataSetType
 
-import java.util
 import scala.reflect.ClassTag
 
 /**
@@ -70,7 +69,7 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
    * @param projection the projection, if any
    * @return [[DataQuantaBuilder]] for the file
    */
-  def readParquet(url: String, projection: Array[String]): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, Record], Record] =
+  def readParquet(url: String, projection: Array[String] = null): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, Record], Record] =
     createSourceBuilder(ParquetSource.create(url, projection))(ClassTag(classOf[Record]))
 
   /**
