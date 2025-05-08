@@ -18,8 +18,6 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
@@ -28,6 +26,7 @@ import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,13 +35,16 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  * Test suite for {@link SparkJoinOperator}.
  */
-public class SparkCoGroupOperatorTest extends SparkOperatorTestBase {
+class SparkCoGroupOperatorTest extends SparkOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         RddChannel.Instance input0 = this.createRddChannelInstance(Arrays.asList(
                 new Tuple2<>(1, "b"), new Tuple2<>(1, "c"), new Tuple2<>(2, "d"), new Tuple2<>(3, "e")));
@@ -104,11 +106,11 @@ public class SparkCoGroupOperatorTest extends SparkOperatorTestBase {
                     continue ResultLoop;
                 }
             }
-            Assert.fail(String.format("Unexpected group: %s", resultCoGroup));
+            fail(String.format("Unexpected group: %s", resultCoGroup));
         }
-        Assert.assertTrue(
-                String.format("Missing groups: %s", expectedGroups),
-                expectedGroups.isEmpty()
+        assertTrue(
+                expectedGroups.isEmpty(),
+                String.format("Missing groups: %s", expectedGroups)
         );
     }
 

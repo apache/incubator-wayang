@@ -18,7 +18,6 @@
 
 package org.apache.wayang.flink.operators;
 
-import org.junit.Before;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -34,6 +33,7 @@ import org.apache.wayang.flink.platform.FlinkPlatform;
 import org.apache.wayang.flink.test.ChannelFactory;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.flink.operators.FlinkExecutionOperator;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Collection;
 
@@ -49,8 +49,8 @@ public class FlinkOperatorTestBase {
 
     protected FlinkExecutor flinkExecutor;
 
-    @Before
-    public void setUp(){
+    @BeforeEach
+    void setUp(){
         this.configuration = new Configuration();
         if(flinkExecutor == null)
             this.flinkExecutor = (FlinkExecutor) FlinkPlatform.getInstance().getExecutorFactory().create(this.mockJob());

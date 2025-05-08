@@ -19,8 +19,7 @@
 package org.apache.wayang.core.platform;
 
 import org.apache.wayang.core.util.json.WayangJsonObj;
-import org.junit.Assert;
-import org.junit.Test;
+
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.configuration.KeyValueProvider;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -33,19 +32,22 @@ import org.apache.wayang.core.test.DummyPlatform;
 import org.apache.wayang.core.test.SerializableDummyExecutionOperator;
 import org.apache.wayang.core.util.JsonSerializables;
 import org.apache.wayang.core.util.WayangCollections;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Test suites for {@link PartialExecution}s.
  */
-public class PartialExecutionTest {
+class PartialExecutionTest {
 
     @Test
-    public void testJsonSerialization() {
+    void testJsonSerialization() {
         // Create first OperatorContext with non-serializable ExecutionOperator.
         final OptimizationContext.OperatorContext operatorContext1 = mock(OptimizationContext.OperatorContext.class);
         when(operatorContext1.getOperator()).thenReturn(new DummyExecutionOperator(1, 1, false));
@@ -76,10 +78,10 @@ public class PartialExecutionTest {
         final WayangJsonObj wayangJsonObj = JsonSerializables.serialize(original, false, serializer);
         final PartialExecution loaded = JsonSerializables.deserialize(wayangJsonObj, serializer, PartialExecution.class);
 
-        Assert.assertEquals(original.getMeasuredExecutionTime(), loaded.getMeasuredExecutionTime());
-        Assert.assertEquals(2, loaded.getAtomicExecutionGroups().size());
-        Assert.assertEquals(1, loaded.getInitializedPlatforms().size());
-        Assert.assertSame(DummyPlatform.getInstance(), WayangCollections.getAny(loaded.getInitializedPlatforms()));
+        assertEquals(original.getMeasuredExecutionTime(), loaded.getMeasuredExecutionTime());
+        assertEquals(2, loaded.getAtomicExecutionGroups().size());
+        assertEquals(1, loaded.getInitializedPlatforms().size());
+        assertSame(DummyPlatform.getInstance(), WayangCollections.getAny(loaded.getInitializedPlatforms()));
     }
 
 }

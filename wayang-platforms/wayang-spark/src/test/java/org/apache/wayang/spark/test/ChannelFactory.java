@@ -18,7 +18,6 @@
 
 package org.apache.wayang.spark.test;
 
-import org.junit.Before;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -26,6 +25,7 @@ import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Collection;
 
@@ -38,8 +38,8 @@ public class ChannelFactory {
 
     private static SparkExecutor sparkExecutor;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         sparkExecutor = mock(SparkExecutor.class);
     }
 

@@ -18,8 +18,6 @@
 
 package org.apache.wayang.core.mapping;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.plan.wayangplan.UnarySink;
@@ -28,16 +26,19 @@ import org.apache.wayang.core.plan.wayangplan.test.TestSink;
 import org.apache.wayang.core.plan.wayangplan.test.TestSource;
 import org.apache.wayang.core.test.TestDataUnit;
 import org.apache.wayang.core.types.DataSetType;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for the {@link SubplanPattern}.
  */
-public class SubplanPatternTest {
+class SubplanPatternTest {
 
     @Test
-    public void testMatchSinkPattern() {
+    void testMatchSinkPattern() {
         // Build the plan.
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
@@ -53,13 +54,13 @@ public class SubplanPatternTest {
         final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH);
 
         // Evaluate the matches.
-        Assert.assertEquals(1, matches.size());
+        assertEquals(1, matches.size());
         final SubplanMatch match = matches.get(0);
-        Assert.assertEquals(sink, match.getOperatorMatches().get("sink").getOperator());
+        assertEquals(sink, match.getOperatorMatches().get("sink").getOperator());
     }
 
     @Test
-    public void testMatchSourcePattern() {
+    void testMatchSourcePattern() {
         // Build the plan.
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
@@ -75,13 +76,13 @@ public class SubplanPatternTest {
         final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH);
 
         // Evaluate the matches.
-        Assert.assertEquals(1, matches.size());
+        assertEquals(1, matches.size());
         final SubplanMatch match = matches.get(0);
-        Assert.assertEquals(source, match.getOperatorMatches().get("source").getOperator());
+        assertEquals(source, match.getOperatorMatches().get("source").getOperator());
     }
 
     @Test
-    public void testMatchChainedPattern() {
+    void testMatchChainedPattern() {
         // Build the plan.
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
@@ -99,10 +100,10 @@ public class SubplanPatternTest {
         final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH);
 
         // Evaluate the matches.
-        Assert.assertEquals(1, matches.size());
+        assertEquals(1, matches.size());
         final SubplanMatch match = matches.get(0);
-        Assert.assertEquals(source, match.getOperatorMatches().get("source").getOperator());
-        Assert.assertEquals(sink, match.getOperatorMatches().get("sink").getOperator());
+        assertEquals(source, match.getOperatorMatches().get("source").getOperator());
+        assertEquals(sink, match.getOperatorMatches().get("sink").getOperator());
     }
 
 }

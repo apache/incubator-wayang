@@ -18,29 +18,31 @@
 
 package org.apache.wayang.basic.types;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.types.DataSetType;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for the {@link RecordType}.
  */
-public class RecordTypeTest {
+class RecordTypeTest {
 
     @Test
-    public void testSupertype() {
+    void testSupertype() {
         DataSetType<Record> t1 = DataSetType.createDefault(Record.class);
         DataSetType<Record> t2 = DataSetType.createDefault(new RecordType("a", "b"));
         DataSetType<Record> t3 = DataSetType.createDefault(new RecordType("a", "b", "c"));
 
-        Assert.assertTrue(t1.isSupertypeOf(t2));
-        Assert.assertFalse(t2.isSupertypeOf(t1));
-        Assert.assertTrue(t1.isSupertypeOf(t3));
-        Assert.assertFalse(t3.isSupertypeOf(t1));
-        Assert.assertTrue(t2.isSupertypeOf(t2));
-        Assert.assertFalse(t2.isSupertypeOf(t3));
-        Assert.assertTrue(t3.isSupertypeOf(t3));
-        Assert.assertFalse(t3.isSupertypeOf(t2));
+        assertTrue(t1.isSupertypeOf(t2));
+        assertFalse(t2.isSupertypeOf(t1));
+        assertTrue(t1.isSupertypeOf(t3));
+        assertFalse(t3.isSupertypeOf(t1));
+        assertTrue(t2.isSupertypeOf(t2));
+        assertFalse(t2.isSupertypeOf(t3));
+        assertTrue(t3.isSupertypeOf(t3));
+        assertFalse(t3.isSupertypeOf(t2));
     }
 }

@@ -25,14 +25,16 @@ import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.operators.ml.SparkKMeansOperator;
 import org.apache.wayang.spark.operators.ml.SparkPredictOperator;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
 
@@ -61,18 +63,18 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
     }
 
     @Test
-    public void testTraining() {
+    void testTraining() {
         final KMeansModel model = getModel();
-        Assert.assertEquals(2, model.getK());
+        assertEquals(2, model.getK());
         List<double[]> centers = Arrays.stream(model.getClusterCenters())
                 .sorted(Comparator.comparingDouble(a -> a[0]))
                 .collect(Collectors.toList());
-        Assert.assertArrayEquals(centers.get(0), new double[]{-1.0, -2.0, -3.0}, 0.1);
-        Assert.assertArrayEquals(centers.get(1), new double[]{1.5, 3.0, 4.5}, 0.1);
+        assertArrayEquals(new double[]{-1.0, -2.0, -3.0}, centers.get(0), 0.1);
+        assertArrayEquals(new double[]{1.5, 3.0, 4.5}, centers.get(1), 0.1);
     }
 
     @Test
-    public void testInference() {
+    void testInference() {
         // Prepare test data.
         CollectionChannel.Instance input1 = this.createCollectionChannelInstance(Collections.singletonList(getModel()));
         RddChannel.Instance input2 = this.createRddChannelInstance(data);
@@ -89,8 +91,8 @@ public class SparkKMeansOperatorTest extends SparkOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> results = output.<Integer>provideRdd().collect();
-        Assert.assertEquals(3, results.size());
-        Assert.assertEquals(
+        assertEquals(3, results.size());
+        assertEquals(
                 results.get(0),
                 results.get(2)
         );

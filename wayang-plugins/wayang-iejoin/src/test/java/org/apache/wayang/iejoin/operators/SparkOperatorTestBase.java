@@ -19,7 +19,6 @@
 package org.apache.wayang.iejoin.operators;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import org.junit.Before;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -33,6 +32,7 @@ import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Collection;
 
@@ -50,8 +50,8 @@ public class SparkOperatorTestBase {
 
     protected Job job;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.configuration = new Configuration();
         this.job = mock(Job.class);
         when(this.job.getConfiguration()).thenReturn(this.configuration);

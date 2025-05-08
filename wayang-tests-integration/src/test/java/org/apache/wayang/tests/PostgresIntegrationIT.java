@@ -18,27 +18,26 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.postgres.platform.PostgresPlatform;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-
 /**
  * Test the Postgres integration with Wayang.
  */
-@Ignore("Requires specific PostgreSQL installation.")
-public class PostgresIntegrationIT {
+@Disabled("Requires specific PostgreSQL installation.")
+class PostgresIntegrationIT {
 
     private static final PostgresPlatform pg = PostgresPlatform.getInstance();
 
-    @BeforeClass
-    public static void setup() {
+    @BeforeAll
+    static void setup() {
 
         Statement stmt = null;
 
@@ -62,8 +61,8 @@ public class PostgresIntegrationIT {
         }
     }
 
-    @AfterClass
-    public static void tearDown() {
+    @AfterAll
+    static void tearDown() {
         Statement stmt = null;
 
         try {

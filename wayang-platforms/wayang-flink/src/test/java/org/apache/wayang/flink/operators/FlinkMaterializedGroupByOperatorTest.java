@@ -24,8 +24,7 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,14 +33,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  * Test suite for {@link FlinkMaterializedGroupByOperator}.
  */
-public class FlinkMaterializedGroupByOperatorTest extends FlinkOperatorTestBase {
+class FlinkMaterializedGroupByOperatorTest extends FlinkOperatorTestBase {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         AtomicInteger counter = new AtomicInteger(0);
         DataSetChannel.Instance input = this.createDataSetChannelInstance(Arrays.stream("abcaba".split(""))
@@ -71,7 +74,7 @@ public class FlinkMaterializedGroupByOperatorTest extends FlinkOperatorTestBase 
         }
         catch (Exception e){
             e.printStackTrace();
-            Assert.fail();
+            fail();
         }
 
         // Verify the outcome.
@@ -87,8 +90,8 @@ public class FlinkMaterializedGroupByOperatorTest extends FlinkOperatorTestBase 
                 Arrays.asList(new Tuple2<>("c", 2))
         };
         Arrays.stream(expectedResults)
-                .forEach(expected -> Assert.assertTrue("Not contained: " + expected, result.contains(expected)));
-        Assert.assertEquals(expectedResults.length, result.size());
+                .forEach(expected -> assertTrue(result.contains(expected), "Not contained: " + expected));
+        assertEquals(expectedResults.length, result.size());
 
     }
 

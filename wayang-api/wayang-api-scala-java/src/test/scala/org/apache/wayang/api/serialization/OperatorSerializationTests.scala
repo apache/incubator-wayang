@@ -26,7 +26,7 @@ import org.apache.wayang.postgres.Postgres
 import org.apache.wayang.postgres.operators.PostgresTableSource
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.sqlite3.operators.Sqlite3TableSource
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 import java.io.{File, PrintWriter}
 import java.sql.{Connection, Statement}

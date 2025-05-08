@@ -18,12 +18,12 @@
 
 package org.apache.wayang.java.test;
 
-import org.junit.Before;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Collection;
 import java.util.stream.Stream;
@@ -37,8 +37,8 @@ public class ChannelFactory {
 
     private static JavaExecutor executor;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         executor = mock(JavaExecutor.class);
     }
 

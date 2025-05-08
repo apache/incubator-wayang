@@ -18,10 +18,10 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Test;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,10 +31,10 @@ import java.util.Arrays;
 /**
  * Test suite for {@link SparkTextFileSink}.
  */
-public class SparkTextFileSinkTest extends SparkOperatorTestBase {
+class SparkTextFileSinkTest extends SparkOperatorTestBase {
 
     @Test
-    public void testWritingDoesNotFail() throws IOException {
+    void testWritingDoesNotFail() throws IOException {
         // Prepare the sink.
         Path tempDir = Files.createTempDirectory("wayang-spark");
         tempDir.toFile().deleteOnExit();

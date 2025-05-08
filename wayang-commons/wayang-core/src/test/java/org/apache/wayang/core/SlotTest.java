@@ -18,28 +18,31 @@
 
 package org.apache.wayang.core;
 
-import org.junit.Test;
 import org.apache.wayang.core.plan.wayangplan.Slot;
 import org.apache.wayang.core.plan.wayangplan.test.TestSink;
 import org.apache.wayang.core.plan.wayangplan.test.TestSource;
 import org.apache.wayang.core.test.TestDataUnit;
 import org.apache.wayang.core.test.TestDataUnit2;
 import org.apache.wayang.core.types.DataSetType;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test suite for {@link Slot}s.
  */
-public class SlotTest {
+class SlotTest {
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testConnectMismatchingSlotFails() {
+    @Test
+    void testConnectMismatchingSlotFails() {
         TestSink<TestDataUnit> testSink = new TestSink<>(DataSetType.createDefault(TestDataUnit.class));
         TestSource<TestDataUnit2> testSource = new TestSource<>(DataSetType.createDefault(TestDataUnit2.class));
-        testSource.connectTo(0, testSink, 0);
+        assertThrows(IllegalArgumentException.class, () ->
+            testSource.connectTo(0, testSink, 0));
     }
 
     @Test
-    public void testConnectMatchingSlots() {
+    void testConnectMatchingSlots() {
         TestSink<TestDataUnit> testSink = new TestSink<>(DataSetType.createDefault(TestDataUnit.class));
         TestSource<TestDataUnit> testSource = new TestSource<>(DataSetType.createDefault(TestDataUnit.class));
         testSource.connectTo(0, testSink, 0);
