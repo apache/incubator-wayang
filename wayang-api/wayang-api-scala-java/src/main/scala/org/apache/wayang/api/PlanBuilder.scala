@@ -102,8 +102,13 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
     */
   def buildAndExecute(): Unit = {
     val plan: WayangPlan = new WayangPlan(this.sinks.toArray: _*)
-    if (this.experiment == null) this.wayangContext.execute(jobName, plan, this.udfJars.toArray: _*)
-    else this.wayangContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
+
+    if (this.experiment == null) {
+      this.wayangContext.execute(jobName, plan, this.udfJars.toArray: _*)
+    }
+    else {
+      this.wayangContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
+    }
   }
 
   /**
