@@ -67,17 +67,17 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-aws</artifactId>
-      <version>3.1.2</version>
+      <version>3.3.6</version>
     </dependency>
     <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-common</artifactId>
-        <version>3.2.4</version>
+        <version>3.3.6</version>
     </dependency>
     <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
-        <version>3.1.2</version>
+        <version>3.3.6</version>
     </dependency>
     <dependency>
       <groupId>org.apache.wayang</groupId>

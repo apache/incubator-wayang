@@ -18,7 +18,7 @@
 
 package org.apache.wayang.profiler.hardware;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.core.util.fs.FileSystem;
 import org.apache.wayang.core.util.fs.FileSystems;

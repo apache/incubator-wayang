@@ -35,8 +35,8 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**
-  * Provides implicits for the basic Wayang API.
-  */
+ * Provides implicits for the basic Wayang API.
+ */
 /**
  * TODO: add the documentation in the implicit of org.apache.wayang.api
  * labels: documentation,todo
