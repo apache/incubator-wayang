@@ -106,6 +106,7 @@
         <scala.mayor.version>2.12</scala.mayor.version>
         <spark.version>3.4.4</spark.version>
         <flink.version>1.20.0</flink.version>
+        <calcite.version>1.39.0</calcite.version>       
 
         <java.version>17</java.version>
         <source.level>17</source.level>
