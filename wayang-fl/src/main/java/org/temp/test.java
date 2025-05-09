@@ -67,12 +67,12 @@ public class test {
 //
 //        System.out.println(result.collect());
 //        Collection<?> output = result.collect();
-        for (Object o : result.collect()) {
-            System.out.println("Type: " + o.getClass().getName());
-            System.out.println("Value: " + o);
-            for (Object idk : (double[]) o){
-                System.out.println(idk);
-            }
-        }
+//        for (Object o : result.collect()) {
+//            System.out.println("Type: " + o.getClass().getName());
+//            System.out.println("Value: " + o);
+//            for (Object idk : (double[]) o){
+//                System.out.println(idk);
+//            }
+//        }
     }
 }
