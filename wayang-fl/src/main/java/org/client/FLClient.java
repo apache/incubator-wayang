@@ -93,33 +93,25 @@ public class FLClient extends AbstractActor {
     }
 
     private void buildPlan(Object operand){
-        System.out.println(hyperparams.get("inputFileUrl"));
         JavaPlanBuilder newPlanBuilder = new JavaPlanBuilder(wayangContext)
                 .withJobName(client.getName()+"-job")
                 .withUdfJarOf(FLClient.class);
         Operator op = planFunction.apply(operand, newPlanBuilder, hyperparams);
-//        System.out.println(op);
         Class classType = op.getOutput(0).getType().getDataUnitType().getTypeClass();
         LocalCallbackSink<?> sink = LocalCallbackSink.createCollectingSink(collector, classType);
         op.connectTo(0, sink, 0);
         plan = new WayangPlan(sink);
-        System.out.println(client.getName() + " built plan successfully");
-        System.out.println(plan);
     }
 
 
 
     private void handleClientUpdateRequestMessage(ClientUpdateRequestMessage msg) {
         System.out.println(client.getName() + " Received compute request");
-//        System.out.println(planFunction);
-//        System.out.println(client.getName() + " Printed planFunction");
         Object operand = msg.getValue();
         buildPlan(operand);
         wayangContext.execute(client.getName() + "-job", plan);
         System.out.println(client.getName() + " executed plan successfully");
         getSender().tell(new ClientUpdateResponseMessage(new LinkedList<>(collector)), getSelf());
-//        System.out.println(client.getName());
-//        System.out.println(collector);
         collector.clear();
     }
 
