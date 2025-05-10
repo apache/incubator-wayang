@@ -34,7 +34,7 @@ system.
 After building the python package, execute the following steps to make
 it available for your system:
 ```shell
-python3 -m pip install dist/pywy-0.7.1.tar.gz
+python3 -m pip install dist/pywy-1.0.0.tar.gz
 ```
 
 ## Executing python code
@@ -70,8 +70,8 @@ be found (usually where pip installs them).
 - Starting the REST API as a background process
 ```shell
 cd wayang-assembly/target/
-tar -xvf apache-wayang-assembly-0.7.1-SNAPSHOT-incubating-dist.tar.gz
-cd wayang-0.7.1-SNAPSHOT
+tar -xvf apache-wayang-assembly-1.0.0-incubating-dist.tar.gz
+cd wayang-1.0.0
 ./bin/wayang-submit org.apache.wayang.api.json.Main &
 ```
 
