@@ -84,6 +84,7 @@ public class FLServer extends AbstractActor {
         for(ActorRef client : active_clients.keySet()){
             if(!active_clients.get(client)) continue;
             active_client_count++;
+            // remove this line later
             client.tell(new PlanHyperparametersMessage(plan, client_hyperparams), getSelf());
         }
 //        while(client_acks < active_client_count){}
@@ -105,6 +106,7 @@ public class FLServer extends AbstractActor {
     }
 
     public void handleAggregateResponsesMessage(AggregateResponsesMessage msg){
+        System.out.println("Iteration Over, Aggregating Responses");
         Object aggregatedResult = aggregator.aggregate(client_responses, hyperparams);
         getSender().tell(aggregatedResult, getSelf());
     }

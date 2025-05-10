@@ -33,7 +33,7 @@ public class FLClientTest2 {
     }
 
     public static void main(String args[]) throws Exception {
-        FLClientApp client_app = new FLClientApp("pekko://client2-system@127.0.0.1:2553/user/client2", "client2", "java");
+        FLClientApp client_app = new FLClientApp("pekko://client2-system@127.0.0.1:2553/user/client2", "client2", "java", new String[] {"file:/Users/vedantaneogi/Downloads/higgs_part2.txt"});
         Config config = ConfigFactory.load("client2-application");
         client_app.startFLClient(config);
     }
