@@ -85,7 +85,6 @@ public class FLServer extends AbstractActor {
             if(!active_clients.get(client)) continue;
             active_client_count++;
             // remove this line later
-            client_hyperparams.put("inputFileUrl", "file:/Users/vedantaneogi/Downloads/higgs_part"+active_client_count+".txt");
             client.tell(new PlanHyperparametersMessage(plan, client_hyperparams), getSelf());
         }
 //        while(client_acks < active_client_count){}

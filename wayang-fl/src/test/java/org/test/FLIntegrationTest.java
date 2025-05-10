@@ -170,7 +170,7 @@ public class FLIntegrationTest {
             // Step 0: Cast operand and extract hyperparams
             System.out.println(Arrays.toString((double[])operand));
             double[] weights = (double[]) operand;
-            String inputFileUrl = (String) hyperparams.get("inputFileUrl");
+            String inputFileUrl = ((String[]) hyperparams.get("inputFiles"))[0];
             int datasetSize = (int) hyperparams.get("datasetSize");
 
             ML4allModel model = new ML4allModel();

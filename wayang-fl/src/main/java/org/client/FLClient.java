@@ -50,6 +50,7 @@ public class FLClient extends AbstractActor {
     private JavaPlanBuilder planBuilder;
     private PlanFunction planFunction;
     private Map<String, Object> hyperparams;
+    private String[] inputFiles;
 
     private Plugin getPlugin(String platformType){
         if(platformType.equals("java")) return Java.basicPlugin();
@@ -57,17 +58,18 @@ public class FLClient extends AbstractActor {
         else return null;
     }
 
-    public Props props(Client client, String platformType) {
-        return Props.create(FLClient.class, () -> new FLClient(client, platformType));
+    public Props props(Client client, String platformType, String[] inputFiles) {
+        return Props.create(FLClient.class, () -> new FLClient(client, platformType, inputFiles));
     }
 
-    public FLClient(Client client, String platformType) {
+    public FLClient(Client client, String platformType, String[] inputFiles) {
         this.client = client;
         this.wayangContext = new WayangContext(new Configuration()).withPlugin(getPlugin(platformType));
         this.planBuilder = new JavaPlanBuilder(wayangContext)
                 .withJobName(client.getName()+"-job")
                 .withUdfJarOf(FLClient.class);
         this.collector = new LinkedList<>();
+        this.inputFiles = inputFiles;
     }
 
     @Override
@@ -88,6 +90,7 @@ public class FLClient extends AbstractActor {
         System.out.println(client.getName() + " receiving plan");
         planFunction = msg.getSerializedplan();
         hyperparams = msg.getHyperparams();
+        hyperparams.put("inputFiles", inputFiles);
         getSender().tell(new PlanHyperparametersAckMessage(), getSelf());
         System.out.println(client.getName() + " initialised plan function");
     }

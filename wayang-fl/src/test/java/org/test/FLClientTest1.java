@@ -34,7 +34,7 @@ public class FLClientTest1 {
 
 
     public static void main(String args[]){
-        FLClientApp client_app = new FLClientApp("pekko://client1-system@127.0.0.1:2552/user/client1", "client1", "java");
+        FLClientApp client_app = new FLClientApp("pekko://client1-system@127.0.0.1:2552/user/client1", "client1", "java", new String[] {"file:/Users/vedantaneogi/Downloads/higgs_part1.txt"});
         Config config = ConfigFactory.load("client1-application");
         client_app.startFLClient(config);
     }
