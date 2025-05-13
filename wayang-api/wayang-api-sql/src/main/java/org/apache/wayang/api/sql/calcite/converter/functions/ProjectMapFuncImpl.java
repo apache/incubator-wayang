@@ -57,7 +57,7 @@ public class ProjectMapFuncImpl implements
                                 "Operation not supported in projection function RexCall: " + kind);
                 }
             };
-            }
+        }
     }
 
     @Override
