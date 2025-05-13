@@ -35,7 +35,17 @@ import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
  * {@link Call}, {@link InputRef}, {@link Literal}
  */
 interface CallTreeFactory<Input, Output> extends Serializable {
-    public Node<Output> fromRexNode(final RexNode node);
+    public default Node<Output> fromRexNode(final RexNode node) {
+        if (node instanceof RexCall) {
+            return new Call<>((RexCall) node, this);
+        } else if (node instanceof RexInputRef) {
+            return new InputRef<>((RexInputRef) node);
+        } else if (node instanceof RexLiteral) {
+            return new Literal<>((RexLiteral) node);
+        } else {
+            throw new UnsupportedOperationException("Unsupported RexNode in filter condition: " + node);
+        }
+    }
 
     /**
      * Derives the java operator for a given {@link SqlKind}, and turns it into a

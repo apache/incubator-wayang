@@ -21,9 +21,6 @@ package org.apache.wayang.api.sql.calcite.converter.functions;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 
@@ -60,20 +57,7 @@ public class ProjectMapFuncImpl implements
                                 "Operation not supported in projection function RexCall: " + kind);
                 }
             };
-        }
-
-        @Override
-        public Node<Object> fromRexNode(final RexNode node) {
-            if (node instanceof RexCall) {
-                return new Call<>((RexCall) node, this);
-            } else if (node instanceof RexInputRef) {
-                return new InputRef<>((RexInputRef) node);
-            } else if (node instanceof RexLiteral) {
-                return new Literal<>((RexLiteral) node);
-            } else {
-                throw new UnsupportedOperationException("Unsupported RexNode in filter condition: " + node);
             }
-        }
     }
 
     @Override

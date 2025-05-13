@@ -20,9 +20,6 @@ package org.apache.wayang.api.sql.calcite.converter.functions;
 
 import java.util.List;
 
-import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.SqlFunctions;
 import org.apache.calcite.sql.SqlKind;
@@ -72,19 +69,6 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
                     return input -> input.stream().map(Boolean.class::cast).anyMatch(Boolean::booleanValue);
                 default:
                     throw new UnsupportedOperationException("Kind not supported: " + kind);
-            }
-        }
-
-        @Override
-        public Node<Object> fromRexNode(final RexNode node) {
-            if (node instanceof RexCall) {
-                return new Call<>((RexCall) node, this);
-            } else if (node instanceof RexInputRef) {
-                return new InputRef<>((RexInputRef) node);
-            } else if (node instanceof RexLiteral) {
-                return new Literal<>((RexLiteral) node);
-            } else {
-                throw new UnsupportedOperationException("Unsupported RexNode in filter condition: " + node);
             }
         }
     }
