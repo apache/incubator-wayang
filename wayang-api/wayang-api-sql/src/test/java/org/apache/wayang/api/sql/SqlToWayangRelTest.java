@@ -21,11 +21,14 @@ import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.rel.rules.CoreRules;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -34,6 +37,7 @@ import org.apache.calcite.tools.RuleSets;
 
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
 import org.apache.wayang.api.sql.calcite.converter.functions.FilterPredicateImpl;
+import org.apache.wayang.api.sql.calcite.converter.functions.ProjectMapFuncImpl;
 import org.apache.wayang.api.sql.calcite.optimizer.Optimizer;
 import org.apache.wayang.api.sql.calcite.rules.WayangRules;
 import org.apache.wayang.api.sql.calcite.schema.SchemaUtils;
@@ -69,6 +73,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -527,6 +532,44 @@ public class SqlToWayangRelTest {
                 .collect(Collectors.toMap(rec -> rec, rec -> 1, Integer::sum));
 
         assert (resultTally.equals(shouldBeTally));
+    }
+
+    @Test
+    public void serializeProjection() throws Exception {
+        final RexBuilder rb = new RexBuilder(new JavaTypeFactoryImpl());
+
+        final RelDataTypeFactory typeFactory = rb.getTypeFactory();
+        final RelDataType intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
+        final RelDataType rowType = typeFactory.createStructType(
+                Arrays.asList(intType, intType, intType),
+                Arrays.asList("x", "b", "y"));
+
+        final RexNode inputRefX = rb.makeInputRef(rowType, 0);
+        final RexNode inputRefB = rb.makeInputRef(rowType, 1);
+        final RexNode inputRefY = rb.makeInputRef(rowType, 2);
+        final SqlOperator add = SqlStdOperatorTable.PLUS;
+        final SqlOperator multiply = SqlStdOperatorTable.MULTIPLY;
+
+        final RexNode addition = rb.makeCall(add, List.of(inputRefX, inputRefB));
+        final RexNode multiplication = rb.makeCall(multiply, List.of(addition, inputRefY));
+
+        final RexCall projection = (RexCall) multiplication;
+
+        final ProjectMapFuncImpl impl = new ProjectMapFuncImpl(List.of(projection));
+
+        final ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
+        final ObjectOutputStream outStream = new ObjectOutputStream(byteOutStream);
+        outStream.writeObject(impl);
+        outStream.close();
+
+        final ByteArrayInputStream byteInStream = new ByteArrayInputStream(byteOutStream.toByteArray());
+        final ObjectInputStream inStream = new ObjectInputStream(byteInStream);
+        final ProjectMapFuncImpl deserializedImpl = (ProjectMapFuncImpl) inStream.readObject();
+        inStream.close();
+        
+        final Record testRecord = new Record(1,2,3);
+
+        assert (impl.apply(testRecord).equals(deserializedImpl.apply(testRecord)));
     }
 
     // @Test
