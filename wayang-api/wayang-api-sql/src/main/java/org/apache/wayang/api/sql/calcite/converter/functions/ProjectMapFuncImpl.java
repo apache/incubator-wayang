@@ -18,7 +18,6 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,61 +28,24 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 
 import org.apache.wayang.core.function.FunctionDescriptor;
-import org.apache.wayang.core.function.FunctionDescriptor.SerializableBiFunction;
+import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
 import org.apache.wayang.basic.data.Record;
 
 public class ProjectMapFuncImpl implements
         FunctionDescriptor.SerializableFunction<Record, Record> {
 
-    /**
-     * Serializable representation of {@link RexNode}
-     */
-    abstract class Node implements Serializable {
-        public Node transform(final RexNode node) {
-            if (node instanceof RexCall) {
-                return new Call((RexCall) node);
-            } else if (node instanceof RexInputRef) {
-                return new InputRef((RexInputRef) node);
-            } else if (node instanceof RexLiteral) {
-                return new Literal((RexLiteral) node);
-            } else {
-                throw new UnsupportedOperationException("RexNode not supported in projection function: " + node);
-            }
-        }
+    final List<Node<Object>> projectionSyntaxTrees;
 
-        abstract Object evaluate(Record record);
+    public ProjectMapFuncImpl(final List<RexNode> projects) {
+        final ProjectCallTreeFactory treeFactory = new ProjectCallTreeFactory();
+        this.projectionSyntaxTrees = projects.stream().map(treeFactory::fromRexNode).collect(Collectors.toList());
     }
 
-    /**
-     * Serializable representation of {@link RexCall}
-     */
-    class Call extends Node {
-        final SerializableBiFunction<Number, Number, Number> operation;
-        final List<Node> children;
-
-        public Call(final RexCall call) {
-            this.operation = deriveOperation(call.getOperator().getKind());
-            this.children = call.getOperands().stream()
-                    .map(op -> this.transform(op))
-                    .collect(Collectors.toList());
-        }
-
-        public Object evaluate(final Record record) {
-            assert (children.size() == 2) : "Project func call should only have two children";
-            return operation.apply((Number) children.get(0).evaluate(record),
-                    (Number) children.get(1).evaluate(record));
-        }
-
-        /**
-         * Derives the java operator for a given {@link SqlKind}, and turns it into a serializable function
-         * @param kind {@link SqlKind} from {@link RexCall} SqlOperator
-         * @return a serializable function of +, -, * or /
-         * @throws UnsupportedOperationException on unrecognized {@link SqlKind}
-         */
-        static SerializableBiFunction<Number, Number, Number> deriveOperation(final SqlKind kind) {
-            return (a, b) -> {
-                final double l = a.doubleValue();
-                final double r = b.doubleValue();
+    class ProjectCallTreeFactory implements CallTreeFactory<List<Object>, Object> {
+        public SerializableFunction<List<Object>, Object> deriveOperation(final SqlKind kind) {
+            return input -> {
+                final double l = ((Number) input.get(0)).doubleValue();
+                final double r = ((Number) input.get(1)).doubleValue();
                 switch (kind) {
                     case PLUS:
                         return l + r;
@@ -99,59 +61,19 @@ public class ProjectMapFuncImpl implements
                 }
             };
         }
-    }
-
-    /**
-     * Serializable representation of {@link RexLiteral}
-     */
-    class Literal extends Node {
-        final Comparable<?> value;
-
-        Literal(final RexLiteral literal) {
-            this.value = literal.getValueAs(Double.class);
-        }
 
         @Override
-        public Object evaluate(final Record record) {
-            return value;
+        public Node<Object> fromRexNode(final RexNode node) {
+            if (node instanceof RexCall) {
+                return new Call<>((RexCall) node, this);
+            } else if (node instanceof RexInputRef) {
+                return new InputRef<>((RexInputRef) node);
+            } else if (node instanceof RexLiteral) {
+                return new Literal<>((RexLiteral) node);
+            } else {
+                throw new UnsupportedOperationException("Unsupported RexNode in filter condition: " + node);
+            }
         }
-    }
-
-    /**
-     * Serializable representation of {@link InputRef}
-     */
-    class InputRef extends Node {
-        final int key;
-
-        InputRef(final RexInputRef inputRef) {
-            this.key = inputRef.getIndex();
-        }
-
-        @Override
-        public Object evaluate(final Record record) {
-            return record.getField(key);
-        }
-    }
-
-    /**
-     * AST of the {@link RexCall} arithmetic, composed into serializable nodes; {@link Call}, {@link InputRef}, {@link Literal}
-     */
-    final List<Node> projectionSyntaxTrees;
-
-    public ProjectMapFuncImpl(final List<RexNode> projects) {
-        this.projectionSyntaxTrees = projects.stream()
-                .map(projection -> {
-                    if (projection instanceof RexCall) {
-                        return new Call((RexCall) projection);
-                    } else if (projection instanceof RexLiteral) {
-                        return new Literal((RexLiteral) projection);
-                    } else if (projection instanceof RexInputRef) {
-                        return new InputRef((RexInputRef) projection);
-                    } else {
-                        throw new UnsupportedOperationException("RexNode not supported in projection: " + projection);
-                    }
-                })
-                .collect(Collectors.toList());
     }
 
     @Override

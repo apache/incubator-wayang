@@ -18,8 +18,7 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
@@ -33,11 +32,10 @@ import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
 
 public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredicate<Record> {
-    private final Node callTree;
+    private final Node<Object> callTree;
 
     public FilterPredicateImpl(final RexNode condition) {
-        assert (condition instanceof RexCall) : "Condition was not a RexCall expression: " + condition;
-        this.callTree = new Call((RexCall) condition);
+        this.callTree = new FilterCallTreeFactory().fromRexNode(condition);
     }
 
     @Override
@@ -45,115 +43,49 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
         return (boolean) callTree.evaluate(record);
     }
 
-    private Node transform(RexNode node) {
-        if (node instanceof RexCall) {
-            return new Call((RexCall) node);
-        } else if (node instanceof RexInputRef) {
-            return new InputRef((RexInputRef) node);
-        } else if (node instanceof RexLiteral) {
-            return new Literal((RexLiteral) node);
-        } else {
-            throw new UnsupportedOperationException("Unsupported RexNode in filter condition: " + node);
-        }
-    }
-
-    abstract class Node implements Serializable {
-        abstract Object evaluate(final Record record);
-    }
-
-    class Call extends Node {
-        final Node[] operands;
-        final SerializableFunction<Object[], Object> operation;
-
-        Call(final RexCall call) {
-            operands = call.getOperands().stream().map(op -> transform(op)).toArray(Node[]::new);
-            operation = deriveOperation(call.getOperator().getKind());
-        }
-
-        @Override
-        Object evaluate(final Record record) {
-            return operation.apply(Arrays.stream(operands).map(op -> op.evaluate(record)).toArray());
-        }
-
-        SerializableFunction<Object[], Object> deriveOperation(SqlKind kind) {
+    class FilterCallTreeFactory implements CallTreeFactory <List<Object>, Object> {
+        public SerializableFunction<List<Object>, Object> deriveOperation(final SqlKind kind) {
             switch (kind) {
                 case NOT:
-                    assert (operands.length == 1)
-                            : "Expected operation " + kind + " to have 1 operand but got: " + operands.length;
-                    return input -> !(boolean) input[0];
+                    return input -> !(boolean) input.get(0);
                 case IS_NOT_NULL:
-                    assert (operands.length == 1)
-                            : "Expected operation " + kind + " to have 1 operand but got: " + operands.length;
-                    return input -> !isEqualTo(input[0], null);
+                    return input -> !isEqualTo(input.get(0), null);
                 case IS_NULL:
-                    assert (operands.length == 1)
-                            : "Expected operation " + kind + " to have 1 operand but got: " + operands.length;
-                    return input -> isEqualTo(input[0], null);
+                    return input -> isEqualTo(input.get(0), null);
                 case LIKE:
-                    assert (operands.length == 2)
-                            : "Expected operation " + kind + " to have 2 operands but got: " + operands.length;
-                    return input -> like((String) input[0], (String) input[1]);
+                    return input -> like((String) input.get(0), (String) input.get(1));
                 case NOT_EQUALS:
-                    assert (operands.length == 2)
-                            : "Expected operation " + kind + " to have 2 operands but got: " + operands.length;
-                    return input -> !isEqualTo(input[0], input[1]);
+                    return input -> !isEqualTo(input.get(0), input.get(1));
                 case EQUALS:
-                    assert (operands.length == 2)
-                            : "Expected operation " + kind + " to have 2 operands but got: " + operands.length;
-                    return input -> isEqualTo(input[0], input[1]);
+                    return input -> isEqualTo(input.get(0), input.get(1));
                 case GREATER_THAN:
-                    assert (operands.length == 2)
-                            : "Expected operation " + kind + " to have 2 operands but got: " + operands.length;
+                    return input -> isGreaterThan(input.get(0), input.get(1));
                 case LESS_THAN:
-                    assert (operands.length == 2)
-                            : "Expected operation " + kind + " to have 2 operands but got: " + operands.length;
-                    return input -> isLessThan(input[0], input[1]);
+                    return input -> isLessThan(input.get(0), input.get(1));
                 case GREATER_THAN_OR_EQUAL:
-                    assert (operands.length == 2)
-                            : "Expected operation " + kind + " to have 2 operands but got: " + operands.length;
-                    return input -> isGreaterThan(input[0], input[1]) || isEqualTo(input[0], input[1]);
+                    return input -> isGreaterThan(input.get(0), input.get(1)) || isEqualTo(input.get(0), input.get(1));
                 case LESS_THAN_OR_EQUAL:
-                    assert (operands.length == 2)
-                            : "Expected operation " + kind + " to have 2 operands but got: " + operands.length;
-                    return input -> isLessThan(input[0], input[1]) || isEqualTo(input[0], input[1]);
+                    return input -> isLessThan(input.get(0), input.get(1)) || isEqualTo(input.get(0), input.get(1));
                 case AND:
-                    assert (operands.length > 1)
-                            : "Expected at least two operands for " + kind + " , got: " + operands.length;
-                    return input -> Arrays.stream(input).map(Boolean.class::cast).allMatch(Boolean::booleanValue);
+                    return input -> input.stream().map(Boolean.class::cast).allMatch(Boolean::booleanValue);
                 case OR:
-                    assert (operands.length > 1)
-                            : "Expected at least two operands for " + kind + " , got: " + operands.length;
-                    return input -> Arrays.stream(input).map(Boolean.class::cast).anyMatch(Boolean::booleanValue);
+                    return input -> input.stream().map(Boolean.class::cast).anyMatch(Boolean::booleanValue);
                 default:
                     throw new UnsupportedOperationException("Kind not supported: " + kind);
             }
         }
 
-    }
-
-    class Literal extends Node {
-        final Object value;
-
-        Literal(final RexLiteral literal) {
-            value = literal.getValue2();
-        }
-
         @Override
-        Object evaluate(final Record record) {
-            return value;
-        }
-    }
-
-    class InputRef extends Node {
-        final int key;
-
-        InputRef(final RexInputRef inputRef) {
-            this.key = inputRef.getIndex();
-        }
-
-        @Override
-        Object evaluate(final Record record) {
-            return record.getField(key);
+        public Node<Object> fromRexNode(final RexNode node) {
+            if (node instanceof RexCall) {
+                return new Call<>((RexCall) node, this);
+            } else if (node instanceof RexInputRef) {
+                return new InputRef<>((RexInputRef) node);
+            } else if (node instanceof RexLiteral) {
+                return new Literal<>((RexLiteral) node);
+            } else {
+                throw new UnsupportedOperationException("Unsupported RexNode in filter condition: " + node);
+            }
         }
     }
 
