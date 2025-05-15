@@ -25,10 +25,6 @@
         <version>1.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
-    <properties>
-        <calcite.version>1.39.0</calcite.version>       
-    </properties>
     
     <artifactId>wayang-api-sql</artifactId>
     <dependencies>

@@ -189,36 +189,18 @@
             <artifactId>giraph-core</artifactId>
             <version>${giraph.version}</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.giraph</groupId>
             <artifactId>giraph-block-app</artifactId>
             <version>${giraph.version}</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.giraph</groupId>
             <artifactId>giraph-examples</artifactId>
             <version>${giraph.version}</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.codehaus.janino/janino -->
         <dependency>
