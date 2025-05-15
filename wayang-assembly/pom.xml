@@ -35,7 +35,6 @@
     <build.testJarPhase>none</build.testJarPhase>
     <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
     <wayang.name>wayang-${project.version}</wayang.name>
-    <calcite.version>1.35.0</calcite.version>       
   </properties>
 
   <dependencies>
@@ -113,11 +112,6 @@
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>2.10.1</version>
-    </dependency>
-    <dependency>
-        <groupId>org.apache.calcite</groupId>
-        <artifactId>calcite-core</artifactId>
-        <version>${calcite.version}</version>
     </dependency>
   </dependencies>
 
