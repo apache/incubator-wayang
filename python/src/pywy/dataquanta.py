@@ -195,7 +195,11 @@ class DataQuanta(GenericTco):
         )
 
 
-    def train_logistic_regression(self, labels, fit_intercept=True):
+    def train_logistic_regression(
+            self: "DataQuanta[In]",
+            labels: "DataQuanta[In]",
+            fit_intercept: bool = True
+    ) -> "DataQuanta[Out]":
         from pywy.basic.model.ops import LogisticRegression
 
         op = LogisticRegression()
