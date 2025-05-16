@@ -24,6 +24,7 @@ from pywy.operators import *
 from pywy.basic.data.record import Record
 from pywy.basic.model.option import Option
 from pywy.basic.model.models import Model
+from pywy.basic.model.ops import LogisticRegression
 
 
 class Configuration:
@@ -192,6 +193,16 @@ class DataQuanta(GenericTco):
             self.context,
             that._connect(op, 1)
         )
+
+
+    def train_logistic_regression(self, labels, fit_intercept=True):
+        from pywy.basic.model.ops import LogisticRegression
+
+        op = LogisticRegression()
+        self._connect(op, 0)
+        labels._connect(op, 1)
+        return DataQuanta(self.context, op)
+
 
     def store_textfile(self: "DataQuanta[In]", path: str, input_type: GenericTco = None) -> None:
         last: List[SinkOperator] = [
