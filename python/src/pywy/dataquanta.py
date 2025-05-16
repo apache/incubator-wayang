@@ -23,8 +23,8 @@ from pywy.types import (GenericTco, Predicate, Function, BiFunction, FlatmapFunc
 from pywy.operators import *
 from pywy.basic.data.record import Record
 from pywy.basic.model.option import Option
-from pywy.basic.model.models import Model
-from pywy.basic.model.ops import LogisticRegression
+from pywy.basic.model.models import (Model, LogisticRegression)
+
 
 
 class Configuration:
@@ -195,7 +195,11 @@ class DataQuanta(GenericTco):
         )
 
 
-    def train_logistic_regression(self, labels, fit_intercept=True):
+    def train_logistic_regression(
+            self: "DataQuanta[In]",
+            labels: "DataQuanta[In]",
+            fit_intercept: bool = True
+    ) -> "DataQuanta[Out]":
         from pywy.basic.model.ops import LogisticRegression
 
         op = LogisticRegression()

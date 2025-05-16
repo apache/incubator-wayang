@@ -110,7 +110,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     val operator = new LogisticRegressionOperator(fitIntercept)
     this.connectTo(operator, 0)
     labels.connectTo(operator, 1)
-    new DataQuanta[LogisticRegressionModel](operator)
+    operator
   }
 
 

@@ -221,13 +221,6 @@ class Sigmoid(Op):
     def inputs_required(self):
         return 1
 
-class LogisticRegression(Op):
-    def __init__(self, name=None):
-        super().__init__(Op.DType.FLOAT32, name)
-
-    def inputs_required(self):
-        return 2  # features + labels
-
 
 class Softmax(Op):
     def __init__(self, name=None):

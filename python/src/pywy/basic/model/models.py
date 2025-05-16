@@ -27,3 +27,10 @@ class DLModel(Model):
 
     def get_out(self):
         return self.out
+
+class LogisticRegression(Op):
+    def __init__(self, name=None):
+        super().__init__(Op.DType.FLOAT32, name)
+
+    def inputs_required(self):
+        return 2
