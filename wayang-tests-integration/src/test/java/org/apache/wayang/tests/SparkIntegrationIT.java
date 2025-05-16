@@ -21,6 +21,9 @@ package org.apache.wayang.tests;
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.*;
+import org.apache.wayang.basic.model.LogisticRegressionModel;
+import org.apache.wayang.api.DataQuanta;
+import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.WayangContext;
@@ -36,6 +39,10 @@ import org.apache.wayang.tests.platform.MyMadeUpPlatform;
 import org.junit.Assert;
 import org.junit.Test;
 
+
+
+
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -43,6 +50,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the Spark integration with Wayang.
@@ -491,6 +499,51 @@ public class SparkIntegrationIT {
             Assert.assertTrue(pred == 0.0 || pred == 1.0);
         }
     }
+
+    @Test
+    public void testLogisticRegressionWithAPI() {
+        WayangContext context = new WayangContext()
+                .with(Spark.basicPlugin())
+                .with(Spark.mlPlugin());
+
+        JavaPlanBuilder planBuilder = new JavaPlanBuilder(context)
+                .withJobName("Logistic Regression Test")
+                .withUdfJarOf(this.getClass());
+
+        // Sample training data
+        List<double[]> features = Arrays.asList(
+                new double[]{0.0, 1.0},
+                new double[]{1.0, 0.0},
+                new double[]{1.0, 1.0},
+                new double[]{0.0, 0.0}
+        );
+        List<Double> labels = Arrays.asList(1.0, 1.0, 0.0, 0.0);
+
+        // Build the pipeline using DataQuantaBuilder
+        LogisticRegressionModel model = planBuilder
+                .loadCollection(features).withName("Load Features")
+                .trainLogisticRegression(
+                        planBuilder.loadCollection(labels).withName("Load Labels"),
+                        true
+                )
+                .collect()
+                .iterator()
+                .next();
+
+        // Predict using the model
+        Collection<Double> predictions = planBuilder
+                .loadCollection(Collections.singletonList(model))
+                .predict(planBuilder.loadCollection(features), Double.class)
+                .collect();
+
+
+        assertEquals(4, predictions.size());
+        for (double prediction : predictions) {
+            assertTrue(prediction == 0.0 || prediction == 1.0);
+        }
+    }
+
+
 
 
     @Test
