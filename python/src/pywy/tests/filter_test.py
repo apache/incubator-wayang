@@ -16,9 +16,7 @@
 #
 
 import unittest
-#from typing import Tuple, Callable, Iterable
 from pywy.dataquanta import WayangContext
-from unittest.mock import Mock
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
 
@@ -33,7 +31,7 @@ class TestWCPlanToJson(unittest.TestCase):
         right = ctx.textfile("file:///var/www/html/README.md") \
             .filter(lambda w: "Wayang" in w, str) \
             .map(lambda w: (len(w), w), str, (int, str))
-        join = left.join(lambda w: w[0], right, lambda w: w[0], (int, str), ((int, str), (int, str))) \
+        join = left.join(lambda w: w[0], right, lambda w: w[0], (int, str)) \
             .store_textfile("file:///var/www/html/data/wordcount-out-python.txt")
 
         self.assertEqual(True, True)

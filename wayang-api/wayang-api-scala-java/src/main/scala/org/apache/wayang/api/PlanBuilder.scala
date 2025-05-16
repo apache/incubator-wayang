@@ -102,8 +102,13 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
     */
   def buildAndExecute(): Unit = {
     val plan: WayangPlan = new WayangPlan(this.sinks.toArray: _*)
-    if (this.experiment == null) this.wayangContext.execute(jobName, plan, this.udfJars.toArray: _*)
-    else this.wayangContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
+
+    if (this.experiment == null) {
+      this.wayangContext.execute(jobName, plan, this.udfJars.toArray: _*)
+    }
+    else {
+      this.wayangContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
+    }
   }
 
   /**
@@ -133,7 +138,7 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
    * @param projection the projection, if any
    * @return [[DataQuanta]] of [[Record]]s representing the file
    */
-  def readParquet(url: String, projection: Array[String]): RecordDataQuanta = load(ParquetSource.create(url, projection))
+  def readParquet(url: String, projection: Array[String] = null): DataQuanta[Record] = load(ParquetSource.create(url, projection))
 
  /**
     * Read a text file from a Google Cloud Storage bucket and provide it as a dataset of [[String]]s, one per line.

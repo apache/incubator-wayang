@@ -106,6 +106,7 @@
         <scala.mayor.version>2.12</scala.mayor.version>
         <spark.version>3.4.4</spark.version>
         <flink.version>1.20.0</flink.version>
+        <calcite.version>1.39.0</calcite.version>       
 
         <java.version>17</java.version>
         <source.level>17</source.level>
@@ -118,7 +119,7 @@
 
         <assertj.version>3.25.3</assertj.version>
         <commons-io.version>2.15.1</commons-io.version>
-        <guava.version>32.1.3-jre</guava.version>
+        <guava.version>33.4.0-jre</guava.version>
         <hamcrest.version>2.2</hamcrest.version>
         <jackson.version>2.15.4</jackson.version>
         <jacoco.version>0.8.9</jacoco.version>
@@ -779,11 +780,19 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
-
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

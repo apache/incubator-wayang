@@ -1,4 +1,3 @@
-
 #  Licensed to the Apache Software Foundation (ASF) under one or more
 #  contributor license agreements.  See the NOTICE file distributed with
 #  this work for additional information regarding copyright ownership.
@@ -17,18 +16,13 @@
 
 from typing import Set, Iterable, Dict
 import json
-import base64
-import cloudpickle
 import requests
-import subprocess
-import time
-import os
 
 from pywy.core.platform import Platform
 from pywy.core.serializer import JSONSerializer
 from pywy.graph.graph import WayangGraph
-from pywy.graph.types import WGraphOfVec, NodeOperator, NodeVec
-from pywy.operators import SinkOperator, UnaryToUnaryOperator, SourceUnaryOperator
+from pywy.graph.types import WGraphOfVec
+from pywy.operators import SinkOperator, UnaryToUnaryOperator
 
 
 class Plugin:
@@ -122,7 +116,6 @@ class PywyPlan:
 
         for node in nodes:
             operator = node.current[0]
-
             if isinstance(operator, UnaryToUnaryOperator):
                 pipeline.append(operator)
             else:

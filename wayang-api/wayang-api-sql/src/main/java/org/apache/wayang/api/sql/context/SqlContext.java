@@ -17,6 +17,9 @@
 
 package org.apache.wayang.api.sql.context;
 
+import org.apache.commons.lang3.StringUtils;
+
+
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
@@ -25,6 +28,8 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
+
+import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
 import org.apache.wayang.api.sql.calcite.optimizer.Optimizer;
 import org.apache.wayang.api.sql.calcite.rules.WayangRules;
@@ -39,6 +44,13 @@ import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
 import org.apache.wayang.spark.Spark;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,8 +84,101 @@ public class SqlContext extends WayangContext {
         for (final Plugin plugin : plugins) {
             this.withPlugin(plugin);
         }
-
+        
         calciteSchema = SchemaUtils.getSchema(configuration);
+    }
+
+    /**
+     * Entry point for executing SQL statements while providing arguments.
+     * You need to provide at least a JDBC source.
+     * 
+     * @param args args[0] = SQL statement path, args[1] = JDBC driver, args[2] =
+     *             JDBC URL, args[3] = JDBC user,
+     *                          args[4] = JDBC password, args[5] = outputPath,
+     *             args[6...] = platforms
+     */
+    public static void main(final String[] args) throws Exception {
+        if (args.length < 5)
+            throw new IllegalArgumentException(
+                    "Usage: ./bin/wayang-submit org.apache.wayang.api.sql.SqlContext <SQL statement path> <JDBC driver> <JDBC URL> <JDBC user> <JDBC password> <Result output path> [platforms...]");
+
+        final String queryPath = args[0];
+        final String jdbcDriver = args[1];
+        final String jdbcUrl = args[2];
+        final String jdbcUser = args[3];
+        final String jdbcPassword = args[4];
+        final String outputPath = args[5];
+
+        final String query = StringUtils.chop(
+                Files.readString(Paths.get(queryPath))
+                        .stripTrailing());
+
+        final String driverPlatform = jdbcDriver.split("\\.")[0];
+
+        final String calciteModel = String.format(
+                "{\r\n" +
+                        "\"calcite\": {\r\n" +
+                        "    \"version\": \"1.0\",\n" +
+                        "    \"defaultSchema\": \"wayang\",\n" +
+                        "    \"schemas\": [\n" +
+                        "        {\n" +
+                        "            \"name\": \"postgres\",\n" +
+                        "            \"type\": \"custom\",\n" +
+                        "            \"factory\": \"org.apache.wayang.api.sql.calcite.jdbc.JdbcSchema$Factory\",\n" +
+                        "            \"operand\": {\n" +
+                        "                \"jdbcDriver\": \"%s\",\n" +
+                        "                \"jdbcUrl\": \"%s\",\n" +
+                        "                \"jdbcUser\": \"%s\",\n" +
+                        "                \"jdbcPassword\": \"%s\"\n" +
+                        "            }\n" +
+                        "        }\n" +
+                        "    ]\n" +
+                        "}\r\n" +
+                        "}",
+                jdbcDriver, jdbcUrl, jdbcUser, jdbcPassword);
+
+        final Configuration configuration = new Configuration();
+
+        configuration.setProperty("wayang.calcite.model", calciteModel);
+        configuration.setProperty(String.format("wayang.%s.jdbc.url", driverPlatform), jdbcUrl);
+        configuration.setProperty(String.format("wayang.%s.jdbc.user", driverPlatform), jdbcUser);
+        configuration.setProperty(String.format("wayang.%s.jdbc.password", driverPlatform), jdbcPassword);
+
+        final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
+
+        final Configuration parseModel = new ModelParser(configuration, calciteModelJSON).setProperties();
+
+        final SqlContext context = new SqlContext(parseModel,
+                List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
+
+        for (int i = 6; i < args.length; i++) {
+            final String platform = args[i];
+
+            switch (platform.toLowerCase()) {
+                case "spark":
+                    context.withPlugin(Spark.basicPlugin());
+                    break;
+                case "java":
+                    context.withPlugin(Java.basicPlugin());
+                    break;
+                case "postgres":
+                    context.withPlugin(Postgres.plugin());
+                    break;
+                default:
+                    throw new IllegalArgumentException("platform not supported " + platform);
+            }
+        }
+
+        final Collection<Record> result = context.executeSql(query);
+
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(outputPath))) {
+            for (final Record record : result) {
+                writer.write(record.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public Collection<Record> executeSql(final String sql) throws SqlParseException {
@@ -98,7 +203,7 @@ public class SqlContext extends WayangContext {
                 WayangRules.WAYANG_JOIN_RULE,
                 WayangRules.WAYANG_AGGREGATE_RULE,
                 WayangRules.WAYANG_SORT_RULE);
-                
+
         final RelNode wayangRel = optimizer.optimize(
                 relNode,
                 relNode.getTraitSet().plus(WayangConvention.INSTANCE),
