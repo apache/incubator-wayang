@@ -19,7 +19,6 @@ package org.apache.wayang.api.sql.context;
 
 import org.apache.commons.lang3.StringUtils;
 
-
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
@@ -29,7 +28,6 @@ import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 
-import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
 import org.apache.wayang.api.sql.calcite.optimizer.Optimizer;
 import org.apache.wayang.api.sql.calcite.rules.WayangRules;
@@ -43,9 +41,6 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
 import org.apache.wayang.spark.Spark;
-
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -84,76 +79,38 @@ public class SqlContext extends WayangContext {
         for (final Plugin plugin : plugins) {
             this.withPlugin(plugin);
         }
-        
+
         calciteSchema = SchemaUtils.getSchema(configuration);
     }
 
     /**
      * Entry point for executing SQL statements while providing arguments.
      * You need to provide at least a JDBC source.
-     * 
-     * @param args args[0] = SQL statement path, args[1] = JDBC driver, args[2] =
-     *             JDBC URL, args[3] = JDBC user,
-     *                          args[4] = JDBC password, args[5] = outputPath,
-     *             args[6...] = platforms
+     * Sample: 
+     * @param args args[0] = config file path, args[1] = query file path, args[2] = output path
      */
     public static void main(final String[] args) throws Exception {
-        if (args.length < 5)
+        if (args.length < 3)
             throw new IllegalArgumentException(
-                    "Usage: ./bin/wayang-submit org.apache.wayang.api.sql.SqlContext <SQL statement path> <JDBC driver> <JDBC URL> <JDBC user> <JDBC password> <Result output path> [platforms...]");
+                    "Usage: ./bin/wayang-submit org.apache.wayang.api.sql.SqlContext <configuration path> <SQL statement path> <output path> [platforms...]");
 
-        final String queryPath = args[0];
-        final String jdbcDriver = args[1];
-        final String jdbcUrl = args[2];
-        final String jdbcUser = args[3];
-        final String jdbcPassword = args[4];
-        final String outputPath = args[5];
+        final String configurationPath = args[0];
+        final String queryPath = args[1];
+        final String outputPath = args[2];
 
-        final String query = StringUtils.chop(
-                Files.readString(Paths.get(queryPath))
-                        .stripTrailing());
+        final String query = StringUtils.chop(Files.readString(Paths.get(queryPath)).stripTrailing());
 
-        final String driverPlatform = jdbcDriver.split("\\.")[0];
+        final Configuration configuration = new Configuration(configurationPath);
 
-        final String calciteModel = String.format(
-                "{\r\n" +
-                        "\"calcite\": {\r\n" +
-                        "    \"version\": \"1.0\",\n" +
-                        "    \"defaultSchema\": \"wayang\",\n" +
-                        "    \"schemas\": [\n" +
-                        "        {\n" +
-                        "            \"name\": \"postgres\",\n" +
-                        "            \"type\": \"custom\",\n" +
-                        "            \"factory\": \"org.apache.wayang.api.sql.calcite.jdbc.JdbcSchema$Factory\",\n" +
-                        "            \"operand\": {\n" +
-                        "                \"jdbcDriver\": \"%s\",\n" +
-                        "                \"jdbcUrl\": \"%s\",\n" +
-                        "                \"jdbcUser\": \"%s\",\n" +
-                        "                \"jdbcPassword\": \"%s\"\n" +
-                        "            }\n" +
-                        "        }\n" +
-                        "    ]\n" +
-                        "}\r\n" +
-                        "}",
-                jdbcDriver, jdbcUrl, jdbcUser, jdbcPassword);
+        System.out.println("loaded model: " + configuration.getStringProperty("wayang.calcite.model"));
 
-        final Configuration configuration = new Configuration();
+        final SqlContext context = new SqlContext(configuration,
+                List.of(Java.channelConversionPlugin(),
+                        Postgres.conversionPlugin()));
 
-        configuration.setProperty("wayang.calcite.model", calciteModel);
-        configuration.setProperty(String.format("wayang.%s.jdbc.url", driverPlatform), jdbcUrl);
-        configuration.setProperty(String.format("wayang.%s.jdbc.user", driverPlatform), jdbcUser);
-        configuration.setProperty(String.format("wayang.%s.jdbc.password", driverPlatform), jdbcPassword);
-
-        final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
-
-        final Configuration parseModel = new ModelParser(configuration, calciteModelJSON).setProperties();
-
-        final SqlContext context = new SqlContext(parseModel,
-                List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
-
-        for (int i = 6; i < args.length; i++) {
+        for (int i = 3; i < args.length; i++) {
             final String platform = args[i];
-
+            System.out.println("loaded platform: " + platform);
             switch (platform.toLowerCase()) {
                 case "spark":
                     context.withPlugin(Spark.basicPlugin());
@@ -213,6 +170,7 @@ public class SqlContext extends WayangContext {
 
         final Collection<Record> collector = new ArrayList<>();
         final WayangPlan wayangPlan = optimizer.convert(wayangRel, collector);
+        collector.add(new Record(wayangRel.getRowType().getFieldNames().toArray()));
         this.execute(getJobName(), wayangPlan);
 
         return collector;
