@@ -149,14 +149,15 @@ public class WayangContext {
     public void explain(WayangPlan wayangPlan, boolean toJson, String... udfJars) {
         Job job = this.createJob(null, null, wayangPlan, udfJars);
         ExecutionPlan executionPlan = job.buildInitialExecutionPlan();
+        long unixTime = System.currentTimeMillis() / 1000L;
 
         ExplainUtils.write(
             ExplainUtils.parsePlan(wayangPlan, true),
-            this.configuration.getStringProperty("wayang.core.explain.logical.file")
+            this.configuration.getStringProperty("wayang.core.explain.directory") + "job-" + job.getName() + "-" + unixTime + "-logical.json"
         );
         ExplainUtils.write(
             ExplainUtils.parsePlan(executionPlan, true),
-            this.configuration.getStringProperty("wayang.core.explain.execution.file")
+            this.configuration.getStringProperty("wayang.core.explain.directory") + "job-" + job.getName() + "-" + unixTime + "-execution.json"
         );
     }
 
