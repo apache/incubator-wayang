@@ -130,7 +130,7 @@ public class SqlContext extends WayangContext {
         final Optimizer optimizer = Optimizer.create(context.calciteSchema, configProperties,
                 relDataTypeFactory);
 
-        final SqlNode sqlNode = optimizer.parseSql("select * from postgres.role_type, fs.exampleSmallA");
+        final SqlNode sqlNode = optimizer.parseSql(query);
         final SqlNode validatedSqlNode = optimizer.validate(sqlNode);
         final RelNode relNode = optimizer.convert(validatedSqlNode);
 
