@@ -48,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -102,15 +103,12 @@ public class SqlContext extends WayangContext {
 
         final Configuration configuration = new Configuration(configurationPath);
 
-        System.out.println("loaded model: " + configuration.getStringProperty("wayang.calcite.model"));
-
         final SqlContext context = new SqlContext(configuration,
                 List.of(Java.channelConversionPlugin(),
                         Postgres.conversionPlugin()));
 
         for (int i = 3; i < args.length; i++) {
             final String platform = args[i];
-            System.out.println("loaded platform: " + platform);
             switch (platform.toLowerCase()) {
                 case "spark":
                     context.withPlugin(Spark.basicPlugin());
@@ -126,11 +124,42 @@ public class SqlContext extends WayangContext {
             }
         }
 
-        final Collection<Record> result = context.executeSql(query);
+        final Properties configProperties = Optimizer.ConfigProperties.getDefaults();
+        final RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
+
+        final Optimizer optimizer = Optimizer.create(context.calciteSchema, configProperties,
+                relDataTypeFactory);
+
+        final SqlNode sqlNode = optimizer.parseSql("select * from postgres.role_type, fs.exampleSmallA");
+        final SqlNode validatedSqlNode = optimizer.validate(sqlNode);
+        final RelNode relNode = optimizer.convert(validatedSqlNode);
+
+        PrintUtils.print("After parsing sql query", relNode);
+
+        final RuleSet rules = RuleSets.ofList(
+                WayangRules.WAYANG_TABLESCAN_RULE,
+                WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
+                WayangRules.WAYANG_PROJECT_RULE,
+                WayangRules.WAYANG_FILTER_RULE,
+                WayangRules.WAYANG_JOIN_RULE,
+                WayangRules.WAYANG_AGGREGATE_RULE,
+                WayangRules.WAYANG_SORT_RULE);
+
+        final RelNode wayangRel = optimizer.optimize(
+                relNode,
+                relNode.getTraitSet().plus(WayangConvention.INSTANCE),
+                rules);
+
+        PrintUtils.print("After translating logical intermediate plan", wayangRel);
+
+        final Collection<Record> collector = new ArrayList<>();
+        final WayangPlan wayangPlan = optimizer.convertWithConfig(wayangRel, configuration, collector);
+        collector.add(new Record(wayangRel.getRowType().getFieldNames().toArray()));
+        context.execute(getJobName(), wayangPlan);
 
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(outputPath))) {
-            for (final Record record : result) {
-                writer.write(record.toString());
+            for (final Record record : collector) {
+                writer.write(Arrays.toString(record.getValues()));
                 writer.newLine();
             }
         } catch (IOException e) {
@@ -170,7 +199,7 @@ public class SqlContext extends WayangContext {
 
         final Collection<Record> collector = new ArrayList<>();
         final WayangPlan wayangPlan = optimizer.convert(wayangRel, collector);
-        collector.add(new Record(wayangRel.getRowType().getFieldNames().toArray()));
+
         this.execute(getJobName(), wayangPlan);
 
         return collector;
