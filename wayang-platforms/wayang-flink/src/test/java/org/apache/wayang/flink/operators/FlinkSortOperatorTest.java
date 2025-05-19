@@ -22,19 +22,20 @@ import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link FlinkSortOperator}.
  */
-public class FlinkSortOperatorTest extends FlinkOperatorTestBase {
+class FlinkSortOperatorTest extends FlinkOperatorTestBase {
 
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input = this.createDataSetChannelInstance(Arrays.asList(6, 0, 1, 1, 5, 2));
         DataSetChannel.Instance output = this.createDataSetChannelInstance();
@@ -56,8 +57,8 @@ public class FlinkSortOperatorTest extends FlinkOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> result = output.<Integer>provideDataSet().collect();
-        Assert.assertEquals(6, result.size());
-        Assert.assertEquals(Arrays.asList(0, 1, 1, 2, 5, 6), result);
+        assertEquals(6, result.size());
+        assertEquals(Arrays.asList(0, 1, 1, 2, 5, 6), result);
 
     }
 

@@ -18,21 +18,21 @@
 
 package org.apache.wayang.core.util.mathex;
 
-
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.util.mathex.exceptions.ParseException;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test suite for the class {@link ExpressionBuilder}.
  */
-public class ExpressionBuilderTest {
+class ExpressionBuilderTest {
 
     @Test
-    public void shouldNotFailOnValidInput() {
+    void shouldNotFailOnValidInput() {
         Collection<String> expressions = Arrays.asList(
                 "x",
                 "f(x)",
@@ -48,7 +48,7 @@ public class ExpressionBuilderTest {
     }
 
     @Test
-    public void shouldFailOnInvalidInput() {
+    void shouldFailOnInvalidInput() {
         Collection<String> expressions = Arrays.asList(
                 // TODO: For some reason this is not failing on my machine
                 //"2x",
@@ -65,7 +65,7 @@ public class ExpressionBuilderTest {
             } catch (ParseException e) {
                 isFailed = true;
             } finally {
-                Assert.assertTrue(isFailed);
+                assertTrue(isFailed);
             }
         }
     }

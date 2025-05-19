@@ -18,8 +18,6 @@
 
 package org.apache.wayang.iejoin.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.function.TransformationDescriptor;
@@ -27,18 +25,21 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link SparkIEJoinOperator}.
  */
-public class SparkIEJoinOperatorTest extends SparkOperatorTestBase {
+class SparkIEJoinOperatorTest extends SparkOperatorTestBase {
 
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         Record r1 = new Record(100, 10);
         Record r2 = new Record(200, 20);
         Record r3 = new Record(300, 30);
@@ -83,7 +84,7 @@ public class SparkIEJoinOperatorTest extends SparkOperatorTestBase {
 
         // Verify the outcome.
         final List<Tuple2<Record, Record>> result = output.<Tuple2<Record, Record>>provideRdd().collect();
-        Assert.assertEquals(2, result.size());
+        assertEquals(2, result.size());
         //Assert.assertEquals(result.get(0), new Tuple2(1, "a"));
 
     }

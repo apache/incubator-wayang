@@ -22,8 +22,6 @@ package org.apache.wayang.jdbc.operators;
 import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -31,21 +29,23 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.jdbc.test.HsqldbPlatform;
 import org.apache.wayang.jdbc.test.HsqldbTableSource;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Test suite for {@link SqlToStreamOperator}.
  */
-public class JdbcTableSourceTest {
+class JdbcTableSourceTest {
 
     @Test
-    public void testCardinalityEstimator() throws SQLException {
+    void testCardinalityEstimator() throws SQLException {
         Job job = mock(Job.class);
         DefaultOptimizationContext optimizationContext = mock(DefaultOptimizationContext.class);
         when(job.getOptimizationContext()).thenReturn(optimizationContext);
@@ -69,7 +69,7 @@ public class JdbcTableSourceTest {
 
         final CardinalityEstimate estimate = cardinalityEstimator.estimate(optimizationContext);
 
-        Assert.assertEquals(
+        assertEquals(
                 new CardinalityEstimate(3, 3, 1d),
                 estimate
         );

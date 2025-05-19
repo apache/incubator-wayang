@@ -18,9 +18,6 @@
 
 package org.apache.wayang.core.optimizer.channels;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -38,14 +35,21 @@ import org.apache.wayang.core.test.DummyNonReusableChannel;
 import org.apache.wayang.core.test.DummyReusableChannel;
 import org.apache.wayang.core.test.MockFactory;
 import org.apache.wayang.core.util.WayangCollections;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test suite for {@link ChannelConversionGraph}.
  */
-public class ChannelConversionGraphTest {
+class ChannelConversionGraphTest {
 
     private static DefaultChannelConversion reusableToNonReusableChannelConversion;
 
@@ -69,8 +73,8 @@ public class ChannelConversionGraphTest {
         };
     }
 
-    @BeforeClass
-    public static void initializeChannelConversions() {
+    @BeforeAll
+    static void initializeChannelConversions() {
         reusableToNonReusableChannelConversion = new DefaultChannelConversion(
                 DummyReusableChannel.DESCRIPTOR,
                 DummyNonReusableChannel.DESCRIPTOR,
@@ -102,7 +106,7 @@ public class ChannelConversionGraphTest {
     }
 
     @Test
-    public void findDirectConversion() throws Exception {
+    void findDirectConversion() throws Exception {
         ChannelConversionGraph channelConversionGraph = new ChannelConversionGraph(configuration);
 
         ExecutionOperator sourceOperator = new DummyExecutionOperator(0, 1, false);
@@ -128,7 +132,7 @@ public class ChannelConversionGraphTest {
     }
 
     @Test
-    public void findIntricateConversion() throws Exception {
+    void findIntricateConversion() throws Exception {
         ChannelConversionGraph channelConversionGraph = new ChannelConversionGraph(new Configuration());
         channelConversionGraph.add(reusableToNonReusableChannelConversion);
         channelConversionGraph.add(nonReusableToReusableChannelConversion);
@@ -157,7 +161,7 @@ public class ChannelConversionGraphTest {
     }
 
     @Test
-    public void findIntricateConversion2() throws Exception {
+    void findIntricateConversion2() throws Exception {
         ChannelConversionGraph channelConversionGraph = new ChannelConversionGraph(new Configuration());
         channelConversionGraph.add(reusableToNonReusableChannelConversion);
         channelConversionGraph.add(nonReusableToReusableChannelConversion);
@@ -186,7 +190,7 @@ public class ChannelConversionGraphTest {
     }
 
     @Test
-    public void updateExistingConversionWithOnlySourceChannel() throws Exception {
+    void updateExistingConversionWithOnlySourceChannel() throws Exception {
         ChannelConversionGraph channelConversionGraph = new ChannelConversionGraph(new Configuration());
         channelConversionGraph.add(reusableToNonReusableChannelConversion);
         channelConversionGraph.add(nonReusableToReusableChannelConversion);
@@ -215,19 +219,19 @@ public class ChannelConversionGraphTest {
                 optimizationContext
         );
 
-        Assert.assertTrue(junction.getSourceChannel() == sourceChannel);
+        assertSame(junction.getSourceChannel(), sourceChannel);
 
         final Channel targetChannel0 = junction.getTargetChannel(0);
-        Assert.assertTrue(targetChannel0 instanceof DummyReusableChannel);
-        Assert.assertTrue(OptimizationUtils.getPredecessorChannel(targetChannel0).getOriginal() == sourceChannel);
+        assertInstanceOf(DummyReusableChannel.class, targetChannel0);
+        assertSame(OptimizationUtils.getPredecessorChannel(targetChannel0).getOriginal(), sourceChannel);
 
         final Channel targetChannel1 = junction.getTargetChannel(1);
-        Assert.assertTrue(targetChannel1 instanceof DummyExternalReusableChannel);
-        Assert.assertTrue(OptimizationUtils.getPredecessorChannel(targetChannel1) == targetChannel0);
+        assertInstanceOf(DummyExternalReusableChannel.class, targetChannel1);
+        assertSame(OptimizationUtils.getPredecessorChannel(targetChannel1), targetChannel0);
     }
 
     @Test
-    public void updateExistingConversionWithReachedDestination() throws Exception {
+    void updateExistingConversionWithReachedDestination() throws Exception {
         ChannelConversionGraph channelConversionGraph = new ChannelConversionGraph(new Configuration());
         channelConversionGraph.add(reusableToNonReusableChannelConversion);
         channelConversionGraph.add(nonReusableToReusableChannelConversion);
@@ -261,20 +265,20 @@ public class ChannelConversionGraphTest {
                 optimizationContext
         );
 
-        Assert.assertTrue(junction.getSourceChannel() == sourceChannel);
+        assertSame(junction.getSourceChannel(), sourceChannel);
 
         final Channel targetChannel0 = junction.getTargetChannel(0);
-        Assert.assertTrue(targetChannel0 == reusableChannel);
-        Assert.assertTrue(OptimizationUtils.getPredecessorChannel(targetChannel0) == sourceChannel);
+        assertSame(targetChannel0, reusableChannel);
+        assertSame(OptimizationUtils.getPredecessorChannel(targetChannel0), sourceChannel);
 
         final Channel targetChannel1 = junction.getTargetChannel(1);
-        Assert.assertTrue(targetChannel1 instanceof DummyExternalReusableChannel);
-        Assert.assertTrue(OptimizationUtils.getPredecessorChannel(targetChannel1).isCopy());
-        Assert.assertTrue(OptimizationUtils.getPredecessorChannel(targetChannel1).getOriginal() == targetChannel0);
+        assertInstanceOf(DummyExternalReusableChannel.class, targetChannel1);
+        assertTrue(OptimizationUtils.getPredecessorChannel(targetChannel1).isCopy());
+        assertSame(OptimizationUtils.getPredecessorChannel(targetChannel1).getOriginal(), targetChannel0);
     }
 
     @Test
-    public void updateExistingConversionWithTwoOpenChannels() throws Exception {
+    void updateExistingConversionWithTwoOpenChannels() throws Exception {
         ChannelConversionGraph channelConversionGraph = new ChannelConversionGraph(new Configuration());
         channelConversionGraph.add(reusableToNonReusableChannelConversion);
         channelConversionGraph.add(nonReusableToReusableChannelConversion);
@@ -305,18 +309,18 @@ public class ChannelConversionGraphTest {
                 optimizationContext
         );
 
-        Assert.assertTrue(junction.getSourceChannel() == sourceChannel);
+        assertSame(junction.getSourceChannel(), sourceChannel);
 
-        Assert.assertTrue(sourceChannel.getConsumers().size() == 1);
+        assertEquals(1, sourceChannel.getConsumers().size());
         ExecutionTask consumer = WayangCollections.getAny(sourceChannel.getConsumers());
         Channel nextChannel = consumer.getOutputChannel(0);
-        Assert.assertTrue(nextChannel == reusableChannel);
-        Assert.assertTrue(junction.getTargetChannel(0).isCopy() && junction.getTargetChannel(0).getOriginal() == nextChannel);
+        assertSame(nextChannel, reusableChannel);
+        assertTrue(junction.getTargetChannel(0).isCopy() && junction.getTargetChannel(0).getOriginal() == nextChannel);
 
         consumer = WayangCollections.getSingle(nextChannel.getConsumers());
         nextChannel = consumer.getOutputChannel(0);
-        Assert.assertTrue(nextChannel == externalChannel);
-        Assert.assertTrue(junction.getTargetChannel(1).isCopy() && junction.getTargetChannel(1).getOriginal() == nextChannel);
+        assertSame(nextChannel, externalChannel);
+        assertTrue(junction.getTargetChannel(1).isCopy() && junction.getTargetChannel(1).getOriginal() == nextChannel);
     }
 
 

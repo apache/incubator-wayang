@@ -18,7 +18,6 @@
 
 package org.apache.wayang.tests;
 
-import org.apache.wayang.api.*;
 import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.basic.model.op.*;
 import org.apache.wayang.basic.model.op.nn.CrossEntropyLoss;
@@ -31,7 +30,7 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,7 +55,7 @@ public class TensorflowIrisScalaLikeApiIT {
     );
 
     @Test
-    public void test() {
+    void test() {
         WayangContext wayangContext = new WayangContext()
                 .with(Java.basicPlugin())
                 .with(Tensorflow.plugin());

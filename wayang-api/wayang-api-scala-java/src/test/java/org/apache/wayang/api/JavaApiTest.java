@@ -18,9 +18,6 @@
 
 package org.apache.wayang.api;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
@@ -38,6 +35,8 @@ import org.apache.wayang.java.operators.JavaMapOperator;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.sqlite3.Sqlite3;
 import org.apache.wayang.sqlite3.operators.Sqlite3TableSource;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,15 +56,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for the Java API.
  */
-public class JavaApiTest {
+class JavaApiTest {
 
     private Configuration sqlite3Configuration;
 
-    @Before
-    public void setUp() throws SQLException, IOException {
+    @BeforeEach
+    void setUp() throws SQLException, IOException {
         // Generate test data.
         this.sqlite3Configuration = new Configuration();
         File sqlite3dbFile = File.createTempFile("wayang-sqlite3", "db");
@@ -83,7 +84,7 @@ public class JavaApiTest {
     }
 
     @Test
-    public void testMapReduce() {
+    void testMapReduce() {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext);
 
@@ -94,11 +95,11 @@ public class JavaApiTest {
                 .reduce((a, b) -> a + b).withName("sum")
                 .collect();
 
-        Assert.assertEquals(WayangCollections.asSet(1 + 4 + 9 + 16), WayangCollections.asSet(outputCollection));
+        assertEquals(WayangCollections.asSet(1 + 4 + 9 + 16), WayangCollections.asSet(outputCollection));
     }
 
     @Test
-    public void testMapReduceBy() {
+    void testMapReduceBy() {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext);
 
@@ -109,11 +110,11 @@ public class JavaApiTest {
                 .reduceByKey(i -> i & 1, (a, b) -> a + b).withName("sum")
                 .collect();
 
-        Assert.assertEquals(WayangCollections.asSet(4 + 16, 1 + 9), WayangCollections.asSet(outputCollection));
+        assertEquals(WayangCollections.asSet(4 + 16, 1 + 9), WayangCollections.asSet(outputCollection));
     }
 
     @Test
-    public void testBroadcast2() {
+    void testBroadcast2() {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext);
 
@@ -129,11 +130,11 @@ public class JavaApiTest {
                 .map(new AddOffset("offset")).withName("add offset").withBroadcast(offsetDataQuanta, "offset")
                 .collect();
 
-        Assert.assertEquals(WayangCollections.asSet(-2, -1, 0, 1, 2), WayangCollections.asSet(outputCollection));
+        assertEquals(WayangCollections.asSet(-2, -1, 0, 1, 2), WayangCollections.asSet(outputCollection));
     }
 
     @Test
-    public void testCustomOperatorShortCut() {
+    void testCustomOperatorShortCut() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
@@ -154,11 +155,11 @@ public class JavaApiTest {
 
         // Check the outcome.
         final List<Integer> expectedOutputValues = WayangArrays.asList(2, 3, 4, 5);
-        Assert.assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
+        assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testWordCount() {
+    void testWordCount() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
@@ -179,11 +180,11 @@ public class JavaApiTest {
                 new Tuple2<>("is", 2),
                 new Tuple2<>("data", 3)
         );
-        Assert.assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
+        assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testWordCountOnSparkAndJava() {
+    void testWordCountOnSparkAndJava() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
 
@@ -204,11 +205,11 @@ public class JavaApiTest {
                 new Tuple2<>("is", 2),
                 new Tuple2<>("data", 3)
         );
-        Assert.assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
+        assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testSample() {
+    void testSample() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
 
@@ -222,13 +223,13 @@ public class JavaApiTest {
                 .collect();
 
         // Check the outcome.
-        Assert.assertEquals(10, outputValues.size());
-        Assert.assertEquals(10, WayangCollections.asSet(outputValues).size());
+        assertEquals(10, outputValues.size());
+        assertEquals(10, WayangCollections.asSet(outputValues).size());
 
     }
 
     @Test
-    public void testDoWhile() {
+    void testDoWhile() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
@@ -253,7 +254,7 @@ public class JavaApiTest {
                 .collect();
 
         Set<Integer> expectedValues = WayangCollections.asSet(1, 2, 3, 6, 12, 24, 48, 96, 192);
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     private static class AddOffset implements FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer> {
@@ -278,7 +279,7 @@ public class JavaApiTest {
     }
 
     @Test
-    public void testRepeat() {
+    void testRepeat() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
@@ -296,7 +297,7 @@ public class JavaApiTest {
                 .collect();
 
         Set<Integer> expectedValues = WayangCollections.asSet(42, 43);
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     private static class SelectWords implements PredicateDescriptor.ExtendedSerializablePredicate<String> {
@@ -321,7 +322,7 @@ public class JavaApiTest {
     }
 
     @Test
-    public void testBroadcast() {
+    void testBroadcast() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
@@ -340,11 +341,11 @@ public class JavaApiTest {
 
         // Verify the outcome.
         Set<String> expectedValues = WayangCollections.asSet("Hello", "World");
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testGroupBy() {
+    void testGroupBy() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
@@ -369,11 +370,11 @@ public class JavaApiTest {
 
         // Verify the outcome.
         Set<Double> expectedValues = WayangCollections.asSet(5d, 6d);
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testJoin() {
+    void testJoin() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
@@ -404,11 +405,11 @@ public class JavaApiTest {
                 new Tuple2<>("Orange juice", 10),
                 new Tuple2<>("Tap water", 0)
         );
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testJoinAndAssemble() {
+    void testJoinAndAssemble() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
@@ -439,11 +440,11 @@ public class JavaApiTest {
                 new Tuple2<>("Orange juice", 10),
                 new Tuple2<>("Tap water", 0)
         );
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testCoGroup() {
+    void testCoGroup() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
@@ -485,11 +486,11 @@ public class JavaApiTest {
                         WayangCollections.asSet(new Tuple2<>("Apple juice", "Juice"), new Tuple2<>("Orange juice", "Juice"))
                 )
         );
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testCoGroupViaKeyBy() {
+    void testCoGroupViaKeyBy() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
@@ -532,11 +533,11 @@ public class JavaApiTest {
                         WayangCollections.asSet(new Tuple2<>("Apple juice", "Juice"), new Tuple2<>("Orange juice", "Juice"))
                 )
         );
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testIntersect() {
+    void testIntersect() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
@@ -552,11 +553,11 @@ public class JavaApiTest {
 
         // Verify the outcome.
         Set<Integer> expectedValues = WayangCollections.asSet(2, 3, 4, 5, 7, 8, 9);
-        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testSort() {
+    void testSort() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
@@ -570,12 +571,12 @@ public class JavaApiTest {
 
         // Verify the outcome.
         List<Integer> expectedValues = Arrays.asList(1, 2, 3, 4, 5);
-        Assert.assertEquals(expectedValues, WayangCollections.asList(outputValues));
+        assertEquals(expectedValues, WayangCollections.asList(outputValues));
     }
 
 
     @Test
-    public void testPageRank() {
+    void testPageRank() {
         // Set up WayangContext.
         WayangContext wayangContext = new WayangContext()
                 .with(Java.basicPlugin())
@@ -601,14 +602,14 @@ public class JavaApiTest {
         sortedPageRanks.sort((pr1, pr2) -> Float.compare(pr2.field1, pr1.field1));
 
         System.out.println(sortedPageRanks);
-        Assert.assertEquals(1L, sortedPageRanks.get(0).field0.longValue());
-        Assert.assertEquals(0L, sortedPageRanks.get(1).field0.longValue());
-        Assert.assertEquals(2L, sortedPageRanks.get(2).field0.longValue());
-        Assert.assertEquals(3L, sortedPageRanks.get(3).field0.longValue());
+        assertEquals(1L, sortedPageRanks.get(0).field0.longValue());
+        assertEquals(0L, sortedPageRanks.get(1).field0.longValue());
+        assertEquals(2L, sortedPageRanks.get(2).field0.longValue());
+        assertEquals(3L, sortedPageRanks.get(3).field0.longValue());
     }
 
     @Test
-    public void testMapPartitions() {
+    void testMapPartitions() {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
@@ -635,11 +636,11 @@ public class JavaApiTest {
         Set<Tuple2<String, Integer>> expectedOutput = WayangCollections.asSet(
                 new Tuple2<>("even", 5), new Tuple2<>("odd", 2)
         );
-        Assert.assertEquals(expectedOutput, WayangCollections.asSet(outputValues));
+        assertEquals(expectedOutput, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testZipWithId() {
+    void testZipWithId() {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
@@ -667,11 +668,11 @@ public class JavaApiTest {
 
         // Check the output.
         Set<Tuple2<Integer, Integer>> expectedOutput = Collections.singleton(new Tuple2<>(42, 100));
-        Assert.assertEquals(expectedOutput, WayangCollections.asSet(outputValues));
+        assertEquals(expectedOutput, WayangCollections.asSet(outputValues));
     }
 
     @Test
-    public void testWriteTextFile() throws IOException, URISyntaxException {
+    void testWriteTextFile() throws IOException, URISyntaxException {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
@@ -689,11 +690,11 @@ public class JavaApiTest {
         // Check the output.
         Set<String> actualLines = Files.lines(Paths.get(new URI(targetUrl))).collect(Collectors.toSet());
         Set<String> expectedLines = inputValues.stream().map(d -> String.format("%.2f", d)).collect(Collectors.toSet());
-        Assert.assertEquals(expectedLines, actualLines);
+        assertEquals(expectedLines, actualLines);
     }
 
     @Test
-    public void testSqlOnJava() throws IOException, SQLException {
+    void testSqlOnJava() throws IOException, SQLException {
         // Execute job.
         final WayangContext wayangCtx = new WayangContext(this.sqlite3Configuration)
                 .with(Java.basicPlugin())
@@ -707,14 +708,14 @@ public class JavaApiTest {
                 .collect();
 
         // Test the outcome.
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet("John", "Evelyn"),
                 WayangCollections.asSet(outputValues)
         );
     }
 
     @Test
-    public void testSqlOnSqlite3() throws IOException, SQLException {
+    void testSqlOnSqlite3() throws IOException, SQLException {
         // Execute job.
         final WayangContext wayangCtx = new WayangContext(this.sqlite3Configuration)
                 .with(Java.basicPlugin())
@@ -728,7 +729,7 @@ public class JavaApiTest {
                 .collect();
 
         // Test the outcome.
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet("John", "Evelyn"),
                 WayangCollections.asSet(outputValues)
         );

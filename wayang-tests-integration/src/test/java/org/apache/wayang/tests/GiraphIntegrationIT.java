@@ -18,13 +18,13 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.giraph.Giraph;
 import org.apache.wayang.java.Java;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,26 +32,30 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Integration tests for the integration of Giraph with Wayang.
  */
-public class GiraphIntegrationIT {
+class GiraphIntegrationIT {
 
-    //@Test
     //TODO validate if this test is helpfull
-    public void testPageRankWithJava() {
+    @Disabled
+    @Test
+    void testPageRankWithJava() {
         List<Tuple2<Character, Float>> pageRanks = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlans.pageRankWithDictionaryCompression(pageRanks);
         WayangContext rc = new WayangContext().with(Java.basicPlugin()).with(Giraph.plugin());
         rc.execute(wayangPlan);
 
-        pageRanks.stream().forEach(System.out::println);
+        pageRanks.forEach(System.out::println);
         this.check(pageRanks);
     }
 
 
     @Test
-    public void testPageRankWithoutGiraph() {
+    void testPageRankWithoutGiraph() {
         List<Tuple2<Character, Float>> pageRanks = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlans.pageRankWithDictionaryCompression(pageRanks);
         WayangContext rc = new WayangContext()
@@ -65,8 +69,8 @@ public class GiraphIntegrationIT {
     private void check(List<Tuple2<Character, Float>> pageRanks) {
         final Map<Character, Float> solutions = WayangPlans.pageRankWithDictionaryCompressionSolution();
         Set<Character> vertices = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toSet());
-        solutions.forEach((k, v) -> Assert.assertTrue(String.format("Missing page rank for %s.", k), vertices.contains(k)));
-        Assert.assertEquals(String.format("Illegal number of page ranks in %s.", pageRanks), solutions.size(), pageRanks.size());
+        solutions.forEach((k, v) -> assertTrue(vertices.contains(k), String.format("Missing page rank for %s.", k)));
+        assertEquals(solutions.size(), pageRanks.size(), String.format("Illegal number of page ranks in %s.", pageRanks));
     }
 
 }

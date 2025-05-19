@@ -18,8 +18,6 @@
 
 package org.apache.wayang.core.plugin;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.mapping.test.TestSinkMapping;
@@ -30,11 +28,13 @@ import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.test.DummyPlatform;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangCollections;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -49,83 +49,83 @@ public class DynamicPluginTest {
     );
 
     @Test
-    public void testLoadYaml() {
+    void testLoadYaml() {
         final DynamicPlugin plugin =
                 DynamicPlugin.loadYaml(ReflectionUtils.getResourceURL("test-plugin.yaml").toString());
 
         Set<Platform> expectedPlatforms = WayangCollections.asSet(DummyPlatform.getInstance());
-        Assert.assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
+        assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
 
         Set<Platform> expectedExcludedPlatforms = Collections.emptySet();
-        Assert.assertEquals(expectedExcludedPlatforms, WayangCollections.asSet(plugin.getExcludedRequiredPlatforms()));
+        assertEquals(expectedExcludedPlatforms, WayangCollections.asSet(plugin.getExcludedRequiredPlatforms()));
 
         Set<Mapping> expectedMappings = WayangCollections.asSet(new TestSinkMapping());
-        Assert.assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
+        assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
 
         Set<Mapping> expectedExcludedMappings = WayangCollections.asSet();
-        Assert.assertEquals(expectedExcludedMappings, WayangCollections.asSet(plugin.getExcludedMappings()));
+        assertEquals(expectedExcludedMappings, WayangCollections.asSet(plugin.getExcludedMappings()));
 
         Set<ChannelConversion> expectedConversions = WayangCollections.asSet();
-        Assert.assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
+        assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
 
         Set<ChannelConversion> expectedExcludedConversions = WayangCollections.asSet(CHANNEL_CONVERSIONS);
-        Assert.assertEquals(expectedExcludedConversions, WayangCollections.asSet(plugin.getExcludedChannelConversions()));
+        assertEquals(expectedExcludedConversions, WayangCollections.asSet(plugin.getExcludedChannelConversions()));
 
         Configuration configuration = new Configuration();
         plugin.setProperties(configuration);
-        Assert.assertEquals(51.3d, configuration.getDoubleProperty("org.apache.wayang.test.float"), 0.000001);
-        Assert.assertEquals("abcdef", configuration.getStringProperty("org.apache.wayang.test.string"));
-        Assert.assertEquals(1234567890123456789L, configuration.getLongProperty("org.apache.wayang.test.long"));
+        assertEquals(51.3d, configuration.getDoubleProperty("org.apache.wayang.test.float"), 0.000001);
+        assertEquals("abcdef", configuration.getStringProperty("org.apache.wayang.test.string"));
+        assertEquals(1234567890123456789L, configuration.getLongProperty("org.apache.wayang.test.long"));
     }
 
     @Test
-    public void testPartialYaml() {
+    void testPartialYaml() {
         final DynamicPlugin plugin =
                 DynamicPlugin.loadYaml(ReflectionUtils.getResourceURL("partial-plugin.yaml").toString());
 
         Set<Platform> expectedPlatforms = WayangCollections.asSet(DummyPlatform.getInstance());
-        Assert.assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
+        assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
 
         Set<Platform> expectedExcludedPlatforms = Collections.emptySet();
-        Assert.assertEquals(expectedExcludedPlatforms, WayangCollections.asSet(plugin.getExcludedRequiredPlatforms()));
+        assertEquals(expectedExcludedPlatforms, WayangCollections.asSet(plugin.getExcludedRequiredPlatforms()));
 
         Set<Mapping> expectedMappings = WayangCollections.asSet();
-        Assert.assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
+        assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
 
         Set<Mapping> expectedExcludedMappings = WayangCollections.asSet(new TestSinkMapping());
-        Assert.assertEquals(expectedExcludedMappings, WayangCollections.asSet(plugin.getExcludedMappings()));
+        assertEquals(expectedExcludedMappings, WayangCollections.asSet(plugin.getExcludedMappings()));
 
         Set<ChannelConversion> expectedConversions = WayangCollections.asSet();
-        Assert.assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
+        assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
 
         Set<ChannelConversion> expectedExcludedConversions = WayangCollections.asSet();
-        Assert.assertEquals(expectedExcludedConversions, WayangCollections.asSet(plugin.getExcludedChannelConversions()));
+        assertEquals(expectedExcludedConversions, WayangCollections.asSet(plugin.getExcludedChannelConversions()));
     }
 
     @Test
-    public void testEmptyYaml() {
+    void testEmptyYaml() {
         final DynamicPlugin plugin =
                 DynamicPlugin.loadYaml(ReflectionUtils.getResourceURL("empty-plugin.yaml").toString());
 
         Set<Platform> expectedPlatforms = Collections.emptySet();
-        Assert.assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
+        assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
 
         Set<Mapping> expectedMappings = Collections.emptySet();
-        Assert.assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
+        assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
 
         Set<ChannelConversion> expectedConversions = Collections.emptySet();
-        Assert.assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
+        assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
     }
 
     @Test
-    public void testExclusion() {
+    void testExclusion() {
         final TestSinkMapping mapping = new TestSinkMapping();
         Configuration configuration = new Configuration();
 
         final DynamicPlugin plugin1 = new DynamicPlugin();
         plugin1.addMapping(mapping);
         plugin1.configure(configuration);
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(mapping),
                 WayangCollections.asSet(configuration.getMappingProvider().provideAll())
         );
@@ -133,7 +133,7 @@ public class DynamicPluginTest {
         final DynamicPlugin plugin2 = new DynamicPlugin();
         plugin2.excludeMapping(mapping);
         plugin2.configure(configuration);
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(),
                 WayangCollections.asSet(configuration.getMappingProvider().provideAll())
         );

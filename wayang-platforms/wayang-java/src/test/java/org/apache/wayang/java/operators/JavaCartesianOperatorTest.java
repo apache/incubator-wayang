@@ -18,24 +18,25 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link JavaCartesianOperator}.
  */
-public class JavaCartesianOperatorTest extends JavaExecutionOperatorTestBase {
+class JavaCartesianOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         Stream<Integer> inputStream0 = Arrays.asList(1, 2).stream();
         Stream<String> inputStream1 = Arrays.asList("a", "b", "c").stream();
@@ -57,8 +58,8 @@ public class JavaCartesianOperatorTest extends JavaExecutionOperatorTestBase {
         // Verify the outcome.
         final List<Tuple2<Integer, String>> result = outputs[0].<Tuple2<Integer, String>>provideStream()
                 .collect(Collectors.toList());
-        Assert.assertEquals(6, result.size());
-        Assert.assertEquals(result.get(0), new Tuple2(1, "a"));
+        assertEquals(6, result.size());
+        assertEquals(new Tuple2(1, "a"), result.get(0));
 
     }
 

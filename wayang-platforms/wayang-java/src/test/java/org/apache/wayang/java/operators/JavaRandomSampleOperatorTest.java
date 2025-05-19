@@ -18,10 +18,9 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,13 +28,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link JavaRandomSampleOperator}.
  */
-public class JavaRandomSampleOperatorTest extends JavaExecutionOperatorTestBase {
+class JavaRandomSampleOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         Collection<Integer> inputCollection = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         final int sampleSize = 3;
@@ -56,12 +57,12 @@ public class JavaRandomSampleOperatorTest extends JavaExecutionOperatorTestBase 
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
-        Assert.assertEquals(sampleSize, result.size());
+        assertEquals(sampleSize, result.size());
 
     }
 
     @Test
-    public void testUDFExecution() {
+    void testUDFExecution() {
         // Prepare test data.
         Stream<Integer> inputStream = Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
@@ -82,12 +83,12 @@ public class JavaRandomSampleOperatorTest extends JavaExecutionOperatorTestBase 
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
-        Assert.assertEquals(2, result.size());
+        assertEquals(2, result.size());
 
     }
 
     @Test
-    public void testLargerSampleExecution() {
+    void testLargerSampleExecution() {
         // Prepare test data.
         Stream<Integer> inputStream = Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
@@ -108,7 +109,7 @@ public class JavaRandomSampleOperatorTest extends JavaExecutionOperatorTestBase 
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
-        Assert.assertEquals(10, result.size());
+        assertEquals(10, result.size());
 
     }
 

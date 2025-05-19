@@ -18,23 +18,13 @@
 
 package org.apache.wayang.jdbc.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
-import org.apache.wayang.core.function.PredicateDescriptor;
-import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.CrossPlatformExecutor;
-import org.apache.wayang.core.profiling.FullInstrumentationStrategy;
-import org.apache.wayang.java.channels.StreamChannel;
-import org.apache.wayang.java.execution.JavaExecutor;
-import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.test.HsqldbJoinOperator;
 import org.apache.wayang.jdbc.test.HsqldbPlatform;
@@ -43,24 +33,23 @@ import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.jdbc.execution.JdbcExecutor;
 import org.apache.wayang.core.profiling.NoInstrumentationStrategy;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Test suite for {@link SqlToStreamOperator}.
  */
-public class JdbcJoinOperatorTest extends OperatorTestBase {
+class JdbcJoinOperatorTest extends OperatorTestBase {
     @Test
-    public void testWithHsqldb() throws SQLException {
+    void testWithHsqldb() throws SQLException {
         Configuration configuration = new Configuration();
 
         Job job = mock(Job.class);
@@ -129,7 +118,7 @@ public class JdbcJoinOperatorTest extends OperatorTestBase {
 
         System.out.println();
 
-        Assert.assertEquals(
+        assertEquals(
             "SELECT * FROM testA JOIN testA ON testB.a=testA.a;",
             sqlQueryChannelInstance.getSqlQuery()
         );
