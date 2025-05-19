@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.api.util
+package org.apache.wayang.api.utils
 
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.basic.WayangBasics

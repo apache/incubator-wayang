@@ -37,7 +37,7 @@ import org.apache.wayang.api.sql.calcite.utils.PrintUtils;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plugin.Plugin;
-import org.apache.wayang.api.util.Parameters;
+import org.apache.wayang.api.utils.Parameters;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
@@ -164,7 +164,7 @@ public class SqlContext extends WayangContext {
                 List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
 
         List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(cmd.getOptionValue("p")));
-        plugins.stream().forEach(plug -> context.register(plug));
+        plugins.stream().forEach(context::register);
 
         final Collection<Record> result = context.executeSql(query);
 
