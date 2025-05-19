@@ -49,7 +49,7 @@ class GiraphIntegrationIT {
         WayangContext rc = new WayangContext().with(Java.basicPlugin()).with(Giraph.plugin());
         rc.execute(wayangPlan);
 
-        pageRanks.stream().forEach(System.out::println);
+        pageRanks.forEach(System.out::println);
         this.check(pageRanks);
     }
 

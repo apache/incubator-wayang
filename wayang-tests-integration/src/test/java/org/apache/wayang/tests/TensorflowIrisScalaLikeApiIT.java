@@ -18,7 +18,6 @@
 
 package org.apache.wayang.tests;
 
-import org.apache.wayang.api.*;
 import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.basic.model.op.*;
 import org.apache.wayang.basic.model.op.nn.CrossEntropyLoss;

@@ -40,7 +40,6 @@ import org.apache.wayang.tests.platform.MyMadeUpPlatform;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -63,7 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class JavaIntegrationIT {
 
     @Test
-    void testReadAndWrite() throws URISyntaxException, IOException {
+    void testReadAndWrite() throws IOException {
         // Build a Wayang plan.
         List<String> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.readWrite(WayangPlans.FILE_SOME_LINES_TXT, collector);
@@ -80,7 +79,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testReadAndTransformAndWrite() throws URISyntaxException {
+    void testReadAndTransformAndWrite() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -121,15 +120,14 @@ class JavaIntegrationIT {
         final Job job = wayangContext.createJob(null, wayangPlan);
         job.getConfiguration().getPlatformProvider().addToBlacklist(Java.platform());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
-        assertThrows(WayangException.class, () ->
-            job.execute());
+        assertThrows(WayangException.class, job::execute);
     }
 
     @Test
-    void testMultiSourceAndMultiSink() throws URISyntaxException {
+    void testMultiSourceAndMultiSink() {
         // Define some input data.
-        final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
-        final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
+        final List<String> collection1 = Arrays.asList("This is source 1.", "This is source 1, too.");
+        final List<String> collection2 = Arrays.asList("This is source 2.", "This is source 2, too.");
         List<String> collector1 = new LinkedList<>();
         List<String> collector2 = new LinkedList<>();
         final WayangPlan wayangPlan = WayangPlans.multiSourceMultiSink(collection1, collection2, collector1, collector2);
@@ -155,10 +153,10 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testMultiSourceAndHoleAndMultiSink() throws URISyntaxException {
+    void testMultiSourceAndHoleAndMultiSink() {
         // Define some input data.
-        final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
-        final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
+        final List<String> collection1 = Arrays.asList("This is source 1.", "This is source 1, too.");
+        final List<String> collection2 = Arrays.asList("This is source 2.", "This is source 2, too.");
         List<String> collector1 = new LinkedList<>();
         List<String> collector2 = new LinkedList<>();
         final WayangPlan wayangPlan = WayangPlans.multiSourceHoleMultiSink(collection1, collection2, collector1, collector2);
@@ -171,9 +169,7 @@ class JavaIntegrationIT {
 
         // Check the results in both sinks.
         List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
-                .flatMap(string -> Arrays.asList(string.toLowerCase(), string.toUpperCase()).stream())
-                .collect(Collectors.toList());
-        Collections.sort(expectedOutcome);
+                .flatMap(string -> Stream.of(string.toLowerCase(), string.toUpperCase())).sorted().collect(Collectors.toList());
         Collections.sort(collector1);
         Collections.sort(collector2);
         assertEquals(expectedOutcome, collector1);
@@ -181,7 +177,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testGlobalMaterializedGroup() throws URISyntaxException {
+    void testGlobalMaterializedGroup() {
         // Build the WayangPlan.
         List<Iterable<Integer>> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.globalMaterializedGroup(collector, 1, 2, 3);
@@ -196,7 +192,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testIntersect() throws URISyntaxException {
+    void testIntersect() {
         // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
@@ -287,7 +283,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testMapPartitions() throws URISyntaxException {
+    void testMapPartitions() {
         // Instantiate Wayang and activate the Java backend.
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
@@ -301,7 +297,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testZipWithId() throws URISyntaxException {
+    void testZipWithId() {
         // Build the WayangPlan.
         List<Long> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.zipWithId(collector, 0, 10, 20, 30, 30);
@@ -316,7 +312,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testDiverseScenario1() throws URISyntaxException {
+    void testDiverseScenario1() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario1(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -328,7 +324,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testDiverseScenario2() throws URISyntaxException {
+    void testDiverseScenario2() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario2(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -339,7 +335,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testDiverseScenario3() throws URISyntaxException {
+    void testDiverseScenario3() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario3(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -350,7 +346,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testDiverseScenario4() throws URISyntaxException {
+    void testDiverseScenario4() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario4(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -361,7 +357,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testSimpleLoop() throws URISyntaxException {
+    void testSimpleLoop() {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleLoop(3, collector, 0, 1, 2);
@@ -374,7 +370,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testSample() throws URISyntaxException {
+    void testSample() {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -387,7 +383,7 @@ class JavaIntegrationIT {
     }
 
     @Test
-    void testLargerSample() throws URISyntaxException {
+    void testLargerSample() {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleSample(15, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -436,13 +432,13 @@ class JavaIntegrationIT {
                 integerDataSetType);
         FilterOperator<Integer> semijoin = new FilterOperator<>(
                 integerDataSetType,
-                new PredicateDescriptor.ExtendedSerializablePredicate<Integer>() {
+                new PredicateDescriptor.ExtendedSerializablePredicate<>() {
 
                     private Set<Integer> allowedInts;
 
                     @Override
                     public void open(ExecutionContext ctx) {
-                        this.allowedInts = new HashSet<>(ctx.<Integer>getBroadcast("allowed values"));
+                        this.allowedInts = new HashSet<>(ctx.getBroadcast("allowed values"));
                     }
 
                     @Override
@@ -471,7 +467,7 @@ class JavaIntegrationIT {
 
     @Test
     void testBroadcasts2() {
-        Collection<Integer> broadcastedValues = Arrays.asList(9);
+        Collection<Integer> broadcastedValues = List.of(9);
         Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);
         List<Integer> collectedValues = new ArrayList<>();
         List<Integer> expectedValues = Arrays.asList(18, 18, 36, 54);
@@ -483,13 +479,13 @@ class JavaIntegrationIT {
                 integerDataSetType);
         MapOperator<Integer, Integer> mulitply = new MapOperator<>(
                 new TransformationDescriptor<>(
-                        new FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer>() {
+                        new FunctionDescriptor.ExtendedSerializableFunction<>() {
 
                             private int coefficient;
 
                             @Override
                             public void open(ExecutionContext ctx) {
-                                final Collection<Integer> broadcast = ctx.<Integer>getBroadcast("allowed values");
+                                final Collection<Integer> broadcast = ctx.getBroadcast("allowed values");
                                 this.coefficient = broadcast.stream().findAny().get();
                             }
 
