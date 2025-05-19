@@ -19,7 +19,6 @@ package org.apache.wayang.api.sql.context;
 
 import org.apache.commons.lang3.StringUtils;
 
-
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
@@ -47,7 +46,7 @@ import org.apache.wayang.postgres.Postgres;
 import org.apache.wayang.spark.Spark;
 import org.apache.commons.cli.*;
 
-
+import com.google.common.io.Resources;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -56,7 +55,9 @@ import scala.collection.JavaConversions;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -112,13 +113,14 @@ public class SqlContext extends WayangContext {
         //Specify the named arguments
         Options options = new Options();
         options.addOption("p", "platforms", true, "[platforms...]");
+        options.addOption("s", "schema", true, "Schema path");
         options.addOption("q", "query", true, "SQL statement path");
-        options.addOption("jdbcDriver", true, "JDBC driver");
-        options.addOption("jdbcUrl", true, "JDBC URL");
-        options.addOption("jdbcPassword", true, "JDBC URL");
         options.addOption("o", "outputPath", true, "Output path");
         options.addOption("d", "data", true, "Data path for file-based schema");
         options.addOption("c", "config", true, "File path for config file");
+        options.addOption("jdbcDriver", true, "JDBC driver");
+        options.addOption("jdbcUrl", true, "JDBC URL");
+        options.addOption("jdbcPassword", true, "JDBC URL");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -130,6 +132,7 @@ public class SqlContext extends WayangContext {
         final String jdbcPassword = cmd.getOptionValue("jdbcPassword");
         final String outputPath = cmd.getOptionValue("o");
         final String dataPath = cmd.getOptionValue("d");
+        final String schemaPath = cmd.getOptionValue("s");
 
         final String query = StringUtils.chop(
                 Files.readString(Paths.get(queryPath))
@@ -143,35 +146,10 @@ public class SqlContext extends WayangContext {
             configuration.load(cmd.getOptionValue("c"));
         }
 
-        final String calciteModel = String.format(
-                "{\r\n" +
-                        "\"calcite\": {\r\n" +
-                        "    \"version\": \"1.0\",\n" +
-                        "    \"defaultSchema\": \"wayang\",\n" +
-                        "    \"schemas\": [\n" +
-                        "        {\n" +
-                        "            \"name\": \"postgres\",\n" +
-                        "            \"type\": \"custom\",\n" +
-                        "            \"factory\": \"org.apache.wayang.api.sql.calcite.jdbc.JdbcSchema$Factory\",\n" +
-                        "            \"operand\": {\n" +
-                        "                \"jdbcDriver\": \"%s\",\n" +
-                        "                \"jdbcUrl\": \"%s\",\n" +
-                        "                \"jdbcUser\": \"%s\",\n" +
-                        "                \"jdbcPassword\": \"%s\"\n" +
-                        "            }\n" +
-                        "        },\n" +
-                        "        {\n" +
-                        "         \"name\": \"fs\",\n" +
-                        "         \"type\": \"custom\", \n" +
-                        "         \"factory\": \"org.apache.calcite.adapter.file.FileSchemaFactory\",\n" +
-                        "         \"operand\": {\n" +
-                        "            \"directory\": \"" + dataPath + "\"\n" +
-                        "          }\n" +
-                        "        }\n" +
-                        "    ]\n" +
-                        "}\r\n" +
-                        "}",
-                jdbcDriver, jdbcUrl, jdbcUser, jdbcPassword);
+        final String calciteModel = Resources.toString(
+                new URL(schemaPath),
+                Charset.defaultCharset()
+        );
 
         configuration.setProperty("wayang.calcite.model", calciteModel);
         configuration.setProperty(String.format("wayang.%s.jdbc.url", driverPlatform), jdbcUrl);
@@ -184,7 +162,6 @@ public class SqlContext extends WayangContext {
 
         final SqlContext context = new SqlContext(parseModel,
                 List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
-
 
         List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(cmd.getOptionValue("p")));
         plugins.stream().forEach(plug -> context.register(plug));
