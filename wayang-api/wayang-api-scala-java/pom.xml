@@ -106,6 +106,11 @@
           <version>1.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
+          <groupId>org.apache.wayang</groupId>
+          <artifactId>wayang-tensorflow</artifactId>
+          <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
           <groupId>org.apache.spark</groupId>
           <artifactId>spark-core_2.12</artifactId>
           <version>${spark.version}</version>
