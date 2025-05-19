@@ -39,6 +39,7 @@ import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
@@ -84,14 +85,14 @@ public class SqlContext extends WayangContext {
         for (final Plugin plugin : plugins) {
             this.withPlugin(plugin);
         }
-        
+
         calciteSchema = SchemaUtils.getSchema(configuration);
     }
 
     /**
      * Entry point for executing SQL statements while providing arguments.
      * You need to provide at least a JDBC source.
-     * 
+     *
      * @param args args[0] = SQL statement path, args[1] = JDBC driver, args[2] =
      *             JDBC URL, args[3] = JDBC user,
      *                          args[4] = JDBC password, args[5] = outputPath,
@@ -138,6 +139,7 @@ public class SqlContext extends WayangContext {
                 jdbcDriver, jdbcUrl, jdbcUser, jdbcPassword);
 
         final Configuration configuration = new Configuration();
+        configuration.load(ReflectionUtils.loadResource("wayang-defaults.properties"));
 
         configuration.setProperty("wayang.calcite.model", calciteModel);
         configuration.setProperty(String.format("wayang.%s.jdbc.url", driverPlatform), jdbcUrl);
