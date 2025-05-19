@@ -26,10 +26,10 @@
         <version>1.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>wayang-api-scala-java</artifactId>
+    <artifactId>wayang-api-utils</artifactId>
     <version>1.0.1-SNAPSHOT</version>
 
-    <name>Wayang API Scala-Java</name>
+    <name>Wayang API Utils</name>
     <description>Wayang implementation of an API of Scala-Java to be enable to work in functional style</description>
 
     <properties>
