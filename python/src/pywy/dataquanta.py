@@ -200,8 +200,6 @@ class DataQuanta(GenericTco):
             labels: "DataQuanta[In]",
             fit_intercept: bool = True
     ) -> "DataQuanta[Out]":
-        from pywy.basic.model.ops import LogisticRegression
-
         op = LogisticRegression()
         self._connect(op, 0)
         labels._connect(op, 1)
