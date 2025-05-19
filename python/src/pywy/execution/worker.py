@@ -15,19 +15,15 @@
 # limitations under the License.
 #
 
+import base64
 import os
+import pickle
 import socket
 import struct
-import base64
-import re
-import sys
-import ast
-import copy
-import pickle
-import cloudpickle
-import numpy as np
 
+import numpy as np
 from pywy.execution.util import SpecialLengths
+
 
 def read_int(stream):
     length = stream.read(4)
@@ -51,6 +47,7 @@ class UTF8Deserializer:
             raise EOFError
         elif length == SpecialLengths.NULL:
             return None
+
         s = stream.read(length)
         return s.decode("utf-8") if self.use_unicode else s
 
@@ -100,6 +97,7 @@ def dump_stream(iterator, stream):
             ##    write_with_length(obj, stream)
     write_int(SpecialLengths.END_OF_DATA_SECTION, stream)
 
+
 def process(infile, outfile):
     udf_length = read_int(infile)
     serialized_udf = infile.read(udf_length)
@@ -108,6 +106,7 @@ def process(infile, outfile):
     iterator = UTF8Deserializer().load_stream(infile)
     out_iter = func(iterator)
     dump_stream(iterator=out_iter, stream=outfile)
+
 
 def local_connect(port):
     sock = None
@@ -118,7 +117,7 @@ def local_connect(port):
         af, socktype, proto, _, sa = res
         try:
             sock = socket.socket(af, socktype, proto)
-            sock.settimeout(30)
+            sock.settimeout(60)
             sock.connect(sa)
             sockfile = sock.makefile("rwb", 65536)
             return (sockfile, sock)

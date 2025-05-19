@@ -23,7 +23,7 @@ from pywy.operators.base import PywyOperator
 class SinkOperator(PywyOperator):
 
     def postfix(self) -> str:
-        return 'Sink'
+        return "Sink"
 
 
 class SinkUnaryOperator(SinkOperator):
@@ -43,7 +43,7 @@ class TextFileSink(SinkUnaryOperator):
     json_name: str
 
     def __init__(self, path: str, input_type: GenericTco):
-        super().__init__('TextFile', input_type)
+        super().__init__("TextFile", input_type)
         self.path = path
         self.json_name = "textFileOutput"
 

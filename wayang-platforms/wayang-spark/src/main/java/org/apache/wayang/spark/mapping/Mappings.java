@@ -73,6 +73,7 @@ public class Mappings {
             new LinearRegressionMapping(),
             new DecisionTreeClassificationMapping(),
             new ModelTransformMapping(),
+            new LogisticRegressionMapping(),
             new PredictMapping()
     );
 

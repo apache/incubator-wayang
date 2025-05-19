@@ -82,32 +82,46 @@ class SparkIntegrationIT {
 
     @Test
     void testReadAndTransformAndWriteWithIllegalConfiguration1() {
+        // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
+        // ILLEGAL: This platform is not registered, so this operator will find no implementation.
         wayangPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
-        WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin());
-        wayangContext.execute(wayangPlan);
-        assertThrows(WayangException.class, () ->
 
+        // Instantiate Wayang and activate the Spark backend.
+        WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin());
+
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
+
+        assertThrows(WayangException.class, () ->
             // Have Wayang execute the plan.
             wayangContext.execute(wayangPlan));
     }
 
     @Test
     void testReadAndTransformAndWriteWithIllegalConfiguration2() {
+        // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
+
         WayangContext wayangContext = new WayangContext();
+        // ILLEGAL: This dummy platform is not sufficient to execute the plan.
         wayangContext.register(MyMadeUpPlatform.getInstance());
         assertThrows(WayangException.class, () ->
-
             // Have Wayang execute the plan.
             wayangContext.execute(wayangPlan));
     }
 
     @Test
     void testReadAndTransformAndWriteWithIllegalConfiguration3() {
+        // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
+
+        // Instantiate Wayang and activate the Spark backend.
         WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin());
+
+        // Have Wayang execute the plan.
         final Job job = wayangContext.createJob(null, wayangPlan);
+        // ILLEGAL: We blacklist the Spark platform, although we need it.
         job.getConfiguration().getPlatformProvider().addToBlacklist(Spark.platform());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
         assertThrows(WayangException.class, () ->
@@ -436,6 +450,49 @@ class SparkIntegrationIT {
 
         Collections.sort(collectedValues);
         assertEquals(expectedValues, collectedValues);
+    }
+
+    @Test
+    void testLogisticRegressionOperator() {
+        CollectionSource<double[]> xSource = new CollectionSource<>(
+                Arrays.asList(
+                        new double[]{0.0, 1.0},
+                        new double[]{1.0, 0.0},
+                        new double[]{1.0, 1.0},
+                        new double[]{0.0, 0.0}
+                ), double[].class
+        );
+        CollectionSource<Double> ySource = new CollectionSource<>(
+                Arrays.asList(1.0, 1.0, 0.0, 0.0), Double.class
+        );
+
+        xSource.addTargetPlatform(Spark.platform());
+        ySource.addTargetPlatform(Spark.platform());
+
+        LogisticRegressionOperator train = new LogisticRegressionOperator(true);
+        PredictOperator<double[], Double> predict = PredictOperators.logisticRegression();
+
+        List<Double> results = new ArrayList<>();
+        LocalCallbackSink<Double> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Double.class));
+
+        xSource.connectTo(0, train, 0);
+        ySource.connectTo(0, train, 1);
+        train.connectTo(0, predict, 0);
+        xSource.connectTo(0, predict, 1);
+        predict.connectTo(0, sink, 0);
+
+        WayangPlan plan = new WayangPlan(sink);
+
+        WayangContext context = new WayangContext()
+                .with(Spark.basicPlugin())
+                .with(Spark.mlPlugin());
+
+        context.execute(plan);
+
+        assertEquals(4, results.size());
+        for (double pred : results) {
+            assertTrue(pred == 0.0 || pred == 1.0);
+        }
     }
 
     @Test

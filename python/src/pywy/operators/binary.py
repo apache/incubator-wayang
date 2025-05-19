@@ -15,24 +15,16 @@
 #  limitations under the License.
 #
 
-from itertools import chain, groupby
-from collections import defaultdict
 import ast
 
-from pywy.operators.base import PywyOperator
 from pywy.basic.model.models import Model
 from pywy.basic.model.option import Option
+from pywy.operators.base import PywyOperator
 from pywy.types import (
-                            GenericTco,
-                            GenericUco,
-                            Predicate,
-                            get_type_predicate,
-                            Function,
-                            BiFunction,
-                            get_type_function,
-                            FlatmapFunction,
-                            get_type_flatmap_function
-                        )
+    GenericTco,
+    Function
+)
+
 
 class BinaryToUnaryOperator(PywyOperator):
 
@@ -48,6 +40,7 @@ class BinaryToUnaryOperator(PywyOperator):
     def __repr__(self):
         return super().__repr__()
 
+
 class JoinOperator(BinaryToUnaryOperator):
     this_key_function: Function
     that: PywyOperator
@@ -55,19 +48,31 @@ class JoinOperator(BinaryToUnaryOperator):
     json_name: str
 
     def __init__(
-            self,
-            this_key_function: Function,
-            that: PywyOperator,
-            that_key_function: Function,
-            input_type: GenericTco,
-            output_type: GenericTco
-        ):
-        super().__init__("Join", input_type, output_type)
+        self,
+        this_key_function: Function,
+        that: PywyOperator,
+        that_key_function: Function,
+        input_type: GenericTco,
+    ):
+        super().__init__("Join", input_type, (input_type, input_type))
         self.this_key_function = lambda g: this_key_function(ast.literal_eval(next(g)))
         self.that = that
         self.that_key_function = lambda g: that_key_function(ast.literal_eval(next(g)))
         self.json_name = "join"
 
+
+class CartesianOperator(BinaryToUnaryOperator):
+    that: PywyOperator
+    json_name: str
+
+    def __init__(
+        self,
+        that: PywyOperator,
+        input_type: GenericTco,
+    ):
+        super().__init__("Cartesian", input_type, input_type)
+        self.that = that
+        self.json_name = "cartesian"
 
 
 class DLTrainingOperator(BinaryToUnaryOperator):

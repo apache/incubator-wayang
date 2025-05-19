@@ -15,17 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.wayang.api.json.operatorfromjson.unary
 
-import com.fasterxml.jackson.annotation.JsonTypeName
-import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
+package org.apache.wayang.basic.model;
 
-@JsonTypeName(OperatorFromJson.OperatorNames.Distinct)
-case class DistinctOperatorFromJson(override val id: Long,
-                                    override val input: Array[Long],
-                                    override val output: Array[Long],
-                                    override val cat: String,
-                                    override val operatorName: String,
-                                    override val executionPlatform: String = null)
-  extends OperatorFromJson(id, input, output, cat, operatorName, executionPlatform) {
+
+
+
+public interface LogisticRegressionModel extends Model {
+    // No extra methods for now — predictions handled via SparkMLModel
 }

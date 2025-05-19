@@ -15,17 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.wayang.api.json.operatorfromjson.unary
+package org.apache.wayang.api.json.operatorfromjson.input
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-@JsonTypeName(OperatorFromJson.OperatorNames.Distinct)
-case class DistinctOperatorFromJson(override val id: Long,
-                                    override val input: Array[Long],
-                                    override val output: Array[Long],
-                                    override val cat: String,
-                                    override val operatorName: String,
-                                    override val executionPlatform: String = null)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeName(OperatorFromJson.OperatorNames.ParquetInput)
+case class ParquetInputFromJson(override val id: Long,
+                                 override val input: Array[Long],
+                                 override val output: Array[Long],
+                                 override val cat: String,
+                                 override val operatorName: String,
+                                 val data: ParquetInputFromJson.Data,
+                                 override val executionPlatform: String = null)
   extends OperatorFromJson(id, input, output, cat, operatorName, executionPlatform) {
+}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+object ParquetInputFromJson {
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  case class Data(filename: String, projection: Array[String] = null)
 }

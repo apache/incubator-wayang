@@ -15,11 +15,14 @@
 #  limitations under the License.
 #
 
-from typing import (Generic, TypeVar, Callable, Hashable, Iterable, Type, Union, Tuple, get_args, get_origin, List, Dict, Any)
-from inspect import signature
-from numpy import int32, int64, float32, float64, ndarray
 import re
-
+from ast import literal_eval
+from inspect import signature
+from typing import (
+    Generic, TypeVar, Callable, Hashable, Iterable, Type, Union, Tuple, get_args, get_origin, List, Dict, Any
+)
+from numpy import int32, int64, float32, float64, ndarray
+from pywy.basic.data.record import Record
 from pywy.exception import PywyException
 
 T = TypeVar("T")      # Type
@@ -45,7 +48,7 @@ NumberOrArray = TypeVar(
     "NumberOrArray", float, int, complex, int32, int64, float32, float64, ndarray
 )
 
-ConstrainedOperatorType = Union[PrimitiveType, NumberOrArray, IterableT, ListT]
+ConstrainedOperatorType = Union[PrimitiveType, NumberOrArray, IterableT, ListT, Record]
 
 Predicate = Callable[[ConstrainedOperatorType], bool]
 Function = Callable[[ConstrainedOperatorType], ConstrainedOperatorType]
@@ -70,6 +73,8 @@ FlatmapFunction = Callable[[ConstrainedOperatorType], Iterable[ConstrainedOperat
     1
     {origin: int, depth: 0}
 """
+
+
 class NDimArray:
     origin: Type
     depth: int
@@ -83,6 +88,7 @@ class NDimArray:
 
     def to_json(self) -> dict:
         return {"origin": get_java_type(self.origin), "depth": self.depth}
+
 
 def ndim_from_type(py_type: ConstrainedOperatorType, depth: int = 0) -> NDimArray:
     # Handle basic types and direct typing module classes
@@ -102,7 +108,8 @@ def ndim_from_type(py_type: ConstrainedOperatorType, depth: int = 0) -> NDimArra
 
     return NDimArray(py_type, depth)
 
-#Define the mappings
+
+# Define the mappings
 type_mappings: Dict[Type, str] = {
     'int': 'Integer',
     'float': 'Float',
@@ -114,8 +121,10 @@ type_mappings: Dict[Type, str] = {
     'Dict': 'Map',
     'tuple': 'Tuple',
     'Tuple': 'Tuple',
-    'Any': 'Object'
+    'Any': 'Object',
+    'Record': 'Record',
 }
+
 
 def get_type_predicate(call: Predicate) -> type:
     sig = signature(call)
@@ -176,18 +185,14 @@ def get_type_flatmap_function(call: FlatmapFunction) -> (type, type):
     keys = list(sig.parameters.keys())
     return sig.parameters[keys[0]].annotation, sig.return_annotation.__args__[0]
 
+
 def typecheck(input_type: Type[ConstrainedOperatorType]):
     allowed_types = get_args(ConstrainedOperatorType)
-    print(allowed_types)
-    print(input_type)
     if input_type in allowed_types or input_type is None:
         return
 
     origin = get_origin(input_type)
     args = get_args(input_type)
-
-    print(origin)
-    print(args)
 
     if isinstance(input_type, List) and args:
         typecheck(args[0])
@@ -197,16 +202,14 @@ def typecheck(input_type: Type[ConstrainedOperatorType]):
         else:
             raise TypeError(f"Unsupported Operator type: {input_type}")
     else:
-    #print(get_args(ConstrainedOperatorType))
-    #if candT not in get_args(ConstrainedOperatorType) and candT is not None:
-    #if candT is not PrimitiveType and candT is not IterableT and candT is not NumberOrArray and candT is not None:
-        raise TypeError(f"Unsupported Operator type: {input_type}, {args}, {isinstance(input_type, Tuple)}")
+        raise TypeError(f"Unsupported Operator type: {input_type}, {origin}, {args}")
 
 def get_java_type(input_type: ConstrainedOperatorType) -> str:
     str_type = get_type_str(input_type)
 
     py_type = str_type.replace("typing.", "")
     return convert_type(py_type)
+
 
 def convert_type(py_type: str) -> str:
     # Regex to find generic types like List[float], Dict[str, int], etc.
@@ -220,6 +223,7 @@ def convert_type(py_type: str) -> str:
         return f"{type_mappings.get(base_type, base_type)}[{converted_inner_types}]"
     else:
         return type_mappings.get(py_type, py_type)
+
 
 def get_type_str(py_type: Any) -> str:
     # Handle basic types and direct typing module classes

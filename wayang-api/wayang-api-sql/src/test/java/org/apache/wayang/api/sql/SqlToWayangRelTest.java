@@ -19,13 +19,14 @@ package org.apache.wayang.api.sql;
 
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.rel.rules.CoreRules;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -33,13 +34,10 @@ import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
 import org.apache.wayang.api.sql.calcite.converter.functions.FilterPredicateImpl;
+import org.apache.wayang.api.sql.calcite.converter.functions.ProjectMapFuncImpl;
 import org.apache.wayang.api.sql.calcite.optimizer.Optimizer;
 import org.apache.wayang.api.sql.calcite.rules.WayangRules;
 import org.apache.wayang.api.sql.calcite.schema.SchemaUtils;
-import org.apache.wayang.api.sql.calcite.schema.WayangSchema;
-import org.apache.wayang.api.sql.calcite.schema.WayangSchemaBuilder;
-import org.apache.wayang.api.sql.calcite.schema.WayangTable;
-import org.apache.wayang.api.sql.calcite.schema.WayangTableBuilder;
 import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.context.SqlContext;
 import org.apache.wayang.basic.data.Record;
@@ -50,10 +48,10 @@ import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -61,10 +59,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -449,7 +446,6 @@ class SqlToWayangRelTest {
     }
 
     @Test
-    @Disabled
     void sparkFilter() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
@@ -464,7 +460,7 @@ class SqlToWayangRelTest {
 
         sqlContext.execute(wayangPlan);
 
-        assertTrue(result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1"))));
+        assertTrue(result.stream().anyMatch(rec -> rec.equals(new Record("test1", "test1", "test2"))));
     }
 
     @Test
@@ -515,8 +511,45 @@ class SqlToWayangRelTest {
     }
 
     @Test
-    @Disabled
-    void rexSerializationTest() throws Exception {
+    void serializeProjection() throws Exception {
+        final RexBuilder rb = new RexBuilder(new JavaTypeFactoryImpl());
+
+        final RelDataTypeFactory typeFactory = rb.getTypeFactory();
+        final RelDataType intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
+        final RelDataType rowType = typeFactory.createStructType(
+                Arrays.asList(intType, intType, intType),
+                Arrays.asList("x", "b", "y"));
+
+        final RexNode inputRefX = rb.makeInputRef(rowType, 0);
+        final RexNode inputRefB = rb.makeInputRef(rowType, 1);
+        final RexNode inputRefY = rb.makeInputRef(rowType, 2);
+        final SqlOperator add = SqlStdOperatorTable.PLUS;
+        final SqlOperator multiply = SqlStdOperatorTable.MULTIPLY;
+
+        final RexNode addition = rb.makeCall(add, List.of(inputRefX, inputRefB));
+        final RexNode multiplication = rb.makeCall(multiply, List.of(addition, inputRefY));
+
+        final RexCall projection = (RexCall) multiplication;
+
+        final ProjectMapFuncImpl impl = new ProjectMapFuncImpl(List.of(projection));
+
+        final ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
+        final ObjectOutputStream outStream = new ObjectOutputStream(byteOutStream);
+        outStream.writeObject(impl);
+        outStream.close();
+
+        final ByteArrayInputStream byteInStream = new ByteArrayInputStream(byteOutStream.toByteArray());
+        final ObjectInputStream inStream = new ObjectInputStream(byteInStream);
+        final ProjectMapFuncImpl deserializedImpl = (ProjectMapFuncImpl) inStream.readObject();
+        inStream.close();
+
+        final Record testRecord = new Record(1,2,3);
+
+        assertEquals(impl.apply(testRecord), deserializedImpl.apply(testRecord));
+    }
+
+    @Test
+    public void serializeFilter() throws Exception {
         // create filterPredicateImpl for serialisation
         final RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
         final RexBuilder rb = new RexBuilder(typeFactory);
@@ -568,68 +601,8 @@ class SqlToWayangRelTest {
         assertEquals("AA", result.stream().findAny().orElseThrow().getString(0));
     }
 
-    @Test
-    void test_simple_sql() throws Exception {
-        final WayangTable customer = WayangTableBuilder.build("customer")
-                .addField("id", SqlTypeName.INTEGER)
-                .addField("name", SqlTypeName.VARCHAR)
-                .addField("age", SqlTypeName.INTEGER)
-                .withRowCount(100)
-                .build();
-
-        final WayangTable orders = WayangTableBuilder.build("orders")
-                .addField("id", SqlTypeName.INTEGER)
-                .addField("cid", SqlTypeName.INTEGER)
-                .addField("price", SqlTypeName.DECIMAL)
-                .addField("quantity", SqlTypeName.INTEGER)
-                .withRowCount(100)
-                .build();
-
-        final WayangSchema wayangSchema = WayangSchemaBuilder.build("exSchema")
-                .addTable(customer)
-                .addTable(orders)
-                .build();
-
-        final Optimizer optimizer = Optimizer.create(wayangSchema);
-
-        // String sql = "select c.name, c.age from customer c where (c.age < 40 or c.age
-        // > 60) and \'alex\' = c.name";
-        // String sql = "select c.age from customer c";
-        final String sql = "select c.name, c.age, o.price from customer c join orders o on c.id = o.cid where c.age > 40 "
-                +
-                "and o" +
-                ".price < 100";
-
-        final SqlNode sqlNode = optimizer.parseSql(sql);
-        final SqlNode validatedSqlNode = optimizer.validate(sqlNode);
-        final RelNode relNode = optimizer.convert(validatedSqlNode);
-
-        print("After parsing", relNode);
-
-        final RuleSet rules = RuleSets.ofList(
-                WayangRules.WAYANG_TABLESCAN_RULE,
-                WayangRules.WAYANG_PROJECT_RULE,
-                WayangRules.WAYANG_FILTER_RULE,
-                WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
-                WayangRules.WAYANG_JOIN_RULE,
-                WayangRules.WAYANG_AGGREGATE_RULE);
-
-        final RelNode wayangRel = optimizer.optimize(
-                relNode,
-                relNode.getTraitSet().plus(WayangConvention.INSTANCE),
-                rules);
-
-        print("After rel to wayang conversion", wayangRel);
-
-        // WayangPlan plan = optimizer.convert(wayangRel);
-
-        // print("After Translating to WayangPlan", plan);
-
-    }
-
     private SqlContext createSqlContext(final String tableResourceName)
             throws IOException, ParseException, SQLException {
-        //
         final String calciteModel = "{\r\n" + //
                 "    \"calcite\": {\r\n" + //
                 "      \"version\": \"1.0\",\r\n" + //
@@ -673,18 +646,4 @@ class SqlToWayangRelTest {
 
         return new SqlContext(configuration);
     }
-
-    private void print(final String header, final RelNode relTree) {
-        final StringWriter sw = new StringWriter();
-
-        sw.append(header).append(":").append("\n");
-
-        final RelWriterImpl relWriter = new RelWriterImpl(new PrintWriter(sw), SqlExplainLevel.ALL_ATTRIBUTES,
-                true);
-
-        relTree.explain(relWriter);
-
-        System.out.println(sw);
-    }
-
 }

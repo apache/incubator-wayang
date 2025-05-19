@@ -17,6 +17,8 @@
  */
 package org.apache.wayang.api.util
 
+import org.apache.wayang.basic.data.Record
+
 import scala.reflect.ClassTag
 
 class NDimArray(val origin: String, val depth: Integer) extends Serializable {
@@ -42,6 +44,7 @@ class NDimArray(val origin: String, val depth: Integer) extends Serializable {
       case "Character" => classOf[Char]
       case "Byte" => classOf[Byte]
       case "Short" => classOf[Short]
+      case "Record" => classOf[Record]
       case _ => classOf[Object]
     }
 
