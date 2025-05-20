@@ -36,16 +36,27 @@ import org.apache.wayang.api.sql.calcite.utils.PrintUtils;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.api.utils.Parameters;
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
 import org.apache.wayang.spark.Spark;
+import org.apache.commons.cli.*;
 
+import com.google.common.io.Resources;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+import scala.collection.JavaConversions;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,42 +98,59 @@ public class SqlContext extends WayangContext {
     /**
      * Entry point for executing SQL statements while providing arguments.
      * You need to provide at least a JDBC source.
-     * Sample: 
-     * @param args args[0] = config file path, args[1] = query file path, args[2] = output path
+     *
+     * @param args args[0] = SQL statement path, args[1] = JDBC driver, args[2] =
+     *             JDBC URL, args[3] = JDBC user,
+     *                          args[4] = JDBC password, args[5] = outputPath,
+     *             args[6...] = platforms
      */
     public static void main(final String[] args) throws Exception {
         if (args.length < 3)
             throw new IllegalArgumentException(
                     "Usage: ./bin/wayang-submit org.apache.wayang.api.sql.SqlContext <configuration path> <SQL statement path> <output path> [platforms...]");
 
-        final String configurationPath = args[0];
-        final String queryPath = args[1];
-        final String outputPath = args[2];
+        //Specify the named arguments
+        Options options = new Options();
+        options.addOption("p", "platforms", true, "[platforms...]");
+        options.addOption("s", "schema", true, "Schema path");
+        options.addOption("q", "query", true, "SQL statement path");
+        options.addOption("o", "outputPath", true, "Output path");
+        options.addOption("d", "data", true, "Data path for file-based schema");
+        options.addOption("c", "config", true, "File path for config file");
+        options.addOption("jdbcDriver", true, "JDBC driver");
+        options.addOption("jdbcUrl", true, "JDBC URL");
+        options.addOption("jdbcPassword", true, "JDBC URL");
+
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        final String queryPath = cmd.getOptionValue("q");
+        final String jdbcDriver = cmd.getOptionValue("jdbcDriver");
+        final String jdbcUrl = cmd.getOptionValue("jdbcUrl");
+        final String jdbcUser = cmd.getOptionValue("jdbcUser");
+        final String jdbcPassword = cmd.getOptionValue("jdbcPassword");
+        final String outputPath = cmd.getOptionValue("o");
+        final String dataPath = cmd.getOptionValue("d");
+        final String schemaPath = cmd.getOptionValue("s");
 
         final String query = StringUtils.chop(Files.readString(Paths.get(queryPath)).stripTrailing());
+        final Configuration configuration = new Configuration();
 
-        final Configuration configuration = new Configuration(configurationPath);
-
-        final SqlContext context = new SqlContext(configuration,
-                List.of(Java.channelConversionPlugin(),
-                        Postgres.conversionPlugin()));
-
-        for (int i = 3; i < args.length; i++) {
-            final String platform = args[i];
-            switch (platform.toLowerCase()) {
-                case "spark":
-                    context.withPlugin(Spark.basicPlugin());
-                    break;
-                case "java":
-                    context.withPlugin(Java.basicPlugin());
-                    break;
-                case "postgres":
-                    context.withPlugin(Postgres.plugin());
-                    break;
-                default:
-                    throw new IllegalArgumentException("platform not supported " + platform);
-            }
+        if (cmd.hasOption("c")) {
+            configuration.load(cmd.getOptionValue("c"));
         }
+
+        final String calciteModel = Resources.toString(
+                new URL(schemaPath),
+                Charset.defaultCharset()
+        );
+
+        final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
+
+        final SqlContext context = new SqlContext(configuration, List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
+
+        final List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(cmd.getOptionValue("p")));
+        plugins.stream().forEach(context::register);
 
         final Properties configProperties = Optimizer.ConfigProperties.getDefaults();
         final RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
