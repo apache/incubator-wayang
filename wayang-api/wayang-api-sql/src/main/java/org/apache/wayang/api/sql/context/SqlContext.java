@@ -105,33 +105,22 @@ public class SqlContext extends WayangContext {
      *             args[6...] = platforms
      */
     public static void main(final String[] args) throws Exception {
-        if (args.length < 3)
+        if (args.length < 4)
             throw new IllegalArgumentException(
                     "Usage: ./bin/wayang-submit org.apache.wayang.api.sql.SqlContext <configuration path> <SQL statement path> <output path> [platforms...]");
 
         //Specify the named arguments
         Options options = new Options();
         options.addOption("p", "platforms", true, "[platforms...]");
-        options.addOption("s", "schema", true, "Schema path");
         options.addOption("q", "query", true, "SQL statement path");
         options.addOption("o", "outputPath", true, "Output path");
-        options.addOption("d", "data", true, "Data path for file-based schema");
         options.addOption("c", "config", true, "File path for config file");
-        options.addOption("jdbcDriver", true, "JDBC driver");
-        options.addOption("jdbcUrl", true, "JDBC URL");
-        options.addOption("jdbcPassword", true, "JDBC URL");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
         final String queryPath = cmd.getOptionValue("q");
-        final String jdbcDriver = cmd.getOptionValue("jdbcDriver");
-        final String jdbcUrl = cmd.getOptionValue("jdbcUrl");
-        final String jdbcUser = cmd.getOptionValue("jdbcUser");
-        final String jdbcPassword = cmd.getOptionValue("jdbcPassword");
         final String outputPath = cmd.getOptionValue("o");
-        final String dataPath = cmd.getOptionValue("d");
-        final String schemaPath = cmd.getOptionValue("s");
 
         final String query = StringUtils.chop(Files.readString(Paths.get(queryPath)).stripTrailing());
         final Configuration configuration = new Configuration();
@@ -139,13 +128,6 @@ public class SqlContext extends WayangContext {
         if (cmd.hasOption("c")) {
             configuration.load(cmd.getOptionValue("c"));
         }
-
-        final String calciteModel = Resources.toString(
-                new URL(schemaPath),
-                Charset.defaultCharset()
-        );
-
-        final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
 
         final SqlContext context = new SqlContext(configuration, List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
 
