@@ -37,7 +37,7 @@ import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
-import org.apache.wayang.basic.model.DLModel;
+import org.apache.wayang.basic.model.{DLModel, LogisticRegressionModel};
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function._
@@ -104,6 +104,17 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                                       selectivity: ProbabilisticDoubleInterval = null,
                                       udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
     mapPartitionsJava(toSerializablePartitionFunction(udf), selectivity, udfLoad)
+
+
+  def trainLogisticRegression(labels: DataQuanta[java.lang.Double], fitIntercept: Boolean): DataQuanta[LogisticRegressionModel] = {
+    val operator = new LogisticRegressionOperator(fitIntercept)
+    this.connectTo(operator, 0)
+    labels.connectTo(operator, 1)
+    operator
+  }
+
+
+
 
   /**
     * Feed this instance into a [[MapPartitionsOperator]].
