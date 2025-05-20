@@ -99,37 +99,40 @@ public class SqlContext extends WayangContext {
      * Entry point for executing SQL statements while providing arguments.
      * You need to provide at least a JDBC source.
      *
-     * @param args args[0] = SQL statement path, args[1] = JDBC driver, args[2] =
-     *             JDBC URL, args[3] = JDBC user,
-     *                          args[4] = JDBC password, args[5] = outputPath,
-     *             args[6...] = platforms
+     * @param args
+     *             <ul>
+     *             <li><b>-p, --platforms</b>: Comma-separated list of execution
+     *             platforms (e.g., spark, java).</li>
+     *             <li><b>-q, --query</b>: Path to the SQL query file to be
+     *             executed.</li>
+     *             <li><b>-o, --outputPath</b>: Path where the output results will
+     *             be stored.</li>
+     *             <li><b>-c, --config</b>: Path to the configuration file.</li>
+     *             </ul>
      */
     public static void main(final String[] args) throws Exception {
         if (args.length < 4)
             throw new IllegalArgumentException(
                     "Usage: ./bin/wayang-submit org.apache.wayang.api.sql.SqlContext <configuration path> <SQL statement path> <output path> [platforms...]");
 
-        //Specify the named arguments
-        Options options = new Options();
+        // Specify the named arguments
+        final Options options = new Options();
         options.addOption("p", "platforms", true, "[platforms...]");
         options.addOption("q", "query", true, "SQL statement path");
         options.addOption("o", "outputPath", true, "Output path");
         options.addOption("c", "config", true, "File path for config file");
 
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
+        final CommandLineParser parser = new DefaultParser();
+        final CommandLine cmd = parser.parse(options, args);
 
         final String queryPath = cmd.getOptionValue("q");
         final String outputPath = cmd.getOptionValue("o");
 
         final String query = StringUtils.chop(Files.readString(Paths.get(queryPath)).stripTrailing());
-        final Configuration configuration = new Configuration();
+        final Configuration configuration = new Configuration(cmd.getOptionValue("c"));
 
-        if (cmd.hasOption("c")) {
-            configuration.load(cmd.getOptionValue("c"));
-        }
-
-        final SqlContext context = new SqlContext(configuration, List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
+        final SqlContext context = new SqlContext(configuration,
+                List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
 
         final List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(cmd.getOptionValue("p")));
         plugins.stream().forEach(context::register);
@@ -172,7 +175,7 @@ public class SqlContext extends WayangContext {
                 writer.write(Arrays.toString(record.getValues()));
                 writer.newLine();
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
