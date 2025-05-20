@@ -32,5 +32,4 @@ class LogisticRegression(Op):
     def __init__(self, name=None):
         super().__init__(Op.DType.FLOAT32, name)
 
-    def inputs_required(self):
-        return 2
+
