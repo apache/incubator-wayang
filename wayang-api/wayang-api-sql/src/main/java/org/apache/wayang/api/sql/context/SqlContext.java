@@ -28,7 +28,6 @@ import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 
-import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
 import org.apache.wayang.api.sql.calcite.optimizer.Optimizer;
 import org.apache.wayang.api.sql.calcite.rules.WayangRules;
@@ -106,71 +105,71 @@ public class SqlContext extends WayangContext {
      *             args[6...] = platforms
      */
     public static void main(final String[] args) throws Exception {
-        if (args.length < 5)
+        if (args.length < 4)
             throw new IllegalArgumentException(
-                    "Usage: ./bin/wayang-submit org.apache.wayang.api.sql.SqlContext <SQL statement path> <JDBC driver> <JDBC URL> <JDBC user> <JDBC password> <Result output path> [platforms...]");
+                    "Usage: ./bin/wayang-submit org.apache.wayang.api.sql.SqlContext <configuration path> <SQL statement path> <output path> [platforms...]");
 
         //Specify the named arguments
         Options options = new Options();
         options.addOption("p", "platforms", true, "[platforms...]");
-        options.addOption("s", "schema", true, "Schema path");
         options.addOption("q", "query", true, "SQL statement path");
         options.addOption("o", "outputPath", true, "Output path");
-        options.addOption("d", "data", true, "Data path for file-based schema");
         options.addOption("c", "config", true, "File path for config file");
-        options.addOption("jdbcDriver", true, "JDBC driver");
-        options.addOption("jdbcUrl", true, "JDBC URL");
-        options.addOption("jdbcPassword", true, "JDBC URL");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
         final String queryPath = cmd.getOptionValue("q");
-        final String jdbcDriver = cmd.getOptionValue("jdbcDriver");
-        final String jdbcUrl = cmd.getOptionValue("jdbcUrl");
-        final String jdbcUser = cmd.getOptionValue("jdbcUser");
-        final String jdbcPassword = cmd.getOptionValue("jdbcPassword");
         final String outputPath = cmd.getOptionValue("o");
-        final String dataPath = cmd.getOptionValue("d");
-        final String schemaPath = cmd.getOptionValue("s");
 
-        final String query = StringUtils.chop(
-                Files.readString(Paths.get(queryPath))
-                        .stripTrailing());
-
-        final String driverPlatform = jdbcDriver.split("\\.")[0];
-
+        final String query = StringUtils.chop(Files.readString(Paths.get(queryPath)).stripTrailing());
         final Configuration configuration = new Configuration();
 
         if (cmd.hasOption("c")) {
             configuration.load(cmd.getOptionValue("c"));
         }
 
-        final String calciteModel = Resources.toString(
-                new URL(schemaPath),
-                Charset.defaultCharset()
-        );
+        final SqlContext context = new SqlContext(configuration, List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
 
-        configuration.setProperty("wayang.calcite.model", calciteModel);
-        configuration.setProperty(String.format("wayang.%s.jdbc.url", driverPlatform), jdbcUrl);
-        configuration.setProperty(String.format("wayang.%s.jdbc.user", driverPlatform), jdbcUser);
-        configuration.setProperty(String.format("wayang.%s.jdbc.password", driverPlatform), jdbcPassword);
-
-        final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
-
-        final Configuration parseModel = new ModelParser(configuration, calciteModelJSON).setProperties();
-
-        final SqlContext context = new SqlContext(parseModel,
-                List.of(Java.channelConversionPlugin(), Postgres.conversionPlugin()));
-
-        List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(cmd.getOptionValue("p")));
+        final List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(cmd.getOptionValue("p")));
         plugins.stream().forEach(context::register);
 
-        final Collection<Record> result = context.executeSql(query);
+        final Properties configProperties = Optimizer.ConfigProperties.getDefaults();
+        final RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
+
+        final Optimizer optimizer = Optimizer.create(context.calciteSchema, configProperties,
+                relDataTypeFactory);
+
+        final SqlNode sqlNode = optimizer.parseSql(query);
+        final SqlNode validatedSqlNode = optimizer.validate(sqlNode);
+        final RelNode relNode = optimizer.convert(validatedSqlNode);
+
+        PrintUtils.print("After parsing sql query", relNode);
+
+        final RuleSet rules = RuleSets.ofList(
+                WayangRules.WAYANG_TABLESCAN_RULE,
+                WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
+                WayangRules.WAYANG_PROJECT_RULE,
+                WayangRules.WAYANG_FILTER_RULE,
+                WayangRules.WAYANG_JOIN_RULE,
+                WayangRules.WAYANG_AGGREGATE_RULE,
+                WayangRules.WAYANG_SORT_RULE);
+
+        final RelNode wayangRel = optimizer.optimize(
+                relNode,
+                relNode.getTraitSet().plus(WayangConvention.INSTANCE),
+                rules);
+
+        PrintUtils.print("After translating logical intermediate plan", wayangRel);
+
+        final Collection<Record> collector = new ArrayList<>();
+        final WayangPlan wayangPlan = optimizer.convertWithConfig(wayangRel, configuration, collector);
+        collector.add(new Record(wayangRel.getRowType().getFieldNames().toArray()));
+        context.execute(getJobName(), wayangPlan);
 
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(outputPath))) {
-            for (final Record record : result) {
-                writer.write(record.toString());
+            for (final Record record : collector) {
+                writer.write(Arrays.toString(record.getValues()));
                 writer.newLine();
             }
         } catch (IOException e) {
@@ -210,6 +209,7 @@ public class SqlContext extends WayangContext {
 
         final Collection<Record> collector = new ArrayList<>();
         final WayangPlan wayangPlan = optimizer.convert(wayangRel, collector);
+
         this.execute(getJobName(), wayangPlan);
 
         return collector;
