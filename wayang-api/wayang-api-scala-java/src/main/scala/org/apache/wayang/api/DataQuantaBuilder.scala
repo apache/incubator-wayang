@@ -28,7 +28,7 @@ import org.apache.wayang.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaB
 import org.apache.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.apache.wayang.basic.data.{Record, Tuple2 => RT2}
 import org.apache.wayang.basic.model.{DLModel, Model, LogisticRegressionModel}
-import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator}
+import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,TimeSeriesDecisionTreeRegressionOperator}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
@@ -291,8 +291,46 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
                           option: DLTrainingOperator.Option) =
     new DLTrainingDataQuantaBuilder(this, that, model, option)
 
+
+  /**
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.apache.wayang.basic.operators.LogisticRegressionOperator]].
+   * This operator trains a logistic regression model using the provided features and labels.
+   *
+   * @param that          the [[DataQuantaBuilder]] containing the label values (0.0 or 1.0)
+   * @param fitIntercept  whether to include an intercept term in the model
+   * @return a [[LogisticRegressionDataQuantaBuilder]] for the trained [[LogisticRegressionModel]]
+   */
   def trainLogisticRegression(that: DataQuantaBuilder[_, java.lang.Double], fitIntercept: Boolean = true): LogisticRegressionDataQuantaBuilder =
     new LogisticRegressionDataQuantaBuilder(this.asInstanceOf[DataQuantaBuilder[_, Array[Double]]], that, fitIntercept)
+
+
+  /**
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.apache.wayang.basic.operators.TimeSeriesDecisionTreeRegressionOperator]].
+   * This operator generates lagged features internally and trains a Spark DecisionTreeRegressor
+   * for time series forecasting.
+   *
+   * @param that         the [[DataQuantaBuilder]] containing the label values
+   * @param lag          the number of previous time steps to use as input features
+   * @param maxDepth     the maximum depth of the decision tree
+   * @param minInstances the minimum number of instances per node in the tree
+   * @return a [[DataQuantaBuilder]] containing the predicted output values
+   */
+  def trainTimeSeriesDecisionTree(
+                                   that: DataQuantaBuilder[_, java.lang.Double],
+                                   lag: Int,
+                                   maxDepth: Int,
+                                   minInstances: Int
+                                 ): DataQuantaBuilder[_, java.lang.Double] =
+    new CustomOperatorDataQuantaBuilder[java.lang.Double](
+      new TimeSeriesDecisionTreeRegressionOperator(lag, maxDepth, minInstances),
+      0,
+      new DataQuantaBuilderCache,
+      this,
+      that
+    )
+
 
 
 
@@ -1779,8 +1817,8 @@ class FakeDataQuantaBuilder[T](_dataQuanta: DataQuanta[T])(implicit javaPlanBuil
 /**
  * [[DataQuantaBuilder]] implementation for [[org.apache.wayang.basic.operators.LogisticRegressionOperator]]s.
  *
- * @param inputDataQuanta0 [[DataQuantaBuilder]] για τα χαρακτηριστικά (features)
- * @param inputDataQuanta1 [[DataQuantaBuilder]] για τις ετικέτες (labels)
+ * @param inputDataQuanta0 [[DataQuantaBuilder]]  (features)
+ * @param inputDataQuanta1 [[DataQuantaBuilder]]  (labels)
  */
 class LogisticRegressionDataQuantaBuilder(inputDataQuanta0: DataQuantaBuilder[_, Array[Double]],
                                           inputDataQuanta1: DataQuantaBuilder[_, java.lang.Double],

@@ -105,7 +105,14 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                                       udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
     mapPartitionsJava(toSerializablePartitionFunction(udf), selectivity, udfLoad)
 
-
+  /**
+   * Feed this instance into a [[LogisticRegressionOperator]].
+   * Trains a logistic regression model using the provided feature and label data.
+   *
+   * @param labels DataQuanta containing the label values (0.0 or 1.0)
+   * @param fitIntercept whether to fit an intercept term
+   * @return a new [[DataQuanta]] instance containing the trained [[LogisticRegressionModel]]
+   */
   def trainLogisticRegression(labels: DataQuanta[java.lang.Double], fitIntercept: Boolean): DataQuanta[LogisticRegressionModel] = {
     val operator = new LogisticRegressionOperator(fitIntercept)
     this.connectTo(operator, 0)
@@ -113,6 +120,27 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     operator
   }
 
+  /**
+   * Feed this instance into a [[TimeSeriesDecisionTreeRegressionOperator]].
+   * Trains a Decision Tree Regression model over time series data using lag-based features.
+   *
+   * @param labels DataQuanta containing the target values to predict
+   * @param lag the number of previous time steps to use as input features
+   * @param maxDepth the maximum depth of the decision tree
+   * @param minInstances the minimum number of instances per node
+   * @return a new [[DataQuanta]] instance containing the predicted values
+   */
+  def trainTimeSeriesDecisionTree(
+                                   labels: DataQuanta[java.lang.Double],
+                                   lag: Int,
+                                   maxDepth: Int,
+                                   minInstances: Int
+                                 ): DataQuanta[java.lang.Double] = {
+    val operator = new TimeSeriesDecisionTreeRegressionOperator(lag, maxDepth, minInstances)
+    this.connectTo(operator, 0)
+    labels.connectTo(operator, 1)
+    operator
+  }
 
 
 
