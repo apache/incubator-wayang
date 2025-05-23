@@ -121,26 +121,25 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   /**
-   * Feed this instance into a [[TimeSeriesDecisionTreeRegressionOperator]].
-   * Trains a Decision Tree Regression model over time series data using lag-based features.
+   * Feed this instance into a [[DecisionTreeRegressionOperator]].
+   * Trains a generic Decision Tree Regression model using feature vectors and label values.
    *
-   * @param labels DataQuanta containing the target values to predict
-   * @param lag the number of previous time steps to use as input features
+   * @param labels DataQuanta containing the target values (labels)
    * @param maxDepth the maximum depth of the decision tree
    * @param minInstances the minimum number of instances per node
    * @return a new [[DataQuanta]] instance containing the predicted values
    */
-  def trainTimeSeriesDecisionTree(
+  def trainDecisionTreeRegression(
                                    labels: DataQuanta[java.lang.Double],
-                                   lag: Int,
                                    maxDepth: Int,
                                    minInstances: Int
                                  ): DataQuanta[java.lang.Double] = {
-    val operator = new TimeSeriesDecisionTreeRegressionOperator(lag, maxDepth, minInstances)
+    val operator = new DecisionTreeRegressionOperator(maxDepth, minInstances)
     this.connectTo(operator, 0)
     labels.connectTo(operator, 1)
     operator
   }
+
 
 
 

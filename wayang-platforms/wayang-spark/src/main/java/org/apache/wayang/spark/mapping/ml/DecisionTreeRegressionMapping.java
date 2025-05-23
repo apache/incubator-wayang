@@ -20,19 +20,19 @@
 
 package org.apache.wayang.spark.mapping.ml;
 
-import org.apache.wayang.basic.operators.TimeSeriesDecisionTreeRegressionOperator;
+import org.apache.wayang.basic.operators.DecisionTreeRegressionOperator;
 import org.apache.wayang.core.mapping.*;
-        import org.apache.wayang.spark.operators.ml.SparkTimeSeriesDecisionTreeRegressionOperator;
+import org.apache.wayang.spark.operators.ml.SparkDecisionTreeRegressionOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link TimeSeriesDecisionTreeRegressionOperator} to {@link SparkTimeSeriesDecisionTreeRegressionOperator}.
+ * Mapping from {@link DecisionTreeRegressionOperator} to {@link SparkDecisionTreeRegressionOperator}.
  */
 @SuppressWarnings("unchecked")
-public class TimeSeriesDecisionTreeRegressionMapping implements Mapping {
+public class DecisionTreeRegressionMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -45,16 +45,16 @@ public class TimeSeriesDecisionTreeRegressionMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "timeSeriesDecisionTreeRegression",
-                new TimeSeriesDecisionTreeRegressionOperator(3, 5, 2), // example default params
+                "decisionTreeRegression",
+                new DecisionTreeRegressionOperator(5, 2), // generic defaults: maxDepth=5, minInstances=2
                 false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<TimeSeriesDecisionTreeRegressionOperator>(
-                (matchedOperator, epoch) -> new SparkTimeSeriesDecisionTreeRegressionOperator(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<DecisionTreeRegressionOperator>(
+                (matchedOperator, epoch) -> new SparkDecisionTreeRegressionOperator(matchedOperator).at(epoch)
         );
     }
 }

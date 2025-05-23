@@ -28,7 +28,7 @@ import org.apache.wayang.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaB
 import org.apache.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.apache.wayang.basic.data.{Record, Tuple2 => RT2}
 import org.apache.wayang.basic.model.{DLModel, Model, LogisticRegressionModel}
-import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,TimeSeriesDecisionTreeRegressionOperator}
+import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
@@ -307,29 +307,27 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
    * Feed the built [[DataQuanta]] of this and the given instance into a
-   * [[org.apache.wayang.basic.operators.TimeSeriesDecisionTreeRegressionOperator]].
-   * This operator generates lagged features internally and trains a Spark DecisionTreeRegressor
-   * for time series forecasting.
+   * [[DecisionTreeRegressionOperator]].
+   * This operator trains a generic Decision Tree Regression model using input features and labels.
    *
    * @param that         the [[DataQuantaBuilder]] containing the label values
-   * @param lag          the number of previous time steps to use as input features
    * @param maxDepth     the maximum depth of the decision tree
    * @param minInstances the minimum number of instances per node in the tree
    * @return a [[DataQuantaBuilder]] containing the predicted output values
    */
-  def trainTimeSeriesDecisionTree(
+  def trainDecisionTreeRegression(
                                    that: DataQuantaBuilder[_, java.lang.Double],
-                                   lag: Int,
                                    maxDepth: Int,
                                    minInstances: Int
                                  ): DataQuantaBuilder[_, java.lang.Double] =
     new CustomOperatorDataQuantaBuilder[java.lang.Double](
-      new TimeSeriesDecisionTreeRegressionOperator(lag, maxDepth, minInstances),
+      new DecisionTreeRegressionOperator(maxDepth, minInstances),
       0,
       new DataQuantaBuilderCache,
       this,
       that
     )
+
 
 
 

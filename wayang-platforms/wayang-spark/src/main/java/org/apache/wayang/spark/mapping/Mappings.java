@@ -74,7 +74,7 @@ public class Mappings {
             new DecisionTreeClassificationMapping(),
             new ModelTransformMapping(),
             new LogisticRegressionMapping(),
-            new TimeSeriesDecisionTreeRegressionMapping(),
+            new DecisionTreeRegressionMapping(),
             new PredictMapping()
     );
 

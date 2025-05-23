@@ -542,29 +542,30 @@ public class SparkIntegrationIT {
             assertTrue(prediction == 0.0 || prediction == 1.0);
         }
     }
-
     @Test
-    public void testTimeSeriesDecisionTreeRegressionWithAPI() {
+    public void testDecisionTreeRegressionWithAPI() {
         WayangContext context = new WayangContext()
                 .with(Spark.basicPlugin())
                 .with(Spark.mlPlugin());
 
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(context)
-                .withJobName("Time Series Decision Tree Test")
+                .withJobName("Decision Tree Regression Test")
                 .withUdfJarOf(this.getClass());
 
-        // Sample time series: y = [1.0, 2.0, 3.0, 4.0, 5.0]
-        List<double[]> series = Collections.singletonList(new double[]{1.0, 2.0, 3.0, 4.0, 5.0});
-
-        // Labels = [3.0, 4.0, 5.0] (i.e., next values for each lagged window)
+        // Original time series: [1.0, 2.0, 3.0, 4.0, 5.0]
+        // Manually create lagged features (lag=2) and labels
+        List<double[]> laggedFeatures = Arrays.asList(
+                new double[]{1.0, 2.0},
+                new double[]{2.0, 3.0},
+                new double[]{3.0, 4.0}
+        );
         List<Double> labels = Arrays.asList(3.0, 4.0, 5.0);
 
         // Train and predict using API
         Collection<Double> predictions = planBuilder
-                .loadCollection(series)
-                .trainTimeSeriesDecisionTree(
+                .loadCollection(laggedFeatures)
+                .trainDecisionTreeRegression(
                         planBuilder.loadCollection(labels),
-                        2, // lag
                         3, // maxDepth
                         1  // minInstances
                 )
@@ -577,9 +578,6 @@ public class SparkIntegrationIT {
             assertTrue(pred >= 1.0 && pred <= 5.0);
         }
     }
-
-
-
 
 
     @Test

@@ -20,14 +20,13 @@
 package org.apache.wayang.spark.operators.ml;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.ml.regression.DecisionTreeRegressor;
 import org.apache.spark.ml.regression.DecisionTreeRegressionModel;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.ml.linalg.Vectors;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.*;
-import org.apache.wayang.basic.operators.TimeSeriesDecisionTreeRegressionOperator;
+import org.apache.wayang.basic.operators.DecisionTreeRegressionOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
@@ -41,8 +40,8 @@ import org.apache.wayang.spark.operators.SparkExecutionOperator;
 
 import java.util.*;
 
-public class SparkTimeSeriesDecisionTreeRegressionOperator
-        extends TimeSeriesDecisionTreeRegressionOperator
+public class SparkDecisionTreeRegressionOperator
+        extends DecisionTreeRegressionOperator
         implements SparkExecutionOperator {
 
     private static final String FEATURES = "features";
@@ -53,26 +52,12 @@ public class SparkTimeSeriesDecisionTreeRegressionOperator
             new StructField(LABEL, DataTypes.DoubleType, false, Metadata.empty())
     });
 
-    public SparkTimeSeriesDecisionTreeRegressionOperator(int lagWindowSize, int maxDepth, int minInstancesPerNode) {
-        super(lagWindowSize, maxDepth, minInstancesPerNode);
+    public SparkDecisionTreeRegressionOperator(int maxDepth, int minInstancesPerNode) {
+        super(maxDepth, minInstancesPerNode);
     }
 
-    public SparkTimeSeriesDecisionTreeRegressionOperator(TimeSeriesDecisionTreeRegressionOperator that) {
+    public SparkDecisionTreeRegressionOperator(DecisionTreeRegressionOperator that) {
         super(that);
-    }
-
-    private static Dataset<Row> createLaggedData(JavaRDD<double[]> seriesRdd, int lag) {
-        JavaRDD<Row> rows = seriesRdd.flatMap(series -> {
-            List<Row> result = new ArrayList<>();
-            for (int i = lag; i < series.length; i++) {
-                double[] input = Arrays.copyOfRange(series, i - lag, i);
-                double label = series[i];
-                result.add(RowFactory.create(Vectors.dense(input), label));
-            }
-            return result.iterator();
-        });
-
-        return SparkSession.builder().getOrCreate().createDataFrame(rows, SCHEMA);
     }
 
     @Override
@@ -96,10 +81,17 @@ public class SparkTimeSeriesDecisionTreeRegressionOperator
         RddChannel.Instance labelsInput = (RddChannel.Instance) inputs[1];
         CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
 
-        JavaRDD<double[]> timeSeriesRdd = featuresInput.provideRdd(); // 1D time series as array
-        int lag = this.getLagWindowSize();
+        JavaRDD<double[]> featuresRdd = featuresInput.provideRdd();
+        JavaRDD<Double> labelsRdd = labelsInput.provideRdd();
 
-        Dataset<Row> trainingData = createLaggedData(timeSeriesRdd, lag);
+        JavaRDD<Row> rows = featuresRdd.zip(labelsRdd).map(tuple ->
+                RowFactory.create(Vectors.dense(tuple._1), tuple._2)
+        );
+
+        Dataset<Row> trainingData = SparkSession
+                .builder()
+                .getOrCreate()
+                .createDataFrame(rows, SCHEMA);
 
         DecisionTreeRegressor dt = new DecisionTreeRegressor()
                 .setLabelCol(LABEL)
@@ -109,9 +101,8 @@ public class SparkTimeSeriesDecisionTreeRegressionOperator
 
         DecisionTreeRegressionModel model = dt.fit(trainingData);
 
-        // Predict next values for each feature vector used in training
         Dataset<Row> predictions = model.transform(trainingData);
-        JavaRDD<Double> predictedValues = predictions.toJavaRDD().map(row -> row.getDouble(2)); // prediction col is at index 2
+        JavaRDD<Double> predictedValues = predictions.select("prediction").toJavaRDD().map(row -> row.getDouble(0));
 
         output.accept(predictedValues.collect());
 

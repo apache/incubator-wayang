@@ -26,38 +26,29 @@ import org.apache.wayang.core.types.DataSetType;
 
 import java.util.Optional;
 
-/**
- * A time series regression operator using Spark's DecisionTreeRegressor.
- * It expects a time series as input and generates lag features internally.
- */
-public class TimeSeriesDecisionTreeRegressionOperator extends BinaryToUnaryOperator<double[], Double, Void> {
 
-    private final int lagWindowSize;
+public class DecisionTreeRegressionOperator extends BinaryToUnaryOperator<double[], Double, Void> {
+
     private final int maxDepth;
     private final int minInstancesPerNode;
 
-    public TimeSeriesDecisionTreeRegressionOperator(int lagWindowSize, int maxDepth, int minInstancesPerNode) {
+    public DecisionTreeRegressionOperator(int maxDepth, int minInstancesPerNode) {
         super(
                 DataSetType.createDefaultUnchecked(double[].class), // Time series input
                 DataSetType.createDefaultUnchecked(Double.class),   // Predicted value output
                 DataSetType.none(),                                 // No model output
                 false
         );
-        this.lagWindowSize = lagWindowSize;
         this.maxDepth = maxDepth;
         this.minInstancesPerNode = minInstancesPerNode;
     }
 
-    public TimeSeriesDecisionTreeRegressionOperator(TimeSeriesDecisionTreeRegressionOperator that) {
+    public DecisionTreeRegressionOperator(DecisionTreeRegressionOperator that) {
         super(that);
-        this.lagWindowSize = that.lagWindowSize;
         this.maxDepth = that.maxDepth;
         this.minInstancesPerNode = that.minInstancesPerNode;
     }
 
-    public int getLagWindowSize() {
-        return lagWindowSize;
-    }
 
     public int getMaxDepth() {
         return maxDepth;
