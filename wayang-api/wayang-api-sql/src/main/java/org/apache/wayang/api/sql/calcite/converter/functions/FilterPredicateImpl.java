@@ -18,11 +18,7 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.SqlFunctions;
 import org.apache.calcite.sql.SqlKind;
