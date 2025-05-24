@@ -23,24 +23,37 @@ import org.apache.wayang.basic.model.op.nn.*;
 import org.apache.wayang.basic.model.optimizer.Adam;
 import org.apache.wayang.basic.model.optimizer.GradientDescent;
 import org.apache.wayang.basic.model.optimizer.Optimizer;
+import org.apache.wayang.tensorflow.model.op.nn.*;
 import org.tensorflow.Graph;
 import org.tensorflow.Operand;
 import org.tensorflow.Tensor;
 import org.tensorflow.ndarray.*;
 import org.tensorflow.op.Ops;
-import org.tensorflow.op.core.Variable;
 import org.tensorflow.types.*;
 import org.tensorflow.types.family.TNumber;
 import org.tensorflow.types.family.TType;
 
 public class Convertor {
 
-    public static Operand<?> convert(Ops tf, Op op, Operand<?>... inputs) {
+    public static Operand<?> convert(Graph graph, Ops tf, Op op, Operand<?>... inputs) {
+        // the last Operand in inputs always the trainingMode
         if (op instanceof ArgMax) {
             return convert(tf, (ArgMax) op, inputs[0]);
         }
+        if (op instanceof BatchNorm2D) {
+            return convert(graph, tf, (BatchNorm2D) op, inputs[0], (Operand<TBool>) inputs[1]);
+        }
         if (op instanceof Cast) {
             return convert(tf, (Cast) op, inputs[0]);
+        }
+        if (op instanceof ConvLSTM2D) {
+            return convert(tf, (ConvLSTM2D) op, inputs[0]);
+        }
+        if (op instanceof Conv2D) {
+            return convert(tf, (Conv2D) op, inputs[0]);
+        }
+        if (op instanceof Conv3D) {
+            return convert(tf, (Conv3D) op, inputs[0]);
         }
         if (op instanceof CrossEntropyLoss) {
             return convert(tf, (CrossEntropyLoss) op, inputs[0], inputs[1]);
@@ -56,6 +69,9 @@ public class Convertor {
         }
         if (op instanceof Mean) {
             return convert(tf, (Mean) op, inputs[0]);
+        }
+        if (op instanceof MSELoss) {
+            return convert(tf, (MSELoss) op, inputs[0], inputs[1]);
         }
         if (op instanceof ReLU) {
             return convert(tf, (ReLU) op, inputs[0]);
@@ -73,6 +89,17 @@ public class Convertor {
 
     public static Operand<TInt32> convert(Ops tf, ArgMax op, Operand<?> input) {
         return tf.withName(op.getName()).math.argMax(input, tf.constant(op.getDim()), TInt32.class);
+    }
+
+    public static Operand<?> convert(Graph graph, Ops tf, BatchNorm2D op, Operand<?> input, Operand<TBool> trainingMode) {
+        if (op.getDType() == Op.DType.FLOAT32) {
+            return new TensorflowBatchNorm2D<TFloat32>(graph, tf, op, TFloat32.class).call((Operand<TFloat32>) input, trainingMode);
+        }
+        if (op.getDType() == Op.DType.FLOAT64) {
+            return new TensorflowBatchNorm2D<TFloat64>(graph, tf, op, TFloat64.class).call((Operand<TFloat64>) input, trainingMode);
+        }
+
+        throw new RuntimeException("Unsupported DType: " + op.getDType());
     }
 
     public static Operand<?> convert(Ops tf, Cast op, Operand<?> input) {
@@ -98,6 +125,39 @@ public class Convertor {
         throw new RuntimeException("Unsupported DType: " + op.getDType());
     }
 
+    public static Operand<?> convert(Ops tf, ConvLSTM2D op, Operand<?> input) {
+        if (op.getDType() == Op.DType.FLOAT32) {
+            return new TensorflowConvLSTM2D<TFloat32>(tf, op, TFloat32.class).call((Operand<TFloat32>) input);
+        }
+        if (op.getDType() == Op.DType.FLOAT64) {
+            return new TensorflowConvLSTM2D<TFloat64>(tf, op, TFloat64.class).call((Operand<TFloat64>) input);
+        }
+
+        throw new RuntimeException("Unsupported DType: " + op.getDType());
+    }
+
+    public static Operand<?> convert(Ops tf, Conv2D op, Operand<?> input) {
+        if (op.getDType() == Op.DType.FLOAT32) {
+            return new TensorflowConv2D<TFloat32>(tf, op, TFloat32.class).call((Operand<TFloat32>) input);
+        }
+        if (op.getDType() == Op.DType.FLOAT64) {
+            return new TensorflowConv2D<TFloat64>(tf, op, TFloat64.class).call((Operand<TFloat64>) input);
+        }
+
+        throw new RuntimeException("Unsupported DType: " + op.getDType());
+    }
+
+    public static Operand<?> convert(Ops tf, Conv3D op, Operand<?> input) {
+        if (op.getDType() == Op.DType.FLOAT32) {
+            return new TensorflowConv3D<TFloat32>(tf, op, TFloat32.class).call((Operand<TFloat32>) input);
+        }
+        if (op.getDType() == Op.DType.FLOAT64) {
+            return new TensorflowConv3D<TFloat64>(tf, op, TFloat64.class).call((Operand<TFloat64>) input);
+        }
+
+        throw new RuntimeException("Unsupported DType: " + op.getDType());
+    }
+
     public static Operand<?> convert(Ops tf, CrossEntropyLoss op, Operand<?> predicted, Operand<?> labels) {
         Operand<?> oneHot;
         if (op.getDType() == Op.DType.FLOAT32) {
@@ -116,6 +176,13 @@ public class Convertor {
                         ),
                         tf.array(1)
                 )),
+                tf.array(0)
+        );
+    }
+
+    public static Operand<?> convert(Ops tf, MSELoss op, Operand<?> predicted, Operand<?> labels) {
+        return tf.withName(op.getName()).math.mean(
+                tf.math.squaredDifference((Operand<TNumber>) predicted, (Operand<TNumber>) labels),
                 tf.array(0)
         );
     }
@@ -151,43 +218,14 @@ public class Convertor {
     }
 
     public static Operand<?> convert(Ops tf, Linear op, Operand<?> input) {
-        if (op.getDType() == Op.DType.INT32) {
-            return convertInternal(tf, op, (Operand<TInt32>) input, TInt32.class);
-        }
-        if (op.getDType() == Op.DType.INT64) {
-            return convertInternal(tf, op, (Operand<TInt64>) input, TInt64.class);
-        }
         if (op.getDType() == Op.DType.FLOAT32) {
-            return convertInternal(tf, op, (Operand<TFloat32>) input, TFloat32.class);
+            return new TensorflowLinear<TFloat32>(tf, op, TFloat32.class).call((Operand<TFloat32>) input);
         }
         if (op.getDType() == Op.DType.FLOAT64) {
-            return convertInternal(tf, op, (Operand<TFloat64>) input, TFloat64.class);
-        }
-        if (op.getDType() == Op.DType.BYTE) {
-            return convertInternal(tf, op, (Operand<TUint8>) input, TUint8.class);
+            return new TensorflowLinear<TFloat64>(tf, op, TFloat64.class).call((Operand<TFloat64>) input);
         }
 
         throw new RuntimeException("Unsupported DType: " + op.getDType());
-    }
-
-    public static <T extends TNumber> Operand<T> convertInternal(Ops tf, Linear op, Operand<T> input, Class<T> tClass) {
-        int[] weightShape = new int[] {op.getInFeatures(), op.getOutFeatures()};
-        Variable<T> weights = tf.variable(tf.random.truncatedNormal(tf.array(weightShape), tClass));
-        if (!op.getBias()) {
-            return tf.withName(op.getName()).linalg.matMul(
-                    input,
-                    weights
-            );
-        }
-        int biasShape = op.getOutFeatures();
-        Variable<T> biases = tf.variable(tf.random.truncatedNormal(tf.array(biasShape), tClass));
-        return tf.withName(op.getName()).math.add(
-                tf.linalg.matMul(
-                        input,
-                        weights
-                ),
-                biases
-        );
     }
 
     public static Operand<?> convert(Ops tf, Mean op, Operand<?> input) {

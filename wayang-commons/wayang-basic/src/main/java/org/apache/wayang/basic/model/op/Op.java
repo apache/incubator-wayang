@@ -34,13 +34,15 @@ public abstract class Op implements Serializable {
     protected final DType dType;
 
     public Op(DType dType) {
-        this.name = this.getClass().getSimpleName() + CNT.getAndIncrement();
-        this.fromList = new ArrayList<>();
-        this.dType = dType;
+        this(null, dType);
     }
 
     public Op(String name, DType dType) {
-        this.name = name;
+        if (name == null || name.isEmpty()) {
+            this.name = this.getClass().getSimpleName() + CNT.getAndIncrement();
+        } else {
+            this.name = name;
+        }
         this.fromList = new ArrayList<>();
         this.dType = dType;
     }
