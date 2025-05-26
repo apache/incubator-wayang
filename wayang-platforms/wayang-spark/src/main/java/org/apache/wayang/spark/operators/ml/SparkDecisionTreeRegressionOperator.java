@@ -19,24 +19,27 @@
 
 package org.apache.wayang.spark.operators.ml;
 
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.regression.DecisionTreeRegressor;
-import org.apache.spark.ml.regression.DecisionTreeRegressionModel;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.ml.linalg.Vectors;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.*;
 import org.apache.wayang.basic.operators.DecisionTreeRegressionOperator;
+import org.apache.wayang.basic.model.DecisionTreeRegressionModel;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.wayang.spark.model.SparkMLModel;
 
 import java.util.*;
 
@@ -99,12 +102,10 @@ public class SparkDecisionTreeRegressionOperator
                 .setMaxDepth(this.getMaxDepth())
                 .setMinInstancesPerNode(this.getMinInstancesPerNode());
 
-        DecisionTreeRegressionModel model = dt.fit(trainingData);
+        org.apache.spark.ml.regression.DecisionTreeRegressionModel sparkModel = dt.fit(trainingData);
 
-        Dataset<Row> predictions = model.transform(trainingData);
-        JavaRDD<Double> predictedValues = predictions.select("prediction").toJavaRDD().map(row -> row.getDouble(0));
-
-        output.accept(predictedValues.collect());
+        // Wrap and return the trained model
+        output.accept(Collections.singletonList(new Model(sparkModel)));
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
@@ -112,5 +113,45 @@ public class SparkDecisionTreeRegressionOperator
     @Override
     public boolean containsAction() {
         return false;
+    }
+
+
+    public static class Model implements DecisionTreeRegressionModel, SparkMLModel<double[], Double> {
+
+        private final org.apache.spark.ml.regression.DecisionTreeRegressionModel model;
+
+        public Model(org.apache.spark.ml.regression.DecisionTreeRegressionModel model) {
+            this.model = model;
+        }
+
+        @Override
+        public double predict(double[] features) {
+            return model.predict(Vectors.dense(features));
+        }
+
+        @Override
+        public JavaRDD<Double> predict(JavaRDD<double[]> input) {
+            JavaRDD<Row> rowRdd = input.map(features -> RowFactory.create(Vectors.dense(features)));
+            StructType schema = new StructType(new StructField[]{
+                    new StructField(FEATURES, new VectorUDT(), false, Metadata.empty())
+            });
+            Dataset<Row> df = SparkSession.builder().getOrCreate().createDataFrame(rowRdd, schema);
+            Dataset<Row> predictions = model.transform(df);
+            return predictions.select("prediction").toJavaRDD().map(row -> row.getDouble(0));
+        }
+
+        @Override
+        public JavaRDD<Tuple2<double[], Double>> transform(JavaRDD<double[]> input) {
+            JavaRDD<Row> rowRdd = input.map(features -> RowFactory.create(Vectors.dense(features)));
+            StructType schema = new StructType(new StructField[]{
+                    new StructField(FEATURES, new VectorUDT(), false, Metadata.empty())
+            });
+            Dataset<Row> df = SparkSession.builder().getOrCreate().createDataFrame(rowRdd, schema);
+            Dataset<Row> predictions = model.transform(df);
+            return predictions.toJavaRDD().map(row -> new Tuple2<>(
+                    ((org.apache.spark.ml.linalg.Vector) row.getAs(FEATURES)).toArray(),
+                    row.getAs("prediction")
+            ));
+        }
     }
 }

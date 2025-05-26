@@ -37,7 +37,7 @@ import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
-import org.apache.wayang.basic.model.{DLModel, LogisticRegressionModel};
+import org.apache.wayang.basic.model.{DLModel, LogisticRegressionModel,DecisionTreeRegressionModel};
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function._
@@ -133,7 +133,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                                    labels: DataQuanta[java.lang.Double],
                                    maxDepth: Int,
                                    minInstances: Int
-                                 ): DataQuanta[java.lang.Double] = {
+                                 ): DataQuanta[DecisionTreeRegressionModel] = {
     val operator = new DecisionTreeRegressionOperator(maxDepth, minInstances)
     this.connectTo(operator, 0)
     labels.connectTo(operator, 1)

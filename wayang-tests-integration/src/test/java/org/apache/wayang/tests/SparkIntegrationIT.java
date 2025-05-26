@@ -22,6 +22,7 @@ import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.basic.model.LogisticRegressionModel;
+import org.apache.wayang.basic.model.DecisionTreeRegressionModel;
 import org.apache.wayang.api.DataQuanta;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.core.api.Configuration;
@@ -552,8 +553,7 @@ public class SparkIntegrationIT {
                 .withJobName("Decision Tree Regression Test")
                 .withUdfJarOf(this.getClass());
 
-        // Original time series: [1.0, 2.0, 3.0, 4.0, 5.0]
-        // Manually create lagged features (lag=2) and labels
+        // Create sample training data
         List<double[]> laggedFeatures = Arrays.asList(
                 new double[]{1.0, 2.0},
                 new double[]{2.0, 3.0},
@@ -561,8 +561,8 @@ public class SparkIntegrationIT {
         );
         List<Double> labels = Arrays.asList(3.0, 4.0, 5.0);
 
-        // Train and predict using API
-        Collection<Double> predictions = planBuilder
+        // Train the model
+        Collection<DecisionTreeRegressionModel> models = planBuilder
                 .loadCollection(laggedFeatures)
                 .trainDecisionTreeRegression(
                         planBuilder.loadCollection(labels),
@@ -571,11 +571,14 @@ public class SparkIntegrationIT {
                 )
                 .collect();
 
-        // Basic validation
-        assertEquals(3, predictions.size());
-        for (Double pred : predictions) {
-            assertNotNull(pred);
-            assertTrue(pred >= 1.0 && pred <= 5.0);
+        // We expect one model
+        assertEquals(1, models.size());
+        DecisionTreeRegressionModel model = models.iterator().next();
+
+        // Validate predictions using model.predict
+        for (double[] features : laggedFeatures) {
+            double prediction = model.predict(features);
+            assertTrue(prediction >= 1.0 && prediction <= 5.0);
         }
     }
 

@@ -27,7 +27,7 @@ import java.util.{Collection => JavaCollection}
 import org.apache.wayang.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaBuilderDecorator}
 import org.apache.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.apache.wayang.basic.data.{Record, Tuple2 => RT2}
-import org.apache.wayang.basic.model.{DLModel, Model, LogisticRegressionModel}
+import org.apache.wayang.basic.model.{DLModel, Model, LogisticRegressionModel,DecisionTreeRegressionModel}
 import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
@@ -319,8 +319,8 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
                                    that: DataQuantaBuilder[_, java.lang.Double],
                                    maxDepth: Int,
                                    minInstances: Int
-                                 ): DataQuantaBuilder[_, java.lang.Double] =
-    new CustomOperatorDataQuantaBuilder[java.lang.Double](
+                                 ): DataQuantaBuilder[_, DecisionTreeRegressionModel] =
+    new CustomOperatorDataQuantaBuilder[DecisionTreeRegressionModel](
       new DecisionTreeRegressionOperator(maxDepth, minInstances),
       0,
       new DataQuantaBuilderCache,

@@ -23,20 +23,20 @@ import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
 import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.basic.model.DecisionTreeRegressionModel;
 
 import java.util.Optional;
 
-
-public class DecisionTreeRegressionOperator extends BinaryToUnaryOperator<double[], Double, Void> {
+public class DecisionTreeRegressionOperator extends BinaryToUnaryOperator<double[], Double, DecisionTreeRegressionModel> {
 
     private final int maxDepth;
     private final int minInstancesPerNode;
 
     public DecisionTreeRegressionOperator(int maxDepth, int minInstancesPerNode) {
         super(
-                DataSetType.createDefaultUnchecked(double[].class), // Time series input
-                DataSetType.createDefaultUnchecked(Double.class),   // Predicted value output
-                DataSetType.none(),                                 // No model output
+                DataSetType.createDefaultUnchecked(double[].class),
+                DataSetType.createDefaultUnchecked(Double.class),
+                DataSetType.createDefaultUnchecked(DecisionTreeRegressionModel.class),
                 false
         );
         this.maxDepth = maxDepth;
@@ -48,7 +48,6 @@ public class DecisionTreeRegressionOperator extends BinaryToUnaryOperator<double
         this.maxDepth = that.maxDepth;
         this.minInstancesPerNode = that.minInstancesPerNode;
     }
-
 
     public int getMaxDepth() {
         return maxDepth;
