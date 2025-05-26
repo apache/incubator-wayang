@@ -308,13 +308,17 @@ public class Job extends OneTimeExecutable {
             if (this.configuration.getBooleanProperty("wayang.core.explain.enabled")) {
                 long unixTime = System.currentTimeMillis() / 1000L;
 
+                String sanitized = ("job-" + this.name + "-" + unixTime)
+                    .replaceAll("\\s+", "_")
+                    .replaceAll("[^a-zA-Z0-9._-]", "");
+
                 ExplainUtils.write(
                     ExplainUtils.parsePlan(this.wayangPlan, true),
-                    this.configuration.getStringProperty("wayang.core.explain.directory") + "job-" + this.name + "-" + unixTime + "-logical.json"
+                    this.configuration.getStringProperty("wayang.core.explain.directory") + sanitized + "-logical.json"
                 );
                 ExplainUtils.write(
                     ExplainUtils.parsePlan(executionPlan, true),
-                    this.configuration.getStringProperty("wayang.core.explain.directory") + "job-" + this.name + "-" + unixTime + "-execution.json"
+                    this.configuration.getStringProperty("wayang.core.explain.directory") + sanitized + "-execution.json"
                 );
             }
 
