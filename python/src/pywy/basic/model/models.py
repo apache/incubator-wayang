@@ -33,3 +33,11 @@ class LogisticRegression(Op):
         super().__init__(Op.DType.FLOAT32, name)
 
 
+class DecisionTreeRegression(Op):
+    def __init__(self, max_depth: int = 5, min_instances: int = 2, name=None):
+        super().__init__(Op.DType.FLOAT32, name)
+        self.max_depth = max_depth
+        self.min_instances = min_instances
+
+
+
