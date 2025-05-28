@@ -21,6 +21,10 @@ package org.apache.wayang.tests;
 import org.apache.wayang.basic.WayangBasics;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.*;
+import org.apache.wayang.basic.model.LogisticRegressionModel;
+import org.apache.wayang.basic.model.DecisionTreeRegressionModel;
+import org.apache.wayang.api.DataQuanta;
+import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.WayangContext;
@@ -491,6 +495,88 @@ class SparkIntegrationIT {
             assertTrue(pred == 0.0 || pred == 1.0);
         }
     }
+
+    @Test
+    void testLogisticRegressionWithAPI() {
+        WayangContext context = new WayangContext()
+                .with(Spark.basicPlugin())
+                .with(Spark.mlPlugin());
+
+        JavaPlanBuilder planBuilder = new JavaPlanBuilder(context)
+                .withJobName("Logistic Regression Test")
+                .withUdfJarOf(this.getClass());
+
+        // Sample training data
+        List<double[]> features = Arrays.asList(
+                new double[]{0.0, 1.0},
+                new double[]{1.0, 0.0},
+                new double[]{1.0, 1.0},
+                new double[]{0.0, 0.0}
+        );
+        List<Double> labels = Arrays.asList(1.0, 1.0, 0.0, 0.0);
+
+        // Build the pipeline using DataQuantaBuilder
+        LogisticRegressionModel model = planBuilder
+                .loadCollection(features).withName("Load Features")
+                .trainLogisticRegression(
+                        planBuilder.loadCollection(labels).withName("Load Labels"),
+                        true
+                )
+                .collect()
+                .iterator()
+                .next();
+
+        // Predict using the model
+        Collection<Double> predictions = planBuilder
+                .loadCollection(Collections.singletonList(model))
+                .predict(planBuilder.loadCollection(features), Double.class)
+                .collect();
+
+
+        assertEquals(4, predictions.size());
+        for (double prediction : predictions) {
+            assertTrue(prediction == 0.0 || prediction == 1.0);
+        }
+    }
+    @Test
+    void testDecisionTreeRegressionWithAPI() {
+        WayangContext context = new WayangContext()
+                .with(Spark.basicPlugin())
+                .with(Spark.mlPlugin());
+
+        JavaPlanBuilder planBuilder = new JavaPlanBuilder(context)
+                .withJobName("Decision Tree Regression Test")
+                .withUdfJarOf(this.getClass());
+
+        // Create sample training data
+        List<double[]> laggedFeatures = Arrays.asList(
+                new double[]{1.0, 2.0},
+                new double[]{2.0, 3.0},
+                new double[]{3.0, 4.0}
+        );
+        List<Double> labels = Arrays.asList(3.0, 4.0, 5.0);
+
+        // Train the model
+        Collection<DecisionTreeRegressionModel> models = planBuilder
+                .loadCollection(laggedFeatures)
+                .trainDecisionTreeRegression(
+                        planBuilder.loadCollection(labels),
+                        3, // maxDepth
+                        1  // minInstances
+                )
+                .collect();
+
+        // We expect one model
+        assertEquals(1, models.size());
+        DecisionTreeRegressionModel model = models.iterator().next();
+
+        // Validate predictions using model.predict
+        for (double[] features : laggedFeatures) {
+            double prediction = model.predict(features);
+            assertTrue(prediction >= 1.0 && prediction <= 5.0);
+        }
+    }
+
 
     @Test
     void testKMeans() {

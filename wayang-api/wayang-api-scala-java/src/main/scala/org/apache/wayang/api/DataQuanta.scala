@@ -37,7 +37,7 @@ import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
-import org.apache.wayang.basic.model.DLModel;
+import org.apache.wayang.basic.model.{DLModel, LogisticRegressionModel,DecisionTreeRegressionModel};
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function._
@@ -104,6 +104,44 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                                       selectivity: ProbabilisticDoubleInterval = null,
                                       udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
     mapPartitionsJava(toSerializablePartitionFunction(udf), selectivity, udfLoad)
+
+  /**
+   * Feed this instance into a [[LogisticRegressionOperator]].
+   * Trains a logistic regression model using the provided feature and label data.
+   *
+   * @param labels DataQuanta containing the label values (0.0 or 1.0)
+   * @param fitIntercept whether to fit an intercept term
+   * @return a new [[DataQuanta]] instance containing the trained [[LogisticRegressionModel]]
+   */
+  def trainLogisticRegression(labels: DataQuanta[java.lang.Double], fitIntercept: Boolean): DataQuanta[LogisticRegressionModel] = {
+    val operator = new LogisticRegressionOperator(fitIntercept)
+    this.connectTo(operator, 0)
+    labels.connectTo(operator, 1)
+    operator
+  }
+
+  /**
+   * Feed this instance into a [[DecisionTreeRegressionOperator]].
+   * Trains a generic Decision Tree Regression model using feature vectors and label values.
+   *
+   * @param labels DataQuanta containing the target values (labels)
+   * @param maxDepth the maximum depth of the decision tree
+   * @param minInstances the minimum number of instances per node
+   * @return a new [[DataQuanta]] instance containing the predicted values
+   */
+  def trainDecisionTreeRegression(
+                                   labels: DataQuanta[java.lang.Double],
+                                   maxDepth: Int,
+                                   minInstances: Int
+                                 ): DataQuanta[DecisionTreeRegressionModel] = {
+    val operator = new DecisionTreeRegressionOperator(maxDepth, minInstances)
+    this.connectTo(operator, 0)
+    labels.connectTo(operator, 1)
+    operator
+  }
+
+
+
 
   /**
     * Feed this instance into a [[MapPartitionsOperator]].

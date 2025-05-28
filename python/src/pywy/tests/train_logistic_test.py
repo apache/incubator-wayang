@@ -14,22 +14,29 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pywy.basic.model.ops import Op
 
+import unittest
+from pywy.dataquanta import WayangContext
+from pywy.platforms.java import JavaPlugin
+from pywy.platforms.spark import SparkPlugin
 
-class Model:
-    pass
+class TestTrainLogisticRegression(unittest.TestCase):
 
+    def test_train_and_predict(self):
+        ctx = WayangContext().register({JavaPlugin, SparkPlugin})
 
-class DLModel(Model):
-    def __init__(self, out: Op):
-        self.out = out
+        features = ctx.load_collection([[0.0, 1.0], [1.0, 0.0], [1.0, 1.0], [0.0, 0.0]])
+        labels = ctx.load_collection([1.0, 1.0, 0.0, 0.0])
 
-    def get_out(self):
-        return self.out
+        model = features.train_logistic_regression(labels)
+        predictions = model.predict(features)
 
-class LogisticRegression(Op):
-    def __init__(self, name=None):
-        super().__init__(Op.DType.FLOAT32, name)
+        result = predictions.collect()
+        print("Predictions:", result)
 
+        self.assertEqual(len(result), 4)
+        for pred in result:
+            self.assertIn(pred, [0.0, 1.0])
 
+if __name__ == "__main__":
+    unittest.main()
