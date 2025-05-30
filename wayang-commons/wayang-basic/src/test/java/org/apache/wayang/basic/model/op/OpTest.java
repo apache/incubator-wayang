@@ -22,12 +22,12 @@ import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.basic.model.op.nn.CrossEntropyLoss;
 import org.apache.wayang.basic.model.op.nn.Linear;
 import org.apache.wayang.basic.model.op.nn.ReLU;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class OpTest {
+class OpTest {
 
     @Test
-    public void testBuild() {
+    void testBuild() {
         // model
         Linear l1 = new Linear(4, 4, true, "l1");
         ReLU r1 = new ReLU("r1");

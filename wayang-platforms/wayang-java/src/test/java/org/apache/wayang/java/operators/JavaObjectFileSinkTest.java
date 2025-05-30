@@ -19,10 +19,10 @@
 package org.apache.wayang.java.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.junit.Test;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,12 +34,12 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaObjectFileSink}.
  */
-public class JavaObjectFileSinkTest extends JavaExecutionOperatorTestBase {
+class JavaObjectFileSinkTest extends JavaExecutionOperatorTestBase {
 
     // If this test fails, make sure you have Hadoop installed and it's HADOOP_HOME is set.
     // Also, if on Windows: Make sure you installed the winutils binaries (https://github.com/cdarlint/winutils)
     @Test
-    public void testWritingDoesNotFail() throws IOException {
+    void testWritingDoesNotFail() throws IOException {
         // Prepare the sink.
         Path tempDir = Files.createTempDirectory("wayang-java");
         tempDir.toFile().deleteOnExit();

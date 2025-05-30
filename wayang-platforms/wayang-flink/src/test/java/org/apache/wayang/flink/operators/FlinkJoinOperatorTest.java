@@ -24,17 +24,17 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for {@link FlinkJoinOperator}.
  */
-public class FlinkJoinOperatorTest extends FlinkOperatorTestBase{
+class FlinkJoinOperatorTest extends FlinkOperatorTestBase {
 
     //TODO: Validate FlinkJoinOperator implementation
     // it is required to validate the implementation of FlinkJoinOperator
@@ -42,7 +42,7 @@ public class FlinkJoinOperatorTest extends FlinkOperatorTestBase{
     // implementation of the implementation in the operator
     // labels:flink,bug
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input0 = this.createDataSetChannelInstance(Arrays.asList(
                 new Tuple2<>(1, "b"), new Tuple2<>(1, "c"), new Tuple2<>(2, "d"), new Tuple2<>(3, "e")));
@@ -74,12 +74,12 @@ public class FlinkJoinOperatorTest extends FlinkOperatorTestBase{
         // Verify the outcome.
         final List<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>> result =
                 output.<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>>provideDataSet().collect();
-        Assert.assertEquals(5, result.size());
-        Assert.assertEquals(result.get(0), new Tuple2<>(new Tuple2<>(1, "b"), new Tuple2<>("x", 1)));
-        Assert.assertEquals(result.get(1), new Tuple2<>(new Tuple2<>(1, "b"), new Tuple2<>("y", 1)));
-        Assert.assertEquals(result.get(2), new Tuple2<>(new Tuple2<>(1, "c"), new Tuple2<>("x", 1)));
-        Assert.assertEquals(result.get(3), new Tuple2<>(new Tuple2<>(1, "c"), new Tuple2<>("y", 1)));
-        Assert.assertEquals(result.get(4), new Tuple2<>(new Tuple2<>(2, "d"), new Tuple2<>("z", 2)));
+        assertEquals(5, result.size());
+        assertEquals(new Tuple2<>(new Tuple2<>(1, "b"), new Tuple2<>("x", 1)), result.get(0));
+        assertEquals(new Tuple2<>(new Tuple2<>(1, "b"), new Tuple2<>("y", 1)), result.get(1));
+        assertEquals(new Tuple2<>(new Tuple2<>(1, "c"), new Tuple2<>("x", 1)), result.get(2));
+        assertEquals(new Tuple2<>(new Tuple2<>(1, "c"), new Tuple2<>("y", 1)), result.get(3));
+        assertEquals(new Tuple2<>(new Tuple2<>(2, "d"), new Tuple2<>("z", 2)), result.get(4));
 
 
     }

@@ -18,22 +18,23 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link JavaLocalCallbackSink}.
  */
-public class JavaLocalCallbackSinkTest extends JavaExecutionOperatorTestBase {
+class JavaLocalCallbackSinkTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         List<Integer> inputValues = Arrays.asList(1, 2, 3);
 
@@ -47,6 +48,6 @@ public class JavaLocalCallbackSinkTest extends JavaExecutionOperatorTestBase {
         evaluate(sink, inputs, outputs);
 
         // Verify the outcome.
-        Assert.assertEquals(collector, inputValues);
+        assertEquals(collector, inputValues);
     }
 }

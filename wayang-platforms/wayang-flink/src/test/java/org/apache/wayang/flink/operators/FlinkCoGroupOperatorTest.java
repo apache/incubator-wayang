@@ -26,18 +26,20 @@ import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test suite for {@link FlinkCoGroupOperator}.
  */
-public class FlinkCoGroupOperatorTest extends FlinkOperatorTestBase {
+class FlinkCoGroupOperatorTest extends FlinkOperatorTestBase {
 
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input0 = this.createDataSetChannelInstance(Arrays.asList(
                 new Tuple2<>(1, "b"), new Tuple2<>(1, "c"), new Tuple2<>(2, "d"), new Tuple2<>(3, "e")));
@@ -99,11 +101,11 @@ public class FlinkCoGroupOperatorTest extends FlinkOperatorTestBase {
                     continue ResultLoop;
                 }
             }
-            Assert.fail(String.format("Unexpected group: %s", resultCoGroup));
+            fail(String.format("Unexpected group: %s", resultCoGroup));
         }
-        Assert.assertTrue(
-                String.format("Missing groups: %s", expectedGroups),
-                expectedGroups.isEmpty()
+        assertTrue(
+                expectedGroups.isEmpty(),
+                String.format("Missing groups: %s", expectedGroups)
         );
     }
 

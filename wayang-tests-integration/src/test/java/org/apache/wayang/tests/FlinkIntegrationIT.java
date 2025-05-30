@@ -18,23 +18,19 @@
 
 package org.apache.wayang.tests;
 
-import org.apache.wayang.java.plugin.JavaBasicPlugin;
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.flink.Flink;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tests.platform.MyMadeUpPlatform;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,10 +43,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 /**
  * Test the Spark integration with Wayang.
  */
-public class FlinkIntegrationIT {
+class FlinkIntegrationIT {
 
     private static final String JAVA  = "JAVA";
     private static final String FLINK = "JAVA";
@@ -58,9 +58,9 @@ public class FlinkIntegrationIT {
 
     private WayangContext makeContext(String plugin){
         WayangContext wayangContext = new WayangContext();
-        if(plugin == JAVA || plugin == BOTH)
+        if (plugin == JAVA || plugin == BOTH)
             wayangContext.with(Java.basicPlugin());
-        if(plugin == FLINK || plugin == BOTH)
+        if (plugin == FLINK || plugin == BOTH)
             wayangContext.with(Flink.basicPlugin());
         return wayangContext;
     }
@@ -71,7 +71,7 @@ public class FlinkIntegrationIT {
     }
 
     @Test
-    public void testReadAndWrite() throws URISyntaxException, IOException {
+    void testReadAndWrite() throws Exception {
         // Build a Wayang plan.
         List<String> collector = new LinkedList<>();
 
@@ -79,12 +79,12 @@ public class FlinkIntegrationIT {
 
         // Verify the plan result.
         final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
-        Assert.assertEquals(lines, collector);
+        assertEquals(lines, collector);
     }
 
 
     @Test
-    public void testReadAndTransformAndWrite() throws URISyntaxException {
+    void testReadAndTransformAndWrite() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -93,7 +93,7 @@ public class FlinkIntegrationIT {
     }
 
     @Test
-    public void testCartesianOperator() throws IOException {
+    void testCartesianOperator() {
 
         List<Tuple2<String, String>> collector = new ArrayList<>();
         final WayangPlan wayangPlan = WayangPlansOperators.cartesian(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT, collector);
@@ -104,48 +104,47 @@ public class FlinkIntegrationIT {
         final WayangPlan wayangPlanJava = WayangPlansOperators.cartesian(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
     @Test
-    public void testCoGroupOperator() throws IOException {
+    void testCoGroupOperator() {
         List<Tuple2<?, ?>> collector = new ArrayList<>();
         final WayangPlan wayangPlan = WayangPlansOperators.coGroup(WayangPlans.FILE_WITH_KEY_1, WayangPlans.FILE_WITH_KEY_2, collector);
         makeAndRun(wayangPlan, FLINK);
-
 
         // Run in java for test result
         List<Tuple2<?, ?>> collectorJava = new ArrayList<>();
         final WayangPlan wayangPlanJava = WayangPlansOperators.coGroup(WayangPlans.FILE_WITH_KEY_1, WayangPlans.FILE_WITH_KEY_2, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
     @Test
-    public void testCollectionSource(){
+    void testCollectionSource() {
         List<String> input = makeList();
         List<String> collector = new ArrayList<>();
 
         WayangPlan wayangplan = WayangPlansOperators.collectionSourceOperator(input, collector);
         makeAndRun(wayangplan, FLINK);
 
-        Assert.assertEquals(input, collector);
+        assertEquals(input, collector);
     }
 
     @Test
-    public void testCountOperator(){
+    void testCountOperator() {
         List<String> input = makeList();
         List<Long> collector = new ArrayList<>();
 
         WayangPlan wayangPlan = WayangPlansOperators.count(input, collector);
         makeAndRun(wayangPlan, FLINK);
 
-        Assert.assertTrue(input.size() == collector.get(0));
+        assertEquals(input.size(), (long) collector.get(0));
     }
 
     @Test
-    public void testDistinctOperator(){
+    void testDistinctOperator() {
         List<String> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlansOperators.distinct(WayangPlans.FILE_SOME_LINES_TXT, collector);
         makeAndRun(wayangPlan, FLINK);
@@ -154,11 +153,11 @@ public class FlinkIntegrationIT {
         WayangPlan wayangPlanJava = WayangPlansOperators.distinct(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava.stream().sorted().toArray(), collector.stream().sorted().toArray());
+        assertArrayEquals(collectorJava.stream().sorted().toArray(), collector.stream().sorted().toArray());
     }
 
     @Test
-    public void testFilterOperator(){
+    void testFilterOperator() {
         List<String> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlansOperators.filter(WayangPlans.FILE_SOME_LINES_TXT, collector);
         makeAndRun(wayangPlan, FLINK);
@@ -167,11 +166,11 @@ public class FlinkIntegrationIT {
         WayangPlan wayangPlanJava = WayangPlansOperators.filter(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
     @Test
-    public void testFlapMapOperator(){
+    void testFlapMapOperator() {
         List<String> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlansOperators.flatMap(WayangPlans.FILE_SOME_LINES_TXT, collector);
         makeAndRun(wayangPlan, FLINK);
@@ -180,11 +179,11 @@ public class FlinkIntegrationIT {
         WayangPlan wayangPlanJava = WayangPlansOperators.flatMap(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
     @Test
-    public void testJoinOperator(){
+    void testJoinOperator() {
         List<Tuple2<?, ?>> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlansOperators.join(WayangPlans.FILE_WITH_KEY_1, WayangPlans.FILE_WITH_KEY_2, collector);
         makeAndRun(wayangPlan, FLINK);
@@ -193,12 +192,11 @@ public class FlinkIntegrationIT {
         WayangPlan wayangPlanJava = WayangPlansOperators.join(WayangPlans.FILE_WITH_KEY_1, WayangPlans.FILE_WITH_KEY_2, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
-
     @Test
-    public void testReduceByOperator(){
+    void testReduceByOperator() {
         List<Tuple2<?, ?>> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlansOperators.reduceBy(WayangPlans.FILE_WITH_KEY_1, collector);
         makeAndRun(wayangPlan, FLINK);
@@ -207,11 +205,11 @@ public class FlinkIntegrationIT {
         WayangPlan wayangPlanJava = WayangPlansOperators.reduceBy(WayangPlans.FILE_WITH_KEY_1, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
     @Test
-    public void testSortOperator(){
+    void testSortOperator() {
         List<String> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlansOperators.sort(WayangPlans.FILE_SOME_LINES_TXT, collector);
         makeAndRun(wayangPlan, FLINK);
@@ -220,12 +218,11 @@ public class FlinkIntegrationIT {
         WayangPlan wayangPlanJava = WayangPlansOperators.sort(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
     @Test
-    public void testTextFileSink() throws IOException {
-
+    void testTextFileSink() throws Exception {
         File temp = File.createTempFile("tempfile", ".tmp");
 
         temp.delete();
@@ -237,14 +234,13 @@ public class FlinkIntegrationIT {
         final List<String> linesFlink = Files.lines(Paths.get(temp.toURI())).collect(Collectors.toList());
 
 
-        Assert.assertEquals(lines, linesFlink);
+        assertEquals(lines, linesFlink);
 
         temp.delete();
-
     }
 
     @Test
-    public void testUnionOperator(){
+    void testUnionOperator() {
         List<String> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlansOperators.union(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT, collector);
         makeAndRun(wayangPlan, FLINK);
@@ -253,11 +249,11 @@ public class FlinkIntegrationIT {
         WayangPlan wayangPlanJava = WayangPlansOperators.union(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
     @Test
-    public void testZipWithIdOperator(){
+    void testZipWithIdOperator() {
         List<Tuple2<Long, String>> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlansOperators.zipWithId(WayangPlans.FILE_SOME_LINES_TXT, collector);
         makeAndRun(wayangPlan, FLINK);
@@ -266,10 +262,10 @@ public class FlinkIntegrationIT {
         WayangPlan wayangPlanJava = WayangPlansOperators.zipWithId(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
         makeAndRun(wayangPlanJava, JAVA);
 
-        Assert.assertEquals(collectorJava, collector);
+        assertEquals(collectorJava, collector);
     }
 
-    private List<String> makeList(){
+    private List<String> makeList() {
         return Arrays.asList(
                 "word1",
                 "word2",
@@ -284,11 +280,8 @@ public class FlinkIntegrationIT {
         );
     }
 
-
-
-
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration1() throws URISyntaxException {
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration1() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
         // ILLEGAL: This platform is not registered, so this operator will find no implementation.
@@ -297,15 +290,13 @@ public class FlinkIntegrationIT {
         // Instantiate Wayang and activate the Spark backend.
         WayangContext wayangContext = makeContext(FLINK);
 
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
-
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
+        assertThrows(WayangException.class, () ->
+            // Have Wayang execute the plan.
+            wayangContext.execute(wayangPlan));
     }
 
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration2() throws URISyntaxException {
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration2() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -313,12 +304,13 @@ public class FlinkIntegrationIT {
         // ILLEGAL: This dummy platform is not sufficient to execute the plan.
         wayangContext.register(MyMadeUpPlatform.getInstance());
 
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
+        assertThrows(WayangException.class, () ->
+            // Have Wayang execute the plan.
+            wayangContext.execute(wayangPlan));
     }
 
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration3() throws URISyntaxException {
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration3() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -330,11 +322,11 @@ public class FlinkIntegrationIT {
         // ILLEGAL: We blacklist the Spark platform, although we need it.
         job.getConfiguration().getPlatformProvider().addToBlacklist(Flink.platform());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
-        job.execute();
+        assertThrows(WayangException.class, job::execute);
     }
 
     @Test
-    public void testMultiSourceAndMultiSink() throws URISyntaxException {
+    void testMultiSourceAndMultiSink() {
         // Define some input data.
         final List<String> collection1 = Arrays.asList("This is source 1.", "This is source 1, too.");
         final List<String> collection2 = Arrays.asList("This is source 2.", "This is source 2, too.");
@@ -354,12 +346,12 @@ public class FlinkIntegrationIT {
         Collections.sort(expectedOutcome2);
         Collections.sort(collector1);
         Collections.sort(collector2);
-        Assert.assertEquals(expectedOutcome1, collector1);
-        Assert.assertEquals(expectedOutcome2, collector2);
+        assertEquals(expectedOutcome1, collector1);
+        assertEquals(expectedOutcome2, collector2);
     }
 
     @Test
-    public void testMultiSourceAndHoleAndMultiSink() throws URISyntaxException {
+    void testMultiSourceAndHoleAndMultiSink() {
         // Define some input data.
         final List<String> collection1 = Arrays.asList("This is source 1.", "This is source 1, too.");
         final List<String> collection2 = Arrays.asList("This is source 2.", "This is source 2, too.");
@@ -372,17 +364,15 @@ public class FlinkIntegrationIT {
 
         // Check the results in both sinks.
         List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
-                .flatMap(string -> Arrays.asList(string.toLowerCase(), string.toUpperCase()).stream())
-                .collect(Collectors.toList());
-        Collections.sort(expectedOutcome);
+                .flatMap(string -> Stream.of(string.toLowerCase(), string.toUpperCase())).sorted().collect(Collectors.toList());
         Collections.sort(collector1);
         Collections.sort(collector2);
-        Assert.assertEquals(expectedOutcome, collector1);
-        Assert.assertEquals(expectedOutcome, collector2);
+        assertEquals(expectedOutcome, collector1);
+        assertEquals(expectedOutcome, collector2);
     }
 
     @Test
-    public void testGlobalMaterializedGroup() throws URISyntaxException {
+    void testGlobalMaterializedGroup() {
         // Build the WayangPlan.
         List<Iterable<Integer>> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.globalMaterializedGroup(collector, 1, 2, 3);
@@ -390,12 +380,12 @@ public class FlinkIntegrationIT {
         // Instantiate Wayang and activate the Java backend.
         makeAndRun(wayangPlan, FLINK);
 
-        Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
+        assertEquals(1, collector.size());
+        assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
     }
 
     @Test
-    public void testIntersect() throws URISyntaxException {
+    void testIntersect() {
         // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
@@ -403,12 +393,13 @@ public class FlinkIntegrationIT {
         // Instantiate Wayang and activate the Java backend.
         makeAndRun(wayangPlan, FLINK);
 
-        Assert.assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
+        assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
     }
 
     //TODO validate this test is required
-    //@Test
-    public void testPageRankWithGraphBasic() {
+    @Disabled
+    @Test
+    void testPageRankWithGraphBasic() {
         // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
@@ -431,7 +422,7 @@ public class FlinkIntegrationIT {
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
         final List<Long> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
-        Assert.assertEquals(
+        assertEquals(
                 Arrays.asList(3L, 0L, 2L, 1L),
                 vertexOrder
         );
@@ -439,7 +430,7 @@ public class FlinkIntegrationIT {
 
 
     @Test
-    public void testMapPartitions() throws URISyntaxException {
+    void testMapPartitions() {
         // Execute the Wayang plan.
         final Collection<Tuple2<String, Integer>> result = new ArrayList<>();
 
@@ -447,14 +438,14 @@ public class FlinkIntegrationIT {
 
         makeAndRun(wayangPlan, FLINK);
 
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
                 WayangCollections.asSet(result)
         );
     }
 
     @Test
-    public void testZipWithId() throws URISyntaxException {
+    void testZipWithId() {
         // Build the WayangPlan.
         List<Long> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.zipWithId(collector, 0, 10, 20, 30, 30);
@@ -462,12 +453,12 @@ public class FlinkIntegrationIT {
         // Instantiate Wayang and activate the Java backend.
         makeAndRun(wayangPlan, FLINK);
 
-        Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(Long.valueOf(5L), collector.get(0));
+        assertEquals(1, collector.size());
+        assertEquals(Long.valueOf(5L), collector.get(0));
     }
 
     @Test
-    public void testDiverseScenario1() throws URISyntaxException {
+    void testDiverseScenario1() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario1(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -476,7 +467,7 @@ public class FlinkIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario2() throws URISyntaxException {
+    void testDiverseScenario2() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario2(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -485,7 +476,7 @@ public class FlinkIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario3() throws URISyntaxException {
+    void testDiverseScenario3() {
         // Build the WayangPlan.
         //TODO: need implement the loop for running this test
         //WayangPlan wayangPlan = WayangPlans.diverseScenario3(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
@@ -495,7 +486,7 @@ public class FlinkIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario4() throws URISyntaxException {
+    void testDiverseScenario4() {
         // Build the WayangPlan.
         //TODO: need implement the loop for running this test
         //WayangPlan wayangPlan = WayangPlans.diverseScenario4(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
@@ -506,7 +497,7 @@ public class FlinkIntegrationIT {
 
 
     @Test
-    public void testSample() throws URISyntaxException {
+    void testSample() {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -516,6 +507,5 @@ public class FlinkIntegrationIT {
 
         System.out.println(collector);
     }
-
 
 }

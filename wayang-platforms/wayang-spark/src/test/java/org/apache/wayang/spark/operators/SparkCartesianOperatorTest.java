@@ -18,23 +18,24 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link SparkCartesianOperator}.
  */
-public class SparkCartesianOperatorTest extends SparkOperatorTestBase {
+class SparkCartesianOperatorTest extends SparkOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         RddChannel.Instance input0 = this.createRddChannelInstance(Arrays.asList(1, 2));
         RddChannel.Instance input1 = this.createRddChannelInstance(Arrays.asList("a", "b", "c"));
@@ -55,8 +56,8 @@ public class SparkCartesianOperatorTest extends SparkOperatorTestBase {
 
         // Verify the outcome.
         final List<Tuple2<Integer, String>> result = output.<Tuple2<Integer, String>>provideRdd().collect();
-        Assert.assertEquals(6, result.size());
-        Assert.assertEquals(result.get(0), new Tuple2(1, "a"));
+        assertEquals(6, result.size());
+        assertEquals(new Tuple2(1, "a"), result.get(0));
 
     }
 

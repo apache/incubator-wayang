@@ -18,19 +18,20 @@
 
 package org.apache.wayang.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for the {@link LimitedInputStream}.
  */
-public class LimitedInputStreamTest {
+class LimitedInputStreamTest {
 
     @Test
-    public void testLimitation() throws IOException {
+    void testLimitation() throws IOException {
         // Generate test data.
         byte[] testData = new byte[(int) Byte.MAX_VALUE + 1];
         for (int b = 0; b <= Byte.MAX_VALUE; b++) {
@@ -43,12 +44,12 @@ public class LimitedInputStreamTest {
         LimitedInputStream lis = new LimitedInputStream(bais, limit);
 
         for (int i = 0; i < limit; i++) {
-            Assert.assertEquals(i, lis.getNumReadBytes());
-            Assert.assertEquals(i, lis.read());
+            assertEquals(i, lis.getNumReadBytes());
+            assertEquals(i, lis.read());
         }
-        Assert.assertEquals(42, lis.getNumReadBytes());
-        Assert.assertEquals(-1, lis.read());
-        Assert.assertEquals(42, lis.getNumReadBytes());
+        assertEquals(42, lis.getNumReadBytes());
+        assertEquals(-1, lis.read());
+        assertEquals(42, lis.getNumReadBytes());
     }
 
 }

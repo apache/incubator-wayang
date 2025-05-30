@@ -18,21 +18,22 @@
 
 package org.apache.wayang.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link CrossProductIterable}.
  */
-public class CrossProductIterableTest {
+class CrossProductIterableTest {
 
     @Test
-    public void test2x3() {
+    void test2x3() {
         List<List<Integer>> matrix = Arrays.asList(
                 Arrays.asList(1, 2 ,3),
                 Arrays.asList(4, 5, 6)
@@ -53,11 +54,11 @@ public class CrossProductIterableTest {
                 Arrays.asList(3, 6)
         );
 
-        Assert.assertEquals(expectedCrossProduct, crossProduct);
+        assertEquals(expectedCrossProduct, crossProduct);
     }
 
     @Test
-    public void test3x2() {
+    void test3x2() {
         List<List<Integer>> matrix = Arrays.asList(
                 Arrays.asList(1, 4),
                 Arrays.asList(2, 5),
@@ -78,11 +79,11 @@ public class CrossProductIterableTest {
                 Arrays.asList(4, 5, 6)
         );
 
-        Assert.assertEquals(expectedCrossProduct, crossProduct);
+        assertEquals(expectedCrossProduct, crossProduct);
     }
 
     @Test
-    public void test1x3() {
+    void test1x3() {
         List<List<Integer>> matrix = Arrays.asList(
                 Arrays.asList(1),
                 Arrays.asList(2),
@@ -96,11 +97,11 @@ public class CrossProductIterableTest {
                 Arrays.asList(1, 2, 3)
         );
 
-        Assert.assertEquals(expectedCrossProduct, crossProduct);
+        assertEquals(expectedCrossProduct, crossProduct);
     }
 
     @Test
-    public void test3x1() {
+    void test3x1() {
         List<List<Integer>> matrix = Arrays.asList(
                 Arrays.asList(1, 2, 3)
         );
@@ -114,11 +115,11 @@ public class CrossProductIterableTest {
                 Arrays.asList(3)
         );
 
-        Assert.assertEquals(expectedCrossProduct, crossProduct);
+        assertEquals(expectedCrossProduct, crossProduct);
     }
 
     @Test
-    public void test1x1() {
+    void test1x1() {
         List<List<Integer>> matrix = Arrays.asList(
                 Arrays.asList(1)
         );
@@ -130,11 +131,11 @@ public class CrossProductIterableTest {
                 Arrays.asList(1)
         );
 
-        Assert.assertEquals(expectedCrossProduct, crossProduct);
+        assertEquals(expectedCrossProduct, crossProduct);
     }
 
     @Test
-    public void test0x0() {
+    void test0x0() {
         List<List<Integer>> matrix = Arrays.asList(
         );
         final Iterable<List<Integer>> crossProductStream = WayangCollections.streamedCrossProduct(matrix);
@@ -144,11 +145,11 @@ public class CrossProductIterableTest {
         List<List<Integer>> expectedCrossProduct = Arrays.asList(
         );
 
-        Assert.assertEquals(expectedCrossProduct, crossProduct);
+        assertEquals(expectedCrossProduct, crossProduct);
     }
 
     @Test
-    public void test2and0() {
+    void test2and0() {
         List<List<Integer>> matrix = Arrays.asList(
                 Arrays.asList(1, 2),
                 Arrays.asList()
@@ -160,6 +161,6 @@ public class CrossProductIterableTest {
         List<List<Integer>> expectedCrossProduct = Arrays.asList(
         );
 
-        Assert.assertEquals(expectedCrossProduct, crossProduct);
+        assertEquals(expectedCrossProduct, crossProduct);
     }
 }

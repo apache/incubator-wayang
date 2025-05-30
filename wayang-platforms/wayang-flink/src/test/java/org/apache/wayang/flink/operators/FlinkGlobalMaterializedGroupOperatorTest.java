@@ -20,22 +20,21 @@ package org.apache.wayang.flink.operators;
 
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for {@link FlinkGlobalMaterializedGroupOperator}.
  */
-public class FlinkGlobalMaterializedGroupOperatorTest extends FlinkOperatorTestBase{
+class FlinkGlobalMaterializedGroupOperatorTest extends FlinkOperatorTestBase {
 
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         Collection<Integer> inputCollection = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
@@ -53,8 +52,8 @@ public class FlinkGlobalMaterializedGroupOperatorTest extends FlinkOperatorTestB
 
         // Verify the outcome.
         final Collection<Iterable<Integer>> result = ((DataSetChannel.Instance) outputs[0]).<Iterable<Integer>>provideDataSet().collect();
-        Assert.assertEquals(1, result.size());
-        Assert.assertEquals(inputCollection, result.iterator().next());
+        assertEquals(1, result.size());
+        assertEquals(inputCollection, result.iterator().next());
 
     }
 

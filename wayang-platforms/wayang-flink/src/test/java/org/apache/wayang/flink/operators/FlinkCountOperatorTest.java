@@ -18,26 +18,22 @@
 
 package org.apache.wayang.flink.operators;
 
-import org.apache.flink.api.java.DataSet;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.apache.wayang.java.channels.CollectionChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import javax.xml.crypto.Data;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for {@link FlinkCountOperator}.
  */
-public class FlinkCountOperatorTest extends FlinkOperatorTestBase{
+class FlinkCountOperatorTest extends FlinkOperatorTestBase {
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input = this.createDataSetChannelInstance(Arrays.asList(1, 2, 3, 4, 5));
         DataSetChannel.Instance output = this.createDataSetChannelInstance();
@@ -55,8 +51,8 @@ public class FlinkCountOperatorTest extends FlinkOperatorTestBase{
 
         // Verify the outcome.
         final List<Object> result = output.provideDataSet().collect();
-        Assert.assertEquals(1,result.size());
-        Assert.assertEquals(Long.valueOf(5),result.iterator().next());
+        assertEquals(1,result.size());
+        assertEquals(Long.valueOf(5),result.iterator().next());
 
     }
 

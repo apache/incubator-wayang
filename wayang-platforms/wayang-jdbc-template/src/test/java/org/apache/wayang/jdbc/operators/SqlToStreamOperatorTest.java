@@ -18,8 +18,6 @@
 
 package org.apache.wayang.jdbc.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -37,6 +35,7 @@ import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.test.HsqldbFilterOperator;
 import org.apache.wayang.jdbc.test.HsqldbPlatform;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -45,16 +44,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Test suite for {@link SqlToStreamOperator}.
  */
-public class SqlToStreamOperatorTest extends OperatorTestBase {
+class SqlToStreamOperatorTest extends OperatorTestBase {
 
     @Test
-    public void testWithHsqldb() throws SQLException {
+    void testWithHsqldb() throws SQLException {
         Configuration configuration = new Configuration();
 
         Job job = mock(Job.class);
@@ -112,11 +113,11 @@ public class SqlToStreamOperatorTest extends OperatorTestBase {
                 new Record(2, "two")
         );
 
-        Assert.assertEquals(expected, output);
+        assertEquals(expected, output);
     }
 
     @Test
-    public void testWithEmptyHsqldb() throws SQLException {
+    void testWithEmptyHsqldb() throws SQLException {
         Configuration configuration = new Configuration();
 
         Job job = mock(Job.class);
@@ -165,7 +166,7 @@ public class SqlToStreamOperatorTest extends OperatorTestBase {
         );
 
         List<Record> output = streamChannelInstance.<Record>provideStream().collect(Collectors.toList());
-        Assert.assertTrue(output.isEmpty());
+        assertTrue(output.isEmpty());
     }
 
 }
