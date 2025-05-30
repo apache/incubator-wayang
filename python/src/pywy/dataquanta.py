@@ -23,7 +23,7 @@ from pywy.types import (GenericTco, Predicate, Function, BiFunction, FlatmapFunc
 from pywy.operators import *
 from pywy.basic.data.record import Record
 from pywy.basic.model.option import Option
-from pywy.basic.model.models import (Model, LogisticRegression)
+from pywy.basic.model.models import (Model, LogisticRegression, DecisionTreeRegression)
 
 
 
@@ -201,6 +201,18 @@ class DataQuanta(GenericTco):
             fit_intercept: bool = True
     ) -> "DataQuanta[Out]":
         op = LogisticRegression()
+        self._connect(op, 0)
+        labels._connect(op, 1)
+        return DataQuanta(self.context, op)
+
+
+    def train_decision_tree_regression(
+            self: "DataQuanta[In]",
+            labels: "DataQuanta[In]",
+            max_depth: int = 5,
+            min_instances: int = 2
+    ) -> "DataQuanta[Out]":
+        op = DecisionTreeRegression(max_depth, min_instances)
         self._connect(op, 0)
         labels._connect(op, 1)
         return DataQuanta(self.context, op)
