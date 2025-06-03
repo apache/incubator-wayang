@@ -21,20 +21,21 @@ package org.apache.wayang.flink.operators;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 /**
  * Test suite for the {@link FlinkCollectionSource}.
  */
-public class FlinkCollectionSourceTest extends FlinkOperatorTestBase{
+class FlinkCollectionSourceTest extends FlinkOperatorTestBase {
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         Set<Integer> inputValues = new HashSet<>(Arrays.asList(1, 2, 3));
         FlinkCollectionSource<Integer> collectionSource = new FlinkCollectionSource<Integer>(
                 inputValues,
@@ -49,6 +50,6 @@ public class FlinkCollectionSourceTest extends FlinkOperatorTestBase{
         this.evaluate(collectionSource, inputs, outputs);
 
         final Set<Integer> outputValues = new HashSet<>(output.<Integer>provideDataSet().collect());
-        Assert.assertEquals(outputValues, inputValues);
+        assertEquals(outputValues, inputValues);
     }
 }

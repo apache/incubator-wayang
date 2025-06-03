@@ -19,7 +19,6 @@
 package org.apache.wayang.spark.operators;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import org.junit.Before;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -33,6 +32,7 @@ import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.wayang.spark.test.ChannelFactory;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Collection;
 
@@ -42,14 +42,14 @@ import static org.mockito.Mockito.when;
 /**
  * Test base for {@link SparkExecutionOperator} tests.
  */
-public class SparkOperatorTestBase {
+class SparkOperatorTestBase {
 
     protected Configuration configuration;
 
     protected SparkExecutor sparkExecutor;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.configuration = new Configuration();
         if(sparkExecutor == null)
             this.sparkExecutor = (SparkExecutor) SparkPlatform.getInstance().getExecutorFactory().create(this.mockJob());

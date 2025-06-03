@@ -18,25 +18,26 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.apache.wayang.basic.operators.SampleOperator;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link SparkBernoulliSampleOperator}.
  */
-public class SparkBernoulliSampleOperatorTest extends SparkOperatorTestBase {
+class SparkBernoulliSampleOperatorTest extends SparkOperatorTestBase {
 
-    @Ignore("Cannot check this, because the sample size returned is not always exact.")
+    @Disabled("Cannot check this, because the sample size returned is not always exact.")
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         List<Integer> inputData = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
@@ -57,11 +58,11 @@ public class SparkBernoulliSampleOperatorTest extends SparkOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> result = ((RddChannel.Instance) outputs[0]).<Integer>provideRdd().collect();
-        Assert.assertEquals(5, result.size());
+        assertEquals(5, result.size());
     }
 
     @Test
-    public void testDoesNotFail() {
+    void testDoesNotFail() {
         // Prepare test data.
         List<Integer> inputData = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 

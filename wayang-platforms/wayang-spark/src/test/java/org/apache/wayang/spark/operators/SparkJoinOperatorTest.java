@@ -18,25 +18,26 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link SparkJoinOperator}.
  */
-public class SparkJoinOperatorTest extends SparkOperatorTestBase {
+class SparkJoinOperatorTest extends SparkOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         RddChannel.Instance input0 = this.createRddChannelInstance(Arrays.asList(
                 new Tuple2<>(1, "b"), new Tuple2<>(1, "c"), new Tuple2<>(2, "d"), new Tuple2<>(3, "e")));
@@ -68,12 +69,12 @@ public class SparkJoinOperatorTest extends SparkOperatorTestBase {
         // Verify the outcome.
         final List<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>> result =
                 output.<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>>provideRdd().collect();
-        Assert.assertEquals(5, result.size());
-        Assert.assertEquals(result.get(0), new Tuple2<>(new Tuple2<>(1, "b"), new Tuple2<>("x", 1)));
-        Assert.assertEquals(result.get(1), new Tuple2<>(new Tuple2<>(1, "b"), new Tuple2<>("y", 1)));
-        Assert.assertEquals(result.get(2), new Tuple2<>(new Tuple2<>(1, "c"), new Tuple2<>("x", 1)));
-        Assert.assertEquals(result.get(3), new Tuple2<>(new Tuple2<>(1, "c"), new Tuple2<>("y", 1)));
-        Assert.assertEquals(result.get(4), new Tuple2<>(new Tuple2<>(2, "d"), new Tuple2<>("z", 2)));
+        assertEquals(5, result.size());
+        assertEquals(new Tuple2<>(new Tuple2<>(1, "b"), new Tuple2<>("x", 1)), result.get(0));
+        assertEquals(new Tuple2<>(new Tuple2<>(1, "b"), new Tuple2<>("y", 1)), result.get(1));
+        assertEquals(new Tuple2<>(new Tuple2<>(1, "c"), new Tuple2<>("x", 1)), result.get(2));
+        assertEquals(new Tuple2<>(new Tuple2<>(1, "c"), new Tuple2<>("y", 1)), result.get(3));
+        assertEquals(new Tuple2<>(new Tuple2<>(2, "d"), new Tuple2<>("z", 2)), result.get(4));
 
 
     }

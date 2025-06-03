@@ -21,9 +21,9 @@ package org.apache.wayang.core.optimizer.cardinality;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,10 +31,10 @@ import static org.mockito.Mockito.when;
 /**
  * Test suite for the {@link DefaultCardinalityEstimator}.
  */
-public class DefaultCardinalityEstimatorTest {
+class DefaultCardinalityEstimatorTest {
 
     @Test
-    public void testBinaryInputEstimation() {
+    void testBinaryInputEstimation() {
         OptimizationContext optimizationContext = mock(OptimizationContext.class);
         when(optimizationContext.getConfiguration()).thenReturn(new Configuration());
 
@@ -53,9 +53,9 @@ public class DefaultCardinalityEstimatorTest {
 
         CardinalityEstimate estimate = estimator.estimate(optimizationContext, inputEstimate1, inputEstimate2);
 
-        Assert.assertEquals(0.9 * 0.4, estimate.getCorrectnessProbability(), 0.001);
-        Assert.assertEquals(singlePointEstimator.applyAsLong(new long[]{50, 10}), estimate.getLowerEstimate());
-        Assert.assertEquals(singlePointEstimator.applyAsLong(new long[]{60, 100}), estimate.getUpperEstimate());
+        assertEquals(0.9 * 0.4, estimate.getCorrectnessProbability(), 0.001);
+        assertEquals(singlePointEstimator.applyAsLong(new long[]{50, 10}), estimate.getLowerEstimate());
+        assertEquals(singlePointEstimator.applyAsLong(new long[]{60, 100}), estimate.getUpperEstimate());
 
     }
 

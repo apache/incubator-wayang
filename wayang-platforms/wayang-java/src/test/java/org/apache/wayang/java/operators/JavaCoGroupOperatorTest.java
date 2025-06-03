@@ -18,8 +18,6 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.core.types.DataSetType;
@@ -28,6 +26,7 @@ import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,13 +34,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  * Test suite for {@link JavaJoinOperator}.
  */
-public class JavaCoGroupOperatorTest extends JavaExecutionOperatorTestBase {
+class JavaCoGroupOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         CollectionChannel.Instance input0 = createCollectionChannelInstance(Arrays.asList(
                 new Tuple2<>(1, "b"),
@@ -104,11 +106,11 @@ public class JavaCoGroupOperatorTest extends JavaExecutionOperatorTestBase {
                     continue ResultLoop;
                 }
             }
-            Assert.fail(String.format("Unexpected group: %s", resultCoGroup));
+            fail(String.format("Unexpected group: %s", resultCoGroup));
         }
-        Assert.assertTrue(
-                String.format("Missing groups: %s", expectedGroups),
-                expectedGroups.isEmpty()
+        assertTrue(
+                expectedGroups.isEmpty(),
+                String.format("Missing groups: %s", expectedGroups)
         );
     }
 

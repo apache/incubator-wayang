@@ -21,21 +21,21 @@ package org.apache.wayang.flink.operators;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import javax.xml.crypto.Data;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for {@link FlinkDistinctOperator}.
  */
 //The test assert error expected 4, actual 1
-public class FlinkDistinctOperatorTest extends FlinkOperatorTestBase{
+class FlinkDistinctOperatorTest extends FlinkOperatorTestBase {
 
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         List<Integer> inputData = Arrays.asList(0, 1, 1, 6, 2, 2, 6, 6);
 
@@ -55,9 +55,9 @@ public class FlinkDistinctOperatorTest extends FlinkOperatorTestBase{
         // Verify the outcome.
         final List<Integer> result = ((DataSetChannel.Instance) outputs[0]).<Integer>provideDataSet().collect();
 
-        Assert.assertEquals(4, result.size());
+        assertEquals(4, result.size());
         result.sort((a, b) -> a - b);
-        Assert.assertEquals(Arrays.asList(0, 1, 2, 6), result);
+        assertEquals(Arrays.asList(0, 1, 2, 6), result);
 
     }
 }

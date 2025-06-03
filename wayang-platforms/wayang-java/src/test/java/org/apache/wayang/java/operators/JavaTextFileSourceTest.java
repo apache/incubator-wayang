@@ -18,42 +18,25 @@
 
 package org.apache.wayang.java.operators;
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.Job;
-import org.apache.wayang.core.function.TransformationDescriptor;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.wayang.core.platform.ChannelInstance;
-import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.util.fs.LocalFileSystem;
 import org.apache.wayang.java.channels.JavaChannelInstance;
-import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
-import org.apache.wayang.java.platform.JavaPlatform;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.Ignore;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for {@link JavaTextFileSource}.
  */
-public class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
+class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
 
     private Locale defaultLocale;
 
@@ -62,19 +45,19 @@ public class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
      * Therefore we ensure it's run in a pre-defined locale and we make sure it's
      * reset after the test.
      */
-    @Before
-    public void setupTest() {
+    @BeforeEach
+    void setupTest() {
         defaultLocale = Locale.getDefault();
         Locale.setDefault(Locale.US);
     }
 
-    @After
-    public void teardownTest() {
+    @AfterEach
+    void teardownTest() {
         Locale.setDefault(defaultLocale);
     }
 
     @Test
-    public void testReadLocalFile() throws IOException, URISyntaxException {
+    void testReadLocalFile() throws IOException, URISyntaxException {
         final String testFileName = "/banking-tx-small.csv";
 
         JavaExecutor javaExecutor = null;
@@ -92,20 +75,21 @@ public class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
 
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
-            Assert.assertEquals(63, result.size());
+            assertEquals(63, result.size());
         } finally {
             if (javaExecutor != null) javaExecutor.dispose();
         }
     }
 
-    @Ignore
     /**
      * Requires a local HTTP Server running, in the project root ...
      *
      * With Python 3: python -m http.server
      * With Python 2: python -m SimpleHTTPServer
      */
-    public void testReadRemoteFileHTTP() throws IOException, URISyntaxException {
+    @Disabled
+    @Test
+    void testReadRemoteFileHTTP() throws IOException, URISyntaxException {
         final String testFileURL = "http://localhost:8000/LICENSE";
 
         JavaExecutor javaExecutor = null;
@@ -123,14 +107,15 @@ public class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
 
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
-            Assert.assertEquals(225, result.size());
+            assertEquals(225, result.size());
         } finally {
             if (javaExecutor != null) javaExecutor.dispose();
         }
     }
 
-    @Ignore
-    public void testReadRemoteFileHTTPS() throws IOException, URISyntaxException {
+    @Disabled
+    @Test
+    void testReadRemoteFileHTTPS() throws IOException, URISyntaxException {
         final String testFileURL = "https://kamir.solidcommunity.net/public/ecolytiq-sustainability-profile/profile2.ttl";
 
         JavaExecutor javaExecutor = null;
@@ -148,7 +133,7 @@ public class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
 
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
-            Assert.assertEquals(23, result.size());
+            assertEquals(23, result.size());
         } finally {
             if (javaExecutor != null) javaExecutor.dispose();
         }

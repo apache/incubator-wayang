@@ -28,7 +28,8 @@ import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.ReflectionUtils
 import org.apache.wayang.java.Java
 import org.apache.wayang.spark.Spark
-import org.junit.{Assert, Test}
+import org.junit.jupiter.api.Assertions._
+import org.junit.jupiter.api.Test
 
 import java.nio.file.{Files, Paths}
 
@@ -45,15 +46,15 @@ class OtherSerializationTests extends SerializationTestBase {
     try {
       val serializedConfiguration = SerializationUtils.serialize(configuration)
       val deserializedConfiguration = SerializationUtils.deserialize[Configuration](serializedConfiguration)
-      Assert.assertEquals(deserializedConfiguration.getStringProperty("spark.master"), "random_master_url_1")
-      Assert.assertEquals(deserializedConfiguration.getStringProperty("spark.app.name"), "random_app_name_2")
+      assertEquals(deserializedConfiguration.getStringProperty("spark.master"), "random_master_url_1")
+      assertEquals(deserializedConfiguration.getStringProperty("spark.app.name"), "random_app_name_2")
 
       val serializedMultiContext = SerializationUtils.serialize(multiContext)
       val deserializedMultiContext = SerializationUtils.deserialize[MultiContext](serializedMultiContext)
-      Assert.assertEquals(deserializedMultiContext.getConfiguration.getStringProperty("spark.master"), "random_master_url_1")
-      Assert.assertEquals(deserializedMultiContext.getConfiguration.getStringProperty("spark.app.name"), "random_app_name_2")
-      Assert.assertEquals(deserializedMultiContext.getSink.get.asInstanceOf[MultiContext.TextFileSink].url, "file:///tmp/out11")
-      Assert.assertArrayEquals(multiContext.getConfiguration.getPlatformProvider.provideAll().toArray, deserializedMultiContext.getConfiguration.getPlatformProvider.provideAll().toArray)
+      assertEquals(deserializedMultiContext.getConfiguration.getStringProperty("spark.master"), "random_master_url_1")
+      assertEquals(deserializedMultiContext.getConfiguration.getStringProperty("spark.app.name"), "random_app_name_2")
+      assertEquals(deserializedMultiContext.getSink.get.asInstanceOf[MultiContext.TextFileSink].url, "file:///tmp/out11")
+      assertArrayEquals(multiContext.getConfiguration.getPlatformProvider.provideAll().toArray, deserializedMultiContext.getConfiguration.getPlatformProvider.provideAll().toArray)
     } catch {
       case t: Throwable =>
         t.printStackTrace()
@@ -76,19 +77,19 @@ class OtherSerializationTests extends SerializationTestBase {
     try {
       val serialized = SerializationUtils.serializeAsString(planBuilder)
       val deserialized = SerializationUtils.deserializeFromString[PlanBuilder](serialized)
-      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName.getMethodName + ".log.json")
+      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName + ".log.json")
 
-      Assert.assertEquals(
+      assertEquals(
         planBuilder.udfJars,
         deserialized.udfJars
       )
-      Assert.assertEquals(
-        deserialized.wayangContext.asInstanceOf[MultiContext].getConfiguration.getStringProperty("spark.master"),
-        "master1"
+      assertEquals(
+        "master1",
+        deserialized.wayangContext.asInstanceOf[MultiContext].getConfiguration.getStringProperty("spark.master")
       )
-      Assert.assertEquals(
+      assertEquals(
+        "file:///tmp/out11",
         deserialized.wayangContext.asInstanceOf[MultiContext].getSink.get.asInstanceOf[MultiContext.TextFileSink].url,
-        "file:///tmp/out11"
       )
     }
     catch {
@@ -116,25 +117,25 @@ class OtherSerializationTests extends SerializationTestBase {
     try {
       val serialized = SerializationUtils.serializeAsString(multiContextPlanBuilder)
       val deserialized = SerializationUtils.deserializeFromString[MultiContextPlanBuilder](serialized)
-      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName.getMethodName + ".log.json")
+      // SerializationTestBase.log(SerializationUtils.serializeAsString(deserialized), testName + ".log.json")
 
-      Assert.assertEquals(
+      assertEquals(
         multiContextPlanBuilder.udfJars,
         deserialized.udfJars
       )
-      Assert.assertEquals(
+      assertEquals(
         multiContextPlanBuilder.multiContexts(0).getConfiguration.getStringProperty("spark.master"),
         "master1"
       )
-      Assert.assertEquals(
+      assertEquals(
         multiContextPlanBuilder.multiContexts(1).getConfiguration.getStringProperty("spark.master"),
         "master2"
       )
-      Assert.assertEquals(
+      assertEquals(
         multiContextPlanBuilder.multiContexts(0).getSink.get.asInstanceOf[MultiContext.TextFileSink].url,
         "file:///tmp/out11"
       )
-      Assert.assertEquals(
+      assertEquals(
         multiContextPlanBuilder.multiContexts(1).getSink.get.asInstanceOf[MultiContext.ObjectFileSink].url,
         "file:///tmp/out12"
       )
@@ -169,7 +170,7 @@ class OtherSerializationTests extends SerializationTestBase {
     val operator = TempFileUtils.readFromTempFileFromString[Operator](tempfile)
 
     // Attach an output sink to deserialized plan
-    val tempFileOut = s"/tmp/${testName.getMethodName}.out"
+    val tempFileOut = s"/tmp/$testName.out"
     val sink = new TextFileSink[AnyRef](s"file://$tempFileOut", classOf[AnyRef])
     operator.connectTo(0, sink, 0)
 
@@ -226,7 +227,7 @@ class OtherSerializationTests extends SerializationTestBase {
     try {
       val serialized = SerializationUtils.serialize(Java.platform())
       val deserialized = SerializationUtils.deserialize[Platform](serialized)
-      Assert.assertEquals(deserialized.getClass.getName, Java.platform().getClass.getName)
+      assertEquals(deserialized.getClass.getName, Java.platform().getClass.getName)
     } catch {
       case t: Throwable =>
         t.printStackTrace()
@@ -250,10 +251,10 @@ class OtherSerializationTests extends SerializationTestBase {
     try {
       val serialized = SerializationUtils.serializeAsString(dataQuanta.operator)
       val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
-      Assert.assertEquals(deserialized.getTargetPlatforms.size(), 2)
+      assertEquals(deserialized.getTargetPlatforms.size(), 2)
       val deserializedPlatformNames = deserialized.getTargetPlatforms.toArray.map(p => p.getClass.getName)
-      Assert.assertTrue(deserializedPlatformNames.contains(Spark.platform().getClass.getName))
-      Assert.assertTrue(deserializedPlatformNames.contains(Java.platform().getClass.getName))
+      assertTrue(deserializedPlatformNames.contains(Spark.platform().getClass.getName))
+      assertTrue(deserializedPlatformNames.contains(Java.platform().getClass.getName))
     } catch {
       case t: Throwable =>
         t.printStackTrace()
@@ -282,8 +283,8 @@ class OtherSerializationTests extends SerializationTestBase {
     try {
       val serialized = SerializationUtils.serializeAsString(dataQuanta.operator)
       val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
-      Assert.assertEquals(deserialized.getTargetPlatforms.size(), 1)
-      Assert.assertEquals(deserialized.getTargetPlatforms.toArray.toList(0).getClass.getName, Spark.platform().getClass.getName)
+      assertEquals(deserialized.getTargetPlatforms.size(), 1)
+      assertEquals(deserialized.getTargetPlatforms.toArray.toList(0).getClass.getName, Spark.platform().getClass.getName)
     } catch {
       case t: Throwable =>
         t.printStackTrace()
@@ -326,8 +327,8 @@ class OtherSerializationTests extends SerializationTestBase {
       .getFunctionDescriptor
       .getLoadProfileEstimator.get().asInstanceOf[NestableLoadProfileEstimator]
 
-    Assert.assertEquals(originalLoadProfileEstimator.getConfigurationKeys, deserializedLoadProfileEstimator.getConfigurationKeys)
-    Assert.assertEquals(originalLoadProfileEstimator.getTemplateKeys, deserializedLoadProfileEstimator.getTemplateKeys)
+    assertEquals(originalLoadProfileEstimator.getConfigurationKeys, deserializedLoadProfileEstimator.getConfigurationKeys)
+    assertEquals(originalLoadProfileEstimator.getTemplateKeys, deserializedLoadProfileEstimator.getTemplateKeys)
 
     /*// Print the contents of configuration keys array for both the originalLoadProfileEstimator and the deserializedLoadProfileEstimator
     println("originalLoadProfileEstimator.getConfigurationKeys: " + originalLoadProfileEstimator.getConfigurationKeys.mkString(","))

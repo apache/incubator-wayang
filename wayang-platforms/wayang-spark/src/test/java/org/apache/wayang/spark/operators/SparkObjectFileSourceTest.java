@@ -19,12 +19,11 @@
 package org.apache.wayang.spark.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URL;
@@ -33,13 +32,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test suite for {@link SparkObjectFileSource}.
  */
-public class SparkObjectFileSourceTest extends SparkOperatorTestBase {
+class SparkObjectFileSourceTest extends SparkOperatorTestBase {
 
     @Test
-    public void testWritingDoesNotFail() throws IOException {
+    void testWritingDoesNotFail() throws IOException {
         SparkExecutor sparkExecutor = null;
         try {
 
@@ -60,9 +62,9 @@ public class SparkObjectFileSourceTest extends SparkOperatorTestBase {
             Set<Integer> expectedValues = new HashSet<>(SparkObjectFileSourceTest.enumerateRange(10000));
             final List<Integer> rddList = output.<Integer>provideRdd().collect();
             for (Integer rddValue : rddList) {
-                Assert.assertTrue("Value: " + rddValue, expectedValues.remove(rddValue));
+                assertTrue(expectedValues.remove(rddValue), "Value: " + rddValue);
             }
-            Assert.assertEquals(0, expectedValues.size());
+            assertEquals(0, expectedValues.size());
         } finally {
             if (sparkExecutor != null) sparkExecutor.dispose();
         }

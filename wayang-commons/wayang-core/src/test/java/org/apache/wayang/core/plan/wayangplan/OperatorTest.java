@@ -18,17 +18,18 @@
 
 package org.apache.wayang.core.plan.wayangplan;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangCollections;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for the {@link Operator} class.
  */
-public class OperatorTest {
+class OperatorTest {
 
     public class Operator1 extends OperatorBase {
 
@@ -64,23 +65,23 @@ public class OperatorTest {
     }
 
     @Test
-    public void testPropertyDetection() {
+    void testPropertyDetection() {
         Operator op = new Operator2(0, 1);
         final Collection<String> estimationContextProperties = op.getEstimationContextProperties();
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet("op1Property", "op2Property"),
                 WayangCollections.asSet(estimationContextProperties)
         );
     }
 
     @Test
-    public void testPropertyCollection() {
+    void testPropertyCollection() {
         Operator op = new Operator2(0, 1);
-        Assert.assertEquals(
+        assertEquals(
                 Double.valueOf(0d),
                 ReflectionUtils.getProperty(op, "op1Property")
         );
-        Assert.assertEquals(
+        assertEquals(
                 Double.valueOf(1d),
                 ReflectionUtils.getProperty(op, "op2Property")
         );

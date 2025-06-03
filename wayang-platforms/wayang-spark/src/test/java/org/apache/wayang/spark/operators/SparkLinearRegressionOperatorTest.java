@@ -25,12 +25,14 @@ import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.operators.ml.SparkLinearRegressionOperator;
 import org.apache.wayang.spark.operators.ml.SparkPredictOperator;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
 
@@ -70,14 +72,14 @@ public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
     }
 
     @Test
-    public void testTraining() {
+    void testTraining() {
         final LinearRegressionModel model = getModel();
-        Assert.assertArrayEquals(new double[]{1, 1}, model.getCoefficients(), 1e-6);
-        Assert.assertEquals(1, model.getIntercept(), 1e-6);
+        assertArrayEquals(new double[]{1, 1}, model.getCoefficients(), 1e-6);
+        assertEquals(1, model.getIntercept(), 1e-6);
     }
 
     @Test
-    public void testInference() {
+    void testInference() {
         // Prepare test data.
         CollectionChannel.Instance input1 = this.createCollectionChannelInstance(Collections.singletonList(getModel()));
         RddChannel.Instance input2 = this.createRddChannelInstance(inferenceData);
@@ -94,8 +96,8 @@ public class SparkLinearRegressionOperatorTest extends SparkOperatorTestBase {
 
         // Verify the outcome.
         final List<Double> results = output.<Double>provideRdd().collect();
-        Assert.assertEquals(2, results.size());
-        Assert.assertEquals(4, results.get(0), 1e-6);
-        Assert.assertEquals(0, results.get(1), 1e-6);
+        assertEquals(2, results.size());
+        assertEquals(4, results.get(0), 1e-6);
+        assertEquals(0, results.get(1), 1e-6);
     }
 }

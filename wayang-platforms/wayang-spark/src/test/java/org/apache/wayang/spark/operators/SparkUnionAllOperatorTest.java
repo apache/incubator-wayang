@@ -18,22 +18,23 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link SparkUnionAllOperator}.
  */
-public class SparkUnionAllOperatorTest extends SparkOperatorTestBase {
+class SparkUnionAllOperatorTest extends SparkOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         RddChannel.Instance input0 = this.createRddChannelInstance(Arrays.asList(6, 0, 1, 1, 5, 2));
         RddChannel.Instance input1 = this.createRddChannelInstance(Arrays.asList(1, 1, 9));
@@ -55,8 +56,8 @@ public class SparkUnionAllOperatorTest extends SparkOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> result = output.<Integer>provideRdd().collect();
-        Assert.assertEquals(9, result.size());
-        Assert.assertEquals(Arrays.asList(6, 0, 1, 1, 5, 2, 1, 1, 9), result);
+        assertEquals(9, result.size());
+        assertEquals(Arrays.asList(6, 0, 1, 1, 5, 2, 1, 1, 9), result);
 
     }
 

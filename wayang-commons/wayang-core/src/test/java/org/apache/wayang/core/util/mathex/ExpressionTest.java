@@ -18,40 +18,44 @@
 
 package org.apache.wayang.core.util.mathex;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.util.mathex.exceptions.EvaluationException;
 import org.apache.wayang.core.util.mathex.model.CompiledFunction;
 import org.apache.wayang.core.util.mathex.model.Constant;
 import org.apache.wayang.core.util.mathex.model.NamedFunction;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  * Test suite for the {@link Expression} subclasses.
  */
-public class ExpressionTest {
+class ExpressionTest {
 
     @Test
-    public void testSingletonExpressions() {
+    void testSingletonExpressions() {
         DefaultContext context = new DefaultContext(Context.baseContext);
         context.setVariable("x", 42);
 
-        Assert.assertEquals(23d, Expression.evaluate("23"), 0d);
-        Assert.assertEquals(-23d, Expression.evaluate("-23"), 0d);
+        assertEquals(23d, Expression.evaluate("23"), 0d);
+        assertEquals(-23d, Expression.evaluate("-23"), 0d);
 
-        Assert.assertEquals(42d, Expression.evaluate("x", context), 0d);
-        Assert.assertEquals(-42d, Expression.evaluate("-x", context), 0d);
+        assertEquals(42d, Expression.evaluate("x", context), 0d);
+        assertEquals(-42d, Expression.evaluate("-x", context), 0d);
 
-        Assert.assertEquals(Math.E, Expression.evaluate("e", context), 0d);
-        Assert.assertEquals(Math.PI, Expression.evaluate("pi", context), 0d);
+        assertEquals(Math.E, Expression.evaluate("e", context), 0d);
+        assertEquals(Math.PI, Expression.evaluate("pi", context), 0d);
 
-        Assert.assertEquals(2d, Expression.evaluate("log(100, 10)", context), 0.000001);
+        assertEquals(2d, Expression.evaluate("log(100, 10)", context), 0.000001);
     }
 
     @Test
-    public void testFailsOnMissingContext() {
+    void testFailsOnMissingContext() {
         Collection<String> faultyExpressions = Arrays.asList(
                 "x",
                 "myFunction(23)",
@@ -66,14 +70,14 @@ public class ExpressionTest {
             } catch (EvaluationException e) {
                 isFailed = true;
             } catch (Throwable t) {
-                Assert.fail(String.format("Unexpected %s.", t));
+                fail(String.format("Unexpected %s.", t));
             }
-            Assert.assertTrue(String.format("Evaluating \"%s\" did not fail.", faultyExpression), isFailed);
+            assertTrue(isFailed, String.format("Evaluating \"%s\" did not fail.", faultyExpression));
         }
     }
 
     @Test
-    public void testComplexExpressions() {
+    void testComplexExpressions() {
         {
             final Expression expression = ExpressionBuilder.parse(" (2 *a + 3* b + 5.3 * c0) + 3*abcdef");
             DefaultContext ctx = new DefaultContext();
@@ -82,7 +86,7 @@ public class ExpressionTest {
             ctx.setVariable("c0", -23);
             ctx.setVariable("abcdef", 821.23);
 
-            Assert.assertEquals(
+            assertEquals(
                     (2*5.1 + 3*3 + 5.3*(-23) + 3*821.23),
                     expression.evaluate(ctx),
                     0.0001
@@ -91,19 +95,19 @@ public class ExpressionTest {
     }
 
     @Test
-    public void testSpecification() {
+    void testSpecification() {
         {
             final Expression expression = ExpressionBuilder.parse("ln(x)");
-            Assert.assertTrue(expression instanceof NamedFunction);
+            assertInstanceOf(NamedFunction.class, expression);
             final Expression specifiedExpression = expression.specify(Context.baseContext);
-            Assert.assertTrue(specifiedExpression instanceof CompiledFunction);
+            assertInstanceOf(CompiledFunction.class, specifiedExpression);
         }
         {
             final Expression expression = ExpressionBuilder.parse("ln(e)");
-            Assert.assertTrue(expression instanceof NamedFunction);
+            assertInstanceOf(NamedFunction.class, expression);
             final Expression specifiedExpression = expression.specify(Context.baseContext);
-            Assert.assertTrue(specifiedExpression instanceof Constant);
-            Assert.assertEquals(1d, specifiedExpression.evaluate(new DefaultContext()), 0.00001d);
+            assertInstanceOf(Constant.class, specifiedExpression);
+            assertEquals(1d, specifiedExpression.evaluate(new DefaultContext()), 0.00001d);
         }
     }
 

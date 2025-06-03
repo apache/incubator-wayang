@@ -20,25 +20,20 @@ package org.apache.wayang.java.operators;
 import org.apache.wayang.basic.operators.KafkaTopicSource;
 import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.execution.JavaExecutor;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +41,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Test suite for {@link JavaKafkaTopicSource}.
  */
-public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
+class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaKafkaTopicSourceTest.class);
 
@@ -57,27 +52,28 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
      * Therefore we ensure it's run in a pre-defined locale and we make sure it's
      * reset after the test.
      */
-    @Before
-    public void setupTest() {
+    @BeforeEach
+    void setupTest() {
         defaultLocale = Locale.getDefault();
         Locale.setDefault(Locale.US);
         logger.info(">>> Test SETUP()");
     }
 
-    @After
-    public void teardownTest() {
+    @AfterEach
+    void teardownTest() {
         logger.info(">>> Test TEARDOWN()");
         Locale.setDefault(defaultLocale);
     }
 
     @Test
-    public void testA() throws Exception {
-        Assert.assertEquals(3, 3);
+    void testA() throws Exception {
+        assertEquals(3, 3);
         logger.info(">>> Test A");
     }
 
-    //@Test
-    public void testReadFromKafkaTopic() {
+    @Test
+    @Disabled
+    void testReadFromKafkaTopic() {
 
         logger.info(">>> Test: testReadFromKafkaTopic()");
 
@@ -92,7 +88,7 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
         logger.info("> 1 ... ");
 
         Properties props = KafkaTopicSource.getDefaultProperties();
-        
+
         logger.info("> 2 ... ");
 
         props.list(System.out);
@@ -117,8 +113,8 @@ public class JavaKafkaTopicSourceTest extends JavaExecutionOperatorTestBase {
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
 
-            Assert.assertNotNull(jks);
-            Assert.assertNotNull(result);
+            assertNotNull(jks);
+            assertNotNull(result);
 
             logger.info("> 6 ... ");
 

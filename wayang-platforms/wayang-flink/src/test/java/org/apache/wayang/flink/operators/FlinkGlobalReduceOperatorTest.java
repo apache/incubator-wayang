@@ -26,21 +26,22 @@ import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.java.channels.CollectionChannel;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link FlinkGlobalReduceOperator}.
  */
-public class FlinkGlobalReduceOperatorTest extends FlinkOperatorTestBase {
+class FlinkGlobalReduceOperatorTest extends FlinkOperatorTestBase {
 
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input = this.createDataSetChannelInstance(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
         DataSetChannel.Instance output = this.createDataSetChannelInstance();
@@ -64,14 +65,14 @@ public class FlinkGlobalReduceOperatorTest extends FlinkOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> result = output.<Integer>provideDataSet().collect();
-        Assert.assertEquals(1, result.size());
-        Assert.assertEquals(Integer.valueOf((10 + 1) * (10 / 2)), result.get(0)); // Props to Gauss!
+        assertEquals(1, result.size());
+        assertEquals(Integer.valueOf((10 + 1) * (10 / 2)), result.get(0)); // Props to Gauss!
 
     }
 
-    @Ignore("Flink cannot reduce empty collections.")
+    @Disabled("Flink cannot reduce empty collections.")
     @Test
-    public void testExecutionWithoutData() throws Exception {
+    void testExecutionWithoutData() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input = this.createDataSetChannelInstance(Collections.emptyList());
         CollectionChannel.Instance output = this.createCollectionChannelInstance();
@@ -95,8 +96,8 @@ public class FlinkGlobalReduceOperatorTest extends FlinkOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> result = WayangCollections.asList(output.provideCollection());
-        Assert.assertEquals(1, result.size());
-        Assert.assertEquals(Integer.valueOf(0), result.get(0));
+        assertEquals(1, result.size());
+        assertEquals(Integer.valueOf(0), result.get(0));
 
     }
 }
