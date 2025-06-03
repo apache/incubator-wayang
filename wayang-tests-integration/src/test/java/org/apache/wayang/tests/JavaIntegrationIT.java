@@ -95,9 +95,7 @@ class JavaIntegrationIT {
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
         wayangPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
-        wayangContext.execute(wayangPlan);
         assertThrows(WayangException.class, () ->
-
             // Have Wayang execute the plan.
             wayangContext.execute(wayangPlan));
     }
@@ -108,7 +106,6 @@ class JavaIntegrationIT {
         WayangContext wayangContext = new WayangContext();
         wayangContext.register(MyMadeUpPlatform.getInstance());
         assertThrows(WayangException.class, () ->
-
             // Have Wayang execute the plan.
             wayangContext.execute(wayangPlan));
     }

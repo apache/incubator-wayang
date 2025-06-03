@@ -94,9 +94,6 @@ class SparkIntegrationIT {
         // Instantiate Wayang and activate the Spark backend.
         WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin());
 
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
-
         assertThrows(WayangException.class, () ->
             // Have Wayang execute the plan.
             wayangContext.execute(wayangPlan));
