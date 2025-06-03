@@ -50,22 +50,22 @@ public class WayangRelConverter {
     }
 
     public Operator convert(final RelNode node) {
-        if (node instanceof WayangTableScan) {
-            return new WayangTableScanVisitor(this).visit((WayangTableScan) node);
-        } else if (node instanceof WayangProject) {
-            return new WayangProjectVisitor(this).visit((WayangProject) node);
-        } else if (node instanceof WayangFilter) {
-            return new WayangFilterVisitor(this).visit((WayangFilter) node);
-        } else if (node instanceof WayangSort) {
-            return new WayangSortVisitor(this).visit((WayangSort) node);
-        } else if (node instanceof WayangJoin && ((WayangJoin) node).getCondition().isA(SqlKind.AND)) {
-            return new WayangMultiConditionJoinVisitor(this).visit((WayangJoin) node);
-        } else if (node instanceof WayangJoin && WayangJoin.class.cast(node).getCondition().isAlwaysTrue()) {
-            return new WayangCrossJoinVisitor(this).visit((WayangJoin) node);
-        } else if (node instanceof WayangJoin) {
-            return new WayangJoinVisitor(this).visit((WayangJoin) node);
-        } else if (node instanceof WayangAggregate) {
-            return new WayangAggregateVisitor(this).visit((WayangAggregate) node);
+        if (node instanceof final WayangTableScan scan) {
+            return new WayangTableScanVisitor(this).visit(scan);
+        } else if (node instanceof final WayangProject project) {
+            return new WayangProjectVisitor(this).visit(project);
+        } else if (node instanceof final WayangFilter filter) {
+            return new WayangFilterVisitor(this).visit(filter);
+        } else if (node instanceof final WayangSort sort) {
+            return new WayangSortVisitor(this).visit(sort);
+        } else if (node instanceof final WayangJoin multiConditionJoin && multiConditionJoin.getCondition().isA(SqlKind.AND)) {
+            return new WayangMultiConditionJoinVisitor(this).visit(multiConditionJoin);
+        } else if (node instanceof final WayangJoin crossJoin && crossJoin.getCondition().isAlwaysTrue()) {
+            return new WayangCrossJoinVisitor(this).visit(crossJoin);
+        } else if (node instanceof final WayangJoin join) {
+            return new WayangJoinVisitor(this).visit(join);
+        } else if (node instanceof final WayangAggregate aggregate) {
+            return new WayangAggregateVisitor(this).visit(aggregate);
         }
         throw new IllegalStateException("Operator translation not supported yet");
     }
