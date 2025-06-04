@@ -23,13 +23,17 @@ import org.apache.wayang.basic.model.op.Input;
 import org.apache.wayang.basic.model.op.Op;
 import org.apache.wayang.basic.model.optimizer.Optimizer;
 import org.tensorflow.*;
-import org.tensorflow.ndarray.*;
+import org.tensorflow.ndarray.NdArray;
+import org.tensorflow.ndarray.Shape;
 import org.tensorflow.ndarray.index.Indices;
 import org.tensorflow.op.Ops;
-import org.tensorflow.types.*;
+import org.tensorflow.op.core.Placeholder;
+import org.tensorflow.types.TBool;
+import org.tensorflow.types.TFloat32;
 import org.tensorflow.types.family.TType;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TensorflowModel extends DLModel implements AutoCloseable {
     private final Op criterion;
@@ -38,6 +42,7 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
 
     private final Graph graph;
     private final Ops tf;
+    private final Placeholder<TBool> trainingMode;
     private final Session session;
     private final Map<String, Operand<?>> opMap;
     private final org.tensorflow.op.Op minimize;
@@ -50,6 +55,7 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
 
         this.graph = new Graph();
         this.tf = Ops.create(graph);
+        this.trainingMode = tf.placeholder(TBool.class, Placeholder.shape(Shape.scalar()));
         this.session = new Session(graph);
         this.opMap = new HashMap<>();
 
@@ -84,14 +90,15 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
     }
 
     private Operand<?> compile(Op op) {
-        Operand[] array = op.getFromList().stream().map(e -> {
+        List<Operand<?>> inputs = op.getFromList().stream().map(e -> {
             Operand<?> operand = this.opMap.get(e.getName());
             if (operand == null) {
                 operand = compile(e);
             }
             return operand;
-        }).toArray(Operand[]::new);
-        final Operand<?> ret = Convertor.convert(tf, op, array);
+        }).collect(Collectors.toList());
+        inputs.add(trainingMode);
+        final Operand<?> ret = Convertor.convert(graph, tf, op, inputs.toArray(Operand[]::new));
         this.opMap.put(op.getName(), ret);
         return ret;
     }
@@ -114,6 +121,7 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
                     Session.Runner runner = session.runner()
                             .feed(Input.Type.FEATURES.getName(), tx)
                             .feed(Input.Type.LABEL.getName(), ty)
+                            .feed(trainingMode, TBool.scalarOf(true))
                             .addTarget(minimize)
                             .fetch(criterion.getName());
                     if (accuracyCalculation != null) {
@@ -140,8 +148,9 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
         try (Tensor tx = Convertor.ndArrayToTensor(x)) {
             Tensor predicted = session.runner()
                     .feed(Input.Type.FEATURES.getName(), tx)
+                    .feed(trainingMode, TBool.scalarOf(false))
                     .fetch(out.getName())
-                    .run()
+                    .run() // will be closed by global resource manager
                     .get(0);
             return (PT) predicted;
         }
