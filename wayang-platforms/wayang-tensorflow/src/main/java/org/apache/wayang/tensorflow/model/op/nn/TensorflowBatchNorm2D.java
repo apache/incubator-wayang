@@ -86,7 +86,7 @@ public class TensorflowBatchNorm2D<T extends TNumber> {
                 tf.math.mul(tf.dtypes.cast(tf.constant(op.getMomentum()), tClass), tf.stopGradient(runningVar)),
                 tf.math.mul(tf.dtypes.cast(tf.constant(1f - op.getMomentum()), tClass), batchNormTraining.batchVariance())
         );
-        Operand<T> y = tf.withControlDependencies( // FIXME: assign is not executed
+        Operand<T> y = tf.withControlDependencies( // FIXME: assign is not executed, issue: https://github.com/tensorflow/java/issues/610
                 tf.assign(runningMean, mean), tf.assign(runningVar, var)
         ).identity(batchNormTraining.y());
         return ConcreteFunction.create(
