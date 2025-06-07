@@ -150,7 +150,7 @@ public class TensorflowOperatorTest {
     public void testBatchNorm2D() {
         try (Graph g = new Graph(); Session session = new Session(g)) {
             Ops tf = Ops.create(g);
-            BatchNorm2D batchNorm2D = new BatchNorm2D(1, 1e-5f, 0.5f);
+            BatchNorm2D batchNorm2D = new BatchNorm2D(1, 1e-5f, 0.1f);
             Operand<TFloat32> x = tf.constant(
                     new float[][][][]{{{
                             {1.0f, 2.0f, 3.0f},

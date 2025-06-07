@@ -49,7 +49,7 @@ public class TensorflowBatchNorm2D<T extends TNumber> {
         this.tClass = tClass;
         this.weight = tf.variable(tf.random.truncatedNormal(tf.array(op.getNumFeatures()), tClass));
         this.bias = tf.variable(tf.random.truncatedNormal(tf.array(op.getNumFeatures()), tClass));
-        this.runningMean = tf.withName("runningMean").variable(tf.ones(tf.array(op.getNumFeatures()), tClass));
+        this.runningMean = tf.withName("runningMean").variable(tf.zeros(tf.array(op.getNumFeatures()), tClass));
         this.runningVar = tf.withName("runningVar").variable(tf.ones(tf.array(op.getNumFeatures()), tClass));
     }
 
