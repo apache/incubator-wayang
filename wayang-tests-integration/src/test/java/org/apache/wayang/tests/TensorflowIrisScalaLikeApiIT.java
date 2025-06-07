@@ -81,10 +81,13 @@ public class TensorflowIrisScalaLikeApiIT {
         DataQuantaBuilder<?, Integer> testYSource = testSource.field1;
 
         /* model */
+        Input features = new Input(Input.Type.FEATURES);
+        Input labels = new Input(Input.Type.LABEL, Op.DType.INT32);
+
         Op l1 = new Linear(4, 32, true);
         Op s1 = new Sigmoid();
         Op l2 = new Linear(32, 3, true);
-        s1.with(l1.with(new Input(Input.Type.FEATURES)));
+        s1.with(l1.with(features));
         l2.with(s1);
 
         DLModel model = new DLModel(l2);
@@ -92,16 +95,13 @@ public class TensorflowIrisScalaLikeApiIT {
         /* training options */
         // 1. loss function
         Op criterion = new CrossEntropyLoss(3);
-        criterion.with(
-                new Input(Input.Type.PREDICTED, Op.DType.FLOAT32),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
-        );
+        criterion.with(model.getOut(), labels);
 
         // 2. accuracy calculation function
         Op acc = new Mean(0);
         acc.with(new Cast(Op.DType.FLOAT32).with(new Eq().with(
-                new ArgMax(1).with(new Input(Input.Type.PREDICTED, Op.DType.FLOAT32)),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
+                new ArgMax(1).with(model.getOut()),
+                labels
         )));
 
         // 3. optimizer with learning rate

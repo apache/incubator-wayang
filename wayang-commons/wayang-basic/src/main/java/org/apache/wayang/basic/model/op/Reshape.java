@@ -18,49 +18,32 @@
 
 package org.apache.wayang.basic.model.op;
 
-public class Input extends Op {
+public class Reshape extends Op {
+    private final int[] shape;
 
-    public Input() {
-        this(DType.FLOAT32);
+    public Reshape(int[] shape) {
+        this(shape, null, DType.FLOAT32);
     }
 
-    public Input(String name) {
-        this(name, DType.FLOAT32);
+    public Reshape(int[] shape, DType dType) {
+        this(shape, null, dType);
     }
 
-    public Input(Type type) {
-        this(type.getName(), DType.FLOAT32);
+    public Reshape(int[] shape, String name) {
+        this(shape, name, DType.FLOAT32);
     }
 
-    public Input(DType dType) {
-        super(dType);
-    }
-
-    public Input(String name, DType dType) {
+    public Reshape(int[] shape, String name, DType dType) {
         super(name, dType);
+        this.shape = shape;
     }
 
-    public Input(Type type, DType dType) {
-        super(type.getName(), dType);
+    public int[] getShape() {
+        return shape;
     }
 
     @Override
     public int inputsRequired() {
-        return 0;
-    }
-
-    public enum Type {
-        FEATURES("..FEATURES.."),
-        LABEL("..LABEL..");
-
-        private final String name;
-
-        Type(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
+        return 1;
     }
 }

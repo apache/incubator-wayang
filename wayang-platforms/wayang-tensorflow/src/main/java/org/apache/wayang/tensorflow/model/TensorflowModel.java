@@ -44,7 +44,7 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
     private final Ops tf;
     private final Placeholder<TBool> trainingMode;
     private final Session session;
-    private final Map<String, Operand<?>> opMap;
+    private final Map<Integer, Operand<?>> opMap;
     private final org.tensorflow.op.Op minimize;
 
     public TensorflowModel(DLModel model, Op criterion, Optimizer optimizer, Op accuracyCalculation) {
@@ -59,39 +59,17 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
         this.session = new Session(graph);
         this.opMap = new HashMap<>();
 
-        connect(criterion);
         compile(criterion);
         if (accuracyCalculation != null) {
-            connect(accuracyCalculation);
             compile(accuracyCalculation);
         }
 
-        this.minimize = Convertor.convert(graph, optimizer).minimize(opMap.get(criterion.getName()));
-    }
-
-    private void connect(Op op) {
-        Deque<List<Op>> deque = new LinkedList<>();
-        deque.addLast(op.getFromList());
-        boolean changeInput = false;
-        while (!deque.isEmpty() && !changeInput) {
-            List<Op> fromList = deque.pollFirst();
-            for (int i = 0; i < fromList.size(); i++) {
-                if (fromList.get(i).getName().equals(Input.Type.PREDICTED.getName())) {
-                    fromList.set(i, out);
-                    changeInput = true;
-                    break;
-                }
-                deque.addLast(fromList.get(i).getFromList());
-            }
-        }
-        if (!changeInput) {
-            throw new RuntimeException("Op " + op.getName() + " operator must start with a Input named '__PREDICTED__'");
-        }
+        this.minimize = Convertor.convert(graph, optimizer).minimize(opMap.get(criterion.getId()));
     }
 
     private Operand<?> compile(Op op) {
         List<Operand<?>> inputs = op.getFromList().stream().map(e -> {
-            Operand<?> operand = this.opMap.get(e.getName());
+            Operand<?> operand = this.opMap.get(e.getId());
             if (operand == null) {
                 operand = compile(e);
             }
@@ -99,7 +77,7 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
         }).collect(Collectors.toList());
         inputs.add(trainingMode);
         final Operand<?> ret = Convertor.convert(graph, tf, op, inputs.toArray(Operand[]::new));
-        this.opMap.put(op.getName(), ret);
+        this.opMap.put(op.getId(), ret);
         return ret;
     }
 

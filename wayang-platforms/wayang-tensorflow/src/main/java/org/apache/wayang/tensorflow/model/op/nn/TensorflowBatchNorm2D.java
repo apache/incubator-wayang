@@ -23,9 +23,7 @@ import org.tensorflow.ConcreteFunction;
 import org.tensorflow.Graph;
 import org.tensorflow.Operand;
 import org.tensorflow.Signature;
-import org.tensorflow.ndarray.Shape;
 import org.tensorflow.op.Ops;
-import org.tensorflow.op.core.Placeholder;
 import org.tensorflow.op.core.Variable;
 import org.tensorflow.op.nn.FusedBatchNorm;
 import org.tensorflow.types.TBool;
@@ -51,61 +49,59 @@ public class TensorflowBatchNorm2D<T extends TNumber> {
         this.tClass = tClass;
         this.weight = tf.variable(tf.random.truncatedNormal(tf.array(op.getNumFeatures()), tClass));
         this.bias = tf.variable(tf.random.truncatedNormal(tf.array(op.getNumFeatures()), tClass));
-        this.runningMean = tf.variable(tf.zeros(tf.array(op.getNumFeatures()), tClass));
-        this.runningVar = tf.variable(tf.ones(tf.array(op.getNumFeatures()), tClass));
+        this.runningMean = tf.withName("runningMean").variable(tf.ones(tf.array(op.getNumFeatures()), tClass));
+        this.runningVar = tf.withName("runningVar").variable(tf.ones(tf.array(op.getNumFeatures()), tClass));
     }
 
     public Operand<T> call(Operand<T> input, Operand<TBool> trainingMode) {
+        ConcreteFunction training = training(input);
+        ConcreteFunction inference = inference(input);
+
         Operand<?> out = tf.withName(op.getName()).ifOp(
                 trainingMode,
-                Collections.singletonList(input),
+                Collections.emptyList(),
                 Collections.singletonList(tClass),
-                training(), inference()
+                training, inference
         ).iterator().next();
 
         return (Operand<T>) out;
     }
 
-    public ConcreteFunction training() {
-        Placeholder<T> trainingInput = tf.withName("trainingInput").placeholder(tClass);
-
+    public ConcreteFunction training(Operand<T> input) {
         FusedBatchNorm<T, T> batchNormTraining = tf.nn.fusedBatchNorm(
-                trainingInput, weight, bias,
-                tf.fakeParam(tClass, Shape.of(op.getNumFeatures())),
-                tf.fakeParam(tClass, Shape.of(op.getNumFeatures())),
+                input, weight, bias, runningMean, runningVar,
                 FusedBatchNorm.epsilon(op.getEpsilon())
                         .exponentialAvgFactor(op.getMomentum())
                         .dataFormat("NCHW")
                         .isTraining(true)
         );
         Operand<T> mean = tf.math.add(
-                tf.math.mul(tf.dtypes.cast(tf.constant(op.getMomentum()), tClass), tf.stopGradient(runningMean)),
-                tf.math.mul(tf.dtypes.cast(tf.constant(1f - op.getMomentum()), tClass), batchNormTraining.batchMean())
+                tf.math.mul(tf.dtypes.cast(tf.constant(1f - op.getMomentum()), tClass), tf.stopGradient(runningMean)),
+                batchNormTraining.batchMean()
         );
         Operand<T> var = tf.math.add(
-                tf.math.mul(tf.dtypes.cast(tf.constant(op.getMomentum()), tClass), tf.stopGradient(runningVar)),
-                tf.math.mul(tf.dtypes.cast(tf.constant(1f - op.getMomentum()), tClass), batchNormTraining.batchVariance())
+                tf.math.mul(tf.dtypes.cast(tf.constant(1f - op.getMomentum()), tClass), tf.stopGradient(runningVar)),
+                batchNormTraining.batchVariance()
         );
-        Operand<T> y = tf.withControlDependencies( // FIXME: assign is not executed, issue: https://github.com/tensorflow/java/issues/610
+        Operand<T> y = tf.withControlDependencies(
                 tf.assign(runningMean, mean), tf.assign(runningVar, var)
         ).identity(batchNormTraining.y());
         return ConcreteFunction.create(
-                Signature.builder().input("x", trainingInput).output("y", y).build(),
+                Signature.builder().output("y", y).build(),
                 graph
         );
     }
 
-    public ConcreteFunction inference() {
-        Placeholder<T> inferenceInput = tf.withName("inferenceInput").placeholder(tClass);
+    public ConcreteFunction inference(Operand<T> input) {
         FusedBatchNorm<T, T> batchNormInference = tf.nn.fusedBatchNorm(
-                inferenceInput, weight, bias, runningMean, runningVar,
+                input, weight, bias, runningMean, runningVar,
                 FusedBatchNorm.epsilon(op.getEpsilon())
                         .exponentialAvgFactor(op.getMomentum())
                         .dataFormat("NCHW")
                         .isTraining(false)
         );
         return ConcreteFunction.create(
-                Signature.builder().input("x", inferenceInput).output("y", batchNormInference.y()).build(),
+                Signature.builder().output("y", batchNormInference.y()).build(),
                 graph
         );
     }

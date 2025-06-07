@@ -61,6 +61,9 @@ public class Convertor {
         if (op instanceof Eq) {
             return convert(tf, (Eq) op, inputs[0], inputs[1]);
         }
+        if (op instanceof Get) {
+            return convert(tf, (Get) op, inputs[0]);
+        }
         if (op instanceof Input) {
             return convert(tf, (Input) op);
         }
@@ -76,8 +79,14 @@ public class Convertor {
         if (op instanceof ReLU) {
             return convert(tf, (ReLU) op, inputs[0]);
         }
+        if (op instanceof Reshape) {
+            return convert(tf, (Reshape) op, inputs[0]);
+        }
         if (op instanceof Sigmoid) {
             return convert(tf, (Sigmoid) op, inputs[0]);
+        }
+        if (op instanceof Slice) {
+            return convert(tf, (Slice) op, inputs[0]);
         }
         if (op instanceof Softmax) {
             return convert(tf, (Softmax) op, inputs[0]);
@@ -194,6 +203,34 @@ public class Convertor {
         );
     }
 
+    public static Operand<?> convert(Ops tf, Get op, Operand<?> input) {
+        if (op.getKey() instanceof String) {
+            String key = (String) op.getKey();
+            if (op.getDType() == Op.DType.INT32) {
+                return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TInt32.class);
+            }
+            if (op.getDType() == Op.DType.INT64) {
+                return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TInt64.class);
+            }
+            if (op.getDType() == Op.DType.FLOAT32) {
+                return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TFloat32.class);
+            }
+            if (op.getDType() == Op.DType.FLOAT64) {
+                return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TFloat64.class);
+            }
+            if (op.getDType() == Op.DType.BYTE) {
+                return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TUint8.class);
+            }
+            if (op.getDType() == Op.DType.BOOL) {
+                return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TBool.class);
+            }
+
+            throw new RuntimeException("Unsupported DType: " + op.getDType());
+        }
+
+        throw new RuntimeException("Unsupported Key Type: " + op.getKey().getClass().getName());
+    }
+
     public static Operand<?> convert(Ops tf, Input op) {
         if (op.getDType() == Op.DType.INT32) {
             return tf.withName(op.getName()).placeholder(TInt32.class);
@@ -236,8 +273,27 @@ public class Convertor {
         return tf.withName(op.getName()).nn.relu((Operand<? extends TNumber>) input);
     }
 
+    public static Operand<?> convert(Ops tf, Reshape op, Operand<?> input) {
+        return tf.withName(op.getName()).reshape(input, tf.constant(op.getShape()));
+    }
+
     public static Operand<?> convert(Ops tf, Sigmoid op, Operand<?> input) {
         return tf.withName(op.getName()).math.sigmoid(input);
+    }
+
+    public static Operand<?> convert(Ops tf, Slice op, Operand<?> input) {
+        int[][] range = op.getRange();
+        int n = range.length;
+        int[] begin = new int[n];
+        int[] size = new int[n];
+        for (int i = 0; i < n; i++) {
+            begin[i] = range[i][0];
+            size[i] = range[i][1];
+            if (size[i] != -1) {
+                size[i] -= begin[i];
+            }
+        }
+        return tf.withName(op.getName()).slice(input, tf.constant(begin), tf.constant(size));
     }
 
     public static Operand<?> convert(Ops tf, Softmax op, Operand<?> input) {

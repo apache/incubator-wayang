@@ -26,7 +26,7 @@ public abstract class BatchNorm extends Op {
     protected final float momentum;
 
     public BatchNorm(int numFeatures, String name, DType dType) {
-        this(numFeatures, 1e-5f, 0.99f, name, dType);
+        this(numFeatures, 1e-5f, 0.1f, name, dType);
     }
 
     public BatchNorm(int numFeatures, float epsilon, float momentum, String name, DType dType) {

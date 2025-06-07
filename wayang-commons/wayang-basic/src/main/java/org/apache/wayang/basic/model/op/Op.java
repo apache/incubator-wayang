@@ -25,8 +25,10 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class Op implements Serializable {
+    private static final AtomicInteger ID_GENERATOR = new AtomicInteger(0);
     private static final AtomicInteger CNT = new AtomicInteger(0);
 
+    protected final int id;
     protected final String name;
     protected final List<Op> fromList;
 
@@ -38,6 +40,7 @@ public abstract class Op implements Serializable {
     }
 
     public Op(String name, DType dType) {
+        this.id = ID_GENERATOR.getAndIncrement();
         if (name == null || name.isEmpty()) {
             this.name = this.getClass().getSimpleName() + CNT.getAndIncrement();
         } else {
@@ -45,6 +48,10 @@ public abstract class Op implements Serializable {
         }
         this.fromList = new ArrayList<>();
         this.dType = dType;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getName() {

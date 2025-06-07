@@ -18,16 +18,23 @@
 
 package org.apache.wayang.tensorflow.model;
 
+import org.apache.wayang.basic.model.op.Get;
 import org.apache.wayang.basic.model.op.Mean;
+import org.apache.wayang.basic.model.op.Reshape;
+import org.apache.wayang.basic.model.op.Slice;
 import org.apache.wayang.basic.model.op.nn.*;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.tensorflow.*;
 import org.tensorflow.op.Ops;
+import org.tensorflow.op.core.Placeholder;
+import org.tensorflow.types.TBool;
 import org.tensorflow.types.TFloat32;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class TensorflowOperatorTest {
 
@@ -139,12 +146,11 @@ public class TensorflowOperatorTest {
         }
     }
 
-    @Ignore // Ignore until the bug in TensorflowBatchNorm2D is solved.
     @Test
     public void testBatchNorm2D() {
         try (Graph g = new Graph(); Session session = new Session(g)) {
             Ops tf = Ops.create(g);
-            BatchNorm2D batchNorm2D = new BatchNorm2D(1);
+            BatchNorm2D batchNorm2D = new BatchNorm2D(1, 1e-5f, 0.5f);
             Operand<TFloat32> x = tf.constant(
                     new float[][][][]{{{
                             {1.0f, 2.0f, 3.0f},
@@ -152,25 +158,159 @@ public class TensorflowOperatorTest {
                             {1.0f, 2.0f, 3.0f}
                     }}}
             );
-            Operand<?> out1 = Convertor.convert(g, tf, batchNorm2D, x, tf.constant(true));
-            Operand<?> out2 = Convertor.convert(g, tf, batchNorm2D, x, tf.constant(false));
-            Result result = session.runner().fetch(out1).fetch(out2).
-                    run();
-            TFloat32 tensor1 = (TFloat32) result.get(0);
-            TFloat32 tensor2 = (TFloat32) result.get(1);
+            Placeholder<TBool> trainingMode = tf.placeholder(TBool.class);
+            Operand<?> out = Convertor.convert(g, tf, batchNorm2D, x, trainingMode);
+            Result result1 = session.runner().feed(trainingMode, TBool.scalarOf(true))
+                    .fetch("runningMean")
+                    .fetch("runningVar")
+                    .fetch(out)
+                    .run();
+            Result result2 = session.runner().feed(trainingMode, TBool.scalarOf(false))
+                    .fetch("runningMean")
+                    .fetch("runningVar")
+                    .fetch(out)
+                    .run();
+//            TFloat32 tensor1 = (TFloat32) result1.get(2);
+//            TFloat32 tensor2 = (TFloat32) result2.get(2);
+//            float[] ans1 = new float[] {
+//                    tensor1.getFloat(0, 0, 0, 0),
+//                    tensor1.getFloat(0, 0, 0, 1),
+//                    tensor1.getFloat(0, 0, 0, 2)
+//            };
+//            float[] ans2 = new float[] {
+//                    tensor2.getFloat(0, 0, 0, 0),
+//                    tensor2.getFloat(0, 0, 0, 1),
+//                    tensor2.getFloat(0, 0, 0, 2)
+//            };
             float[] ans1 = new float[] {
-                    tensor1.getFloat(0, 0, 0, 0),
-                    tensor1.getFloat(0, 0, 0, 1),
-                    tensor1.getFloat(0, 0, 0, 2)
+                    ((TFloat32) result1.get(0)).getFloat(0),
+                    ((TFloat32) result1.get(1)).getFloat(0)
             };
             float[] ans2 = new float[] {
-                    tensor2.getFloat(0, 0, 0, 0),
-                    tensor2.getFloat(0, 0, 0, 1),
-                    tensor2.getFloat(0, 0, 0, 2)
+                    ((TFloat32) result2.get(0)).getFloat(0),
+                    ((TFloat32) result2.get(1)).getFloat(0)
             };
             System.out.println(Arrays.toString(ans1));
             System.out.println(Arrays.toString(ans2));
             Assertions.assertArrayEquals(ans1, ans2);
+        }
+    }
+
+    @Test
+    public void testSlice() {
+        try (Graph g = new Graph(); Session session = new Session(g)) {
+            Ops tf = Ops.create(g);
+            float[][] matrix = new float[][] {
+                    {1.0f, 2.0f, 3.0f},
+                    {4.0f, 5.0f, 6.0f},
+                    {7.0f, 8.0f, 9.0f}
+            };
+            Operand<TFloat32> input = tf.constant(matrix);
+            Slice slice = new Slice(
+                    new int[][] {
+                            {1,  2},
+                            {2, -1},
+                    }
+            );
+            Operand<?> out = Convertor.convert(tf, slice, input);
+            TFloat32 tensor = (TFloat32) session.runner().fetch(out).run().get(0);
+            long[] shape = tensor.shape().asArray();
+            System.out.println(Arrays.toString(shape));
+            Assertions.assertArrayEquals(new long[]{1, 1}, shape);
+            float ans = tensor.getFloat(0, 0);
+            System.out.println(ans);
+            Assertions.assertEquals(6.0f, ans);
+        }
+    }
+
+    @Test
+    public void testGet() {
+        try (Graph g = new Graph(); Session session = new Session(g)) {
+            Ops tf = Ops.create(g);
+            String key = "k";
+            Get get = new Get("k");
+            Operand<TFloat32> value = tf.constant(1.0f);
+            Operand<?> map = tf.emptyTensorMap();
+            map = tf.tensorMapInsert(map, tf.constant(key), value);
+            Operand<?> out = Convertor.convert(tf, get, map);
+            TFloat32 tensor = (TFloat32) session.runner().fetch(out).run().get(0);
+            float ans = tensor.getFloat();
+            System.out.println(ans);
+            Assertions.assertEquals(1.0f, ans);
+        }
+    }
+
+    @Test
+    public void testReshape() {
+        try (Graph g = new Graph(); Session session = new Session(g)) {
+            Ops tf = Ops.create(g);
+            float[][] matrix = new float[][] {
+                    {1.0f, 2.0f, 3.0f},
+                    {4.0f, 5.0f, 6.0f},
+                    {7.0f, 8.0f, 9.0f}
+            };
+            Operand<TFloat32> input = tf.constant(matrix);
+            Reshape reshape = new Reshape(new int[]{-1});
+            Operand<?> out = Convertor.convert(tf, reshape, input);
+            TFloat32 tensor = (TFloat32) session.runner().fetch(out).run().get(0);
+            long[] shape = tensor.shape().asArray();
+            System.out.println(Arrays.toString(shape));
+            Assertions.assertArrayEquals(new long[]{9}, shape);
+        }
+    }
+
+    @Test
+    public void testControl() {
+        try (Graph g = new Graph(); Session session = new Session(g)) {
+            Ops tf = Ops.create(g);
+            Placeholder<TFloat32> input = tf.placeholder(TFloat32.class);
+            Operand<TFloat32> x = tf.variable(tf.zeros(tf.array(1), TFloat32.class));
+            Operand<TFloat32> out = tf.withControlDependencies(
+                    tf.assignAdd(x, input)
+            ).identity(x);
+
+            session.runner().feed(input, TFloat32.vectorOf(1.0f)).fetch(out).fetch(x).run().get(1);
+            TFloat32 tensor = (TFloat32) session.runner().feed(input, TFloat32.vectorOf(1.0f)).fetch(out).fetch(x).run().get(1);
+            float ans = tensor.getFloat(0);
+            System.out.println(ans);
+            Assertions.assertEquals(2.0f, ans);
+        }
+    }
+
+    @Test
+    public void testIf() {
+        try (Graph g = new Graph(); Session session = new Session(g)) {
+            Ops tf = Ops.create(g);
+            Placeholder<TBool> trainingMode = tf.placeholder(TBool.class);
+            Operand<TFloat32> x = tf.withName("xxx").variable(tf.zeros(tf.array(1), TFloat32.class));
+
+            // trainingMode
+            Operand<TFloat32> trainOut = tf.withControlDependencies(
+                tf.assignSub(x, tf.array(1.0f))
+            ).identity(x);
+
+            // inferenceMode
+            Operand<TFloat32> inferOut = tf.withControlDependencies(
+                    tf.assignAdd(x, tf.array(10.0f))
+            ).identity(x);
+
+            Operand<?> out = tf.ifOp(
+                    trainingMode,
+                    new ArrayList<>(),
+                    Collections.singletonList(TFloat32.class),
+                    ConcreteFunction.create(
+                            Signature.builder().output("y", trainOut).build(), g
+                    ),
+                    ConcreteFunction.create(
+                            Signature.builder().output("y", inferOut).build(), g
+                    )
+            ).iterator().next();
+
+            session.runner().feed(trainingMode, TBool.scalarOf(true)).fetch(out).fetch("xxx").run();
+            TFloat32 tensor = (TFloat32) session.runner().feed(trainingMode, TBool.scalarOf(false)).fetch(out).fetch("xxx").run().get(0);
+            float ans = tensor.getFloat(0);
+            System.out.println(ans);
+            Assertions.assertEquals(9.0f, ans);
         }
     }
 }

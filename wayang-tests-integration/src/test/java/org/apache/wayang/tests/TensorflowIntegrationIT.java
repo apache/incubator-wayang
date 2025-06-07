@@ -78,28 +78,26 @@ public class TensorflowIntegrationIT {
         /* test features */
         CollectionSource<float[]> testXSource = new CollectionSource<>(testX, float[].class);
 
-        /* model */
-        Op l1 = new Linear(4, 64, true);
-        Op s1 = new Sigmoid();
-        Op l2 = new Linear(64, 3, true);
-        s1.with(l1.with(new Input(Input.Type.FEATURES)));
-        l2.with(s1);
+        /* model with layer api */
+        Input features = new Input(Input.Type.FEATURES);
+        Input labels = new Input(Input.Type.LABEL, Op.DType.INT32);
 
-        DLModel model = new DLModel(l2);
+        DLModel model = new DLModel.Builder()
+                .layer(features)
+                .layer(new Linear(4, 64, true))
+                .layer(new Sigmoid())
+                .layer(new Linear(64, 3, true))
+                .build();
 
         /* training options */
         // 1. loss function
         Op criterion = new CrossEntropyLoss(3);
-        criterion.with(
-                new Input(Input.Type.PREDICTED, Op.DType.FLOAT32),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
-        );
+        criterion.with(model.getOut(), labels);
 
         // 2. accuracy calculation function
         Op acc = new Mean(0);
         acc.with(new Cast(Op.DType.FLOAT32).with(new Eq().with(
-                new ArgMax(1).with(new Input(Input.Type.PREDICTED, Op.DType.FLOAT32)),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
+                new ArgMax(1).with(model.getOut()), labels
         )));
 
         // 3. optimizer

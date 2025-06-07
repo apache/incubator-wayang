@@ -32,7 +32,6 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -46,7 +45,7 @@ import java.util.Random;
  * Test the Tensorflow integration with Wayang.
  * Note: this test fails on M1 Macs because of Tensorflow-Java incompatibility.
  */
-class TensorflowIrisIT {
+public class TensorflowIrisIT {
 
     public static URI TRAIN_PATH = createUri("/iris_train.csv");
     public static URI TEST_PATH = createUri("/iris_test.csv");
@@ -57,9 +56,8 @@ class TensorflowIrisIT {
             "Iris-virginica", 2
     );
 
-    @Disabled
     @Test
-    void test() {
+    public void test() {
         final Tuple<Operator, Operator> trainSource = fileOperation(TRAIN_PATH, true);
         final Tuple<Operator, Operator> testSource = fileOperation(TEST_PATH, false);
 
@@ -76,10 +74,13 @@ class TensorflowIrisIT {
         Operator testYSource = testSource.field1;
 
         /* model */
+        Input features = new Input(Input.Type.FEATURES);
+        Input labels = new Input(Input.Type.LABEL, Op.DType.INT32);
+
         Op l1 = new Linear(4, 32, true);
         Op s1 = new Sigmoid();
         Op l2 = new Linear(32, 3, true);
-        s1.with(l1.with(new Input(Input.Type.FEATURES)));
+        s1.with(l1.with(features));
         l2.with(s1);
 
         DLModel model = new DLModel(l2);
@@ -87,16 +88,13 @@ class TensorflowIrisIT {
         /* training options */
         // 1. loss function
         Op criterion = new CrossEntropyLoss(3);
-        criterion.with(
-                new Input(Input.Type.PREDICTED, Op.DType.FLOAT32),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
-        );
+        criterion.with(model.getOut(), labels);
 
         // 2. accuracy calculation function
         Op acc = new Mean(0);
         acc.with(new Cast(Op.DType.FLOAT32).with(new Eq().with(
-                new ArgMax(1).with(new Input(Input.Type.PREDICTED, Op.DType.FLOAT32)),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
+                new ArgMax(1).with(model.getOut()),
+                labels
         )));
 
         // 3. optimizer with learning rate
