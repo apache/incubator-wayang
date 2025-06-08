@@ -29,9 +29,12 @@ import org.tensorflow.Operand;
 import org.tensorflow.Tensor;
 import org.tensorflow.ndarray.*;
 import org.tensorflow.op.Ops;
+import org.tensorflow.op.core.Placeholder;
 import org.tensorflow.types.*;
 import org.tensorflow.types.family.TNumber;
 import org.tensorflow.types.family.TType;
+
+import java.util.Arrays;
 
 public class Convertor {
 
@@ -42,6 +45,9 @@ public class Convertor {
         }
         if (op instanceof BatchNorm2D) {
             return convert(graph, tf, (BatchNorm2D) op, inputs[0], (Operand<TBool>) inputs[1]);
+        }
+        if (op instanceof BatchNorm3D) {
+            return convert(graph, tf, (BatchNorm3D) op, inputs[0], (Operand<TBool>) inputs[1]);
         }
         if (op instanceof Cast) {
             return convert(tf, (Cast) op, inputs[0]);
@@ -91,6 +97,12 @@ public class Convertor {
         if (op instanceof Softmax) {
             return convert(tf, (Softmax) op, inputs[0]);
         }
+        if (op instanceof Transpose) {
+            return convert(tf, (Transpose) op, inputs[0]);
+        }
+        if (op instanceof ZeroLike) {
+            return convert(tf, (ZeroLike) op, inputs[0]);
+        }
 
 
         throw new RuntimeException("Unsupported operator: " + op.getClass());
@@ -106,6 +118,17 @@ public class Convertor {
         }
         if (op.getDType() == Op.DType.FLOAT64) {
             return new TensorflowBatchNorm2D<TFloat64>(graph, tf, op, TFloat64.class).call((Operand<TFloat64>) input, trainingMode);
+        }
+
+        throw new RuntimeException("Unsupported DType: " + op.getDType());
+    }
+
+    public static Operand<?> convert(Graph graph, Ops tf, BatchNorm3D op, Operand<?> input, Operand<TBool> trainingMode) {
+        if (op.getDType() == Op.DType.FLOAT32) {
+            return new TensorflowBatchNorm3D<TFloat32>(graph, tf, op, TFloat32.class).call((Operand<TFloat32>) input, trainingMode);
+        }
+        if (op.getDType() == Op.DType.FLOAT64) {
+            return new TensorflowBatchNorm3D<TFloat64>(graph, tf, op, TFloat64.class).call((Operand<TFloat64>) input, trainingMode);
         }
 
         throw new RuntimeException("Unsupported DType: " + op.getDType());
@@ -207,7 +230,7 @@ public class Convertor {
         if (op.getKey() instanceof String) {
             String key = (String) op.getKey();
             if (op.getDType() == Op.DType.INT32) {
-                return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TInt32.class);
+                return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TInt32.class).value();
             }
             if (op.getDType() == Op.DType.INT64) {
                 return tf.withName(op.getName()).tensorMapLookup(input, tf.constant(key), TInt64.class);
@@ -232,23 +255,27 @@ public class Convertor {
     }
 
     public static Operand<?> convert(Ops tf, Input op) {
+        Shape shape = null;
+        if (op.getShape() != null) {
+            shape = Shape.of(Arrays.stream(op.getShape()).mapToLong(e -> (long) e).toArray());
+        }
         if (op.getDType() == Op.DType.INT32) {
-            return tf.withName(op.getName()).placeholder(TInt32.class);
+            return tf.withName(op.getName()).placeholder(TInt32.class, Placeholder.shape(shape));
         }
         if (op.getDType() == Op.DType.INT64) {
-            return tf.withName(op.getName()).placeholder(TInt64.class);
+            return tf.withName(op.getName()).placeholder(TInt64.class, Placeholder.shape(shape));
         }
         if (op.getDType() == Op.DType.FLOAT32) {
-            return tf.withName(op.getName()).placeholder(TFloat32.class);
+            return tf.withName(op.getName()).placeholder(TFloat32.class, Placeholder.shape(shape));
         }
         if (op.getDType() == Op.DType.FLOAT64) {
-            return tf.withName(op.getName()).placeholder(TFloat64.class);
+            return tf.withName(op.getName()).placeholder(TFloat64.class, Placeholder.shape(shape));
         }
         if (op.getDType() == Op.DType.BYTE) {
-            return tf.withName(op.getName()).placeholder(TUint8.class);
+            return tf.withName(op.getName()).placeholder(TUint8.class, Placeholder.shape(shape));
         }
         if (op.getDType() == Op.DType.BOOL) {
-            return tf.withName(op.getName()).placeholder(TBool.class);
+            return tf.withName(op.getName()).placeholder(TBool.class, Placeholder.shape(shape));
         }
 
         throw new RuntimeException("Unsupported DType: " + op.getDType());
@@ -293,11 +320,25 @@ public class Convertor {
                 size[i] -= begin[i];
             }
         }
-        return tf.withName(op.getName()).slice(input, tf.constant(begin), tf.constant(size));
+        Operand<?> out = tf.withName(op.getName()).slice(input, tf.constant(begin), tf.constant(size));
+//        System.out.println(out.shape());
+        return out;
     }
 
     public static Operand<?> convert(Ops tf, Softmax op, Operand<?> input) {
         return tf.withName(op.getName()).nn.softmax((Operand<? extends TNumber>) input);
+    }
+
+    public static Operand<?> convert(Ops tf, Transpose op, Operand<?> input) {
+        Operand<?> out = tf.withName(op.getName()).linalg.transpose(input, tf.constant(op.getPerm()));
+//        System.out.println(out.shape());
+        return out;
+    }
+
+    public static Operand<?> convert(Ops tf, ZeroLike op, Operand<?> input) {
+        Operand<?> out = tf.withName(op.getName()).zerosLike(input);
+//        System.out.println(out.shape());
+        return out;
     }
 
     public static org.tensorflow.framework.optimizers.Optimizer convert(Graph graph, Optimizer optimizer) {

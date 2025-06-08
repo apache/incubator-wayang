@@ -109,8 +109,10 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
                         TFloat32 loss = (TFloat32) ret.get(0);
                         System.out.printf("[epoch %d, batch %d] loss: %f ", i + 1, start / batchSize + 1, loss.getFloat());
 
-                        TFloat32 acc = (TFloat32) ret.get(1);
-                        System.out.printf("accuracy: %f ", acc.getFloat());
+                        if (accuracyCalculation != null) {
+                            TFloat32 acc = (TFloat32) ret.get(1);
+                            System.out.printf("accuracy: %f ", acc.getFloat());
+                        }
                     }
                     System.out.println();
                 }

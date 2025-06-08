@@ -33,9 +33,9 @@ public class TensorflowLinear<T extends TNumber> {
     public TensorflowLinear(Ops tf, Linear op, Class<T> tClass) {
         this.tf = tf;
         this.op = op;
-        this.weights = tf.variable(tf.random.truncatedNormal(tf.array(op.getInFeatures(), op.getOutFeatures()), tClass));
+        this.weights = tf.withName("LinearWeights").variable(tf.random.truncatedNormal(tf.array(op.getInFeatures(), op.getOutFeatures()), tClass));
         if (op.getBias()) {
-            bias = tf.variable(tf.random.truncatedNormal(tf.array(op.getOutFeatures()), tClass));
+            bias = tf.withName("LinearBias").variable(tf.random.truncatedNormal(tf.array(op.getOutFeatures()), tClass));
         } else {
             bias = null;
         }

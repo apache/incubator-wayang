@@ -47,8 +47,8 @@ class TensorflowModelTest {
                 ;
         IntNdArray y = NdArrays.vectorOf(0, 0, 1, 1, 2, 2);
 
-        Input features = new Input(Input.Type.FEATURES, Op.DType.FLOAT32);
-        Input labels = new Input(Input.Type.LABEL, Op.DType.INT32);
+        Input features = new Input(null, Input.Type.FEATURES, Op.DType.FLOAT32);
+        Input labels = new Input(null, Input.Type.LABEL, Op.DType.INT32);
 
         DLModel model = new DLModel.Builder()
                 .layer(features)

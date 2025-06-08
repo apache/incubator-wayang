@@ -28,6 +28,7 @@ import org.tensorflow.types.family.TNumber;
 import java.util.Arrays;
 import java.util.List;
 
+// FIXME: do not use this. error: org.tensorflow.exceptions.TensorFlowException: No gradient defined for op: Conv3D. Please see https://www.tensorflow.org/code/tensorflow/cc/gradients/README.md for instructions on how to add C++ gradients.
 public class TensorflowConv3D<T extends TNumber> {
     private final Ops tf;
     private final Conv3D op;
@@ -37,9 +38,9 @@ public class TensorflowConv3D<T extends TNumber> {
     public TensorflowConv3D(Ops tf, Conv3D op, Class<T> tClass) {
         this.tf = tf;
         this.op = op;
-        this.kernel = tf.variable(tf.random.truncatedNormal(tf.array(kernelShape()), tClass));
+        this.kernel = tf.withName("Conv3DKernel").variable(tf.random.truncatedNormal(tf.array(kernelShape()), tClass));
         if (op.getBias()) {
-            bias = tf.variable(tf.random.truncatedNormal(tf.array(op.getOutChannels()), tClass));
+            bias = tf.withName("Conv3DBias").variable(tf.random.truncatedNormal(tf.array(op.getOutChannels()), tClass));
         } else {
             bias = null;
         }

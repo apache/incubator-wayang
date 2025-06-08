@@ -79,8 +79,8 @@ public class TensorflowIntegrationIT {
         CollectionSource<float[]> testXSource = new CollectionSource<>(testX, float[].class);
 
         /* model with layer api */
-        Input features = new Input(Input.Type.FEATURES);
-        Input labels = new Input(Input.Type.LABEL, Op.DType.INT32);
+        Input features = new Input(null, Input.Type.FEATURES);
+        Input labels = new Input(null, Input.Type.LABEL, Op.DType.INT32);
 
         DLModel model = new DLModel.Builder()
                 .layer(features)

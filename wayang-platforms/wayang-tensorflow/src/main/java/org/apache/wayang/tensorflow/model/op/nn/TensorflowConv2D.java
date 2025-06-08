@@ -38,9 +38,9 @@ public class TensorflowConv2D<T extends TNumber> {
     public TensorflowConv2D(Ops tf, Conv2D op, Class<T> tClass) {
         this.tf = tf;
         this.op = op;
-        this.kernel = tf.variable(tf.random.truncatedNormal(tf.array(kernelShape()), tClass));
+        this.kernel = tf.withName("Conv2DKernel").variable(tf.random.truncatedNormal(tf.array(kernelShape()), tClass));
         if (op.getBias()) {
-            bias = tf.variable(tf.random.truncatedNormal(tf.array(op.getOutChannels()), tClass));
+            bias = tf.withName("Conv2DBias").variable(tf.random.truncatedNormal(tf.array(op.getOutChannels()), tClass));
         } else {
             bias = null;
         }

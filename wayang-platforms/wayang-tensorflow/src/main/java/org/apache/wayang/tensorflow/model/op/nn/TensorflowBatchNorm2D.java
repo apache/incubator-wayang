@@ -19,18 +19,21 @@
 package org.apache.wayang.tensorflow.model.op.nn;
 
 import org.apache.wayang.basic.model.op.nn.BatchNorm2D;
-import org.tensorflow.ConcreteFunction;
-import org.tensorflow.Graph;
-import org.tensorflow.Operand;
-import org.tensorflow.Signature;
+import org.tensorflow.*;
 import org.tensorflow.op.Ops;
+import org.tensorflow.op.core.Placeholder;
+import org.tensorflow.op.core.PlaceholderWithDefault;
 import org.tensorflow.op.core.Variable;
 import org.tensorflow.op.nn.FusedBatchNorm;
 import org.tensorflow.types.TBool;
 import org.tensorflow.types.family.TNumber;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
+// FIXME: do not use this. there is bug for computation graph
 public class TensorflowBatchNorm2D<T extends TNumber> {
     private final Graph graph;
     private final Ops tf;
@@ -47,19 +50,20 @@ public class TensorflowBatchNorm2D<T extends TNumber> {
         this.tf = tf;
         this.op = op;
         this.tClass = tClass;
-        this.weight = tf.variable(tf.random.truncatedNormal(tf.array(op.getNumFeatures()), tClass));
-        this.bias = tf.variable(tf.random.truncatedNormal(tf.array(op.getNumFeatures()), tClass));
-        this.runningMean = tf.withName("runningMean").variable(tf.zeros(tf.array(op.getNumFeatures()), tClass));
-        this.runningVar = tf.withName("runningVar").variable(tf.ones(tf.array(op.getNumFeatures()), tClass));
+        this.weight = tf.withName("BatchNorm2DWeight").variable(tf.random.truncatedNormal(tf.array(op.getNumFeatures()), tClass));
+        this.bias = tf.withName("BatchNorm2DBias").variable(tf.random.truncatedNormal(tf.array(op.getNumFeatures()), tClass));
+        this.runningMean = tf.withName("BatchNorm2DRunningMean").variable(tf.zeros(tf.array(op.getNumFeatures()), tClass));
+        this.runningVar = tf.withName("BatchNorm2DRunningVar").variable(tf.ones(tf.array(op.getNumFeatures()), tClass));
     }
 
     public Operand<T> call(Operand<T> input, Operand<TBool> trainingMode) {
-        ConcreteFunction training = training(input);
-        ConcreteFunction inference = inference(input);
+        List<Operand<?>> placeholders = getPlaceholders(input);
+        ConcreteFunction training = training(input, placeholders);
+        ConcreteFunction inference = inference(input, placeholders);
 
         Operand<?> out = tf.withName(op.getName()).ifOp(
                 trainingMode,
-                Collections.emptyList(),
+                placeholders,
                 Collections.singletonList(tClass),
                 training, inference
         ).iterator().next();
@@ -67,7 +71,26 @@ public class TensorflowBatchNorm2D<T extends TNumber> {
         return (Operand<T>) out;
     }
 
-    public ConcreteFunction training(Operand<T> input) {
+    public List<Operand<?>> getPlaceholders(Operand<?> input) {
+        Set<GraphOperation> operations = graph.subgraphTo(Collections.singleton(tf.identity(input)));
+        List<Operand<?>> inputs = new ArrayList<>();
+        for (GraphOperation x : operations) {
+            if (x.type().equals(Placeholder.OP_NAME)
+                    || x.type().equals(PlaceholderWithDefault.OP_NAME)) {
+                inputs.add(x.output(0));
+            }
+        }
+        return inputs;
+    }
+
+    public Signature.Builder addPlaceholders(Signature.Builder builder, List<Operand<?>> placeholders) {
+        for (Operand<?> placeholder : placeholders) {
+            builder.input(placeholder.op().name(), placeholder);
+        }
+        return builder;
+    }
+
+    public ConcreteFunction training(Operand<T> input, List<Operand<?>> placeholders) {
         FusedBatchNorm<T, T> batchNormTraining = tf.nn.fusedBatchNorm(
                 input, weight, bias, runningMean, runningVar,
                 FusedBatchNorm.epsilon(op.getEpsilon())
@@ -87,12 +110,12 @@ public class TensorflowBatchNorm2D<T extends TNumber> {
                 tf.assign(runningMean, mean), tf.assign(runningVar, var)
         ).identity(batchNormTraining.y());
         return ConcreteFunction.create(
-                Signature.builder().output("y", y).build(),
+                addPlaceholders(Signature.builder(), placeholders).output("y", y).build(),
                 graph
         );
     }
 
-    public ConcreteFunction inference(Operand<T> input) {
+    public ConcreteFunction inference(Operand<T> input, List<Operand<?>> placeholders) {
         FusedBatchNorm<T, T> batchNormInference = tf.nn.fusedBatchNorm(
                 input, weight, bias, runningMean, runningVar,
                 FusedBatchNorm.epsilon(op.getEpsilon())
@@ -101,7 +124,7 @@ public class TensorflowBatchNorm2D<T extends TNumber> {
                         .isTraining(false)
         );
         return ConcreteFunction.create(
-                Signature.builder().output("y", batchNormInference.y()).build(),
+                addPlaceholders(Signature.builder(), placeholders).output("y", batchNormInference.y()).build(),
                 graph
         );
     }

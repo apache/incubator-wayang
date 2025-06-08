@@ -81,8 +81,8 @@ public class TensorflowIrisScalaLikeApiIT {
         DataQuantaBuilder<?, Integer> testYSource = testSource.field1;
 
         /* model */
-        Input features = new Input(Input.Type.FEATURES);
-        Input labels = new Input(Input.Type.LABEL, Op.DType.INT32);
+        Input features = new Input(null, Input.Type.FEATURES);
+        Input labels = new Input(null, Input.Type.LABEL, Op.DType.INT32);
 
         Op l1 = new Linear(4, 32, true);
         Op s1 = new Sigmoid();

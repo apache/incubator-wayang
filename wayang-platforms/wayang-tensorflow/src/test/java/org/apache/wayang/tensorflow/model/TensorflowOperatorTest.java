@@ -23,10 +23,12 @@ import org.apache.wayang.basic.model.op.Mean;
 import org.apache.wayang.basic.model.op.Reshape;
 import org.apache.wayang.basic.model.op.Slice;
 import org.apache.wayang.basic.model.op.nn.*;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.tensorflow.*;
+import org.tensorflow.ndarray.FloatNdArray;
+import org.tensorflow.ndarray.NdArrays;
+import org.tensorflow.ndarray.Shape;
 import org.tensorflow.op.Ops;
 import org.tensorflow.op.core.Placeholder;
 import org.tensorflow.types.TBool;
@@ -132,17 +134,16 @@ public class TensorflowOperatorTest {
     public void testConvLSTM2D() {
         try (Graph g = new Graph(); Session session = new Session(g)) {
             Ops tf = Ops.create(g);
-            ConvLSTM2D convLSTM2D = new ConvLSTM2D(1, 2, new int[]{2}, new int[]{1}, true);
+            ConvLSTM2D convLSTM2D = new ConvLSTM2D(1, 2, new int[]{2}, new int[]{1}, true, "output");
             float[][] one = new float[][]{{1.0f, 2.0f, 3.0f}, {1.0f, 2.0f, 3.0f}, {1.0f, 2.0f, 3.0f}};
             Operand<TFloat32> input = tf.constant(
                     new float[][][][][]{{{one}, {one}}}
             );
             Operand<?> out = Convertor.convert(tf, convLSTM2D, input);
-            out = tf.tensorMapLookup(out, tf.constant("hidden"), TFloat32.class);
             TFloat32 tensor = (TFloat32) session.runner().fetch(out).run().get(0);
             long[] shape = tensor.shape().asArray();
             System.out.println(Arrays.toString(shape));
-            Assertions.assertArrayEquals(new long[]{1, 2, 3, 3}, shape);
+            Assertions.assertArrayEquals(new long[]{1, 2, 2, 3, 3}, shape);
         }
     }
 
@@ -151,23 +152,30 @@ public class TensorflowOperatorTest {
         try (Graph g = new Graph(); Session session = new Session(g)) {
             Ops tf = Ops.create(g);
             BatchNorm2D batchNorm2D = new BatchNorm2D(1, 1e-5f, 0.1f);
-            Operand<TFloat32> x = tf.constant(
-                    new float[][][][]{{{
-                            {1.0f, 2.0f, 3.0f},
-                            {1.0f, 2.0f, 3.0f},
-                            {1.0f, 2.0f, 3.0f}
-                    }}}
-            );
+//            Operand<TFloat32> tensor = tf.constant(
+//                    new float[][][][]{{{
+//                            {1.0f, 2.0f, 3.0f},
+//                            {1.0f, 2.0f, 3.0f},
+//                            {1.0f, 2.0f, 3.0f}
+//                    }}}
+//            );
+
+            FloatNdArray tensor = NdArrays.ofFloats(Shape.of(1, 1, 3, 3))
+                    .set(NdArrays.vectorOf(1.0f, 2.0f, 3.0f), 0, 0, 0)
+                    .set(NdArrays.vectorOf(1.0f, 2.0f, 3.0f), 0, 0, 1)
+                    .set(NdArrays.vectorOf(1.0f, 2.0f, 3.0f), 0, 0, 2);
+
+            Placeholder<TFloat32> x = tf.placeholder(TFloat32.class, Placeholder.shape(Shape.of(1, 1, 3, 3)));
             Placeholder<TBool> trainingMode = tf.placeholder(TBool.class);
             Operand<?> out = Convertor.convert(g, tf, batchNorm2D, x, trainingMode);
-            Result result1 = session.runner().feed(trainingMode, TBool.scalarOf(true))
-                    .fetch("runningMean")
-                    .fetch("runningVar")
+            Result result1 = session.runner().feed(trainingMode, TBool.scalarOf(true)).feed(x, TFloat32.tensorOf(tensor))
+                    .fetch("BatchNorm2DRunningMean")
+                    .fetch("BatchNorm2DRunningVar")
                     .fetch(out)
                     .run();
-            Result result2 = session.runner().feed(trainingMode, TBool.scalarOf(false))
-                    .fetch("runningMean")
-                    .fetch("runningVar")
+            Result result2 = session.runner().feed(trainingMode, TBool.scalarOf(false)).feed(x, TFloat32.tensorOf(tensor))
+                    .fetch("BatchNorm2DRunningMean")
+                    .fetch("BatchNorm2DRunningVar")
                     .fetch(out)
                     .run();
 //            TFloat32 tensor1 = (TFloat32) result1.get(2);
@@ -182,6 +190,50 @@ public class TensorflowOperatorTest {
 //                    tensor2.getFloat(0, 0, 0, 1),
 //                    tensor2.getFloat(0, 0, 0, 2)
 //            };
+            float[] ans1 = new float[] {
+                    ((TFloat32) result1.get(0)).getFloat(0),
+                    ((TFloat32) result1.get(1)).getFloat(0)
+            };
+            float[] ans2 = new float[] {
+                    ((TFloat32) result2.get(0)).getFloat(0),
+                    ((TFloat32) result2.get(1)).getFloat(0)
+            };
+            System.out.println(Arrays.toString(ans1));
+            System.out.println(Arrays.toString(ans2));
+            Assertions.assertArrayEquals(ans1, ans2);
+        }
+    }
+
+    @Test
+    public void testBatchNorm3D() {
+        try (Graph g = new Graph(); Session session = new Session(g)) {
+            Ops tf = Ops.create(g);
+            BatchNorm3D batchNorm3D = new BatchNorm3D(1, 1e-5f, 0.1f);
+            Operand<TFloat32> x = tf.constant(
+                    new float[][][][][]{{{
+                        {
+                            {1.0f, 2.0f, 3.0f},
+                            {1.0f, 2.0f, 3.0f},
+                            {1.0f, 2.0f, 3.0f}
+                        }, {
+                            {1.0f, 2.0f, 3.0f},
+                            {1.0f, 2.0f, 3.0f},
+                            {1.0f, 2.0f, 3.0f}
+                        }
+                    }}}
+            );
+            Placeholder<TBool> trainingMode = tf.placeholder(TBool.class);
+            Operand<?> out = Convertor.convert(g, tf, batchNorm3D, x, trainingMode);
+            Result result1 = session.runner().feed(trainingMode, TBool.scalarOf(true))
+                    .fetch("BatchNorm2DRunningMean")
+                    .fetch("BatchNorm2DRunningVar")
+                    .fetch(out)
+                    .run();
+            Result result2 = session.runner().feed(trainingMode, TBool.scalarOf(false))
+                    .fetch("BatchNorm2DRunningMean")
+                    .fetch("BatchNorm2DRunningVar")
+                    .fetch(out)
+                    .run();
             float[] ans1 = new float[] {
                     ((TFloat32) result1.get(0)).getFloat(0),
                     ((TFloat32) result1.get(1)).getFloat(0)

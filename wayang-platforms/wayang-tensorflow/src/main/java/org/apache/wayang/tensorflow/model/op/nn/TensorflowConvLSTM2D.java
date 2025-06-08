@@ -53,20 +53,29 @@ public class TensorflowConvLSTM2D<T extends TNumber> {
         Operand<T> h = tf.zeros(tf.array(batchSize, op.getHiddenDim(), height, width), tClass);
         Operand<T> c = tf.zeros(tf.array(batchSize, op.getHiddenDim(), height, width), tClass);
 
+        String outKey = op.getOutput();
         List<Operand<T>> outputs = new ArrayList<>((int) seqLen);
 
         for (long t = 0; t < seqLen; t++) {
-            Operand<?> hc = cell.call(tf.gather(input, tf.constant(t), tf.constant(1)), h, c);
-            h = tf.tensorMapLookup(hc, tf.constant("hidden"), tClass);
-            c = tf.tensorMapLookup(hc, tf.constant("cell"), tClass);
-            outputs.add(h);
+            Operand<T>[] hc = cell.call(tf.gather(input, tf.constant(t), tf.constant(1)), h, c);
+            h = hc[0];
+            c = hc[1];
+            if ("output".equals(outKey)) {
+                outputs.add(h);
+            }
         }
 
-        Operand<?> map = tf.emptyTensorMap();
-        map = tf.tensorMapInsert(map, tf.constant("output"), tf.stack(outputs, Stack.axis(1L)));
-        map = tf.tensorMapInsert(map, tf.constant("hidden"), h);
-        map = tf.withName(op.getName()).tensorMapInsert(map, tf.constant("cell"), c);
-        return map;
+        if ("output".equals(outKey)) {
+            return tf.stack(outputs, Stack.axis(1L));
+        }
+        if ("hidden".equals(outKey)) {
+            return h;
+        }
+        if ("cell".equals(outKey)) {
+            return c;
+        }
+
+        throw new IllegalArgumentException("Unrecognized output: " + outKey);
     }
 
     public static class Cell<T extends TNumber> {
@@ -81,7 +90,7 @@ public class TensorflowConvLSTM2D<T extends TNumber> {
             ), tClass);
         }
 
-        public Operand<?> call(Operand<T> input, Operand<T> hCur, Operand<T> cCur) {
+        public Operand<T>[] call(Operand<T> input, Operand<T> hCur, Operand<T> cCur) {
             // input: [batch_size, input_dim, height, width]
             // hCur: [batch_size, hidden_dim, height, width]
             // cCur: [batch_size, hidden_dim, height, width]
@@ -96,10 +105,7 @@ public class TensorflowConvLSTM2D<T extends TNumber> {
             Operand<T> cNext = tf.math.add(tf.math.mul(f, cCur), tf.math.mul(i, g)); // [batch_size, hidden_dim, height, width]
             Operand<T> hNext = tf.math.mul(o, tf.math.tanh(cNext)); // [batch_size, hidden_dim, height, width]
 
-            Operand<?> map = tf.emptyTensorMap();
-            map = tf.tensorMapInsert(map, tf.constant("hidden"), hNext);
-            map = tf.tensorMapInsert(map, tf.constant("cell"), cNext);
-            return map;
+            return new Operand[]{hNext, cNext};
         }
     }
 }

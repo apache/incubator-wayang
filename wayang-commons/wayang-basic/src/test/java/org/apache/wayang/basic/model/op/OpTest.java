@@ -29,8 +29,8 @@ class OpTest {
     @Test
     void testBuild() {
         // model
-        Input features = new Input(Input.Type.FEATURES);
-        Input labels = new Input(Input.Type.LABEL);
+        Input features = new Input(null, Input.Type.FEATURES);
+        Input labels = new Input(null, Input.Type.LABEL);
 
         DLModel model = new DLModel.Builder()
                 .layer(features)
