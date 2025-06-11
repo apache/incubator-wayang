@@ -17,19 +17,15 @@
  */
 package org.apache.wayang.java.test;
 
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * What is this test testin?
@@ -42,10 +38,11 @@ import org.junit.Test;
  * in the main branch.
  *
  */
-public class KafkaClientTest {
+class KafkaClientTest {
 
-    //@Test
-    public void testReadFromKafkaTopic() {
+    @Test
+    @Disabled
+    void testReadFromKafkaTopic() {
 
         final String topicName1 = "banking-tx-small-csv";
 

@@ -38,29 +38,26 @@ import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
 import org.apache.wayang.tests.platform.MyMadeUpPlatform;
-import org.junit.Assert;
-import org.junit.Test;
-
-
-
-
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test the Spark integration with Wayang.
  */
-public class SparkIntegrationIT {
+class SparkIntegrationIT {
 
     @Test
-    public void testReadAndWrite() throws URISyntaxException, IOException {
+    void testReadAndWrite() throws IOException {
         // Build a Wayang plan.
         List<String> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.readWrite(WayangPlans.FILE_SOME_LINES_TXT, collector);
@@ -73,11 +70,11 @@ public class SparkIntegrationIT {
 
         // Verify the plan result.
         final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
-        Assert.assertEquals(lines, collector);
+        assertEquals(lines, collector);
     }
 
     @Test
-    public void testReadAndTransformAndWrite() throws URISyntaxException {
+    void testReadAndTransformAndWrite() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -88,8 +85,8 @@ public class SparkIntegrationIT {
         wayangContext.execute(wayangPlan);
     }
 
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration1() throws URISyntaxException {
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration1() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
         // ILLEGAL: This platform is not registered, so this operator will find no implementation.
@@ -98,29 +95,26 @@ public class SparkIntegrationIT {
         // Instantiate Wayang and activate the Spark backend.
         WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin());
 
-
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
-
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
+        assertThrows(WayangException.class, () ->
+            // Have Wayang execute the plan.
+            wayangContext.execute(wayangPlan));
     }
 
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration2() throws URISyntaxException {
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration2() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
         WayangContext wayangContext = new WayangContext();
         // ILLEGAL: This dummy platform is not sufficient to execute the plan.
         wayangContext.register(MyMadeUpPlatform.getInstance());
-
-        // Have Wayang execute the plan.
-        wayangContext.execute(wayangPlan);
+        assertThrows(WayangException.class, () ->
+            // Have Wayang execute the plan.
+            wayangContext.execute(wayangPlan));
     }
 
-    @Test(expected = WayangException.class)
-    public void testReadAndTransformAndWriteWithIllegalConfiguration3() throws URISyntaxException {
+    @Test
+    void testReadAndTransformAndWriteWithIllegalConfiguration3() {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -132,11 +126,11 @@ public class SparkIntegrationIT {
         // ILLEGAL: We blacklist the Spark platform, although we need it.
         job.getConfiguration().getPlatformProvider().addToBlacklist(Spark.platform());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
-        job.execute();
+        assertThrows(WayangException.class, job::execute);
     }
 
     @Test
-    public void testMultiSourceAndMultiSink() throws URISyntaxException {
+    void testMultiSourceAndMultiSink() {
         // Define some input data.
         final List<String> collection1 = Arrays.asList("This is source 1.", "This is source 1, too.");
         final List<String> collection2 = Arrays.asList("This is source 2.", "This is source 2, too.");
@@ -160,12 +154,12 @@ public class SparkIntegrationIT {
         Collections.sort(expectedOutcome2);
         Collections.sort(collector1);
         Collections.sort(collector2);
-        Assert.assertEquals(expectedOutcome1, collector1);
-        Assert.assertEquals(expectedOutcome2, collector2);
+        assertEquals(expectedOutcome1, collector1);
+        assertEquals(expectedOutcome2, collector2);
     }
 
     @Test
-    public void testMultiSourceAndHoleAndMultiSink() throws URISyntaxException {
+    void testMultiSourceAndHoleAndMultiSink() {
         // Define some input data.
         final List<String> collection1 = Arrays.asList("This is source 1.", "This is source 1, too.");
         final List<String> collection2 = Arrays.asList("This is source 2.", "This is source 2, too.");
@@ -181,17 +175,15 @@ public class SparkIntegrationIT {
 
         // Check the results in both sinks.
         List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
-                .flatMap(string -> Arrays.asList(string.toLowerCase(), string.toUpperCase()).stream())
-                .collect(Collectors.toList());
-        Collections.sort(expectedOutcome);
+                .flatMap(string -> Stream.of(string.toLowerCase(), string.toUpperCase())).sorted().collect(Collectors.toList());
         Collections.sort(collector1);
         Collections.sort(collector2);
-        Assert.assertEquals(expectedOutcome, collector1);
-        Assert.assertEquals(expectedOutcome, collector2);
+        assertEquals(expectedOutcome, collector1);
+        assertEquals(expectedOutcome, collector2);
     }
 
     @Test
-    public void testGlobalMaterializedGroup() throws URISyntaxException {
+    void testGlobalMaterializedGroup() {
         // Build the WayangPlan.
         List<Iterable<Integer>> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.globalMaterializedGroup(collector, 1, 2, 3);
@@ -201,12 +193,12 @@ public class SparkIntegrationIT {
 
         wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
+        assertEquals(1, collector.size());
+        assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
     }
 
     @Test
-    public void testIntersect() throws URISyntaxException {
+    void testIntersect() {
         // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
@@ -216,11 +208,11 @@ public class SparkIntegrationIT {
 
         wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
+        assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
     }
 
     @Test
-    public void testRepeat() {
+    void testRepeat() {
         // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
@@ -231,12 +223,12 @@ public class SparkIntegrationIT {
 
         wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(5, collector.size());
-        Assert.assertEquals(WayangCollections.asSet(5, 15, 25, 35, 50), WayangCollections.asSet(collector));
+        assertEquals(5, collector.size());
+        assertEquals(WayangCollections.asSet(5, 15, 25, 35, 50), WayangCollections.asSet(collector));
     }
 
     @Test
-    public void testPageRankWithGraphBasic() {
+    void testPageRankWithGraphBasic() {
         // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
@@ -259,7 +251,7 @@ public class SparkIntegrationIT {
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
         final List<Long> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
-        Assert.assertEquals(
+        assertEquals(
                 Arrays.asList(3L, 0L, 2L, 1L),
                 vertexOrder
         );
@@ -267,7 +259,7 @@ public class SparkIntegrationIT {
 
 
     @Test
-    public void testPageRankWithSparkGraph() {
+    void testPageRankWithSparkGraph() {
         // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
@@ -290,28 +282,28 @@ public class SparkIntegrationIT {
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
         final List<Long> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
-        Assert.assertEquals(
+        assertEquals(
                 Arrays.asList(3L, 0L, 2L, 1L),
                 vertexOrder
         );
     }
 
     @Test
-    public void testMapPartitions() throws URISyntaxException {
+    void testMapPartitions() {
         // Instantiate Wayang and activate the Java backend.
         WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin());
 
         // Execute the Wayang plan.
         final Collection<Tuple2<String, Integer>> result = WayangPlans.mapPartitions(wayangContext, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
 
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
                 WayangCollections.asSet(result)
         );
     }
 
     @Test
-    public void testZipWithId() throws URISyntaxException {
+    void testZipWithId() {
         // Build the WayangPlan.
         List<Long> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.zipWithId(collector, 0, 10, 20, 30, 30);
@@ -321,12 +313,12 @@ public class SparkIntegrationIT {
 
         wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(Long.valueOf(5L), collector.get(0));
+        assertEquals(1, collector.size());
+        assertEquals(Long.valueOf(5L), collector.get(0));
     }
 
     @Test
-    public void testDiverseScenario1() throws URISyntaxException {
+    void testDiverseScenario1() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario1(WayangPlans.FILE_SOME_LINES_TXT);
 
@@ -337,7 +329,7 @@ public class SparkIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario2() throws URISyntaxException {
+    void testDiverseScenario2() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario2(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -348,7 +340,7 @@ public class SparkIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario3() throws URISyntaxException {
+    void testDiverseScenario3() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario3(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -359,7 +351,7 @@ public class SparkIntegrationIT {
     }
 
     @Test
-    public void testDiverseScenario4() throws URISyntaxException {
+    void testDiverseScenario4() {
         // Build the WayangPlan.
         WayangPlan wayangPlan = WayangPlans.diverseScenario4(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
@@ -370,7 +362,7 @@ public class SparkIntegrationIT {
     }
 
     @Test
-    public void testSimpleLoop() throws URISyntaxException {
+    void testSimpleLoop() {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleLoop(3, collector, 0, 1, 2);
@@ -383,7 +375,7 @@ public class SparkIntegrationIT {
     }
 
     @Test
-    public void testSample() throws URISyntaxException {
+    void testSample() {
         // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
         WayangPlan wayangPlan = WayangPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -396,7 +388,7 @@ public class SparkIntegrationIT {
     }
 
     @Test
-    public void testSampleInLoop() {
+    void testSampleInLoop() {
         final List<Integer> collector = new ArrayList<>();
         WayangPlan wayangPlan = WayangPlans.sampleInLoop(2, 10, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 
@@ -409,29 +401,29 @@ public class SparkIntegrationIT {
     }
 
     @Test
-    public void testCurrentIterationNumber() {
+    void testCurrentIterationNumber() {
         WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin());
         final Collection<Integer> result = WayangPlans.loopWithIterationNumber(wayangContext, 15, 5, -1, 1, 5);
         int expectedOffset = 10;
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
                 WayangCollections.asSet(result)
         );
     }
 
     @Test
-    public void testCurrentIterationNumberWithTooFewExpectedIterations() {
+    void testCurrentIterationNumberWithTooFewExpectedIterations() {
         WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin());
         final Collection<Integer> result = WayangPlans.loopWithIterationNumber(wayangContext, 15, 2, -1, 1, 5);
         int expectedOffset = 10;
-        Assert.assertEquals(
+        assertEquals(
                 WayangCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
                 WayangCollections.asSet(result)
         );
     }
 
     @Test
-    public void testBroadcasts() {
+    void testBroadcasts() {
         Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);
         Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);
         List<Integer> collectedValues = new ArrayList<>();
@@ -456,11 +448,11 @@ public class SparkIntegrationIT {
         wayangContext.execute(wayangPlan);
 
         Collections.sort(collectedValues);
-        Assert.assertEquals(expectedValues, collectedValues);
+        assertEquals(expectedValues, collectedValues);
     }
 
     @Test
-    public void testLogisticRegressionOperator() {
+    void testLogisticRegressionOperator() {
         CollectionSource<double[]> xSource = new CollectionSource<>(
                 Arrays.asList(
                         new double[]{0.0, 1.0},
@@ -496,14 +488,14 @@ public class SparkIntegrationIT {
 
         context.execute(plan);
 
-        Assert.assertEquals(4, results.size());
+        assertEquals(4, results.size());
         for (double pred : results) {
-            Assert.assertTrue(pred == 0.0 || pred == 1.0);
+            assertTrue(pred == 0.0 || pred == 1.0);
         }
     }
 
     @Test
-    public void testLogisticRegressionWithAPI() {
+    void testLogisticRegressionWithAPI() {
         WayangContext context = new WayangContext()
                 .with(Spark.basicPlugin())
                 .with(Spark.mlPlugin());
@@ -545,7 +537,7 @@ public class SparkIntegrationIT {
         }
     }
     @Test
-    public void testDecisionTreeRegressionWithAPI() {
+    void testDecisionTreeRegressionWithAPI() {
         WayangContext context = new WayangContext()
                 .with(Spark.basicPlugin())
                 .with(Spark.mlPlugin());
@@ -617,7 +609,7 @@ public class SparkIntegrationIT {
 
 
     @Test
-    public void testKMeans() {
+    void testKMeans() {
         CollectionSource<double[]> collectionSource = new CollectionSource<>(
                 Arrays.asList(
                         new double[]{1, 2, 3},
@@ -651,8 +643,8 @@ public class SparkIntegrationIT {
         wayangContext.execute(wayangPlan);
 
         // Verify the outcome.
-        Assert.assertEquals(3, results.size());
-        Assert.assertEquals(
+        assertEquals(3, results.size());
+        assertEquals(
                 results.get(0),
                 results.get(2)
         );

@@ -18,13 +18,12 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,13 +31,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test suite for {@link JavaReduceByOperator}.
  */
-public class JavaMaterializedGroupByOperatorTest extends JavaExecutionOperatorTestBase {
+class JavaMaterializedGroupByOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         AtomicInteger counter = new AtomicInteger(0);
         Stream<Tuple2<String, Integer>> inputStream = Arrays.stream("abcaba".split(""))
@@ -69,8 +71,8 @@ public class JavaMaterializedGroupByOperatorTest extends JavaExecutionOperatorTe
                 Arrays.asList(new Tuple2<>("c", 2))
         };
         Arrays.stream(expectedResults)
-                .forEach(expected -> Assert.assertTrue("Not contained: " + expected, result.contains(expected)));
-        Assert.assertEquals(expectedResults.length, result.size());
+                .forEach(expected -> assertTrue(result.contains(expected), "Not contained: " + expected));
+        assertEquals(expectedResults.length, result.size());
 
     }
 }

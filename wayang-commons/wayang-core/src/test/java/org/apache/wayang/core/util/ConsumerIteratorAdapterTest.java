@@ -18,21 +18,24 @@
 
 package org.apache.wayang.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.function.Consumer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test suite for the {@link ConsumerIteratorAdapter}.
  */
-public class ConsumerIteratorAdapterTest {
+class ConsumerIteratorAdapterTest {
 
     @Test
-    public void testCriticalLoad() {
+    void testCriticalLoad() {
         final int maxI = 50000000;
 
         final ConsumerIteratorAdapter<Integer> adapter = new ConsumerIteratorAdapter<>(maxI / 1000);
@@ -51,11 +54,11 @@ public class ConsumerIteratorAdapterTest {
 
         Logger logger = LogManager.getLogger(this.getClass());
         for (int i = 0; i < maxI; i++) {
-            Assert.assertTrue(iterator.hasNext());
-            Assert.assertEquals(i, iterator.next().intValue());
+            assertTrue(iterator.hasNext());
+            assertEquals(i, iterator.next().intValue());
             if (i > 0 && i % 10000000 == 0) logger.info("Put through {} elements.", i);
         }
-        Assert.assertFalse(iterator.hasNext());
+        assertFalse(iterator.hasNext());
     }
 
 

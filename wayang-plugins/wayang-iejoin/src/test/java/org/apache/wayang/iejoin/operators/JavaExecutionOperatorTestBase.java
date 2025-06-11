@@ -18,7 +18,6 @@
 
 package org.apache.wayang.iejoin.operators;
 
-import org.junit.BeforeClass;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -31,6 +30,7 @@ import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.util.Collection;
 import java.util.stream.Stream;
@@ -47,8 +47,8 @@ public class JavaExecutionOperatorTestBase {
 
     protected static Configuration configuration;
 
-    @BeforeClass
-    public static void init() {
+    @BeforeAll
+    static void init() {
         configuration = new Configuration();
         job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);

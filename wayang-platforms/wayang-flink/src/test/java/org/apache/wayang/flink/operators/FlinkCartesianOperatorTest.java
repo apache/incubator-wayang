@@ -22,19 +22,20 @@ import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link FlinkCartesianOperator}.
  */
-public class FlinkCartesianOperatorTest extends FlinkOperatorTestBase {
+class FlinkCartesianOperatorTest extends FlinkOperatorTestBase {
 
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input0 = this.createDataSetChannelInstance(Arrays.asList(1, 2));
         DataSetChannel.Instance input1 = this.createDataSetChannelInstance(Arrays.asList("a", "b", "c"));
@@ -55,8 +56,8 @@ public class FlinkCartesianOperatorTest extends FlinkOperatorTestBase {
 
         // Verify the outcome.
         final List<Tuple2<Integer, String>> result = output.<Tuple2<Integer, String>>provideDataSet().collect();
-        Assert.assertEquals(6, result.size());
-        Assert.assertEquals(result.get(0), new Tuple2(1, "a"));
+        assertEquals(6, result.size());
+        assertEquals(new Tuple2(1, "a"), result.get(0));
 
     }
 }

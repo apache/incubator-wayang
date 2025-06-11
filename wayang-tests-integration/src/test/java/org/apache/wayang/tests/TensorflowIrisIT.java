@@ -32,8 +32,8 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
-import org.junit.Test;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -46,7 +46,7 @@ import java.util.Random;
  * Test the Tensorflow integration with Wayang.
  * Note: this test fails on M1 Macs because of Tensorflow-Java incompatibility.
  */
-public class TensorflowIrisIT {
+class TensorflowIrisIT {
 
     public static URI TRAIN_PATH = createUri("/iris_train.csv");
     public static URI TEST_PATH = createUri("/iris_test.csv");
@@ -57,8 +57,9 @@ public class TensorflowIrisIT {
             "Iris-virginica", 2
     );
 
-    @Ignore
-    public void test() {
+    @Disabled
+    @Test
+    void test() {
         final Tuple<Operator, Operator> trainSource = fileOperation(TRAIN_PATH, true);
         final Tuple<Operator, Operator> testSource = fileOperation(TEST_PATH, false);
 

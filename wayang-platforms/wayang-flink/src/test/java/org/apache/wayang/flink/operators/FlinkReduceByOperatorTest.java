@@ -25,8 +25,7 @@ import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -34,10 +33,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  * Test suite for {@link FlinkReduceByOperator}.
  */
-public class FlinkReduceByOperatorTest extends FlinkOperatorTestBase{
+class FlinkReduceByOperatorTest extends FlinkOperatorTestBase {
 
     //TODO: Validate FlinkReduceByOperator implementation
     // it is required to validate the implementation of FlinkReduceByOperator
@@ -45,7 +48,7 @@ public class FlinkReduceByOperatorTest extends FlinkOperatorTestBase{
     // implementation of the implementation in the operator
     // labels:flink,bug
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         List<Tuple2<String, Integer>> inputList = Arrays.stream("aaabbccccdeefff".split(""))
                 .map(string -> new Tuple2<>(string, 1))
@@ -80,7 +83,7 @@ public class FlinkReduceByOperatorTest extends FlinkOperatorTestBase{
         }
         catch (Exception e) {
             e.printStackTrace();
-            Assert.fail();
+            fail();
         }
 
         // Verify the outcome.
@@ -96,8 +99,8 @@ public class FlinkReduceByOperatorTest extends FlinkOperatorTestBase{
                 new Tuple2<>("f", 3)
         };
         Arrays.stream(expectedResults)
-                .forEach(expected -> Assert.assertTrue("Not contained: " + expected, resultSet.contains(expected)));
-        Assert.assertEquals(expectedResults.length, resultSet.size());
+                .forEach(expected -> assertTrue(resultSet.contains(expected), "Not contained: " + expected));
+        assertEquals(expectedResults.length, resultSet.size());
 
     }
 }

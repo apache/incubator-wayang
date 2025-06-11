@@ -18,23 +18,23 @@
 
 package org.apache.wayang.flink.operators;
 
-import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.flink.channels.DataSetChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link FlinkUnionAllOperator}.
  */
-public class FlinkUnionAllOperatorTest extends FlinkOperatorTestBase {
+class FlinkUnionAllOperatorTest extends FlinkOperatorTestBase {
 
     @Test
-    public void testExecution() throws Exception {
+    void testExecution() throws Exception {
         // Prepare test data.
         DataSetChannel.Instance input0 = this.createDataSetChannelInstance(Arrays.asList(6, 0, 1, 1, 5, 2));
         DataSetChannel.Instance input1 = this.createDataSetChannelInstance(Arrays.asList(1, 1, 9));
@@ -56,7 +56,7 @@ public class FlinkUnionAllOperatorTest extends FlinkOperatorTestBase {
         // Verify the outcome.
         final List<Integer> result = output.<Integer>provideDataSet().collect();
         // final List<Integer> result = ((DataSetChannel.Instance) outputs[0]).<Integer>provideDataSet().collect();
-        Assert.assertEquals(9, result.size());
-        Assert.assertEquals(Arrays.asList(6, 0, 1, 1, 5, 2, 1, 1, 9), result);
+        assertEquals(9, result.size());
+        assertEquals(Arrays.asList(6, 0, 1, 1, 5, 2, 1, 1, 9), result);
     }
 }

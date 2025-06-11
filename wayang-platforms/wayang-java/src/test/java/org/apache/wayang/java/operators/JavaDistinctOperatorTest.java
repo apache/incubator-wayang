@@ -18,23 +18,24 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link JavaDistinctOperator}.
  */
-public class JavaDistinctOperatorTest extends JavaExecutionOperatorTestBase {
+class JavaDistinctOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         Stream<Integer> inputStream = Arrays.asList(0, 1, 1, 2, 2, 6, 6).stream();
 
@@ -51,8 +52,8 @@ public class JavaDistinctOperatorTest extends JavaExecutionOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
-        Assert.assertEquals(4, result.size());
-        Assert.assertEquals(Arrays.asList(0, 1, 2, 6), result);
+        assertEquals(4, result.size());
+        assertEquals(Arrays.asList(0, 1, 2, 6), result);
 
     }
 

@@ -14,8 +14,7 @@ import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Measurement;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
 import org.apache.wayang.commons.util.profiledb.storage.FileStorage;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,10 +23,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 
-public class ProfileDBTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ProfileDBTest {
 
     @Test
-    public void testPolymorphSaveAndLoad() throws IOException {
+    void testPolymorphSaveAndLoad() throws IOException {
         File tempDir = Files.createTempDirectory("profiledb").toFile();
         File file = new File(tempDir, "new-profiledb.json");
         file.createNewFile();
@@ -59,21 +61,21 @@ public class ProfileDBTest {
         Collection<Experiment> loadedExperiments = profileDB.load(bis);
 
         // Compare the experiments.
-        Assert.assertEquals(1, loadedExperiments.size());
+        assertEquals(1, loadedExperiments.size());
         Experiment loadedExperiment = loadedExperiments.iterator().next();
-        Assert.assertEquals(experiment, loadedExperiment);
+        assertEquals(experiment, loadedExperiment);
 
         // Compare the measurements.
-        Assert.assertEquals(2, loadedExperiment.getMeasurements().size());
+        assertEquals(2, loadedExperiment.getMeasurements().size());
         Set<Measurement> expectedMeasurements = new HashSet<>(2);
         expectedMeasurements.add(timeMeasurement);
         expectedMeasurements.add(memoryMeasurement);
         Set<Measurement> loadedMeasurements = new HashSet<>(loadedExperiment.getMeasurements());
-        Assert.assertEquals(expectedMeasurements, loadedMeasurements);
+        assertEquals(expectedMeasurements, loadedMeasurements);
     }
 
     @Test
-    public void testRecursiveSaveAndLoad() throws IOException {
+    void testRecursiveSaveAndLoad() throws IOException {
         File tempDir = Files.createTempDirectory("profiledb").toFile();
         File file = new File(tempDir, "new-profiledb.json");
         file.createNewFile();
@@ -103,18 +105,18 @@ public class ProfileDBTest {
         Collection<Experiment> loadedExperiments = profileDB.load(bis);
 
         // Compare the experiments.
-        Assert.assertEquals(1, loadedExperiments.size());
+        assertEquals(1, loadedExperiments.size());
         Experiment loadedExperiment = loadedExperiments.iterator().next();
-        Assert.assertEquals(experiment, loadedExperiment);
+        assertEquals(experiment, loadedExperiment);
 
         // Compare the measurements.
-        Assert.assertEquals(1, loadedExperiment.getMeasurements().size());
+        assertEquals(1, loadedExperiment.getMeasurements().size());
         final Measurement loadedMeasurement = loadedExperiment.getMeasurements().iterator().next();
-        Assert.assertEquals(topLevelMeasurement, loadedMeasurement);
+        assertEquals(topLevelMeasurement, loadedMeasurement);
     }
 
     @Test
-    public void testFileOperations() throws IOException {
+    void testFileOperations() throws IOException {
         File tempDir = Files.createTempDirectory("profiledb").toFile();
         File file = new File(tempDir, "profiledb.json");
         file.createNewFile();
@@ -141,12 +143,12 @@ public class ProfileDBTest {
         // Load and compare.
         final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.load());
         final List<Experiment> expectedExperiments = Arrays.asList(experiment1, experiment2, experiment3);
-        Assert.assertEquals(expectedExperiments.size(), loadedExperiments.size());
-        Assert.assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
+        assertEquals(expectedExperiments.size(), loadedExperiments.size());
+        assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
     }
 
     @Test
-    public void testAppendOnNonExistentFile() throws IOException {
+    void testAppendOnNonExistentFile() throws IOException {
 
         File tempDir = Files.createTempDirectory("profiledb").toFile();
         File file = new File(tempDir, "new-profiledb.json");
@@ -163,7 +165,7 @@ public class ProfileDBTest {
         experiment1.addMeasurement(new TestTimeMeasurement("exec-time", 1L));
 
         // Save the experiments.
-        Assert.assertTrue(!file.exists() || file.delete());
+        assertTrue(!file.exists() || file.delete());
         profileDB.append(experiment1);
 
         Files.lines(file.toPath()).forEach(System.out::println);
@@ -171,8 +173,8 @@ public class ProfileDBTest {
         // Load and compare.
         final Set<Experiment> loadedExperiments = new HashSet<>(profileDB.load());
         final List<Experiment> expectedExperiments = Collections.singletonList(experiment1);
-        Assert.assertEquals(expectedExperiments.size(), loadedExperiments.size());
-        Assert.assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
+        assertEquals(expectedExperiments.size(), loadedExperiments.size());
+        assertEquals(new HashSet<>(expectedExperiments), new HashSet<>(loadedExperiments));
     }
 
 }

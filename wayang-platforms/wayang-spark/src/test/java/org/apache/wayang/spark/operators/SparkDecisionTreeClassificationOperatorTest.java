@@ -25,12 +25,13 @@ import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.operators.ml.SparkDecisionTreeClassificationOperator;
 import org.apache.wayang.spark.operators.ml.SparkPredictOperator;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SparkDecisionTreeClassificationOperatorTest extends SparkOperatorTestBase {
 
@@ -73,13 +74,13 @@ public class SparkDecisionTreeClassificationOperatorTest extends SparkOperatorTe
     }
 
     @Test
-    public void testTraining() {
+    void testTraining() {
         final DecisionTreeClassificationModel model = getModel();
-        Assert.assertEquals(model.getDepth(), 2);
+        assertEquals(2, model.getDepth());
     }
 
     @Test
-    public void testInference() {
+    void testInference() {
         // Prepare test data.
         CollectionChannel.Instance input1 = this.createCollectionChannelInstance(Collections.singletonList(getModel()));
         RddChannel.Instance input2 = this.createRddChannelInstance(inferenceData);
@@ -96,9 +97,9 @@ public class SparkDecisionTreeClassificationOperatorTest extends SparkOperatorTe
 
         // Verify the outcome.
         final List<Integer> results = output.<Integer>provideRdd().collect();
-        Assert.assertEquals(3, results.size());
-        Assert.assertEquals(0, results.get(0).intValue());
-        Assert.assertEquals(1, results.get(1).intValue());
-        Assert.assertEquals(2, results.get(2).intValue());
+        assertEquals(3, results.size());
+        assertEquals(0, results.get(0).intValue());
+        assertEquals(1, results.get(1).intValue());
+        assertEquals(2, results.get(2).intValue());
     }
 }

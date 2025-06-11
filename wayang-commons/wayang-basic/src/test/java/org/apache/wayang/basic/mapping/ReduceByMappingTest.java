@@ -18,8 +18,7 @@
 
 package org.apache.wayang.basic.mapping;
 
-import org.junit.Assert;
-import org.junit.Test;
+
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.GroupByOperator;
@@ -36,14 +35,18 @@ import org.apache.wayang.core.plan.wayangplan.UnarySink;
 import org.apache.wayang.core.plan.wayangplan.UnarySource;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.types.DataUnitType;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 /**
  * Test suite for the {@link ReduceByMapping}.
  */
-public class ReduceByMappingTest {
+class ReduceByMappingTest {
 
     @Test
-    public void testMapping() {
+    void testMapping() {
         // Construct a plan: source -> groupBy -> reduce -> sink.
         UnarySource<Tuple2<String, Integer>> source = new TestSource<>(DataSetType.createDefault(Tuple2.class));
 
@@ -83,10 +86,10 @@ public class ReduceByMappingTest {
         // Check that now we have this plan: source -> reduceBy -> sink.
         final Operator finalSink = plan.getSinks().iterator().next();
         final Operator inputOperator = finalSink.getEffectiveOccupant(0).getOwner();
-        Assert.assertTrue(inputOperator instanceof ReduceByOperator);
+        assertInstanceOf(ReduceByOperator.class, inputOperator);
         ReduceByOperator reduceBy = (ReduceByOperator) inputOperator;
-        Assert.assertEquals(keyDescriptor, reduceBy.getKeyDescriptor());
-        Assert.assertEquals(reduceDescriptor, reduceBy.getReduceDescriptor());
-        Assert.assertEquals(source, reduceBy.getEffectiveOccupant(0).getOwner());
+        assertEquals(keyDescriptor, reduceBy.getKeyDescriptor());
+        assertEquals(reduceDescriptor, reduceBy.getReduceDescriptor());
+        assertEquals(source, reduceBy.getEffectiveOccupant(0).getOwner());
     }
 }

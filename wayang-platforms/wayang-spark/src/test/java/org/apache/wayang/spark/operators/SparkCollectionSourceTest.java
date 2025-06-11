@@ -18,23 +18,24 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for the {@link SparkCollectionSource}.
  */
-public class SparkCollectionSourceTest extends SparkOperatorTestBase {
+class SparkCollectionSourceTest extends SparkOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         Set<Integer> inputValues = new HashSet<>(Arrays.asList(1, 2, 3));
         SparkCollectionSource<Integer> collectionSource = new SparkCollectionSource<>(
                 inputValues,
@@ -49,6 +50,6 @@ public class SparkCollectionSourceTest extends SparkOperatorTestBase {
         this.evaluate(collectionSource, inputs, outputs);
 
         final Set<Integer> outputValues = new HashSet<>(output.<Integer>provideRdd().collect());
-        Assert.assertEquals(outputValues, inputValues);
+        assertEquals(outputValues, inputValues);
     }
 }

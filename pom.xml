@@ -125,7 +125,7 @@
         <jacoco.version>0.8.9</jacoco.version>
         <jodatime.version>2.10.6</jodatime.version>
         <jsonpath.version>2.4.0</jsonpath.version>
-        <junit5.version>5.10.2</junit5.version>
+        <junit5.version>5.12.2</junit5.version>
         <mockito.version>5.11.0</mockito.version>
         <mockk.version>1.10.0</mockk.version>
         <external.platforms.scope>provided</external.platforms.scope>

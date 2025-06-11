@@ -18,40 +18,41 @@
 
 package org.apache.wayang.apps.tpch.data;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suited for {@link LineItemTuple}.
  */
-public class LineItemTupleTest {
+class LineItemTupleTest {
 
     @Test
-    public void testParser() {
+    void testParser() {
         LineItemTuple.Parser parser = new LineItemTuple.Parser();
         final LineItemTuple tuple = parser.parse("\"3249925\";\"37271\";\"9775\";\"1\";\"9.00\";\"10874.43\";\"0.10\";" +
                 "\"0.04\";\"N\";\"O\";\"1998-04-19\";\"1998-06-17\";\"1998-04-21\";\"TAKE BACK RETURN         \";" +
                 "\"AIR       \";\"express instructions among the excuses nag\"");
 
-        Assert.assertEquals(3249925, tuple.L_ORDERKEY);
-        Assert.assertEquals(37271, tuple.L_PARTKEY);
-        Assert.assertEquals(9775, tuple.L_SUPPKEY);
-        Assert.assertEquals(1, tuple.L_LINENUMBER);
-        Assert.assertEquals(9.00, tuple.L_QUANTITY, 0);
-        Assert.assertEquals(10874.43, tuple.L_EXTENDEDPRICE, 0.001);
-        Assert.assertEquals(0.10, tuple.L_DISCOUNT, 0.001);
-        Assert.assertEquals(0.04, tuple.L_TAX, 0.001);
-        Assert.assertEquals('N', tuple.L_RETURNFLAG);
-        Assert.assertEquals('O', tuple.L_LINESTATUS);
-        Assert.assertEquals(this.toDateInteger(1998, 4, 19), tuple.L_SHIPDATE);
-        Assert.assertEquals(this.toDateInteger(1998, 6, 17), tuple.L_COMMITDATE);
-        Assert.assertEquals(this.toDateInteger(1998, 4, 21), tuple.L_RECEIPTDATE);
-        Assert.assertEquals("TAKE BACK RETURN         ", tuple.L_SHIPINSTRUCT);
-        Assert.assertEquals("AIR       ", tuple.L_SHIPMODE);
-        Assert.assertEquals("express instructions among the excuses nag", tuple.L_COMMENT);
+        assertEquals(3249925, tuple.L_ORDERKEY);
+        assertEquals(37271, tuple.L_PARTKEY);
+        assertEquals(9775, tuple.L_SUPPKEY);
+        assertEquals(1, tuple.L_LINENUMBER);
+        assertEquals(9.00, tuple.L_QUANTITY, 0);
+        assertEquals(10874.43, tuple.L_EXTENDEDPRICE, 0.001);
+        assertEquals(0.10, tuple.L_DISCOUNT, 0.001);
+        assertEquals(0.04, tuple.L_TAX, 0.001);
+        assertEquals('N', tuple.L_RETURNFLAG);
+        assertEquals('O', tuple.L_LINESTATUS);
+        assertEquals(this.toDateInteger(1998, 4, 19), tuple.L_SHIPDATE);
+        assertEquals(this.toDateInteger(1998, 6, 17), tuple.L_COMMITDATE);
+        assertEquals(this.toDateInteger(1998, 4, 21), tuple.L_RECEIPTDATE);
+        assertEquals("TAKE BACK RETURN         ", tuple.L_SHIPINSTRUCT);
+        assertEquals("AIR       ", tuple.L_SHIPMODE);
+        assertEquals("express instructions among the excuses nag", tuple.L_COMMENT);
     }
 
     private int toDateInteger(int year, int month, int date) {

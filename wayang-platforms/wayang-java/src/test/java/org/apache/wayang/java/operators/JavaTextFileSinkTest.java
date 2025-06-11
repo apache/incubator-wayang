@@ -18,10 +18,6 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.function.TransformationDescriptor;
@@ -32,6 +28,9 @@ import org.apache.wayang.core.util.fs.LocalFileSystem;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,14 +38,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -56,7 +54,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Test suite for {@link JavaTextFileSink}.
  */
-public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
+class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSinkTest.class);
 
@@ -67,20 +65,20 @@ public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
      * Therefore we ensure it's run in a pre-defined locale and we make sure it's
      * reset after the test.
      */
-    @Before
-    public void setupTest() {
+    @BeforeEach
+    void setupTest() {
         defaultLocale = Locale.getDefault();
         Locale.setDefault(Locale.US);
     }
 
-    @After
-    public void teardownTest() {
+    @AfterEach
+    void teardownTest() {
 
         Locale.setDefault(defaultLocale);
     }
 
     @Test
-    public void testWritingLocalFile() throws IOException, URISyntaxException {
+    void testWritingLocalFile() throws IOException, URISyntaxException {
         Configuration configuration = new Configuration();
 
         final File tempDir = LocalFileSystem.findTempDir();
@@ -105,7 +103,7 @@ public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
 
 
         final List<String> lines = Files.lines(Paths.get(new URI(targetUrl))).collect(Collectors.toList());
-        Assert.assertEquals(
+        assertEquals(
                 Arrays.asList("1.12", "-0.10", "3.00"),
                 lines
         );

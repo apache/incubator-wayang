@@ -24,7 +24,6 @@ import java.nio.file.{Files, Paths}
 import java.sql.{Connection, Statement}
 import java.util.function.Consumer
 
-import org.junit.{Assert, Test}
 import org.apache.wayang.basic.WayangBasics
 import org.apache.wayang.core.api.{Configuration, WayangContext}
 import org.apache.wayang.core.function.FunctionDescriptor.ExtendedSerializablePredicate
@@ -35,6 +34,8 @@ import org.apache.wayang.java.operators.JavaMapOperator
 import org.apache.wayang.spark.Spark
 import org.apache.wayang.sqlite3.Sqlite3
 import org.apache.wayang.sqlite3.operators.Sqlite3TableSource
+import org.junit.jupiter.api.Assertions._
+import org.junit.jupiter.api.Test
 
 /**
   * Tests the Wayang API.
@@ -57,7 +58,7 @@ class ApiTest {
 
     // Check the outcome.
     val expectedOutputValues = inputValues.map(_ + 2)
-    Assert.assertArrayEquals(expectedOutputValues, outputValues.toArray)
+    assertArrayEquals(expectedOutputValues, outputValues.toArray)
   }
 
   @Test
@@ -87,7 +88,7 @@ class ApiTest {
 
     // Check the outcome.
     val expectedOutputValues = inputValues.map(_ + 2)
-    Assert.assertArrayEquals(expectedOutputValues, outputValues.toArray)
+    assertArrayEquals(expectedOutputValues, outputValues.toArray)
   }
 
   @Test
@@ -113,7 +114,7 @@ class ApiTest {
 
     // Check the outcome.
     val expectedOutputValues = inputValues.map(_ + 2)
-    Assert.assertArrayEquals(expectedOutputValues, outputValues.toArray)
+    assertArrayEquals(expectedOutputValues, outputValues.toArray)
   }
 
   @Test
@@ -135,7 +136,7 @@ class ApiTest {
 
     val expectedWordCounts = Set(("big", 3), ("is", 2), ("data", 3))
 
-    Assert.assertEquals(expectedWordCounts, wordCounts)
+    assertEquals(expectedWordCounts, wordCounts)
   }
 
   @Test
@@ -157,7 +158,7 @@ class ApiTest {
 
     val expectedWordCounts = Set(("big", 3), ("is", 2), ("data", 3))
 
-    Assert.assertEquals(expectedWordCounts, wordCounts)
+    assertEquals(expectedWordCounts, wordCounts)
   }
 
   @Test
@@ -175,8 +176,8 @@ class ApiTest {
       .collect()
 
     // Check the result.
-    Assert.assertEquals(10, sample.size)
-    Assert.assertEquals(10, sample.toSet.size)
+    assertEquals(10, sample.size)
+    assertEquals(10, sample.toSet.size)
   }
 
   @Test
@@ -199,7 +200,7 @@ class ApiTest {
       .collect().toSet
 
     val expectedValues = Set(1, 2, 3, 6, 12, 24, 48, 96, 192)
-    Assert.assertEquals(expectedValues, values)
+    assertEquals(expectedValues, values)
   }
 
   @Test
@@ -222,7 +223,7 @@ class ApiTest {
 
     // initial: 1,2 -> 1st: 2,3 -> 2nd: 6,7 => 3rd: 42,43
     val expectedValues = Set(42, 43)
-    Assert.assertEquals(expectedValues, values)
+    assertEquals(expectedValues, values)
   }
 
   @Test
@@ -256,7 +257,7 @@ class ApiTest {
       .collect().toSet
 
     val expectedValues = Set("Hello", "World")
-    Assert.assertEquals(expectedValues, values)
+    assertEquals(expectedValues, values)
   }
 
   @Test
@@ -280,7 +281,7 @@ class ApiTest {
       .collect()
 
     val expectedValues = Set(5, 6)
-    Assert.assertEquals(expectedValues, result.toSet)
+    assertEquals(expectedValues, result.toSet)
   }
 
   @Test
@@ -304,7 +305,7 @@ class ApiTest {
       .collect()
 
     val expectedValues = Set(5)
-    Assert.assertEquals(expectedValues, result.toSet)
+    assertEquals(expectedValues, result.toSet)
   }
 
   @Test
@@ -324,7 +325,7 @@ class ApiTest {
       .collect()
 
     val expectedValues = Set(("Apple juice", 10), ("Tap water", 0), ("Orange juice", 10))
-    Assert.assertEquals(expectedValues, result.toSet)
+    assertEquals(expectedValues, result.toSet)
   }
 
   @Test
@@ -343,7 +344,7 @@ class ApiTest {
       .collect()
 
     val expectedValues = Set(("Apple juice", 10), ("Tap water", 0), ("Orange juice", 10))
-    Assert.assertEquals(expectedValues, result.toSet)
+    assertEquals(expectedValues, result.toSet)
   }
 
 
@@ -369,7 +370,7 @@ class ApiTest {
       (Set(("Cola", 5)), Set()),
       (Set(("Juice", 10)), Set(("Apple juice", "Juice"), ("Orange juice", "Juice")))
     )
-    Assert.assertEquals(expectedValues, actualValues)
+    assertEquals(expectedValues, actualValues)
   }
 
   @Test
@@ -388,7 +389,7 @@ class ApiTest {
       .collect()
 
     val expectedValues = Set(2, 3, 4, 5, 7, 8, 9)
-    Assert.assertEquals(expectedValues, result.toSet)
+    assertEquals(expectedValues, result.toSet)
   }
 
 
@@ -406,7 +407,7 @@ class ApiTest {
       .collect()
 
     val expectedValues = Array(1, 2, 3, 4, 5)
-    Assert.assertArrayEquals(expectedValues, result.toArray)
+    assertArrayEquals(expectedValues, result.toArray)
   }
 
 
@@ -430,9 +431,9 @@ class ApiTest {
 
     print(pageRanks)
     // Let's not check absolute numbers but only the relative ordering.
-    Assert.assertTrue(pageRanks(1) > pageRanks(0))
-    Assert.assertTrue(pageRanks(0) > pageRanks(2))
-    Assert.assertTrue(pageRanks(2) > pageRanks(3))
+    assertTrue(pageRanks(1) > pageRanks(0))
+    assertTrue(pageRanks(0) > pageRanks(2))
+    assertTrue(pageRanks(2) > pageRanks(3))
   }
 
   @Test
@@ -452,7 +453,7 @@ class ApiTest {
       .reduceByKey(_._1, { case ((kind1, count1), (kind2, count2)) => (kind1, count1 + count2) })
       .collect()
 
-    Assert.assertEquals(Set(("odd", 2), ("even", 5)), typeCounts.toSet)
+    assertEquals(Set(("odd", 2), ("even", 5)), typeCounts.toSet)
   }
 
   @Test
@@ -474,7 +475,7 @@ class ApiTest {
       .collect()
 
     val expectedValues = Set((42, 100))
-    Assert.assertEquals(expectedValues, result.toSet)
+    assertEquals(expectedValues, result.toSet)
   }
 
   @Test
@@ -497,7 +498,7 @@ class ApiTest {
     })
 
     val expectedLines = inputValues.map(v => f"${v % .2f}").toSet
-    Assert.assertEquals(expectedLines, lines)
+    assertEquals(expectedLines, lines)
   }
 
   @Test
@@ -535,7 +536,7 @@ class ApiTest {
       .toSet
 
     val expectedValues = Set("John", "Evelyn")
-    Assert.assertEquals(expectedValues, result)
+    assertEquals(expectedValues, result)
   }
 
   @Test
@@ -573,6 +574,6 @@ class ApiTest {
       .toSet
 
     val expectedValues = Set("John", "Evelyn")
-    Assert.assertEquals(expectedValues, result)
+    assertEquals(expectedValues, result)
   }
 }

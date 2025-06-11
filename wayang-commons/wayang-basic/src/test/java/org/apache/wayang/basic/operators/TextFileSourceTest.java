@@ -22,8 +22,6 @@ package org.apache.wayang.basic.operators;
 import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
@@ -31,7 +29,7 @@ import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimate;
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,18 +40,19 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Test suite for {@link TextFileSource}.
  */
-public class TextFileSourceTest {
+class TextFileSourceTest {
 
     private final Logger logger = LogManager.getLogger(this.getClass());
 
     @Test
-    public void testCardinalityEstimation() throws URISyntaxException, IOException {
+    void testCardinalityEstimation() throws URISyntaxException, IOException {
         Job job = mock(Job.class);
         DefaultOptimizationContext optimizationContext = mock(DefaultOptimizationContext.class);
         when(job.getOptimizationContext()).thenReturn(optimizationContext);
@@ -84,7 +83,7 @@ public class TextFileSourceTest {
         final Optional<CardinalityEstimator> cardinalityEstimator = textFileSource
                 .createCardinalityEstimator(0, optimizationContext.getConfiguration());
 
-        Assert.assertTrue(cardinalityEstimator.isPresent());
+        assertTrue(cardinalityEstimator.isPresent());
         final CardinalityEstimate estimate = cardinalityEstimator.get().estimate(optimizationContext);
 
         this.logger.info("Estimated between {} and {} lines in {} and counted {}.",
@@ -93,8 +92,8 @@ public class TextFileSourceTest {
                 testFile,
                 numLineFeeds);
 
-        Assert.assertTrue(estimate.getLowerEstimate() <= numLineFeeds);
-        Assert.assertTrue(estimate.getUpperEstimate() >= numLineFeeds);
+        assertTrue(estimate.getLowerEstimate() <= numLineFeeds);
+        assertTrue(estimate.getUpperEstimate() >= numLineFeeds);
     }
 
 }

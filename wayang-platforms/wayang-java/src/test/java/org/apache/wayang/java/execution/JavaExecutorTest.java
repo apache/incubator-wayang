@@ -18,8 +18,6 @@
 
 package org.apache.wayang.java.execution;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.function.ExecutionContext;
 import org.apache.wayang.core.function.FunctionDescriptor;
@@ -33,18 +31,21 @@ import org.apache.wayang.java.operators.JavaCollectionSource;
 import org.apache.wayang.java.operators.JavaDoWhileOperator;
 import org.apache.wayang.java.operators.JavaLocalCallbackSink;
 import org.apache.wayang.java.operators.JavaMapOperator;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for the {@link JavaExecutor}.
  */
-public class JavaExecutorTest {
+class JavaExecutorTest {
 
     @Test
-    public void testLazyExecutionResourceHandling() {
+    void testLazyExecutionResourceHandling() {
         // The JavaExecutor should not dispose resources that are consumed by lazily executed ExecutionOperators until
         // execution.
         JavaCollectionSource<Integer> source1 = new JavaCollectionSource<>(
@@ -125,7 +126,7 @@ public class JavaExecutorTest {
         final WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         wayangContext.execute(new WayangPlan(sink));
 
-        Assert.assertEquals(WayangArrays.asList(6, 7, 8), collector);
+        assertEquals(WayangArrays.asList(6, 7, 8), collector);
     }
 
 }

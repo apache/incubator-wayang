@@ -18,8 +18,6 @@
 
 package org.apache.wayang.jdbc.execution;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
@@ -38,20 +36,22 @@ import org.apache.wayang.jdbc.test.HsqldbFilterOperator;
 import org.apache.wayang.jdbc.test.HsqldbPlatform;
 import org.apache.wayang.jdbc.test.HsqldbProjectionOperator;
 import org.apache.wayang.jdbc.test.HsqldbTableSource;
+import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Test suite for {@link JdbcExecutor}.
  */
-public class JdbcExecutorTest {
+class JdbcExecutorTest {
 
     @Test
-    public void testExecuteWithPlainTableSource() throws SQLException {
+    void testExecuteWithPlainTableSource() throws SQLException {
         Configuration configuration = new Configuration();
         Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
@@ -80,14 +80,14 @@ public class JdbcExecutorTest {
 
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
-        Assert.assertEquals(
+        assertEquals(
                 "SELECT * FROM customer;",
                 sqlQueryChannelInstance.getSqlQuery()
         );
     }
 
     @Test
-    public void testExecuteWithFilter() throws SQLException {
+    void testExecuteWithFilter() throws SQLException {
         Configuration configuration = new Configuration();
         Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
@@ -129,14 +129,14 @@ public class JdbcExecutorTest {
 
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
-        Assert.assertEquals(
+        assertEquals(
                 "SELECT * FROM customer WHERE age >= 18;",
                 sqlQueryChannelInstance.getSqlQuery()
         );
     }
 
     @Test
-    public void testExecuteWithProjection() throws SQLException {
+    void testExecuteWithProjection() throws SQLException {
         Configuration configuration = new Configuration();
         Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
@@ -171,14 +171,14 @@ public class JdbcExecutorTest {
 
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
-        Assert.assertEquals(
+        assertEquals(
                 "SELECT name, age FROM customer;",
                 sqlQueryChannelInstance.getSqlQuery()
         );
     }
 
     @Test
-    public void testExecuteWithProjectionAndFilters() throws SQLException {
+    void testExecuteWithProjectionAndFilters() throws SQLException {
         Configuration configuration = new Configuration();
         Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
@@ -239,7 +239,7 @@ public class JdbcExecutorTest {
 
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
-        Assert.assertEquals(
+        assertEquals(
                 "SELECT name, age FROM customer WHERE age >= 18 AND name IS NOT NULL;",
                 sqlQueryChannelInstance.getSqlQuery()
         );

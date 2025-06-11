@@ -23,8 +23,8 @@ import org.apache.wayang.basic.operators.TextFileSink
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan.{LoopHeadOperator, Operator, WayangPlan}
 import org.apache.wayang.core.util.ReflectionUtils
-import org.junit.rules.TestName
-import org.junit.{Assert, Rule}
+import org.junit.jupiter.api.Assertions._
+import org.junit.jupiter.api.{BeforeEach, TestInfo}
 
 import java.io.{File, FileWriter}
 import java.nio.file.{Files, Paths}
@@ -34,18 +34,12 @@ import scala.jdk.CollectionConverters.asScalaBufferConverter
 
 trait SerializationTestBase {
 
-  //
-  // Some magic from https://stackoverflow.com/a/36152864/5589918 in order to get the current test name
-  //
-  var _testName: TestName = new TestName
+  var testName: String = _
 
-  @Rule
-  def testName: TestName = _testName
-
-  def testName_=(aTestName: TestName): Unit = {
-    _testName = aTestName
+  @BeforeEach
+  def setUp(info: TestInfo): Unit = {
+    testName = info.getTestMethod.orElseThrow().getName
   }
-
 
   def serializeDeserializeExecuteAssert(operator: Operator, wayangContext: WayangContext, expectedLines: List[String], log: Boolean = false): Unit = {
     var tempFileOut: Option[String] = None
@@ -70,12 +64,12 @@ trait SerializationTestBase {
   def serializeDeserializeExecute(operator: Operator, wayangContext: WayangContext, log: Boolean = false): String = {
     try {
       val serialized = SerializationUtils.serializeAsString(operator)
-      if (log) SerializationTestBase.log(serialized, testName.getMethodName + ".log.json")
+      if (log) SerializationTestBase.log(serialized, testName + ".log.json")
       val deserialized = SerializationUtils.deserializeFromString[Operator](serialized)
 
       // Create an output sink
       val outType = deserialized.getOutput(0).getType.getDataUnitType.getTypeClass
-      val tempFilenameOut = s"/tmp/${testName.getMethodName}.out"
+      val tempFilenameOut = s"/tmp/$testName.out"
       val sink = new TextFileSink(s"file://$tempFilenameOut", outType)
 
       // And attach it to the deserialized operator
@@ -106,11 +100,11 @@ object SerializationTestBase {
     val lines = Files.lines(Paths.get(outputFilename)).collect(Collectors.toList[String]).asScala
 
     // Assert number of lines
-    Assert.assertEquals("Number of lines in the file should match", expectedLines.size, lines.size)
+    assertEquals(expectedLines.size, lines.size, "Number of lines in the file should match")
 
     // Assert content of lines
     lines.zip(expectedLines).foreach { case (actual, expected) =>
-      Assert.assertEquals("Line content should match", expected, actual)
+      assertEquals(expected, actual, "Line content should match")
     }
   }
 
@@ -120,7 +114,7 @@ object SerializationTestBase {
     val lines = Files.lines(Paths.get(outputFilename)).collect(Collectors.toList[String]).asScala
 
     // Assert number of lines
-    Assert.assertEquals("Number of lines in the file should match", expectedNumberOfLines, lines.size)
+    assertEquals(expectedNumberOfLines, lines.size, "Number of lines in the file should match")
   }
 
 

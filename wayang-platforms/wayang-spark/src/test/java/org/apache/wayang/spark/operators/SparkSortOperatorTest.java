@@ -18,23 +18,24 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for {@link SparkSortOperator}.
  */
-public class SparkSortOperatorTest extends SparkOperatorTestBase {
+class SparkSortOperatorTest extends SparkOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(6, 0, 1, 1, 5, 2));
         RddChannel.Instance output = this.createRddChannelInstance();
@@ -56,8 +57,8 @@ public class SparkSortOperatorTest extends SparkOperatorTestBase {
 
         // Verify the outcome.
         final List<Integer> result = output.<Integer>provideRdd().collect();
-        Assert.assertEquals(6, result.size());
-        Assert.assertEquals(Arrays.asList(0, 1, 1, 2, 5, 6), result);
+        assertEquals(6, result.size());
+        assertEquals(Arrays.asList(0, 1, 1, 2, 5, 6), result);
 
     }
 
