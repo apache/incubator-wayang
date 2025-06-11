@@ -14,35 +14,29 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pywy.basic.model.ops import Op
 
+import unittest
+from pywy.dataquanta import WayangContext
+from pywy.platforms.java import JavaPlugin
+from pywy.platforms.spark import SparkPlugin
 
-class Model:
-    pass
+class TestTrainLinearSVC(unittest.TestCase):
 
+    def test_train_and_predict(self):
+        ctx = WayangContext().register({JavaPlugin, SparkPlugin})
 
-class DLModel(Model):
-    def __init__(self, out: Op):
-        self.out = out
+        features = ctx.load_collection([[0.0, 1.0], [1.0, 0.0], [1.0, 1.0], [0.0, 0.0]])
+        labels = ctx.load_collection([1.0, 1.0, 0.0, 0.0])
 
-    def get_out(self):
-        return self.out
+        model = features.train_linear_svc(labels, max_iter=10, reg_param=0.1)
+        predictions = model.predict(features)
 
-class LogisticRegression(Op):
-    def __init__(self, name=None):
-        super().__init__(Op.DType.FLOAT32, name)
+        result = predictions.collect()
+        print("Predictions:", result)
 
+        self.assertEqual(len(result), 4)
+        for pred in result:
+            self.assertIn(pred, [0.0, 1.0])
 
-class DecisionTreeRegression(Op):
-    def __init__(self, max_depth: int = 5, min_instances: int = 2, name=None):
-        super().__init__(Op.DType.FLOAT32, name)
-        self.max_depth = max_depth
-        self.min_instances = min_instances
-
-
-class LinearSVC(Op):
-    def __init__(self, max_iter: int = 10, reg_param: float = 0.1, name=None):
-        super().__init__(Op.DType.FLOAT32, name)
-        self.max_iter = max_iter
-        self.reg_param = reg_param
-
+if __name__ == "__main__":
+    unittest.main()

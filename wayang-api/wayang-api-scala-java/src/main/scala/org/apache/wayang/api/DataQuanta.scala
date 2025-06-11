@@ -140,6 +140,27 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     operator
   }
 
+  /**
+   * Feed this instance into a [[LinearSVCOperator]].
+   * Trains a linear support vector classification (SVM) model using feature vectors and label values.
+   *
+   * @param labels    DataQuanta containing the target binary labels (0.0 or 1.0)
+   * @param maxIter   the maximum number of iterations to optimize the linear SVM
+   * @param regParam  the regularization parameter (L2 penalty term)
+   * @return a new [[DataQuanta]] instance containing the trained [[SVMModel]]
+   */
+  def trainLinearSVC(
+                      labels: DataQuanta[java.lang.Double],
+                      maxIter: Int,
+                      regParam: Double
+                    ): DataQuanta[org.apache.wayang.basic.model.SVMModel] = {
+    val operator = new LinearSVCOperator(maxIter, regParam)
+    this.connectTo(operator, 0)
+    labels.connectTo(operator, 1)
+    operator
+  }
+
+
 
 
 

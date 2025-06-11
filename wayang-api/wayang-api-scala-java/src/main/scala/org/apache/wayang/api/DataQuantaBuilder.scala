@@ -28,7 +28,7 @@ import org.apache.wayang.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaB
 import org.apache.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.apache.wayang.basic.data.{Record, Tuple2 => RT2}
 import org.apache.wayang.basic.model.{DLModel, Model, LogisticRegressionModel,DecisionTreeRegressionModel}
-import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator}
+import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator, LinearSVCOperator}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
@@ -327,6 +327,29 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
       this,
       that
     )
+
+  /**
+   * Feed the built [[DataQuanta]] of this and the given instance into a [[LinearSVCOperator]].
+   * This operator trains a linear support vector classification (SVM) model using input features and binary labels.
+   *
+   * @param that      the [[DataQuantaBuilder]] containing the label values
+   * @param maxIter   the maximum number of optimization iterations
+   * @param regParam  the regularization strength for the SVM model
+   * @return a [[DataQuantaBuilder]] containing the trained [[SVMModel]]
+   */
+  def trainLinearSVC(
+                      that: DataQuantaBuilder[_, java.lang.Double],
+                      maxIter: Int,
+                      regParam: Double
+                    ): DataQuantaBuilder[_, org.apache.wayang.basic.model.SVMModel] =
+    new CustomOperatorDataQuantaBuilder[org.apache.wayang.basic.model.SVMModel](
+      new LinearSVCOperator(maxIter, regParam),
+      0,
+      new DataQuantaBuilderCache,
+      this,
+      that
+    )
+
 
 
 
