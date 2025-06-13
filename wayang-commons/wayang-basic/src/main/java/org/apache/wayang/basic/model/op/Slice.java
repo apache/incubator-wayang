@@ -16,40 +16,34 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.basic.model;
+package org.apache.wayang.basic.model.op;
 
-import org.apache.wayang.basic.model.op.Op;
+public class Slice extends Op {
+    private final int[][] range; // int[dim][2]
 
-public class DLModel implements Model {
-    protected final Op out;
-
-    public DLModel(Op out) {
-        this.out = out;
+    public Slice(int[][] range) {
+        this(range, null, DType.FLOAT32);
     }
 
-    public Op getOut() {
-        return out;
+    public Slice(int[][] range, DType dType) {
+        this(range, null, dType);
     }
 
-    public static class Builder {
-        private Op out;
+    public Slice(int[][] range, String name) {
+        this(range, name, DType.FLOAT32);
+    }
 
-        public DLModel build() {
-            return new DLModel(out);
-        }
+    public Slice(int[][] range, String name, DType dType) {
+        super(name, dType);
+        this.range = range;
+    }
 
-        public Builder layer(Op op) {
-            if (op == null) {
-                return this;
-            }
+    public int[][] getRange() {
+        return range;
+    }
 
-            if (out == null) {
-                out = op;
-            } else {
-                out = op.with(out);
-            }
-
-            return this;
-        }
+    @Override
+    public int inputsRequired() {
+        return 1;
     }
 }

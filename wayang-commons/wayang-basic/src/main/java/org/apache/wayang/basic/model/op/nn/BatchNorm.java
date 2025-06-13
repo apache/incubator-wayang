@@ -16,40 +16,40 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.basic.model;
+package org.apache.wayang.basic.model.op.nn;
 
 import org.apache.wayang.basic.model.op.Op;
 
-public class DLModel implements Model {
-    protected final Op out;
+public abstract class BatchNorm extends Op {
+    protected final int numFeatures;
+    protected final float epsilon;
+    protected final float momentum;
 
-    public DLModel(Op out) {
-        this.out = out;
+    public BatchNorm(int numFeatures, String name, DType dType) {
+        this(numFeatures, 1e-5f, 0.1f, name, dType);
     }
 
-    public Op getOut() {
-        return out;
+    public BatchNorm(int numFeatures, float epsilon, float momentum, String name, DType dType) {
+        super(name, dType);
+        this.numFeatures = numFeatures;
+        this.epsilon = epsilon;
+        this.momentum = momentum;
     }
 
-    public static class Builder {
-        private Op out;
+    public int getNumFeatures() {
+        return numFeatures;
+    }
 
-        public DLModel build() {
-            return new DLModel(out);
-        }
+    public float getEpsilon() {
+        return epsilon;
+    }
 
-        public Builder layer(Op op) {
-            if (op == null) {
-                return this;
-            }
+    public float getMomentum() {
+        return momentum;
+    }
 
-            if (out == null) {
-                out = op;
-            } else {
-                out = op.with(out);
-            }
-
-            return this;
-        }
+    @Override
+    public int inputsRequired() {
+        return 1;
     }
 }

@@ -16,40 +16,34 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.basic.model;
+package org.apache.wayang.basic.model.op;
 
-import org.apache.wayang.basic.model.op.Op;
+public class Transpose extends Op {
+    private final int[] perm;
 
-public class DLModel implements Model {
-    protected final Op out;
-
-    public DLModel(Op out) {
-        this.out = out;
+    public Transpose(int[] perm) {
+        this(perm, null, DType.FLOAT32);
     }
 
-    public Op getOut() {
-        return out;
+    public Transpose(int[] perm, DType dType) {
+        this(perm, null, dType);
     }
 
-    public static class Builder {
-        private Op out;
+    public Transpose(int[] perm, String name) {
+        this(perm, name, DType.FLOAT32);
+    }
 
-        public DLModel build() {
-            return new DLModel(out);
-        }
+    public Transpose(int[] perm, String name, DType dType) {
+        super(name, dType);
+        this.perm = perm;
+    }
 
-        public Builder layer(Op op) {
-            if (op == null) {
-                return this;
-            }
+    public int[] getPerm() {
+        return perm;
+    }
 
-            if (out == null) {
-                out = op;
-            } else {
-                out = op.with(out);
-            }
-
-            return this;
-        }
+    @Override
+    public int inputsRequired() {
+        return 1;
     }
 }
