@@ -23,6 +23,7 @@ import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.*;
 import org.apache.wayang.basic.model.LogisticRegressionModel;
 import org.apache.wayang.basic.model.DecisionTreeRegressionModel;
+import org.apache.wayang.basic.model.SVMModel;
 import org.apache.wayang.api.DataQuanta;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.core.api.Configuration;
@@ -571,6 +572,38 @@ class SparkIntegrationIT {
         for (double[] features : laggedFeatures) {
             double prediction = model.predict(features);
             assertTrue(prediction >= 1.0 && prediction <= 5.0);
+        }
+    }
+
+    @Test
+    public void testLinearSVCWithAPI() {
+        WayangContext context = new WayangContext()
+                .with(Spark.basicPlugin())
+                .with(Spark.mlPlugin());
+
+        JavaPlanBuilder planBuilder = new JavaPlanBuilder(context)
+                .withJobName("Linear SVC Test")
+                .withUdfJarOf(this.getClass());
+
+        List<double[]> features = Arrays.asList(
+                new double[]{0.0, 1.0},
+                new double[]{1.0, 0.0},
+                new double[]{1.0, 1.0},
+                new double[]{0.0, 0.0}
+        );
+        List<Double> labels = Arrays.asList(1.0, 1.0, 0.0, 0.0);
+
+        Collection<SVMModel> models = planBuilder
+                .loadCollection(features)
+                .trainLinearSVC(planBuilder.loadCollection(labels), 10, 0.1)
+                .collect();
+
+        assertEquals(1, models.size());
+        SVMModel model = models.iterator().next();
+
+        for (double[] f : features) {
+            double pred = model.predict(f);
+            assertTrue(pred == 0.0 || pred == 1.0);
         }
     }
 
