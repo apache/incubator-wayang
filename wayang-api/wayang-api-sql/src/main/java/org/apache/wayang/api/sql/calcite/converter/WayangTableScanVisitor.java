@@ -30,7 +30,6 @@ import org.apache.wayang.postgres.operators.PostgresTableSource;
 import org.apache.wayang.basic.data.Record;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 //TODO: create tablesource with column types
@@ -42,7 +41,6 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
 
     @Override
     Operator visit(final WayangTableScan wayangRelNode) {
-
         final String tableName = wayangRelNode.getTableName();
         final List<String> columnNames = wayangRelNode.getColumnNames();
 
@@ -50,17 +48,19 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
         final String tableSource = wayangRelNode.getTable().getQualifiedName().get(0);
 
         if (tableSource.equals("postgres")) {
-            return new PostgresTableSource(tableName, columnNames.toArray(new String[]{}));
+            return new PostgresTableSource(tableName, columnNames.toArray(String[]::new));
         }
 
         if (tableSource.equals("fs")) {
-            ModelParser modelParser;
+            final ModelParser modelParser;
             try {
                 modelParser = this.wayangRelConverter.getConfiguration() == null
                         ? new ModelParser()
                         : new ModelParser(this.wayangRelConverter.getConfiguration());
             } catch (final Exception e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
+                throw new IllegalArgumentException(
+                        "Could not initialize calcite model parser from current Wayang configuration");
             }
 
             final List<RelDataType> fieldTypes = wayangRelNode.getRowType().getFieldList().stream()
@@ -69,15 +69,9 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
 
             final String url = String.format("file:/%s/%s.csv", modelParser.getFsPath(), wayangRelNode.getTableName());
 
-            final String separator = modelParser.getSeparator();
+            final char separator = modelParser.getSchemaDelimiter(tableSource);
 
-            if (Objects.equals(separator, "")) {
-                return new JavaCSVTableSource<>(url,
-                        DataSetType.createDefault(Record.class), fieldTypes);
-            } else {
-                return new JavaCSVTableSource<>(url,
-                        DataSetType.createDefault(Record.class), fieldTypes, separator.charAt(0));
-            }
+            return new JavaCSVTableSource<>(url, DataSetType.createDefault(Record.class), fieldTypes, separator);
         } else
             throw new RuntimeException("Source not supported");
     }

@@ -49,10 +49,11 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -131,7 +132,8 @@ class SqlToWayangRelTest {
         final WayangPlan wayangPlan = t.field1;
 
         // except reduce by
-        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> node.addTargetPlatform(Java.platform()));
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes()
+                .forEach(node -> node.addTargetPlatform(Java.platform()));
 
         sqlContext.execute(wayangPlan);
 
@@ -148,7 +150,8 @@ class SqlToWayangRelTest {
         final WayangPlan wayangPlan = t.field1;
 
         // except reduce by
-        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> node.addTargetPlatform(Java.platform()));
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes()
+                .forEach(node -> node.addTargetPlatform(Java.platform()));
 
         sqlContext.execute(wayangPlan);
 
@@ -167,7 +170,8 @@ class SqlToWayangRelTest {
         final WayangPlan wayangPlan = t.field1;
 
         // except reduce by
-        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> node.addTargetPlatform(Java.platform()));
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes()
+                .forEach(node -> node.addTargetPlatform(Java.platform()));
 
         sqlContext.execute(wayangPlan);
 
@@ -185,7 +189,8 @@ class SqlToWayangRelTest {
         final WayangPlan wayangPlan = t.field1;
 
         // except reduce by
-        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> node.addTargetPlatform(Java.platform()));
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes()
+                .forEach(node -> node.addTargetPlatform(Java.platform()));
 
         sqlContext.execute(wayangPlan);
 
@@ -265,7 +270,8 @@ class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
-        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> node.addTargetPlatform(Java.platform()));
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes()
+                .forEach(node -> node.addTargetPlatform(Java.platform()));
 
         sqlContext.execute(wayangPlan);
 
@@ -456,7 +462,8 @@ class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
-        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> node.addTargetPlatform(Spark.platform()));
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes()
+                .forEach(node -> node.addTargetPlatform(Spark.platform()));
 
         sqlContext.execute(wayangPlan);
 
@@ -472,7 +479,8 @@ class SqlToWayangRelTest {
         final WayangPlan wayangPlan = t.field1;
 
         // except reduce by
-        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> node.addTargetPlatform(Spark.platform()));
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes()
+                .forEach(node -> node.addTargetPlatform(Spark.platform()));
 
         sqlContext.execute(wayangPlan);
 
@@ -493,7 +501,8 @@ class SqlToWayangRelTest {
         final Collection<Record> result = t.field0;
         final WayangPlan wayangPlan = t.field1;
 
-        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes().forEach(node -> node.addTargetPlatform(Spark.platform()));
+        PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes()
+                .forEach(node -> node.addTargetPlatform(Spark.platform()));
 
         sqlContext.execute(wayangPlan);
 
@@ -543,7 +552,7 @@ class SqlToWayangRelTest {
         final ProjectMapFuncImpl deserializedImpl = (ProjectMapFuncImpl) inStream.readObject();
         inStream.close();
 
-        final Record testRecord = new Record(1,2,3);
+        final Record testRecord = new Record(1, 2, 3);
 
         assertEquals(impl.apply(testRecord), deserializedImpl.apply(testRecord));
     }
@@ -601,8 +610,8 @@ class SqlToWayangRelTest {
         assertEquals("AA", result.stream().findAny().orElseThrow().getString(0));
     }
 
-    private SqlContext createSqlContext(final String tableResourceName)
-            throws IOException, ParseException, SQLException {
+    @Test
+    void exampleCustomDelimiter() throws Exception {
         final String calciteModel = "{\r\n" + //
                 "    \"calcite\": {\r\n" + //
                 "      \"version\": \"1.0\",\r\n" + //
@@ -613,24 +622,80 @@ class SqlToWayangRelTest {
                 "          \"type\": \"custom\",\r\n" + //
                 "          \"factory\": \"org.apache.calcite.adapter.file.FileSchemaFactory\",\r\n" + //
                 "          \"operand\": {\r\n" + //
-                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath()
-                + "\"\r\n" + //
+                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath() + "\",\r\n" + //
+                "            \"delimiter\": \"|\"" +
                 "          }\r\n" + //
                 "        }\r\n" + //
                 "      ]\r\n" + //
-                "    },\r\n" + //
-                "    \"separator\": \";\"\r\n" + //
-                "  }\r\n" + //
-                "  \r\n" + //
-                "  \r\n";
+                "    }\r\n" + //
+                "  }";
 
-        final JSONObject calciteModelJSON = (JSONObject) new JSONParser().parse(calciteModel);
+        final JsonNode calciteModelJSON = new ObjectMapper().readTree(calciteModel);
+
         final Configuration configuration = new ModelParser(new Configuration(), calciteModelJSON)
                 .setProperties();
-        assertNotNull(configuration,"Could not get configuration with calcite model: " + calciteModel);
+        assertNotNull(configuration, "Could not get configuration with calcite model: " + calciteModel);
+
+        final String tableResourceName = "/data/exampleDelimiter.csv";
 
         final String dataPath = this.getClass().getResource(tableResourceName).getPath();
-        assertTrue(dataPath != null && !dataPath.isEmpty(), "Could not get table resource from path: " + tableResourceName);
+        assertTrue(dataPath != null && !dataPath.isEmpty(),
+                "Could not get table resource from path: " + tableResourceName);
+
+        configuration.setProperty("wayang.fs.table.url", dataPath);
+
+        configuration.setProperty(
+                "wayang.ml.executions.file",
+                "mle" + ".txt");
+
+        configuration.setProperty(
+                "wayang.ml.optimizations.file",
+                "mlo" + ".txt");
+
+        configuration.setProperty("wayang.ml.experience.enabled", "false");
+
+        final SqlContext sqlContext = new SqlContext(configuration);
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT count(*) FROM fs.exampleDelimiter" //
+        );
+
+        final Collection<Record> result = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+        sqlContext.execute(wayangPlan);
+
+        assertEquals(result.size(), 1);
+        assertEquals(result.stream().findFirst().get().getInt(0), 3);
+    }
+
+    private SqlContext createSqlContext(final String tableResourceName)
+            throws IOException, ParseException, SQLException {
+        final String calciteModel = "{\r\n" +
+                "    \"calcite\": {\r\n" +
+                "      \"version\": \"1.0\",\r\n" +
+                "      \"defaultSchema\": \"wayang\",\r\n" +
+                "      \"schemas\": [\r\n" +
+                "        {\r\n" +
+                "          \"name\": \"fs\",\r\n" +
+                "          \"type\": \"custom\",\r\n" +
+                "          \"factory\": \"org.apache.calcite.adapter.file.FileSchemaFactory\",\r\n" +
+                "          \"operand\": {\r\n" +
+                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath() + "\"\r\n" +
+                "          }\r\n" +
+                "        }\r\n" +
+                "      ]\r\n" +
+                "    }\r\n" +
+                "  }";
+
+        final JsonNode calciteModelJSON = new ObjectMapper().readTree(calciteModel);
+
+        final Configuration configuration = new ModelParser(new Configuration(), calciteModelJSON)
+                .setProperties();
+        assertNotNull(configuration, "Could not get configuration with calcite model: " + calciteModel);
+
+        final String dataPath = this.getClass().getResource(tableResourceName).getPath();
+        assertTrue(dataPath != null && !dataPath.isEmpty(),
+                "Could not get table resource from path: " + tableResourceName);
 
         configuration.setProperty("wayang.fs.table.url", dataPath);
 
