@@ -665,7 +665,7 @@ class SqlToWayangRelTest {
         sqlContext.execute(wayangPlan);
 
         assertEquals(result.size(), 1);
-        assertEquals(result.stream().findFirst().get(), 3);
+        assertEquals(result.stream().findFirst().get().getInt(0), 3);
     }
 
     private SqlContext createSqlContext(final String tableResourceName)
