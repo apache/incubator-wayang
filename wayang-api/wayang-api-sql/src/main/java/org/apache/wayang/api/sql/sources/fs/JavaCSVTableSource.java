@@ -18,7 +18,9 @@
 package org.apache.wayang.api.sql.sources.fs;
 
 import org.apache.calcite.rel.type.RelDataType;
+
 import org.apache.commons.io.IOUtils;
+
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -41,54 +43,62 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecutionOperator {
 
-
     private final String sourcePath;
 
     private final List<RelDataType> fieldTypes;
-    private char separator = ';';   // Default separator
+    private final char separator; // Default separator
 
     // TODO: incorporate fields later for projectable table scans
     // private final ImmutableIntList fields;
 
-    public JavaCSVTableSource(String sourcePath, DataSetType type, List<RelDataType> fieldTypes) {
+    /**
+     * Table source with default seperator ';' <p>
+     * See {@link #JavaCSVTableSource(String, DataSetType, List, char)} for custom seperator
+     * @param sourcePath
+     * @param type
+     * @param fieldTypes
+     */
+    public JavaCSVTableSource(final String sourcePath, final DataSetType<T> type, final List<RelDataType> fieldTypes) {
         super(type);
         this.sourcePath = sourcePath;
         this.fieldTypes = fieldTypes;
+        this.separator = ';'; // Default seperator
     }
 
     /**
-     * Constructor with separator
+     * Constructor with custom separator
+     * 
      * @param sourcePath
      * @param type
      * @param fieldTypes
      * @param separator
      */
-    public JavaCSVTableSource(String sourcePath, DataSetType type, List<RelDataType> fieldTypes, char separator) {
+    public JavaCSVTableSource(final String sourcePath, final DataSetType<T> type, final List<RelDataType> fieldTypes,
+            final char separator) {
         super(type);
         this.sourcePath = sourcePath;
         this.fieldTypes = fieldTypes;
         this.separator = separator;
     }
 
-    /*public JavaCSVTableSource(DataSetType<T> type) {
-        this(null, type);
-    }*/
-
     @Override
     public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
-            ChannelInstance[] inputs,
-            ChannelInstance[] outputs,
-            JavaExecutor javaExecutor,
-            OptimizationContext.OperatorContext operatorContext) {
+            final ChannelInstance[] inputs,
+            final ChannelInstance[] outputs,
+            final JavaExecutor javaExecutor,
+            final OptimizationContext.OperatorContext operatorContext) {
         assert outputs.length == this.getNumOutputs();
-
+        
         final String path;
         if (this.sourcePath == null) {
             final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
@@ -97,55 +107,55 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
             assert inputs.length == 0;
             path = this.sourcePath;
         }
+
         final String actualInputPath = FileSystems.findActualSingleInputPath(path);
-        Stream<T> stream = this.createStream(actualInputPath);
+        final Stream<Record> stream = this.createStream(actualInputPath);
         ((StreamChannel.Instance) outputs[0]).accept(stream);
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
-    private Stream<T> createStream(String actualInputPath) {
-        Function<String, T> parser = this::parseLine;
-        return streamLines(actualInputPath).map(parser);
+    private Stream<Record> createStream(final String actualInputPath) {
+        return streamLines(actualInputPath).map(this::parseLine);
     }
 
-    private T parseLine(String s) {
-        Class typeClass = this.getType().getDataUnitType().getTypeClass();
-        assert typeClass == Record.class;
-        try {
-            String[] tokens = CsvRowConverter.parseLine(s, this.separator);
+    private Record parseLine(final String s) {
+        assert this.getType().getDataUnitType().getTypeClass() == Record.class;
 
-            if (tokens.length != fieldTypes.size()) {
-                throw new IllegalStateException(String.format("Error while parsing CSV file %s at line %s", sourcePath, s));
-            }
+        try {
+            final String[] tokens = CsvRowConverter.parseLine(s, this.separator);
+            if (tokens.length != fieldTypes.size())
+                throw new IllegalStateException(
+                        String.format("Error while parsing CSV file %s at line %s, using separator %s", sourcePath, s, separator));
+            // now tokens.length == fieldtypes.size
+
             final Object[] objects = new Object[tokens.length];
+
             for (int i = 0; i < tokens.length; i++) {
                 objects[i] = CsvRowConverter.convert(fieldTypes.get(i), tokens[i]);
             }
-            return (T) new Record(objects);
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
+
+            return new Record(objects);
+        } catch (final IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException(String.format("Error while parsing CSV file %s at line %s", sourcePath, s));
         }
-        throw new IllegalStateException(String.format("Error while parsing CSV file %s at line %s", sourcePath, s));
     }
 
-
-
-
-
     @Override
-    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+    public List<ChannelDescriptor> getSupportedInputChannels(final int index) {
         return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
     @Override
-    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+    public List<ChannelDescriptor> getSupportedOutputChannels(final int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
     /**
-     * Copied from {@link FileUtils} as a quick work around to read CSV file after skipping
+     * Copied from {@link FileUtils} as a quick work around to read CSV file after
+     * skipping
      * header row.
      *
      * Creates a {@link Stream} of a lines of the file.
@@ -153,24 +163,25 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
      * @param path of the file
      * @return the {@link Stream}
      */
-    private static Stream<String> streamLines(String path) {
+    private static Stream<String> streamLines(final String path) {
         final FileSystem fileSystem = FileSystems.getFileSystem(path).orElseThrow(
-                () -> new IllegalStateException(String.format("No file system found for %s", path))
-        );
+                () -> new IllegalStateException(String.format("No file system found for %s", path)));
         try {
-            Iterator<String> lineIterator = createLineIterator(fileSystem, path);
+            final Iterator<String> lineIterator = createLineIterator(fileSystem, path);
             lineIterator.next(); // skip header row
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(lineIterator, 0), false);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new WayangException(String.format("%s failed to read %s.", FileUtils.class, path), e);
         }
 
     }
 
     /**
-     * Creates an {@link Iterator} over the lines of a given {@code path} (that resides in the given {@code fileSystem}).
+     * Creates an {@link Iterator} over the lines of a given {@code path} (that
+     * resides in the given {@code fileSystem}).
      */
-    private static Iterator<String> createLineIterator(FileSystem fileSystem, String path) throws IOException {
+    private static Iterator<String> createLineIterator(final FileSystem fileSystem, final String path)
+            throws IOException {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(fileSystem.open(path), "UTF-8"));
         return new Iterator<String>() {
 
@@ -183,7 +194,7 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
             private void advance() {
                 try {
                     this.next = reader.readLine();
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     this.next = null;
                     throw new UncheckedIOException(e);
                 } finally {
@@ -206,11 +217,5 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
                 return returnValue;
             }
         };
-
     }
-
-
-
-
-
 }
