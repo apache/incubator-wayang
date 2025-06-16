@@ -29,13 +29,16 @@ import java.sql.SQLException;
 
 public class SchemaUtils {
     public static CalciteSchema getSchema(Configuration configuration) throws SQLException {
-        String calciteModel = configuration.getStringProperty("wayang.calcite.model");
+        final String calciteModel = configuration.getStringProperty("wayang.calcite.model");
         final Connection connection = DriverManager.getConnection("jdbc:calcite:model=inline: "+calciteModel);
+
         return getCalciteSchema(connection);
     }
+
     public static CalciteSchema getCalciteSchema(Connection connection) throws SQLException {
-        CalciteConnection calciteConnection = connection.unwrap(CalciteConnection.class);
+        final CalciteConnection calciteConnection = connection.unwrap(CalciteConnection.class);
         final SchemaPlus schemaPlus = calciteConnection.getRootSchema();
+
         return CalciteSchema.from(schemaPlus);
     }
 }
