@@ -23,6 +23,7 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.tools.RuleSet;
@@ -150,6 +151,8 @@ public class SqlContext extends WayangContext {
         PrintUtils.print("After parsing sql query", relNode);
 
         final RuleSet rules = RuleSets.ofList(
+                CoreRules.FILTER_INTO_JOIN,
+                CoreRules.JOIN_ASSOCIATE,
                 WayangRules.WAYANG_TABLESCAN_RULE,
                 WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
                 WayangRules.WAYANG_PROJECT_RULE,
