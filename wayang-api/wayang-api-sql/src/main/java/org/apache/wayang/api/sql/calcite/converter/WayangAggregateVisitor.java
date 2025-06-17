@@ -20,9 +20,7 @@ package org.apache.wayang.api.sql.calcite.converter;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import org.apache.calcite.rel.core.Aggregate;
 import org.apache.calcite.rel.core.AggregateCall;
 
 import org.apache.wayang.api.sql.calcite.converter.functions.AggregateAddCols;
@@ -30,6 +28,7 @@ import org.apache.wayang.api.sql.calcite.converter.functions.AggregateFunction;
 import org.apache.wayang.api.sql.calcite.converter.functions.AggregateKeyExtractor;
 import org.apache.wayang.api.sql.calcite.converter.functions.AggregateGetResult;
 import org.apache.wayang.api.sql.calcite.rel.WayangAggregate;
+
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
 import org.apache.wayang.basic.operators.MapOperator;
@@ -49,7 +48,7 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
     Operator visit(final WayangAggregate wayangRelNode) {
         final Operator childOp = wayangRelConverter.convert(wayangRelNode.getInput(0));
 
-        final List<AggregateCall> aggregateCalls = ((Aggregate) wayangRelNode).getAggCallList();
+        final List<AggregateCall> aggregateCalls = wayangRelNode.getAggCallList();
         final HashSet<Integer> groupingFields = new HashSet<>(wayangRelNode.getGroupSet().asSet());
 
         final MapOperator<Record, Record> mapOperator = new MapOperator<>(
@@ -76,6 +75,5 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
                 Record.class);
         aggregateOperator.connectTo(0, mapOperator2, 0);
         return mapOperator2;
-
     }
 }
