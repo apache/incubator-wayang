@@ -21,7 +21,6 @@ package org.apache.wayang.api.sql.calcite.converter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -50,7 +49,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         final Operator childOpLeft = wayangRelConverter.convert(wayangRelNode.getInput(0));
         final Operator childOpRight = wayangRelConverter.convert(wayangRelNode.getInput(1));
 
-        final RexNode condition = ((Join) wayangRelNode).getCondition();
+        final RexNode condition = wayangRelNode.getCondition();
         final RexCall call = (RexCall) condition;
 
         final List<Integer> keys = call.getOperands().stream()
@@ -67,9 +66,9 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         // offset of the index in the right child
         final int offset = wayangRelNode.getInput(0).getRowType().getFieldCount();
 
-        final int leftKeyIndex = keys.get(0) < keys.get(1) ? keys.get(0) : keys.get(0) - offset;
-        final int rightKeyIndex = keys.get(0) < keys.get(1) ? keys.get(1) - offset : keys.get(1);
-
+        final int leftKeyIndex  = keys.get(0) < keys.get(1) ? keys.get(0)          : keys.get(1);
+        final int rightKeyIndex = keys.get(0) < keys.get(1) ? keys.get(1) - offset : keys.get(0) - offset;
+        
         final JoinOperator<Record, Record, Object> join = new JoinOperator<>(
                 new TransformationDescriptor<>(new JoinKeyExtractor(leftKeyIndex), Record.class, Object.class),
                 new TransformationDescriptor<>(new JoinKeyExtractor(rightKeyIndex), Record.class, Object.class));
