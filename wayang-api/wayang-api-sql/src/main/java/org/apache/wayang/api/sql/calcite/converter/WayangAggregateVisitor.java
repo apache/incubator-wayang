@@ -20,9 +20,7 @@ package org.apache.wayang.api.sql.calcite.converter;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import org.apache.calcite.rel.core.Aggregate;
 import org.apache.calcite.rel.core.AggregateCall;
 
 import org.apache.wayang.api.sql.calcite.converter.functions.AggregateAddCols;
@@ -30,6 +28,7 @@ import org.apache.wayang.api.sql.calcite.converter.functions.AggregateFunction;
 import org.apache.wayang.api.sql.calcite.converter.functions.AggregateKeyExtractor;
 import org.apache.wayang.api.sql.calcite.converter.functions.AggregateGetResult;
 import org.apache.wayang.api.sql.calcite.rel.WayangAggregate;
+
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
 import org.apache.wayang.basic.operators.MapOperator;
@@ -48,10 +47,8 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
     @Override
     Operator visit(final WayangAggregate wayangRelNode) {
         final Operator childOp = wayangRelConverter.convert(wayangRelNode.getInput(0));
-        Operator aggregateOperator;
 
-        final List<AggregateCall> aggregateCalls = ((Aggregate) wayangRelNode).getAggCallList();
-        final int groupCount = wayangRelNode.getGroupCount();
+        final List<AggregateCall> aggregateCalls = wayangRelNode.getAggCallList();
         final HashSet<Integer> groupingFields = new HashSet<>(wayangRelNode.getGroupSet().asSet());
 
         final MapOperator<Record, Record> mapOperator = new MapOperator<>(
@@ -60,22 +57,15 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
                 Record.class);
         childOp.connectTo(0, mapOperator, 0);
 
-        if (groupCount > 0) {
-            ReduceByOperator<Record, Object> reduceByOperator;
-            reduceByOperator = new ReduceByOperator<>(
-                    new TransformationDescriptor<>(new AggregateKeyExtractor(groupingFields), Record.class, Object.class),
-                    new ReduceDescriptor<>(new AggregateFunction(aggregateCalls),
-                            DataUnitType.createGrouped(Record.class),
-                            DataUnitType.createBasicUnchecked(Record.class)));
-            aggregateOperator = reduceByOperator;
-        } else {
-            GlobalReduceOperator<Record> globalReduceOperator;
-            globalReduceOperator = new GlobalReduceOperator<>(
-                    new ReduceDescriptor<>(new AggregateFunction(aggregateCalls),
-                            DataUnitType.createGrouped(Record.class),
-                            DataUnitType.createBasicUnchecked(Record.class)));
-            aggregateOperator = globalReduceOperator;
-        }
+        final Operator aggregateOperator = wayangRelNode.getGroupCount() > 0 ? new ReduceByOperator<>(
+                new TransformationDescriptor<>(new AggregateKeyExtractor(groupingFields), Record.class, Object.class),
+                new ReduceDescriptor<>(new AggregateFunction(aggregateCalls),
+                        DataUnitType.createGrouped(Record.class),
+                        DataUnitType.createBasicUnchecked(Record.class)))
+                : new GlobalReduceOperator<>(
+                        new ReduceDescriptor<>(new AggregateFunction(aggregateCalls),
+                                DataUnitType.createGrouped(Record.class),
+                                DataUnitType.createBasicUnchecked(Record.class)));
 
         mapOperator.connectTo(0, aggregateOperator, 0);
 
@@ -85,6 +75,5 @@ public class WayangAggregateVisitor extends WayangRelNodeVisitor<WayangAggregate
                 Record.class);
         aggregateOperator.connectTo(0, mapOperator2, 0);
         return mapOperator2;
-
     }
 }

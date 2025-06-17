@@ -38,8 +38,7 @@ public class WayangFilterVisitor extends WayangRelNodeVisitor<WayangFilter> {
     @Override
     Operator visit(final WayangFilter wayangRelNode) {
         final Operator childOp = wayangRelConverter.convert(wayangRelNode.getInput(0));
-
-        final RexNode condition = ((Filter) wayangRelNode).getCondition();
+        final RexNode condition = wayangRelNode.getCondition();
 
         final FilterOperator<Record> filter = new FilterOperator<>(
                 new FilterPredicateImpl(condition),

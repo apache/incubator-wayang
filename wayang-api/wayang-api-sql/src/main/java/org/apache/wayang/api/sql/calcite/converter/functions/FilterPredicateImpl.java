@@ -18,7 +18,11 @@
 
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.SqlFunctions;
 import org.apache.calcite.sql.SqlKind;
@@ -56,31 +60,54 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
                     isLessThan(input.get(0), input.get(1)) || isEqualTo(input.get(0), input.get(1));
                 case AND -> input.stream().map(Boolean.class::cast).allMatch(Boolean::booleanValue);
                 case OR -> input.stream().map(Boolean.class::cast).anyMatch(Boolean::booleanValue);
+                case MINUS -> widenToDouble.apply(input.get(0)) - widenToDouble.apply(input.get(1));
+                case PLUS -> widenToDouble.apply(input.get(0)) + widenToDouble.apply(input.get(1));
                 default -> throw new UnsupportedOperationException("Kind not supported: " + kind);
             };
         }
     }
 
     /**
-     * Widening conversions
+     * Widens number types to optional double 
+     * see also {@link #widenToDouble} 
+     * @return Optional.empty if no conversion available, Optional.of(double) otherwise
      */
-    final SerializableFunction<Object, Comparable> ensureComparable = (a) -> a instanceof Integer val ? val.longValue() : (Comparable<?>) a;
+    final SerializableFunction<Object, Optional<Double>> widenToOptionalDouble = 
+                field -> field instanceof final Number number ? Optional.of(number.doubleValue())    :
+                         field instanceof final Date date     ? Optional.of((double) date.getTime()) :  
+                         Optional.empty();
+    
+
+    /**
+     * Consumes the option from {@link #widenToOptionalDouble()}, and eagerly provides the underlying double.
+     * @throws UnsupportedOperationException if conversion was not possible
+     */
+    final SerializableFunction<Object, Double> widenToDouble = field -> widenToOptionalDouble
+            .andThen(option -> option.orElseThrow(() -> new UnsupportedOperationException("Could not convert: " + option + " to double.")))
+            .apply(field);
+
+    /**
+     * Widening conversions, all numbers to double
+     */
+    final SerializableFunction<Object, Comparable> ensureComparable = field -> 
+        field instanceof Number || field instanceof Date ? widenToDouble.apply(field) : 
+        Comparable.class.cast(field);
+    
 
     /**
      * Java equivalent of SQL like clauses
+     * 
      * @param s1
      * @param s2
      * @return true if {@code s1} like {@code s2}
      */
     private boolean like(final String s1, final String s2) {
-        final SqlFunctions.LikeFunction likeFunction = new SqlFunctions.LikeFunction();
-        final boolean isMatch = likeFunction.like(s1, s2);
-
-        return isMatch;
+        return new SqlFunctions.LikeFunction().like(s1, s2);
     }
 
     /**
      * Java equivalent of sql greater than clauses
+     * 
      * @param o1
      * @param o2
      * @return true if {@code o1 > o2}
@@ -91,6 +118,7 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
 
     /**
      * Java equivalent of sql less than clauses
+     * 
      * @param o1
      * @param o2
      * @return true if {@code o1 < o2}
@@ -101,11 +129,12 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
 
     /**
      * Java equivalent of SQL equals clauses
+     * 
      * @param o1
      * @param o2
      * @return true if {@code o1 == o2}
      */
     private boolean isEqualTo(final Object o1, final Object o2) {
-        return ensureComparable.apply(o1).equals(ensureComparable.apply(o2));
+        return Objects.equals(ensureComparable.apply(o1), ensureComparable.apply(o2));
     }
 }
