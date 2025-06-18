@@ -43,7 +43,7 @@ case class Op(val op: String, val opType: String, val dType: String, val fromLis
       case "Cast" => new Cast(parseDType(dType))
       case "CrossEntropyLoss" => new CrossEntropyLoss(labels)
       case "Eq" => new Eq()
-      case "Input" => new Input(parseInputType(opType))
+      case "Input" => new Input(null, parseInputType(opType))
       case "Mean" => new Mean(dim)
       case "Linear" => new Linear(inFeatures, outFeatures, bias)
       case "ReLU" => new ReLU()
@@ -74,7 +74,6 @@ case class Op(val op: String, val opType: String, val dType: String, val fromLis
     inputType match {
       case "..FEATURES.." => Input.Type.FEATURES
       case "..LABEL.." => Input.Type.LABEL
-      case "..PREDICTED.." => Input.Type.PREDICTED
     }
   }
 }
