@@ -16,40 +16,30 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.basic.model;
+package org.apache.wayang.basic.model.op.nn;
 
 import org.apache.wayang.basic.model.op.Op;
 
-public class DLModel implements Model {
-    protected final Op out;
+public class MSELoss extends Op {
 
-    public DLModel(Op out) {
-        this.out = out;
+    public MSELoss() {
+        super(DType.FLOAT32);
     }
 
-    public Op getOut() {
-        return out;
+    public MSELoss(String name) {
+        super(name, DType.FLOAT32);
     }
 
-    public static class Builder {
-        private Op out;
-
-        public DLModel build() {
-            return new DLModel(out);
+    @Override
+    public DType getDType() {
+        if (!fromList.isEmpty() && fromList.get(0).getDType() == DType.FLOAT64) {
+            return DType.FLOAT64;
         }
+        return DType.FLOAT32;
+    }
 
-        public Builder layer(Op op) {
-            if (op == null) {
-                return this;
-            }
-
-            if (out == null) {
-                out = op;
-            } else {
-                out = op.with(out);
-            }
-
-            return this;
-        }
+    @Override
+    public int inputsRequired() {
+        return 2;
     }
 }

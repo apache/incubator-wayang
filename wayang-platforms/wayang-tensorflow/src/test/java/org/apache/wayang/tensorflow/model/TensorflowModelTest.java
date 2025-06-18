@@ -46,23 +46,28 @@ class TensorflowModelTest {
                 .set(NdArrays.vectorOf(6.7f, 3.3f, 5.7f, 2.5f), 5)
                 ;
         IntNdArray y = NdArrays.vectorOf(0, 0, 1, 1, 2, 2);
-        Op l1 = new Linear(4, 64, true);
-        Op s1 = new Sigmoid();
-        Op l2 = new Linear(64, 3, true);
-        s1.with(l1.with(new Input(Input.Type.FEATURES)));
-        l2.with(s1);
-        DLModel model = new DLModel(l2);
+
+        Input features = new Input(null, Input.Type.FEATURES, Op.DType.FLOAT32);
+        Input labels = new Input(null, Input.Type.LABEL, Op.DType.INT32);
+
+        DLModel model = new DLModel.Builder()
+                .layer(features)
+                .layer(new Linear(4, 64, true))
+                .layer(new Sigmoid())
+                .layer(new Linear(64, 3, true))
+                .build();
+
         Op criterion = new CrossEntropyLoss(3);
-        criterion.with(
-                new Input(Input.Type.PREDICTED, Op.DType.FLOAT32),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
-        );
+        criterion.with(model.getOut(), labels);
+
         Op acc = new Mean(0);
         acc.with(new Cast(Op.DType.FLOAT32).with(new Eq().with(
-                new ArgMax(1).with(new Input(Input.Type.PREDICTED, Op.DType.FLOAT32)),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
+                new ArgMax(1).with(model.getOut()),
+                labels
         )));
+
         Optimizer optimizer = new GradientDescent(0.02f);
+
         try (TensorflowModel tfModel = new TensorflowModel(model, criterion, optimizer, acc)) {
             System.out.println(tfModel.getOut().getName());
             tfModel.train(x, y, 100, 6);
