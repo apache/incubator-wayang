@@ -66,7 +66,7 @@ public class TensorflowConv2D<T extends TNumber> {
         throw new RuntimeException("Unsupported Stride: " + Arrays.toString(stride));
     }
 
-    public Operand<T> call(Operand<T> input) {
+    public Operand<T> callV1(Operand<T> input) {
         if (!op.getBias()) {
             return tf.withName(op.getName()).nn.conv2d(
                     input,
@@ -88,5 +88,25 @@ public class TensorflowConv2D<T extends TNumber> {
                     BiasAdd.dataFormat("NCHW")
             );
         }
+    }
+
+    // FIXME: use this version instead of "callV1" until the tensorflow error (The Conv2D op currently only supports the NHWC tensor format on the CPU. The op was given the format: NCHW) is fixed.
+    public Operand<T> call(Operand<T> input) {
+        Operand<T> transpose = tf.linalg.transpose(input, tf.array(0, 2, 3, 1)); // NCHW -> NHWC
+        Operand<T> conv = tf.nn.conv2d(
+                transpose,
+                kernel,
+                strideShape(),
+                op.getPadding(),
+                Conv2d.dataFormat("NHWC")
+        );
+        if (op.getBias()) {
+            conv = tf.nn.biasAdd(
+                    conv,
+                    bias,
+                    BiasAdd.dataFormat("NHWC")
+            );
+        }
+        return tf.withName(op.getName()).linalg.transpose(conv, tf.array(0, 3, 1, 2)); // NHWC -> NCHW
     }
 }

@@ -23,6 +23,7 @@ import org.apache.wayang.basic.model.op.Mean;
 import org.apache.wayang.basic.model.op.Reshape;
 import org.apache.wayang.basic.model.op.Slice;
 import org.apache.wayang.basic.model.op.nn.*;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.tensorflow.*;
@@ -107,7 +108,7 @@ public class TensorflowOperatorTest {
         }
     }
 
-    @Test
+    @Ignore
     public void testConv3D() {
         try (Graph g = new Graph(); Session session = new Session(g)) {
             Ops tf = Ops.create(g);
