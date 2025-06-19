@@ -30,8 +30,6 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
 
-import com.amazonaws.services.kms.model.UnsupportedOperationException;
-
 /**
  * AST of the {@link RexCall} arithmetic, composed into serializable nodes;
  * {@link Call}, {@link InputRef}, {@link Literal}
