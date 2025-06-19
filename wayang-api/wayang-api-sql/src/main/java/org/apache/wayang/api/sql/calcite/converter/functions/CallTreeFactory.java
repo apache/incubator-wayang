@@ -18,30 +18,32 @@
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
-
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
+
+import com.amazonaws.services.kms.model.UnsupportedOperationException;
 
 /**
  * AST of the {@link RexCall} arithmetic, composed into serializable nodes;
  * {@link Call}, {@link InputRef}, {@link Literal}
  */
-interface CallTreeFactory<Input, Output> extends Serializable {
-    public default Node<Output> fromRexNode(final RexNode node) {
-        if (node instanceof RexCall) {
-            return new Call<>((RexCall) node, this);
-        } else if (node instanceof RexInputRef) {
-            return new InputRef<>((RexInputRef) node);
-        } else if (node instanceof RexLiteral) {
-            return new Literal<>((RexLiteral) node);
+interface CallTreeFactory extends Serializable {
+    public default Node fromRexNode(final RexNode node) {
+        if (node instanceof final RexCall call) {
+            return new Call(call, this);
+        } else if (node instanceof final RexInputRef inputRef) {
+            return new InputRef(inputRef);
+        } else if (node instanceof final RexLiteral literal) {
+            return new Literal(literal);
         } else {
             throw new UnsupportedOperationException("Unsupported RexNode in filter condition: " + node);
         }
@@ -55,42 +57,53 @@ interface CallTreeFactory<Input, Output> extends Serializable {
      * @return a serializable function of +, -, * or /
      * @throws UnsupportedOperationException on unrecognized {@link SqlKind}
      */
-    public SerializableFunction<List<Output>, Output> deriveOperation(SqlKind kind);
+    public SerializableFunction<List<Object>, Object> deriveOperation(SqlKind kind);
 }
 
-interface Node<Output> extends Serializable {
-    public Output evaluate(final Record record);
+interface Node extends Serializable {
+    public Object evaluate(final Record rec);
 }
 
-class Call<Input, Output> implements Node<Output> {
-    final List<Node<Output>> operands;
-    final SerializableFunction<List<Output>, Output> operation;
+class Call implements Node {
+    private final List<Node> operands;
+    final SerializableFunction<List<Object>, Object> operation;
 
-    protected Call(final RexCall call, final CallTreeFactory<Input, Output> tree) {
-        operands = call.getOperands().stream().map(tree::fromRexNode).collect(Collectors.toList());
+    protected Call(final RexCall call, final CallTreeFactory tree) {
+        operands = call.getOperands().stream().map(tree::fromRexNode).toList();
         operation = tree.deriveOperation(call.getKind());
     }
 
     @Override
-    public Output evaluate(final Record record) {
-        return operation.apply(operands.stream().map(op -> op.evaluate(record)).collect(Collectors.toList()));
+    public Object evaluate(final Record rec) {
+        return operation.apply(
+                operands.stream()
+                        .map(op -> op.evaluate(rec))
+                        .toList());
     }
 }
 
-class Literal<Output> implements Node<Output> {
-    final Output value;
+class Literal implements Node {
+    final Serializable value;
 
     Literal(final RexLiteral literal) {
-        value = (Output) literal.getValue2();
+        value = switch (literal.getTypeName()) {
+            case DATE         -> literal.getValueAs(Calendar.class);
+            case INTEGER      -> literal.getValueAs(Double.class);
+            case INTERVAL_DAY -> literal.getValueAs(BigDecimal.class).doubleValue();
+            case DECIMAL      -> literal.getValueAs(BigDecimal.class).doubleValue();
+            case CHAR         -> literal.getValueAs(String.class);
+            default -> throw new UnsupportedOperationException(
+                    "Literal conversion to Java not implemented, type: " + literal.getTypeName());
+        };
     }
 
     @Override
-    public Output evaluate(final Record record) {
+    public Object evaluate(final Record rec) {
         return value;
     }
 }
 
-class InputRef<Output> implements Node<Output> {
+class InputRef implements Node {
     private final int key;
 
     InputRef(final RexInputRef inputRef) {
@@ -98,7 +111,7 @@ class InputRef<Output> implements Node<Output> {
     }
 
     @Override
-    public Output evaluate(final Record record) {
-        return (Output) record.getField(key);
+    public Object evaluate(final Record rec) {
+        return rec.getField(key);
     }
 }

@@ -19,7 +19,6 @@
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
@@ -31,37 +30,34 @@ import org.apache.wayang.basic.data.Record;
 public class ProjectMapFuncImpl implements
         FunctionDescriptor.SerializableFunction<Record, Record> {
 
-    final List<Node<Object>> projectionSyntaxTrees;
+    private final List<Node> projectionSyntaxTrees;
 
     public ProjectMapFuncImpl(final List<RexNode> projects) {
         final ProjectCallTreeFactory treeFactory = new ProjectCallTreeFactory();
-        this.projectionSyntaxTrees = projects.stream().map(treeFactory::fromRexNode).collect(Collectors.toList());
+        this.projectionSyntaxTrees = projects.stream().map(treeFactory::fromRexNode).toList();
     }
 
-    class ProjectCallTreeFactory implements CallTreeFactory<List<Object>, Object> {
+    class ProjectCallTreeFactory implements CallTreeFactory {
         public SerializableFunction<List<Object>, Object> deriveOperation(final SqlKind kind) {
-            return input -> {
-                final double l = ((Number) input.get(0)).doubleValue();
-                final double r = ((Number) input.get(1)).doubleValue();
+            return input -> 
                 switch (kind) {
-                    case PLUS:
-                        return l + r;
-                    case MINUS:
-                        return l - r;
-                    case TIMES:
-                        return l * r;
-                    case DIVIDE:
-                        return l / r;
-                    default:
-                        throw new UnsupportedOperationException(
+                    case PLUS   -> asDouble(input.get(0)) + asDouble(input.get(1));
+                    case MINUS  -> asDouble(input.get(0)) - asDouble(input.get(1));
+                    case TIMES  -> asDouble(input.get(0)) * asDouble(input.get(1));
+                    case DIVIDE -> asDouble(input.get(0)) / asDouble(input.get(1));
+                    default -> throw new UnsupportedOperationException(
                                 "Operation not supported in projection function RexCall: " + kind);
-                }
             };
+        }
+
+        double asDouble(final Object o){
+            assert o instanceof Number : "Cannot perform arithmetic on non-numbers: " + o.getClass();
+            return ((Number) o).doubleValue();
         }
     }
 
     @Override
-    public Record apply(final Record record) {
-        return new Record(projectionSyntaxTrees.stream().map(call -> call.evaluate(record)).toArray());
+    public Record apply(final Record rec) {
+        return new Record(projectionSyntaxTrees.stream().map(call -> call.evaluate(rec)).toArray());
     }
 }
