@@ -17,11 +17,10 @@
  */
 package org.apache.wayang.api.sql.calcite.converter.functions;
 
-import java.util.Arrays;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.runtime.SqlFunctions;
@@ -31,12 +30,12 @@ import org.apache.wayang.core.function.FunctionDescriptor;
 
 public class AggregateFunction
         implements FunctionDescriptor.SerializableBinaryOperator<Record> {
-    final List<SqlKind> aggregateKinds;
+    private final List<SqlKind> aggregateKinds;
 
     public AggregateFunction(final List<AggregateCall> aggregateCalls) {
         this.aggregateKinds = aggregateCalls.stream()
-            .map(call -> call.getAggregation().getKind())
-            .collect(Collectors.toList());
+                .map(call -> call.getAggregation().getKind())
+                .toList();
     }
 
     @Override
@@ -56,15 +55,15 @@ public class AggregateFunction
 
             switch (kind) {
                 case SUM:
-                    resValues[counter] = this.castAndMap(field1, field2, null, Long::sum, Integer::sum, Double::sum);
+                    resValues[counter] = this.castAndMap(field1, field2, null, Long::sum, Integer::sum, Double::sum, BigDecimal::add);
                     break;
                 case MIN:
                     resValues[counter] = this.castAndMap(field1, field2, SqlFunctions::least, SqlFunctions::least,
-                            SqlFunctions::least, SqlFunctions::least);
+                            SqlFunctions::least, SqlFunctions::least, SqlFunctions::least);
                     break;
                 case MAX:
                     resValues[counter] = this.castAndMap(field1, field2, SqlFunctions::greatest, SqlFunctions::greatest,
-                            SqlFunctions::greatest, SqlFunctions::greatest);
+                            SqlFunctions::greatest, SqlFunctions::greatest, SqlFunctions::greatest);
                     break;
                 case COUNT:
                     // since aggregates inject an extra column for counting before,
@@ -76,9 +75,7 @@ public class AggregateFunction
                     resValues[counter] = count;
                     break;
                 case AVG:
-                    assert (field1 instanceof Integer && field2 instanceof Integer)
-                            : "Expected to find integers for count but found: " + field1 + " and " + field2;
-                    final Object avg = Integer.class.cast(field1) + Integer.class.cast(field2);
+                    final Object avg = this.castAndMap(field1, field2, null, Long::sum, Integer::sum, Double::sum, BigDecimal::add);
 
                     resValues[counter] = avg;
 
@@ -95,6 +92,7 @@ public class AggregateFunction
         return new Record(resValues);
     }
 
+
     /**
      * Handles casts for the record class for each interior type.
      * 
@@ -110,7 +108,8 @@ public class AggregateFunction
             final BiFunction<String, String, Object> stringMap,
             final BiFunction<Long, Long, Object> longMap,
             final BiFunction<Integer, Integer, Object> integerMap,
-            final BiFunction<Double, Double, Object> doubleMap) {
+            final BiFunction<Double, Double, Object> doubleMap,
+            final BiFunction<BigDecimal, BigDecimal, Object> bigDecimalMap) {
         // support operations between null and any
         // class
         if ((a == null || b == null) || (a.getClass() == b.getClass())) {
@@ -122,19 +121,16 @@ public class AggregateFunction
             // force .getClass() to be safe so
             // we can pass null objects to
             // .apply methods.
-            switch (aWrapped.orElse(bWrapped.orElse("")).getClass().getSimpleName()) {
-                case "String":
-                    return stringMap.apply((String) a, (String) b);
-                case "Long":
-                    return longMap.apply((Long) a, (Long) b);
-                case "Integer":
-                    return integerMap.apply((Integer) a, (Integer) b);
-                case "Double":
-                    return doubleMap.apply((Double) a, (Double) b);
-                default:
-                    throw new IllegalStateException("Unsupported operation between: " + aWrapped.getClass().toString()
-                            + " and: " + bWrapped.getClass().toString());
-            }
+            return switch (aWrapped.orElse(bWrapped.orElse("")).getClass().getSimpleName()) {
+                case "String" -> stringMap.apply((String) a, (String) b);
+                case "Long" -> longMap.apply((Long) a, (Long) b);
+                case "Integer" -> integerMap.apply((Integer) a, (Integer) b);
+                case "Double" -> doubleMap.apply((Double) a, (Double) b);
+                case "BigDecimal" -> bigDecimalMap.apply((BigDecimal) a, (BigDecimal) b);
+                default -> throw new IllegalStateException("Unsupported operation between: "
+                        + aWrapped.getClass().toString()
+                        + " and: " + bWrapped.getClass().toString());
+            };
         }
         throw new IllegalStateException("Unsupported operation between: " + a.getClass().getSimpleName() + " and: "
                 + b.getClass().getSimpleName());
