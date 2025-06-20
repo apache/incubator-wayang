@@ -18,7 +18,6 @@
 
 package org.apache.wayang.api.sql.calcite.converter;
 
-import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 
@@ -50,9 +49,18 @@ public class WayangFilterVisitor extends WayangRelNodeVisitor<WayangFilter> {
     }
 
     /** for quick sanity check **/
-    public static final EnumSet<SqlKind> SUPPORTED_OPS = EnumSet.of(SqlKind.AND, SqlKind.OR, SqlKind.NOT,
-            SqlKind.EQUALS, SqlKind.NOT_EQUALS,
-            SqlKind.LESS_THAN, SqlKind.GREATER_THAN,
-            SqlKind.GREATER_THAN_OR_EQUAL, SqlKind.LESS_THAN_OR_EQUAL, SqlKind.LIKE, SqlKind.IS_NOT_NULL, SqlKind.IS_NULL);
+    protected static final EnumSet<SqlKind> SUPPORTED_OPS = EnumSet.of(
+            SqlKind.AND,
+            SqlKind.OR,
+            SqlKind.NOT,
+            SqlKind.EQUALS,
+            SqlKind.NOT_EQUALS,
+            SqlKind.LESS_THAN,
+            SqlKind.GREATER_THAN,
+            SqlKind.GREATER_THAN_OR_EQUAL,
+            SqlKind.LESS_THAN_OR_EQUAL,
+            SqlKind.LIKE,
+            SqlKind.IS_NOT_NULL,
+            SqlKind.IS_NULL);
 
 }

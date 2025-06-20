@@ -22,7 +22,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.SqlFunctions;
@@ -33,20 +32,9 @@ import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
 
 public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredicate<Record> {
-    private final Node callTree;
-
-    public FilterPredicateImpl(final RexNode condition) {
-        this.callTree = new FilterCallTreeFactory().fromRexNode(condition);
-    }
-
-    @Override
-    public boolean test(final Record rec) {
-        return (boolean) callTree.evaluate(rec);
-    }
-
     class FilterCallTreeFactory implements CallTreeFactory {
         public SerializableFunction<List<Object>, Object> deriveOperation(final SqlKind kind) {
-            return (input) -> switch (kind) {
+            return input -> switch (kind) {
                 case NOT -> !(boolean) input.get(0);
                 case IS_NOT_NULL -> !isEqualTo(input.get(0), null);
                 case IS_NULL -> isEqualTo(input.get(0), null);
@@ -112,40 +100,51 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
         }
     }
 
-    /**
-     * Widens number types to optional double
-     * see also {@link #widenToDouble}
-     * 
-     * @return Optional.empty if no conversion available, Optional.of(double)
-     *         otherwise
-     */
+    private final Node callTree;
 
-    final SerializableFunction<Object, Optional<Double>> widenToOptionalDouble = field -> {
+    /**
+     * Widens number types to double
+     * 
+     * @throws UnsupportedOperationException if conversion was not possible
+     */
+    final SerializableFunction<Object, Double> widenToDouble = field -> {
         if (field instanceof final Number number) {
-            return Optional.of(number.doubleValue());
+            return number.doubleValue();
         } else if (field instanceof final Date date) {
-            return Optional.of((double) date.getTime());
+            return (double) date.getTime();
         } else if (field instanceof final Calendar calendar) {
-            return Optional.of((double) calendar.getTime().getTime());
+            return (double) calendar.getTime().getTime();
         } else {
-            return Optional.empty();
+            throw new UnsupportedOperationException("Could not widen to double, field class: " + field.getClass());
         }
     };
 
     /**
-     * Consumes the option from {@link #widenToOptionalDouble()}, and eagerly
-     * provides the underlying double.
-     * 
-     * @throws UnsupportedOperationException if conversion was not possible
-     */
-    final SerializableFunction<Object, Double> widenToDouble = field -> widenToOptionalDouble
-            .andThen(option -> option.orElseThrow(() -> new UnsupportedOperationException(
-                    "Could not convert: " + option + " to double." + ", field: " + field)))
-            .apply(field);
-
-    /**
      * Widening conversions, all numbers to double
      */
-    final SerializableFunction<Object, Comparable> ensureComparable = field -> field instanceof Number
-            || field instanceof Date ? widenToDouble.apply(field) : Comparable.class.cast(field);
+    final SerializableFunction<Object, Comparable> ensureComparable = field -> {
+        if (field instanceof final Number number) {
+            return number.doubleValue();
+        } else if (field instanceof final Date date) {
+            return (double) date.getTime();
+        } else if (field instanceof final Calendar calendar) {
+            return (double) calendar.getTime().getTime();
+        } else if (field instanceof final String string) {
+            return string;
+        } else if (field instanceof final Character character) {
+            return character.toString();
+        } else {
+            throw new UnsupportedOperationException(
+                    "Type not supported in filter comparisons yet: " + field.getClass());
+        }
+    };
+
+    public FilterPredicateImpl(final RexNode condition) {
+        this.callTree = new FilterCallTreeFactory().fromRexNode(condition);
+    }
+
+    @Override
+    public boolean test(final Record rec) {
+        return (boolean) callTree.evaluate(rec);
+    }
 }

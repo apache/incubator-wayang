@@ -19,7 +19,6 @@
 package org.apache.wayang.api.sql.calcite.converter;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
@@ -55,7 +54,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         final List<Integer> keys = call.getOperands().stream()
             .map(RexInputRef.class::cast)
             .map(RexInputRef::getIndex)
-            .collect(Collectors.toList());
+            .toList();
 
         assert (keys.size() == 2) : "Amount of keys found in join was not 2, got: " + keys.size();
         
@@ -78,7 +77,7 @@ public class WayangJoinVisitor extends WayangRelNodeVisitor<WayangJoin> {
         childOpRight.connectTo(0, join, 1);
 
         // Join returns Tuple2 - map to a Record
-        final MapOperator<Tuple2<Record, Record>, Record> mapOperator = new MapOperator<Tuple2<Record, Record>, Record>(
+        final MapOperator<Tuple2<Record, Record>, Record> mapOperator = new MapOperator<>(
                 new JoinFlattenResult(),
                 ReflectionUtils.specify(Tuple2.class),
                 Record.class);
