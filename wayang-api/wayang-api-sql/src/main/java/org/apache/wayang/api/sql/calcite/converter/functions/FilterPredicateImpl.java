@@ -157,6 +157,8 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
             return character.toString();
         } else if (field instanceof final DateString dateString) {
             return (double) dateString.getMillisSinceEpoch();
+        } else if (field == null) {
+            return null;
         } else {
             throw new UnsupportedOperationException(
                     "Type not supported in filter comparisons yet: " + field.getClass());
