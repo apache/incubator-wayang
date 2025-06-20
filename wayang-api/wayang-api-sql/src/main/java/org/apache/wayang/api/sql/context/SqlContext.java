@@ -17,6 +17,10 @@
 
 package org.apache.wayang.api.sql.context;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.lang3.StringUtils;
 
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -40,25 +44,16 @@ import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.plugin.Plugin;
 import org.apache.wayang.api.utils.Parameters;
 import org.apache.wayang.core.api.WayangContext;
-import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.postgres.Postgres;
 import org.apache.wayang.spark.Spark;
-import org.apache.commons.cli.*;
-
-import com.google.common.io.Resources;
-
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import scala.collection.JavaConversions;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.charset.Charset;
 import java.nio.file.Paths;
-import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,8 +172,8 @@ public class SqlContext extends WayangContext {
         context.execute(getJobName(), wayangPlan);
 
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(outputPath))) {
-            for (final Record record : collector) {
-                writer.write(Arrays.toString(record.getValues()));
+            for (final Record rec : collector) {
+                writer.write(Arrays.toString(rec.getValues()));
                 writer.newLine();
             }
         } catch (final IOException e) {
