@@ -27,8 +27,11 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.util.Sarg;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
+
+import com.google.common.collect.ImmutableRangeSet;
 
 /**
  * AST of the {@link RexCall} arithmetic, composed into serializable nodes;
@@ -84,12 +87,22 @@ class Literal implements Node {
     final Serializable value;
 
     Literal(final RexLiteral literal) {
+        System.out.println(literal.getValue().getClass());
+        System.out.println(literal.getValue2().getClass());
+        System.out.println(literal.getValue3().getClass());
+        System.out.println(literal.getValue4().getClass());
+
         value = switch (literal.getTypeName()) {
             case DATE         -> literal.getValueAs(Calendar.class);
             case INTEGER      -> literal.getValueAs(Double.class);
             case INTERVAL_DAY -> literal.getValueAs(BigDecimal.class).doubleValue();
             case DECIMAL      -> literal.getValueAs(BigDecimal.class).doubleValue();
             case CHAR         -> literal.getValueAs(String.class);
+            case SARG         -> {
+                final Sarg<?> sarg = literal.getValueAs(Sarg.class);
+                assert sarg.rangeSet instanceof Serializable : "Sarg RangeSet was not serializable.";
+                yield (ImmutableRangeSet<?>) sarg.rangeSet;
+            }
             default -> throw new UnsupportedOperationException(
                     "Literal conversion to Java not implemented, type: " + literal.getTypeName());
         };

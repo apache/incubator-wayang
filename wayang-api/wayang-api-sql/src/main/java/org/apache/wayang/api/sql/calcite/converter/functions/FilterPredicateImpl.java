@@ -26,10 +26,13 @@ import java.util.Objects;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.SqlFunctions;
 import org.apache.calcite.sql.SqlKind;
-
+import org.apache.calcite.util.DateString;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
+
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
 
 public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredicate<Record> {
     class FilterCallTreeFactory implements CallTreeFactory {
@@ -51,6 +54,25 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
                 case OR -> input.stream().anyMatch(obj -> Boolean.class.cast(obj).booleanValue());
                 case MINUS -> widenToDouble.apply(input.get(0)) - widenToDouble.apply(input.get(1));
                 case PLUS -> widenToDouble.apply(input.get(0)) + widenToDouble.apply(input.get(1));
+                case SEARCH -> {
+                    if (input.get(0) instanceof final ImmutableRangeSet range) {
+                        assert input.get(1) instanceof Comparable : "field is not comparable: " + input.get(1).getClass();
+                        Comparable field = ensureComparable.apply(input.get(1));
+                        Comparable left = ensureComparable.apply(range.span().lowerEndpoint());
+                        Comparable right = ensureComparable.apply(range.span().upperEndpoint());
+                        Range<Comparable> newRange = Range.closed(left, right);
+                        yield newRange.contains(field);
+                    } else if (input.get(1) instanceof final ImmutableRangeSet range) {
+                        assert input.get(0) instanceof Comparable : "field is not comparable: " + input.get(0).getClass();
+                        Comparable field = ensureComparable.apply(input.get(0));
+                        Comparable left = ensureComparable.apply(range.span().lowerEndpoint());
+                        Comparable right = ensureComparable.apply(range.span().upperEndpoint());
+                        Range<Comparable> newRange = Range.closed(left, right);
+                        yield newRange.contains(field);
+                    } else {
+                        throw new UnsupportedOperationException("No range set found in SARG, input1: " + input.get(0).getClass() + ", input2: " + input.get(1).getClass());
+                    }
+                }
                 default -> throw new UnsupportedOperationException("Kind not supported: " + kind);
             };
         }
@@ -133,6 +155,8 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
             return string;
         } else if (field instanceof final Character character) {
             return character.toString();
+        } else if (field instanceof final DateString dateString) {
+            return (double) dateString.getMillisSinceEpoch();
         } else {
             throw new UnsupportedOperationException(
                     "Type not supported in filter comparisons yet: " + field.getClass());
