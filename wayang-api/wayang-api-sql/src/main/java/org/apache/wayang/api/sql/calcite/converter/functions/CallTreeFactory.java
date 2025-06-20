@@ -87,11 +87,6 @@ class Literal implements Node {
     final Serializable value;
 
     Literal(final RexLiteral literal) {
-        System.out.println(literal.getValue().getClass());
-        System.out.println(literal.getValue2().getClass());
-        System.out.println(literal.getValue3().getClass());
-        System.out.println(literal.getValue4().getClass());
-
         value = switch (literal.getTypeName()) {
             case DATE         -> literal.getValueAs(Calendar.class);
             case INTEGER      -> literal.getValueAs(Double.class);

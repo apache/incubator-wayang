@@ -27,6 +27,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.SqlFunctions;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.util.DateString;
+import org.apache.calcite.util.NlsString;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.FunctionDescriptor.SerializableFunction;
@@ -156,7 +157,9 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
             return (double) calendar.getTime().getTime();
         } else if (field instanceof final String string) {
             return string;
-        } else if (field instanceof final Character character) {
+        } else if (field instanceof final NlsString nlsString) {
+            return nlsString.getValue();
+        }  else if (field instanceof final Character character) {
             return character.toString();
         } else if (field instanceof final DateString dateString) {
             return (double) dateString.getMillisSinceEpoch();
