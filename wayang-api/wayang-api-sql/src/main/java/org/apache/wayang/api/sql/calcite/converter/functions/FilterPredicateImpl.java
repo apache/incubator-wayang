@@ -56,21 +56,24 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
                 case PLUS -> widenToDouble.apply(input.get(0)) + widenToDouble.apply(input.get(1));
                 case SEARCH -> {
                     if (input.get(0) instanceof final ImmutableRangeSet range) {
-                        assert input.get(1) instanceof Comparable : "field is not comparable: " + input.get(1).getClass();
-                        Comparable field = ensureComparable.apply(input.get(1));
-                        Comparable left = ensureComparable.apply(range.span().lowerEndpoint());
-                        Comparable right = ensureComparable.apply(range.span().upperEndpoint());
-                        Range<Comparable> newRange = Range.closed(left, right);
+                        assert input.get(1) instanceof Comparable
+                                : "field is not comparable: " + input.get(1).getClass();
+                        final Comparable field = ensureComparable.apply(input.get(1));
+                        final Comparable left = ensureComparable.apply(range.span().lowerEndpoint());
+                        final Comparable right = ensureComparable.apply(range.span().upperEndpoint());
+                        final Range<Comparable> newRange = Range.closed(left, right);
                         yield newRange.contains(field);
                     } else if (input.get(1) instanceof final ImmutableRangeSet range) {
-                        assert input.get(0) instanceof Comparable : "field is not comparable: " + input.get(0).getClass();
-                        Comparable field = ensureComparable.apply(input.get(0));
-                        Comparable left = ensureComparable.apply(range.span().lowerEndpoint());
-                        Comparable right = ensureComparable.apply(range.span().upperEndpoint());
-                        Range<Comparable> newRange = Range.closed(left, right);
+                        assert input.get(0) instanceof Comparable
+                                : "field is not comparable: " + input.get(0).getClass();
+                        final Comparable field = ensureComparable.apply(input.get(0));
+                        final Comparable left = ensureComparable.apply(range.span().lowerEndpoint());
+                        final Comparable right = ensureComparable.apply(range.span().upperEndpoint());
+                        final Range<Comparable> newRange = Range.closed(left, right);
                         yield newRange.contains(field);
                     } else {
-                        throw new UnsupportedOperationException("No range set found in SARG, input1: " + input.get(0).getClass() + ", input2: " + input.get(1).getClass());
+                        throw new UnsupportedOperationException("No range set found in SARG, input1: "
+                                + input.get(0).getClass() + ", input2: " + input.get(1).getClass());
                     }
                 }
                 default -> throw new UnsupportedOperationException("Kind not supported: " + kind);
