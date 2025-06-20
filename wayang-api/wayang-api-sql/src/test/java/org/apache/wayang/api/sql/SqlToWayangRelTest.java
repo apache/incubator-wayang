@@ -323,6 +323,21 @@ class SqlToWayangRelTest {
     }
 
     @Test
+    void javaFilterWithAlgebra() throws Exception {
+        final SqlContext sqlContext = createSqlContext("/data/exampleInt.csv");
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT * FROM fs.exampleInt WHERE exampleInt.NAMEC = 0 - 1 + 1" //
+        );
+
+        final Collection<Record> result = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+        sqlContext.execute(wayangPlan);
+
+        assertEquals(0, result.size());
+    }
+
+    @Test
     void filterWithLike() throws Exception {
         final SqlContext sqlContext = createSqlContext("/data/largeLeftTableIndex.csv");
 
