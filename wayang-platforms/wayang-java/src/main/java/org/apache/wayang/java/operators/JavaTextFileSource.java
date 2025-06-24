@@ -42,6 +42,8 @@ import java.util.stream.Stream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,7 +111,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     /**
      * @return Stream<String> from the provided URL
      */
-    private Stream<String> streamFromURL(final URL sourceUrl) {
+    public static Stream<String> streamFromURL(final URL sourceUrl) {
         try {
             final HttpURLConnection connection = (HttpURLConnection) sourceUrl.openConnection();
             connection.setRequestMethod("GET");
@@ -137,19 +139,9 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     /**
      * @return Stream<String> from the file system
      */
-    private Stream<String> streamFromFs(final String path) {
-        final File file = new File(URI.create(path));
-
+    public static Stream<String> streamFromFs(final String path) {
         try {
-            final BufferedReader reader = new BufferedReader(new FileReader(file));
-
-            return reader.lines().onClose(() -> {
-                try {
-                    reader.close();
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-            });
+            return Files.lines(Path.of(URI.create(path)));
         } catch (final Exception e) {
             throw new WayangException(e);
         }
