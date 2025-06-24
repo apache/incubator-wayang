@@ -1354,11 +1354,11 @@
                     <releaseProfiles>apache-release</releaseProfiles>
                     <!--<pushChanges>false</pushChanges>-->
                     <!--<dryRun>true</dryRun>-->
-                    <releaseVersion>1.0.0</releaseVersion>
+                    <releaseVersion>1.1.0</releaseVersion>
                     <updateWorkingCopyVersions>true</updateWorkingCopyVersions>
                     <updateDependencies>true</updateDependencies>
-                    <tag>v1.0.0-rc5</tag>
-                    <scmReleaseCommitComment>@{prefix} prepare release 1.0.0</scmReleaseCommitComment>
+                    <tag>v1.1.0-rc2</tag>
+                    <scmReleaseCommitComment>@{prefix} prepare release 1.1.0</scmReleaseCommitComment>
                     <tagNameFormat>apache-@{project.artifactId}-@{project.version}-incubating</tagNameFormat>
                     <tagNameFormat>v${project.version}</tagNameFormat>
                 </configuration>
