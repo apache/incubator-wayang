@@ -60,24 +60,25 @@ class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
     void testReadLocalFile() throws IOException, URISyntaxException {
         final String testFileName = "/banking-tx-small.csv";
 
-        JavaExecutor javaExecutor = null;
+        final JavaExecutor javaExecutor = null;
         try {
             // Prepare the source.
             final URL inputUrl = this.getClass().getResource(testFileName);
-            System.out.println( "* " + inputUrl + " *");
-            JavaTextFileSource source = new JavaTextFileSource(
-                    inputUrl.toString() );
+            System.out.println("* " + inputUrl + " *");
+            final JavaTextFileSource source = new JavaTextFileSource(
+                    inputUrl.toString());
 
             // Execute.
-            JavaChannelInstance[] inputs = new JavaChannelInstance[]{};
-            JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
+            final JavaChannelInstance[] inputs = new JavaChannelInstance[] {};
+            final JavaChannelInstance[] outputs = new JavaChannelInstance[] { createStreamChannelInstance() };
             evaluate(source, inputs, outputs);
 
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
             assertEquals(63, result.size());
         } finally {
-            if (javaExecutor != null) javaExecutor.dispose();
+            if (javaExecutor != null)
+                javaExecutor.dispose();
         }
     }
 
@@ -92,51 +93,43 @@ class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
     void testReadRemoteFileHTTP() throws IOException, URISyntaxException {
         final String testFileURL = "http://localhost:8000/LICENSE";
 
-        JavaExecutor javaExecutor = null;
+        final JavaExecutor javaExecutor = null;
         try {
             // Prepare the source.
             final URL inputUrl = new URL(testFileURL);
-            System.out.println( "** " + inputUrl + " **");
-            JavaTextFileSource source = new JavaTextFileSource(
-                    inputUrl.toString() );
+            System.out.println("** " + inputUrl + " **");
+            final JavaTextFileSource source = new JavaTextFileSource(
+                    inputUrl.toString());
 
             // Execute.
-            JavaChannelInstance[] inputs = new JavaChannelInstance[]{};
-            JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
+            final JavaChannelInstance[] inputs = new JavaChannelInstance[] {};
+            final JavaChannelInstance[] outputs = new JavaChannelInstance[] { createStreamChannelInstance() };
             evaluate(source, inputs, outputs);
 
             // Verify the outcome.
             final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
             assertEquals(225, result.size());
         } finally {
-            if (javaExecutor != null) javaExecutor.dispose();
+            if (javaExecutor != null)
+                javaExecutor.dispose();
         }
     }
 
-    @Disabled
     @Test
-    void testReadRemoteFileHTTPS() throws IOException, URISyntaxException {
-        final String testFileURL = "https://kamir.solidcommunity.net/public/ecolytiq-sustainability-profile/profile2.ttl";
+    void testReadRemoteFileHTTPS() throws Exception {
+        final String testFileURL = "https://downloads.apache.org/incubator/wayang/1.0.0/RELEASE_NOTES";
 
-        JavaExecutor javaExecutor = null;
-        try {
-            // Prepare the source.
-            final URL inputUrl = new URL(testFileURL);
-            System.out.println( "*** " + inputUrl + " ***");
-            JavaTextFileSource source = new JavaTextFileSource(
-                    inputUrl.toString() );
+        // Prepare the source.
+        final URL inputUrl = new URL(testFileURL);
+        final JavaTextFileSource source = new JavaTextFileSource(inputUrl.toString());
 
-            // Execute.
-            JavaChannelInstance[] inputs = new JavaChannelInstance[]{};
-            JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-            evaluate(source, inputs, outputs);
+        // Execute.
+        final JavaChannelInstance[] inputs = new JavaChannelInstance[] {};
+        final JavaChannelInstance[] outputs = new JavaChannelInstance[] { createStreamChannelInstance() };
+        evaluate(source, inputs, outputs);
 
-            // Verify the outcome.
-            final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
-            assertEquals(23, result.size());
-        } finally {
-            if (javaExecutor != null) javaExecutor.dispose();
-        }
-
+        // Verify the outcome.
+        final List<String> result = outputs[0].<String>provideStream().toList();
+        assertEquals(64, result.size());
     }
 }
