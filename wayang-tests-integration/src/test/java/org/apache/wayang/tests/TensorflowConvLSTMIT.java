@@ -21,6 +21,7 @@ package org.apache.wayang.tests;
 import org.apache.wayang.api.DLTrainingDataQuantaBuilder;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.api.LoadCollectionDataQuantaBuilder;
+import org.apache.wayang.api.PredictDataQuantaBuilder;
 import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.basic.model.op.*;
 import org.apache.wayang.basic.model.op.nn.*;
@@ -32,22 +33,19 @@ import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Test the Tensorflow ConvLSTM integration with Wayang.
  */
 public class TensorflowConvLSTMIT {
-    private int inputDim = 1;
+    private int inputDim = 2;
     private int hiddenDim = 64;
-    private int outputDim = 1;
-    private int inputFrames = 8;
+    private int outputDim = 2;
+    private int inputFrames = 6;
     private int outputFrames = 3;
-    private int height = 16;
-    private int width = 16;
+    private int height = 17;
+    private int width = 29;
 
     private int batchSize = 16;
 
@@ -59,8 +57,8 @@ public class TensorflowConvLSTMIT {
         int[] stride = new int[]{1};
         int numLayers = 3;
 
-        Input features = new Input(new int[]{batchSize, inputFrames, inputDim, height, width}, Input.Type.FEATURES);
-        Input labels = new Input(new int[]{batchSize, outputFrames, outputDim, height, width}, Input.Type.LABEL);
+        Input features = new Input(new int[]{-1, inputFrames, inputDim, height, width}, Input.Type.FEATURES);
+        Input labels = new Input(new int[]{-1, outputFrames, outputDim, height, width}, Input.Type.LABEL);
 
         int[] perm = new int[]{0, 2, 1, 3, 4};
 
@@ -79,8 +77,8 @@ public class TensorflowConvLSTMIT {
             ;
         }
         builder.layer(new Slice(new int[][]{{0, -1}, {inputFrames - outputFrames, -1}, {0, -1}, {0, -1}, {0, -1}})) // Input only the last outputFrames from ConvLSTM
-                .layer(new Reshape(new int[]{batchSize, -1, height, width}))
-                .layer(new Conv2D(hiddenDim * outputFrames, outputFrames, kernelSize, stride, "SAME", true))
+                .layer(new Reshape(new int[]{-1, hiddenDim * outputFrames, height, width}))
+                .layer(new Conv2D(hiddenDim * outputFrames, outputDim * outputFrames, kernelSize, stride, "SAME", true))
 //                .layer(new Transpose(perm)) // change channels and timeStep
 //                .layer(new Conv3D(hiddenDim, outputDim, new int[]{3, 3, 3}, stride, "SAME", true)) // FIXME: The gradient of conv3D cannot be calculated, use conv2D as a substitute.
 //                .layer(new Transpose(perm)) // change channels and timeStep
@@ -110,13 +108,17 @@ public class TensorflowConvLSTMIT {
         JavaPlanBuilder plan = new JavaPlanBuilder(wayangContext);
 
         LoadCollectionDataQuantaBuilder<float[][][][]> X = plan.loadCollection(mockData(inputFrames, inputDim));
+        LoadCollectionDataQuantaBuilder<float[][][][]> XTest = plan.loadCollection(mockData(inputFrames, inputDim));
         LoadCollectionDataQuantaBuilder<float[][][][]> Y = plan.loadCollection(mockData(outputFrames, outputDim));
 
         DLTrainingDataQuantaBuilder<float[][][][], float[][][][]> trainingOperator = X.dlTraining(Y, model, option);
 
-        Collection<DLModel> trainedModel = trainingOperator.collect();
+//        Collection<DLModel> trainedModel = trainingOperator.collect();
+//        System.out.println(trainedModel);
 
-        System.out.println(trainedModel);
+        PredictDataQuantaBuilder<float[][][][], float[][][][]> predictOperator = trainingOperator.predict(XTest, float[][][][].class);
+        Collection<float[][][][]> predicted = predictOperator.collect();
+        System.out.println(Arrays.deepToString(predicted.iterator().next()));
     }
 
     /**

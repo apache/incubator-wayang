@@ -24,6 +24,7 @@ import org.tensorflow.Operand;
 import org.tensorflow.Output;
 import org.tensorflow.op.Ops;
 import org.tensorflow.op.core.Stack;
+import org.tensorflow.types.TInt32;
 import org.tensorflow.types.family.TNumber;
 
 import java.util.ArrayList;
@@ -45,15 +46,21 @@ public class TensorflowConvLSTM2D<T extends TNumber> {
 
     public Operand<?> call(Operand<T> input) {
         // input: [batch_size, time_step, input_dim, height, width]
-        long batchSize = input.shape().get(0);
-        long seqLen = input.shape().get(1);
-        long height = input.shape().get(3);
-        long width = input.shape().get(4);
+        Operand<TInt32> shape = tf.concat(
+                Arrays.asList(
+                        tf.shape.size(tf.shape(input), tf.constant(0)), // batch_size
+                        tf.array(op.getHiddenDim()), // hidden_dim
+                        tf.shape.size(tf.shape(input), tf.constant(3)), // height
+                        tf.shape.size(tf.shape(input), tf.constant(4)) // width
+                ),
+                tf.constant(0)
+        );
 
-        Operand<T> h = tf.zeros(tf.array(batchSize, op.getHiddenDim(), height, width), tClass);
-        Operand<T> c = tf.zeros(tf.array(batchSize, op.getHiddenDim(), height, width), tClass);
+        Operand<T> h = tf.zeros(shape, tClass);
+        Operand<T> c = tf.zeros(shape, tClass);
 
         String outKey = op.getOutput();
+        long seqLen = input.shape().get(1);
         List<Operand<T>> outputs = new ArrayList<>((int) seqLen);
 
         for (long t = 0; t < seqLen; t++) {
