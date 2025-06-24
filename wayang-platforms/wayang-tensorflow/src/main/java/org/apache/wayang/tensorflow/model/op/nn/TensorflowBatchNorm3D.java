@@ -23,8 +23,12 @@ import org.apache.wayang.basic.model.op.nn.BatchNorm3D;
 import org.tensorflow.Graph;
 import org.tensorflow.Operand;
 import org.tensorflow.op.Ops;
+import org.tensorflow.op.core.Shape;
 import org.tensorflow.types.TBool;
+import org.tensorflow.types.TInt32;
 import org.tensorflow.types.family.TNumber;
+
+import java.util.Arrays;
 
 public class TensorflowBatchNorm3D<T extends TNumber> {
     private final Ops tf;
@@ -44,9 +48,18 @@ public class TensorflowBatchNorm3D<T extends TNumber> {
     }
 
     public Operand<T> call(Operand<T> input, Operand<TBool> trainingMode) {
-        long[] s = input.shape().asArray(); // N, C, D, H, W
-        Operand<T> input2D = tf.reshape(input, tf.array(s[0], s[1], s[2], -1)); // N, C, D, H * W
+        // input: N, C, D, H, W
+        Shape<TInt32> inputShape = tf.shape(input);
+        Operand<TInt32> square = tf.math.mul(tf.shape.size(inputShape, tf.constant(3)), tf.shape.size(inputShape, tf.constant(4)));
+        Operand<TInt32> newShape = tf.concat(
+                Arrays.asList(
+                        tf.shape.take(inputShape, tf.constant(3)),
+                        square
+                ),
+                tf.constant(0)
+        ); // N, C, D, H * W
+        Operand<T> input2D = tf.reshape(input, newShape);
         Operand<T> output = batchNorm2D.call(input2D, trainingMode);
-        return tf.withName(op.getName()).reshape(output, tf.constant(s));
+        return tf.withName(op.getName()).reshape(output, inputShape);
     }
 }
