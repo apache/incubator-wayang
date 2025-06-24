@@ -20,16 +20,15 @@ package org.apache.wayang.java.operators;
 
 import org.apache.wayang.java.channels.JavaChannelInstance;
 import org.apache.wayang.java.execution.JavaExecutor;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -57,29 +56,23 @@ class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
     }
 
     @Test
-    void testReadLocalFile() throws IOException, URISyntaxException {
+    void testReadLocalFile() {
         final String testFileName = "/banking-tx-small.csv";
 
-        final JavaExecutor javaExecutor = null;
-        try {
-            // Prepare the source.
-            final URL inputUrl = this.getClass().getResource(testFileName);
-            System.out.println("* " + inputUrl + " *");
-            final JavaTextFileSource source = new JavaTextFileSource(
-                    inputUrl.toString());
+        // Prepare the source.
+        final URL inputUrl = this.getClass().getResource(testFileName);
+        System.out.println("* " + inputUrl + " *");
+        final JavaTextFileSource source = new JavaTextFileSource(
+                inputUrl.toString());
 
-            // Execute.
-            final JavaChannelInstance[] inputs = new JavaChannelInstance[] {};
-            final JavaChannelInstance[] outputs = new JavaChannelInstance[] { createStreamChannelInstance() };
-            evaluate(source, inputs, outputs);
+        // Execute.
+        final JavaChannelInstance[] inputs = new JavaChannelInstance[] {};
+        final JavaChannelInstance[] outputs = new JavaChannelInstance[] { createStreamChannelInstance() };
+        evaluate(source, inputs, outputs);
 
-            // Verify the outcome.
-            final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
-            assertEquals(63, result.size());
-        } finally {
-            if (javaExecutor != null)
-                javaExecutor.dispose();
-        }
+        // Verify the outcome.
+        final List<String> result = outputs[0].<String>provideStream().toList();
+        assertEquals(63, result.size());
     }
 
     /**
@@ -88,9 +81,9 @@ class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
      * With Python 3: python -m http.server
      * With Python 2: python -m SimpleHTTPServer
      */
-    @Disabled
+    @Disabled 
     @Test
-    void testReadRemoteFileHTTP() throws IOException, URISyntaxException {
+    void testReadRemoteFileHTTP() throws Exception {
         final String testFileURL = "http://localhost:8000/LICENSE";
 
         final JavaExecutor javaExecutor = null;
@@ -107,7 +100,7 @@ class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
             evaluate(source, inputs, outputs);
 
             // Verify the outcome.
-            final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
+            final List<String> result = outputs[0].<String>provideStream().toList();
             assertEquals(225, result.size());
         } finally {
             if (javaExecutor != null)
