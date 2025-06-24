@@ -1,4 +1,44 @@
 ==============================================================
+Apache Wayang (incubating) 1.1.0
+==============================================================
+
+This is a minor release of Apache Wayang (incubating).
+Based on this release the project aims to move out of incubation.
+
+This release supports the following new features:
+
+general:
+- migration to Java 17
+- migration to junit5 for tests
+- better explain & json utils
+
+api-sql:
+- sort operator
+- cross joins
+- joins with multiple equals conditions
+- search arguments in filter WHERE clauses
+- '+/-' algebra in filter statements
+- calcite rules for more optimized SQL trees
+- better support for sql-types for java udfs
+- better serializability for java-based platforms
+
+wayang-basic:
+- Parquet source operator
+- LinearSVC operator
+- LogisticRegression operator
+- DecisionTreeRegression operator with time series
+- GoogleCloudStorageSource operator
+- NN Batch normalisation
+- NN Convolutions 
+- NN MSE loss
+
+api-python:
+- Parquet source operator
+
+wayang-api-scala-java:
+- api for deep learning
+
+==============================================================
 Apache Wayang (incubating) 1.0.0
 ==============================================================
 
