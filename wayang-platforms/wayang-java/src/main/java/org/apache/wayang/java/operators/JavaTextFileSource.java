@@ -30,8 +30,6 @@ import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
@@ -54,6 +52,46 @@ import org.slf4j.LoggerFactory;
 public class JavaTextFileSource extends TextFileSource implements JavaExecutionOperator {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaTextFileSource.class);
+
+    /**
+     * @return Stream<String> from the provided URL
+     */
+    public static Stream<String> streamFromURL(final URL sourceUrl) {
+        try {
+            final HttpURLConnection connection = (HttpURLConnection) sourceUrl.openConnection();
+            connection.setRequestMethod("GET");
+
+            // Check if the response code indicates success (HTTP status code 200)
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                logger.info(">>> Ready to stream the data from URL: " + sourceUrl.toString());
+                // Read the data line by line and process it in the StreamChannel
+                final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                return reader.lines().onClose(() -> {
+                    try {
+                        connection.disconnect();
+                        reader.close();
+                    } catch (final IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            } else {
+                throw new WayangException("Connection with Http failed");
+            }
+        } catch (final Exception e) {
+            throw new WayangException(e);
+        }
+    }
+
+    /**
+     * @return Stream<String> from the file system
+     */
+    public static Stream<String> streamFromFs(final String path) {
+        try {
+            return Files.lines(Path.of(URI.create(path)));
+        } catch (final Exception e) {
+            throw new WayangException(e);
+        }
+    }
 
     public JavaTextFileSource(final String inputUrl) {
         super(inputUrl);
@@ -90,8 +128,8 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         final String protocol = sourceUrl.getProtocol();
 
         final Stream<String> lines = (protocol.startsWith("https") || protocol.startsWith("http"))
-                ? this.streamFromURL(sourceUrl)
-                : this.streamFromFs(urlStr);
+                ? JavaTextFileSource.streamFromURL(sourceUrl)
+                : JavaTextFileSource.streamFromFs(urlStr);
 
         ((StreamChannel.Instance) outputs[0]).accept(lines);
 
@@ -106,45 +144,6 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         outputs[0].getLineage().addPredecessor(mainLineageNode);
 
         return prepareLineageNode.collectAndMark();
-    }
-
-    /**
-     * @return Stream<String> from the provided URL
-     */
-    public static Stream<String> streamFromURL(final URL sourceUrl) {
-        try {
-            final HttpURLConnection connection = (HttpURLConnection) sourceUrl.openConnection();
-            connection.setRequestMethod("GET");
-
-            // Check if the response code indicates success (HTTP status code 200)
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                logger.info(">>> Ready to stream the data from URL: " + sourceUrl.toString());
-                // Read the data line by line and process it in the StreamChannel
-                final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                return reader.lines().onClose(() -> {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                throw new WayangException("Connection with Http failed");
-            }
-        } catch (final Exception e) {
-            throw new WayangException(e);
-        }
-    }
-
-    /**
-     * @return Stream<String> from the file system
-     */
-    public static Stream<String> streamFromFs(final String path) {
-        try {
-            return Files.lines(Path.of(URI.create(path)));
-        } catch (final Exception e) {
-            throw new WayangException(e);
-        }
     }
 
     @Override
