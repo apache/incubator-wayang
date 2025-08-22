@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>wayang-api</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.1.0</version>
 
     <name>Wayang API</name>
     <description>
