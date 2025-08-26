@@ -284,56 +284,6 @@
             </build>
         </profile>
 
-        <!-- Used to build Java 11+ -->
-        <profile>
-            <id>java17</id>
-            <activation>
-                <jdk>17</jdk>
-            </activation>
-            <properties>
-                <java.version>17</java.version>
-                <source.level>17</source.level>
-                <maven.compiler.source>17</maven.compiler.source>
-                <maven.compiler.target>17</maven.compiler.target>
-                <maven.compiler.release>17</maven.compiler.release>
-                <jaxb.version>2.2.11</jaxb.version>
-                <java-activation.version>1.1.1</java-activation.version>
-                <javax-annotation-api>1.3.2</javax-annotation-api>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>enforce-maven-version</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireJavaVersion>
-                                            <version>17</version>
-                                        </requireJavaVersion>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <configuration>
-                            <source>17</source>
-                            <detectJavaApiLink>false</detectJavaApiLink>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-
-        </profile>
-
         <!--
             Profile to be run before a release is executed, currently does the following:
 
