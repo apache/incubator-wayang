@@ -109,7 +109,7 @@ class PywyPlan:
         json_data["operators"] = []
 
         nodes = []
-        pipeline = list()
+        pipeline = []
         self.graph.traversal(self.graph.starting_nodes, lambda x, parent: nodes.append(x))
         id_table = {(obj.current[0]): index + 1 for index, obj in enumerate(nodes)}
         serializer = JSONSerializer(id_table)
@@ -123,10 +123,14 @@ class PywyPlan:
                     json_data["operators"].append(serializer.serialize_pipeline(pipeline))
 
                 json_data["operators"].append(serializer.serialize(operator))
-                pipeline = list()
+                pipeline = []
 
-        # This should either be configurable on the WayangContext or env
-        url = 'http://localhost:8080/wayang-api-json/submit-plan/json'
+        port = self.configuration.get_property("wayang.api.python.port")
+
+        if port is None: 
+            port = 8080
+
+        url = f'http://localhost:{port}/wayang-api-json/submit-plan/json'
         headers = {'Content-type': 'application/json'}
         json_body = json.dumps(json_data)
         print(json_body)
