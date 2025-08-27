@@ -15,7 +15,7 @@
 #  limitations under the License.
 #
 
-from typing import Dict, Set, List, Optional, cast
+from typing import Set, List, Optional, cast
 
 from pywy.core.core import Plugin, PywyPlan
 from pywy.operators.base import PO_T
@@ -24,18 +24,7 @@ from pywy.operators import *
 from pywy.basic.data.record import Record
 from pywy.basic.model.option import Option
 from pywy.basic.model.models import (Model, LogisticRegression, DecisionTreeRegression, LinearSVC)
-
-
-
-class Configuration:
-    entries: Dict[str, str]
-
-    def __init__(self):
-        self.entries = {}
-
-    def set_property(self, key: str, value: str):
-        self.entries[key] = value
-
+from pywy.configuration import Configuration
 
 class WayangContext:
     """
@@ -242,7 +231,7 @@ class DataQuanta(GenericTco):
                 )
             )
         ]
-        PywyPlan(self.context.plugins, self.context.configuration.entries, last).execute()
+        PywyPlan(self.context.plugins, self.context.configuration, last).execute()
 
     def _connect(self, op: PO_T, port_op: int = 0) -> PywyOperator:
         self.operator.connect(0, op, port_op)

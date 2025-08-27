@@ -18,6 +18,7 @@ from typing import Set, Iterable, Dict
 import json
 import requests
 
+from pywy.configuration import Configuration
 from pywy.core.platform import Platform
 from pywy.core.serializer import JSONSerializer
 from pywy.graph.graph import WayangGraph
@@ -68,7 +69,7 @@ class PywyPlan:
     """
     graph: WayangGraph
 
-    def __init__(self, plugins: Set[Plugin], configuration: Dict[str, str], sinks: Iterable[SinkOperator]):
+    def __init__(self, plugins: Set[Plugin], configuration: Configuration, sinks: Iterable[SinkOperator]):
         """basic Constructor of PywyPlan
 
         this constructor set the plugins and sinks element, and it prepares
@@ -100,7 +101,7 @@ class PywyPlan:
         context = {}
         context["origin"] = "python"
         context["platforms"] = {}
-        context["configuration"] = self.configuration
+        context["configuration"] = self.configuration.entries
 
         if len(self.plugins) > 0:
             context["platforms"] = list(map(lambda pl: next(iter(pl.platforms)).name, self.plugins))
@@ -125,10 +126,7 @@ class PywyPlan:
                 json_data["operators"].append(serializer.serialize(operator))
                 pipeline = []
 
-        port = self.configuration.get_property("wayang.api.python.port")
-
-        if port is None: 
-            port = 8080
+        port = self.configuration.get_property("wayang.api.python.port") or 8080
 
         url = f'http://localhost:{port}/wayang-api-json/submit-plan/json'
         headers = {'Content-type': 'application/json'}

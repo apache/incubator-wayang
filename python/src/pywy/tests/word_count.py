@@ -16,9 +16,8 @@
 #
 
 import unittest
-from typing import Tuple, Callable, Iterable
+from typing import Iterable
 from pywy.dataquanta import WayangContext, Configuration
-from unittest.mock import Mock
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
 

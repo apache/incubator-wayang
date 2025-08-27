@@ -16,7 +16,7 @@
 #
 
 import re
-from ast import literal_eval
+
 from inspect import signature
 from typing import (
     Generic, TypeVar, Callable, Hashable, Iterable, Type, Union, Tuple, get_args, get_origin, List, Dict, Any
