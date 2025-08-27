@@ -75,6 +75,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Properties;
 import java.util.Random;
@@ -776,6 +777,20 @@ public class Configuration implements Serializable {
             throw new WayangException(String.format("No value for \"%s\".", key));
         }
         return optionalLongProperty.getAsLong();
+    }
+
+    
+    public OptionalInt getOptionalIntProperty(String key) {
+        final Optional<String> intValue = this.properties.optionallyProvideFor(key);
+        if (intValue.isPresent()) {
+            return OptionalInt.of(Integer.valueOf(intValue.get()));
+        } else {
+            return OptionalInt.empty();
+        }
+    }
+
+    public int getIntProperty(String key) {
+        return getOptionalIntProperty(key).orElseThrow(() -> new WayangException(String.format("No value for \"%s\".", key)));
     }
 
     public long getLongProperty(String key, long fallback) {
