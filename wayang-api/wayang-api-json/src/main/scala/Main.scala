@@ -70,5 +70,8 @@ object Main extends ZIOAppDefault {
   val app = Routes(drawRoute, jsonRoute).toHttpApp
 
   // Run it like any simple app
-  override val run = Server.serve(app).provide(Server.default)
+  def run = for {
+    args <- getArgs
+    _ <- Server.serve(app).provide(Server.defaultWithPort((args.headOption getOrElse "8080" toInt)))
+  } yield ()
 }
