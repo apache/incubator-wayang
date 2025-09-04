@@ -24,57 +24,23 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class ReaderIterator <Output> implements Iterator<Output> {
+import org.apache.wayang.core.api.exception.WayangException;
+
+public class ReaderIterator<Output> implements Iterator<Output> {
 
     private Output nextObj = null;
     private boolean eos = false;
-    private boolean fst = false;
-    private DataInputStream stream = null;
+    private final DataInputStream stream;
 
-    public ReaderIterator(DataInputStream stream) {
-
+    public ReaderIterator(final DataInputStream stream) {
         this.stream = stream;
-        this.eos = false;
-        this.nextObj = null;
-    }
-
-    private Output read() {
-
-        int END_OF_DATA_SECTION = -1;
-
-        try {
-            int length = this.stream.readInt();
-
-            if (length > 0) {
-                byte[] obj = new byte[length];
-                stream.readFully(obj);
-                String s = new String(obj, StandardCharsets.UTF_8);
-                Output it = (Output) s;
-                return it;
-            } else if (length == END_OF_DATA_SECTION) {
-                this.eos = true;
-                return null;
-            }
-        } catch (IOException e) {
-            //e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-        return null;
     }
 
     @Override
     public boolean hasNext() {
 
-        if(!this.eos){
+        if (!this.eos) {
             nextObj = read();
-
-            //To work with null values it is suppose to use -5
-            /*
-            if(this.nextObj == null){
-                System.out.println("HAS NEXT IS NULL");
-                return false;
-            }*/
-
             return !this.eos;
         }
 
@@ -84,12 +50,34 @@ public class ReaderIterator <Output> implements Iterator<Output> {
     @Override
     public Output next() {
 
-        if(!this.eos){
-            Output obj = nextObj;
+        if (!this.eos) {
+            final Output obj = nextObj;
             nextObj = null;
             return obj;
         }
 
         throw new NoSuchElementException();
+    }
+
+    private Output read() {
+
+        final int END_OF_DATA_SECTION = -1;
+
+        try {
+            final int length = this.stream.readInt();
+
+            if (length > 0) {
+                final byte[] obj = new byte[length];
+                stream.readFully(obj);
+                final String s = new String(obj, StandardCharsets.UTF_8);
+                return (Output) s;
+            } else if (length == END_OF_DATA_SECTION) {
+                this.eos = true;
+                return null;
+            }
+        } catch (final IOException e) {
+            throw new WayangException("ReaderIterator failed while reading element", e);
+        }
+        return null;
     }
 }

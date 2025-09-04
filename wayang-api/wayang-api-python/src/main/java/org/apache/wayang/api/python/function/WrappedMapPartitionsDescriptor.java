@@ -18,29 +18,39 @@
 
 package org.apache.wayang.api.python.function;
 
-import org.apache.wayang.core.function.MapPartitionsDescriptor;
 import org.apache.wayang.api.python.executor.PythonWorkerManager;
-import org.apache.wayang.core.function.FunctionDescriptor;
+import org.apache.wayang.core.function.MapPartitionsDescriptor;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.wayang.core.types.BasicDataUnitType;
 
 import com.google.protobuf.ByteString;
 
-public class WrappedMapPartitionsDescriptor<Input, Output> extends MapPartitionsDescriptor<Input, Output> {
+    public class WrappedMapPartitionsDescriptor<Input, Output> extends MapPartitionsDescriptor<Input, Output> {
 
     public WrappedMapPartitionsDescriptor(
-        final ByteString serializedUDF,
-        Class<Input> inputTypeClass,
-        Class<Output> outputTypeClass
-    ) {
-        super(
-            input -> {
-                final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
-                final Iterable<Output> output = manager.execute();
-                return output;
-            },
-            inputTypeClass,
-            outputTypeClass,
-            (ProbabilisticDoubleInterval) null
-        );
+            final ByteString serializedUDF,
+            final Class<Input> inputTypeClass,
+            final Class<Output> outputTypeClass) {
+        super(input -> {
+            final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
+            return manager.execute();
+        },
+                inputTypeClass,
+                outputTypeClass,
+                (ProbabilisticDoubleInterval) null);
+    }
+
+        public WrappedMapPartitionsDescriptor(
+            final ByteString serializedUDF,
+            final BasicDataUnitType<Input> inputTypeClass,
+            final BasicDataUnitType<Output> outputTypeClass) {
+        super(input -> {
+            final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
+            return manager.execute();
+        },
+                inputTypeClass,
+                outputTypeClass,
+                (ProbabilisticDoubleInterval) null,
+                null);
     }
 }

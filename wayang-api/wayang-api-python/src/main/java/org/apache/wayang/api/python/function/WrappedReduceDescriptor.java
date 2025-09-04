@@ -18,14 +18,10 @@
 
 package org.apache.wayang.api.python.function;
 
-import org.apache.wayang.core.function.MapPartitionsDescriptor;
-import org.apache.wayang.core.function.ReduceDescriptor;
-
 import java.util.ArrayList;
 
 import org.apache.wayang.api.python.executor.PythonWorkerManager;
-import org.apache.wayang.core.function.FunctionDescriptor;
-import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.types.BasicDataUnitType;
 import org.apache.wayang.core.types.DataUnitGroupType;
 
@@ -34,21 +30,18 @@ import com.google.protobuf.ByteString;
 public class WrappedReduceDescriptor<Type> extends ReduceDescriptor<Type> {
 
     public WrappedReduceDescriptor(
-        final ByteString serializedUDF,
-        DataUnitGroupType<Type> inputTypeClass,
-        BasicDataUnitType<Type> outputTypeClass
-    ) {
-        super(
-            (a, b) -> {
-                final ArrayList<Type> input = new ArrayList<>();
-                input.add(a);
-                input.add(b);
-                final PythonWorkerManager<Type, Type> manager = new PythonWorkerManager<>(serializedUDF, input);
-                final Iterable<Type> output = manager.execute();
-                return output.iterator().next();
-            },
-            inputTypeClass,
-            outputTypeClass
-        );
+            final ByteString serializedUDF,
+            final DataUnitGroupType<Type> inputTypeClass,
+            final BasicDataUnitType<Type> outputTypeClass) {
+        super((a, b) -> {
+            final ArrayList<Type> input = new ArrayList<>();
+            input.add(a);
+            input.add(b);
+            final PythonWorkerManager<Type, Type> manager = new PythonWorkerManager<>(serializedUDF, input);
+            final Iterable<Type> output = manager.execute();
+            return output.iterator().next();
+        },
+                inputTypeClass,
+                outputTypeClass);
     }
 }

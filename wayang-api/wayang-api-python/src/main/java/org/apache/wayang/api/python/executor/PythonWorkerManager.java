@@ -18,39 +18,37 @@
 
 package org.apache.wayang.api.python.executor;
 
-import com.google.protobuf.ByteString;
 import org.apache.wayang.core.api.exception.WayangException;
+
+import com.google.protobuf.ByteString;
 
 public class PythonWorkerManager<Input, Output> {
 
-    private ByteString serializedUDF;
-    private Iterable<Input> inputIterator;
+    private final ByteString serializedUDF;
+    private final Iterable<Input> inputIterator;
 
     public PythonWorkerManager(
-            ByteString serializedUDF,
-            Iterable<Input> input
-    ){
+            final ByteString serializedUDF,
+            final Iterable<Input> input) {
         this.serializedUDF = serializedUDF;
         this.inputIterator = input;
     }
 
-    public Iterable<Output> execute(){
-        PythonProcessCaller worker = new PythonProcessCaller(this.serializedUDF);
+    public Iterable<Output> execute() {
+        final PythonProcessCaller worker = new PythonProcessCaller();
 
-        if(worker.isReady()){
-            ProcessFeeder<Input, Output> feed = new ProcessFeeder<>(
-                worker.getSocket(),
-                this.serializedUDF,
-                this.inputIterator
-            );
+        if (worker.isReady()) {
+            final ProcessFeeder<Input, Output> feed = new ProcessFeeder<>(
+                    worker.getSocket(),
+                    this.serializedUDF,
+                    this.inputIterator);
             feed.send();
-            ProcessReceiver<Output> r = new ProcessReceiver<>(worker.getSocket());
+            final ProcessReceiver<Output> r = new ProcessReceiver<>(worker.getSocket());
             return r.getIterable();
-        } else{
-            int port = worker.getSocket().getLocalPort();
+        } else {
+            final int port = worker.getSocket().getLocalPort();
             worker.close();
             throw new WayangException("Not possible to work with the Socket provided on port: " + port);
         }
-
     }
 }

@@ -18,35 +18,32 @@
 
 package org.apache.wayang.api.python.function;
 
+import java.util.ArrayList;
+
+import org.apache.wayang.api.python.executor.PythonWorkerManager;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.types.BasicDataUnitType;
-import org.apache.wayang.api.python.executor.PythonWorkerManager;
 
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 
 public class WrappedTransformationDescriptor<Input, Output> extends TransformationDescriptor<Input, Output> {
 
     public WrappedTransformationDescriptor(
-        final ByteString serializedUDF,
-        BasicDataUnitType<Input> inputTypeClass,
-        BasicDataUnitType<Output> outputTypeClass
-    ) {
-        super(
-            (item) -> {
-                final ArrayList<Input> input = new ArrayList<>();
-                input.add(item);
-                final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
-                final Iterable<Output> output = manager.execute();
+            final ByteString serializedUDF,
+            final BasicDataUnitType<Input> inputTypeClass,
+            final BasicDataUnitType<Output> outputTypeClass) {
+        super(item -> {
+            final ArrayList<Input> input = new ArrayList<>();
+            input.add(item);
+            final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
+            final Iterable<Output> output = manager.execute();
 
-                if (output.iterator().hasNext()) {
-                    return output.iterator().next();
-                }
-
-                return null;
-            },
-            inputTypeClass,
-            outputTypeClass
-        );
+            if (output.iterator().hasNext()) {
+                return output.iterator().next();
+            }
+            return null;
+        },
+                inputTypeClass,
+                outputTypeClass);
     }
 }
