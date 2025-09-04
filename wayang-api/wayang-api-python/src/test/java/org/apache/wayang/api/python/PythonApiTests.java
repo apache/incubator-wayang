@@ -18,6 +18,7 @@
 package org.apache.wayang.api.python;
 
 import java.util.List;
+import java.nio.file.Paths;
 
 import org.apache.wayang.api.python.executor.PythonProcessCaller;
 import org.apache.wayang.api.python.function.WrappedMapPartitionsDescriptor;
@@ -37,10 +38,9 @@ class PythonApiTests {
     @Test
     void processCallerSocketTest() {
         final Configuration configuration = new Configuration();
-
-        configuration.setProperty("wayang.api.python.worker", "/var/www/html/python/src/pywy/execution/worker.py");
-        configuration.setProperty("wayang.api.python.path", "python3");
-        configuration.setProperty("wayang.api.python.worker", "/usr/local/lib/python3.8/dist-packages");
+        final String path = Paths.get("python/worker.py").toString();
+        
+        configuration.setProperty("wayang.api.python.worker", path);
 
         final PythonProcessCaller processCaller = new PythonProcessCaller();
 
@@ -65,7 +65,7 @@ class PythonApiTests {
 
         final Iterable<String> input = List.of("wayang");
 
-        descriptor.getJavaImplementation().apply(input);
+        assertTrue(descriptor.getJavaImplementation().apply(input) != null);
     }
 
     @Test
