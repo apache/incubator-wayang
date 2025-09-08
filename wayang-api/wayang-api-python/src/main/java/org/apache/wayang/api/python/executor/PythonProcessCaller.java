@@ -43,7 +43,9 @@ public class PythonProcessCaller {
 
         // TODO create documentation to how to the configuration in the code
         this.configuration = new Configuration();
-        this.configuration.load(ReflectionUtils.loadResource("wayang-api-python-defaults.properties"));
+        System.out.println(this.configuration.getStringProperty("wayang.api.python.worker"));
+        //this.configuration.load(ReflectionUtils.loadResource("wayang-api-python-defaults.properties"));
+        System.out.println(this.configuration.getStringProperty("wayang.api.python.worker"));
         this.ready = false;
         final byte[] addr = new byte[4];
         addr[0] = 127;
