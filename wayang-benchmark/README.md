@@ -17,7 +17,7 @@ specific language governing permissions and limitations
 under the License.
 --->
 
-# Apache Wayang (incubating) Benchmarks <img align="right" width="128px" src="https://wayang.apache.org/assets/img/logo/logo_400x160.png" alt="Wayang logo">
+# Apache Wayang (incubating) Benchmarks <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang logo">
 
 This repository provides example applications and further benchmarking tools to evaluate and get started with [Apache Wayang (incubating)](https://wayang.apache.org).
 
