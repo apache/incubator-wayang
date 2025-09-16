@@ -45,7 +45,7 @@ So if you don’t already have one, you should create a .m2 directory in your us
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.1-SNAPSHOT http://maven.apache.org/xsd/settings-1.1.1-SNAPSHOT.xsd" xmlns="http://maven.apache.org/SETTINGS/1.1.1-SNAPSHOT"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <servers>
     <!-- Apache Repo Settings -->
