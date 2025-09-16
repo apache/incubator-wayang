@@ -18,23 +18,24 @@
 
 package org.apache.wayang.java.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.channels.JavaChannelInstance;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test suite for the {@link JavaCollectionSource}.
  */
-public class JavaCollectionSourceTest extends JavaExecutionOperatorTestBase {
+class JavaCollectionSourceTest extends JavaExecutionOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         Set<Integer> inputValues = new HashSet<>(Arrays.asList(1, 2, 3));
         JavaCollectionSource collectionSource = new JavaCollectionSource(
                 inputValues,
@@ -45,7 +46,7 @@ public class JavaCollectionSourceTest extends JavaExecutionOperatorTestBase {
         evaluate(collectionSource, inputs, outputs);
 
         final Set<Object> outputValues = outputs[0].provideStream().collect(Collectors.toSet());
-        Assert.assertEquals(outputValues, inputValues);
+        assertEquals(outputValues, inputValues);
     }
 
 

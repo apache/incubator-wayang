@@ -32,6 +32,7 @@ public class Mappings {
     public static Collection<Mapping> BASIC_MAPPINGS = Arrays.asList(
             new TextFileSourceMapping(),
             new TextFileSinkMapping(),
+            new ParquetSourceMapping(),
             new ObjectFileSourceMapping(),
             new ObjectFileSinkMapping(),
             new MapMapping(),
@@ -58,7 +59,10 @@ public class Mappings {
             new SampleMapping(),
             new ZipWithIdMapping(),
             new KafkaTopicSourceMapping(),
-            new KafkaTopicSinkMapping()
+            new KafkaTopicSinkMapping(),
+            new AmazonS3SourceMapping(),
+            new GoogleCloudStorageSourceMapping(),
+            new AzureBlobStorageSourceMapping()
     );
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(

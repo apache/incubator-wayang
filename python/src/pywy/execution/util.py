@@ -23,4 +23,3 @@ class SpecialLengths(object):
     END_OF_STREAM = -4
     NULL = -5
     START_ARROW_STREAM = -6
-

@@ -27,7 +27,8 @@ import java.util.{Collection => JavaCollection}
 import org.apache.wayang.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaBuilderDecorator}
 import org.apache.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.apache.wayang.basic.data.{Record, Tuple2 => RT2}
-import org.apache.wayang.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator}
+import org.apache.wayang.basic.model.{DLModel, Model, LogisticRegressionModel,DecisionTreeRegressionModel}
+import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator, LinearSVCOperator}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
@@ -37,6 +38,9 @@ import org.apache.wayang.core.plan.wayangplan.{Operator, OutputSlot, UnarySource
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.types.DataSetType
 import org.apache.wayang.core.util.{Logging, ReflectionUtils, WayangCollections, Tuple => WayangTuple}
+import org.apache.wayang.core.plan.wayangplan.OutputSlot
+
+
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -272,6 +276,97 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
                          that: DataQuantaBuilder[_, ThatOut],
                          thatKeyUdf: SerializableFunction[ThatOut, Key]) =
     new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
+
+  /**
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.apache.wayang.basic.operators.DLTrainingOperator]].
+   *
+   * @param that       the other [[DataQuantaBuilder]] to join with
+   * @param model      model for the [[org.apache.wayang.basic.operators.DLTrainingOperator]]
+   * @param option     option for the [[org.apache.wayang.basic.operators.DLTrainingOperator]]
+   * @return a [[DLTrainingDataQuantaBuilder]]
+   */
+  def dlTraining[ThatOut](that: DataQuantaBuilder[_, ThatOut],
+                          model: DLModel,
+                          option: DLTrainingOperator.Option) =
+    new DLTrainingDataQuantaBuilder(this, that, model, option)
+
+
+  /**
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.apache.wayang.basic.operators.LogisticRegressionOperator]].
+   * This operator trains a logistic regression model using the provided features and labels.
+   *
+   * @param that          the [[DataQuantaBuilder]] containing the label values (0.0 or 1.0)
+   * @param fitIntercept  whether to include an intercept term in the model
+   * @return a [[LogisticRegressionDataQuantaBuilder]] for the trained [[LogisticRegressionModel]]
+   */
+  def trainLogisticRegression(that: DataQuantaBuilder[_, java.lang.Double], fitIntercept: Boolean = true): LogisticRegressionDataQuantaBuilder =
+    new LogisticRegressionDataQuantaBuilder(this.asInstanceOf[DataQuantaBuilder[_, Array[Double]]], that, fitIntercept)
+
+
+  /**
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[DecisionTreeRegressionOperator]].
+   * This operator trains a generic Decision Tree Regression model using input features and labels.
+   *
+   * @param that         the [[DataQuantaBuilder]] containing the label values
+   * @param maxDepth     the maximum depth of the decision tree
+   * @param minInstances the minimum number of instances per node in the tree
+   * @return a [[DataQuantaBuilder]] containing the predicted output values
+   */
+  def trainDecisionTreeRegression(
+                                   that: DataQuantaBuilder[_, java.lang.Double],
+                                   maxDepth: Int,
+                                   minInstances: Int
+                                 ): DataQuantaBuilder[_, DecisionTreeRegressionModel] =
+    new CustomOperatorDataQuantaBuilder[DecisionTreeRegressionModel](
+      new DecisionTreeRegressionOperator(maxDepth, minInstances),
+      0,
+      new DataQuantaBuilderCache,
+      this,
+      that
+    )
+
+  /**
+   * Feed the built [[DataQuanta]] of this and the given instance into a [[LinearSVCOperator]].
+   * This operator trains a linear support vector classification (SVM) model using input features and binary labels.
+   *
+   * @param that      the [[DataQuantaBuilder]] containing the label values
+   * @param maxIter   the maximum number of optimization iterations
+   * @param regParam  the regularization strength for the SVM model
+   * @return a [[DataQuantaBuilder]] containing the trained [[SVMModel]]
+   */
+  def trainLinearSVC(
+                      that: DataQuantaBuilder[_, java.lang.Double],
+                      maxIter: Int,
+                      regParam: Double
+                    ): DataQuantaBuilder[_, org.apache.wayang.basic.model.SVMModel] =
+    new CustomOperatorDataQuantaBuilder[org.apache.wayang.basic.model.SVMModel](
+      new LinearSVCOperator(maxIter, regParam),
+      0,
+      new DataQuantaBuilderCache,
+      this,
+      that
+    )
+
+
+
+
+
+
+
+  /**
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.apache.wayang.basic.operators.PredictOperator]].
+   *
+   * @param that       the other [[DataQuantaBuilder]] to join with
+   * @return a [[PredictDataQuantaBuilder]]
+   */
+  def predict[ThatOut, Result](that: DataQuantaBuilder[_, ThatOut], resultType: Class[Result]) =
+    new PredictDataQuantaBuilder(this.asInstanceOf[DataQuantaBuilder[_, Model]], that, resultType)
+
+
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
@@ -1337,6 +1432,53 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
 }
 
 /**
+ * [[DataQuantaBuilder]] implementation for [[org.apache.wayang.basic.operators.DLTrainingOperator]]s.
+ *
+ * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param model            model for the [[org.apache.wayang.basic.operators.DLTrainingOperator]]
+ * @param option           option for the [[org.apache.wayang.basic.operators.DLTrainingOperator]]
+ */
+class DLTrainingDataQuantaBuilder[In0, In1](inputDataQuanta0: DataQuantaBuilder[_, In0],
+                                        inputDataQuanta1: DataQuantaBuilder[_, In1],
+                                        model: DLModel,
+                                        option: DLTrainingOperator.Option)
+                                          (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[DLTrainingDataQuantaBuilder[In0, In1], DLModel] {
+
+  // Since we are currently not looking at type parameters, we can statically determine the output type.
+  locally {
+    this.outputTypeTrap.dataSetType = dataSetType[DLModel]
+  }
+
+  override protected def build =
+    inputDataQuanta0.dataQuanta()
+      .dlTrainingJava(model, option, inputDataQuanta1.dataQuanta())(inputDataQuanta1.classTag)
+}
+
+/**
+ * [[DataQuantaBuilder]] implementation for [[org.apache.wayang.basic.operators.PredictOperator]]s.
+ *
+ * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ */
+class PredictDataQuantaBuilder[In1, Out](inputDataQuanta0: DataQuantaBuilder[_, Model],
+                                         inputDataQuanta1: DataQuantaBuilder[_, In1],
+                                         outClass: Class[Out])
+                                         (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[PredictDataQuantaBuilder[In1, Out], Out] {
+
+  // Since we are currently not looking at type parameters, we can statically determine the output type.
+  locally {
+    this.outputTypeTrap.dataSetType = dataSetType[Out]
+  }
+
+  override protected def build =
+    inputDataQuanta0.dataQuanta().
+      predictJava(inputDataQuanta1.dataQuanta())(inputDataQuanta1.classTag, ClassTag.apply(outClass))
+}
+
+/**
   * [[DataQuantaBuilder]] implementation for [[org.apache.wayang.basic.operators.CoGroupOperator]]s.
   *
   * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
@@ -1692,6 +1834,33 @@ class FakeDataQuantaBuilder[T](_dataQuanta: DataQuanta[T])(implicit javaPlanBuil
     */
   override protected def build: DataQuanta[T] = _dataQuanta
 }
+
+/**
+ * [[DataQuantaBuilder]] implementation for [[org.apache.wayang.basic.operators.LogisticRegressionOperator]]s.
+ *
+ * @param inputDataQuanta0 [[DataQuantaBuilder]]  (features)
+ * @param inputDataQuanta1 [[DataQuantaBuilder]]  (labels)
+ */
+class LogisticRegressionDataQuantaBuilder(inputDataQuanta0: DataQuantaBuilder[_, Array[Double]],
+                                          inputDataQuanta1: DataQuantaBuilder[_, java.lang.Double],
+                                          fitIntercept: Boolean = true)
+                                         (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[LogisticRegressionDataQuantaBuilder, LogisticRegressionModel] {
+
+  locally {
+    this.outputTypeTrap.dataSetType = dataSetType[LogisticRegressionModel]
+  }
+
+  override protected def build: DataQuanta[LogisticRegressionModel] =
+    inputDataQuanta0
+      .dataQuanta()
+      .trainLogisticRegression(inputDataQuanta1.dataQuanta(), fitIntercept)
+
+
+}
+
+
+
 
 /**
   * This is not an actual [[DataQuantaBuilder]] but rather decorates such a [[DataQuantaBuilder]] with a key.

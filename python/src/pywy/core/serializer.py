@@ -30,6 +30,7 @@ from pywy.graph.types import WGraphOfVec, NodeOperator, NodeVec
 from pywy.types import get_java_type, NDimArray, ndim_from_type
 from pywy.operators import SinkOperator, UnaryToUnaryOperator, SourceUnaryOperator
 
+
 class JSONSerializer:
     id_table: Iterable[int]
 
@@ -53,38 +54,42 @@ class JSONSerializer:
 
         json_operator["data"] = {}
 
-        if hasattr(operator, "input_type"):
-            if operator.input_type is not None:
-                json_operator["data"]["inputType"] = ndim_from_type(operator.input_type).to_json()
-        if hasattr(operator, "output_type"):
-            if operator.output_type is not None:
-                json_operator["data"]["outputType"] = ndim_from_type(operator.output_type).to_json()
+        if hasattr(operator, "input_type") and operator.input_type is not None:
+            json_operator["data"]["inputType"] = ndim_from_type(operator.input_type).to_json()
+
+        if hasattr(operator, "output_type") and operator.output_type is not None:
+            json_operator["data"]["outputType"] = ndim_from_type(operator.output_type).to_json()
 
         if operator.json_name == "filter":
             json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.use_predicate)).decode('utf-8')
 
-            return json_operator
-        if operator.json_name == "reduceBy":
+        elif operator.json_name == "reduceBy":
             json_operator["data"]["keyUdf"] = base64.b64encode(cloudpickle.dumps(operator.key_function)).decode('utf-8')
             json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.reduce_function)).decode('utf-8')
 
-            return json_operator
         elif operator.json_name == "join":
             json_operator["data"]["thisKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.this_key_function)).decode('utf-8')
             json_operator["data"]["thatKeyUdf"] = base64.b64encode(cloudpickle.dumps(operator.that_key_function)).decode('utf-8')
 
-            return json_operator
+        elif operator.json_name == "cartesian":
+            del json_operator["data"]
+
         elif operator.json_name == "dlTraining":
             json_operator["data"]["model"] = {"modelType": "DLModel", "op": operator.model.get_out().to_dict()}
             json_operator["data"]["option"] = operator.option.to_dict()
 
-            return json_operator
         else:
             if hasattr(operator, "get_udf"):
                 json_operator["data"]["udf"] = base64.b64encode(cloudpickle.dumps(operator.get_udf)).decode('utf-8')
 
             if hasattr(operator, "path"):
-                json_operator["data"]["filename"] =  operator.path
+                json_operator["data"]["filename"] = operator.path
+
+            if hasattr(operator, "projection"):
+                json_operator["data"]["projection"] = operator.projection
+
+            if hasattr(operator, "column_names"):
+                json_operator["data"]["column_names"] = operator.column_names
 
         return json_operator
 
@@ -97,7 +102,7 @@ class JSONSerializer:
         json_operator["cat"] = "unary"
         json_operator["data"] = {}
         json_operator["input"] = list(map(lambda x: self.id_table[x], pipeline[0].inputOperator))
-        json_operator["output"] = list(map(lambda x: self.id_table[x], pipeline[len(pipeline) - 1].outputOperator))
+        json_operator["output"] = list(map(lambda x: self.id_table[x], pipeline[-1].outputOperator))
 
         if len(pipeline) == 1:
             return self.serialize(pipeline[0])

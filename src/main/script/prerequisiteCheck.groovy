@@ -190,7 +190,7 @@ if (os == "windows") {
 // profiles.
 /////////////////////////////////////////////////////
 
-checkJavaVersion("1.8", "11")
+checkJavaVersion("1.8", "17")
 
 // Check if hadoop is available
 // It seems that this is only required on Windows systems.

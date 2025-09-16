@@ -18,18 +18,14 @@
 package org.apache.wayang.api.json
 
 import zio._
-import zio.IO
 import zio.http._
-import zio.Console._
 import scala.util.Try
 
 import org.apache.wayang.api.json.builder.JsonPlanBuilder
 import org.apache.wayang.api.json.operatorfromdrawflow.OperatorFromDrawflowConverter
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
 import org.apache.wayang.api.json.parserutil.ParseOperatorsFromDrawflow
-import org.apache.wayang.api.json.parserutil.ParseOperatorsFromJson
 import org.apache.wayang.api.json.parserutil.ParsePlanFromJson
-import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson
 
 object Main extends ZIOAppDefault {
   val drawRoute =
@@ -74,5 +70,8 @@ object Main extends ZIOAppDefault {
   val app = Routes(drawRoute, jsonRoute).toHttpApp
 
   // Run it like any simple app
-  override val run = Server.serve(app).provide(Server.default)
+  def run = for {
+    args <- getArgs
+    _ <- Server.serve(app).provide(Server.defaultWithPort((args.headOption getOrElse "8080" toInt)))
+  } yield ()
 }

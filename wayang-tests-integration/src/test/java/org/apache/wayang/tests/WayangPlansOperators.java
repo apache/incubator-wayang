@@ -55,7 +55,7 @@ public class WayangPlansOperators extends WayangPlans{
         TextFileSource fileSource1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource fileSource2 = new TextFileSource(inputFileUri2.toString());
 
-        CartesianOperator<String, String> cartesianOperator = new CartesianOperator<String, String>(String.class, String.class);
+        CartesianOperator<String, String> cartesianOperator = new CartesianOperator<>(String.class, String.class);
 
         LocalCallbackSink<Tuple2<String, String>> sink = LocalCallbackSink.createCollectingSink(collector, ReflectionUtils.specify(Tuple2.class));
 
@@ -76,13 +76,13 @@ public class WayangPlansOperators extends WayangPlans{
                     return new Tuple2<>(split[0], Integer.parseInt(split[1]));
                 };
 
-        MapOperator<String, Tuple2<String, Integer>> mapOperator1 = new MapOperator<String, Tuple2<String, Integer>>(
+        MapOperator<String, Tuple2<String, Integer>> mapOperator1 = new MapOperator<>(
                 mapFunction,
                 String.class,
                 ReflectionUtils.specify(Tuple2.class)
         );
 
-        MapOperator<String, Tuple2<String, Integer>> mapOperator2 = new MapOperator<String, Tuple2<String, Integer>>(
+        MapOperator<String, Tuple2<String, Integer>> mapOperator2 = new MapOperator<>(
                 mapFunction,
                 String.class,
                 ReflectionUtils.specify(Tuple2.class)
@@ -90,9 +90,7 @@ public class WayangPlansOperators extends WayangPlans{
 
 
         FunctionDescriptor.SerializableFunction<Tuple2<String, Integer>, String> keyExtractor =
-                element -> {
-                    return element.field0;
-                };
+                element -> element.field0;
 
         CoGroupOperator<Tuple2<String, Integer>, Tuple2<String, Integer>, String> coGroupOperator =
                 new CoGroupOperator<>(
@@ -116,7 +114,7 @@ public class WayangPlansOperators extends WayangPlans{
     }
 
     public static WayangPlan collectionSourceOperator(Collection<String> source, Collection<String> collector){
-        CollectionSource<String> colSource = new CollectionSource<String>(source, String.class);
+        CollectionSource<String> colSource = new CollectionSource<>(source, String.class);
 
         LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, String.class);
 
@@ -126,9 +124,9 @@ public class WayangPlansOperators extends WayangPlans{
     }
 
     public static WayangPlan count(Collection<String> source, Collection<Long> collector){
-        CollectionSource<String> colSource = new CollectionSource<String>(source, String.class);
+        CollectionSource<String> colSource = new CollectionSource<>(source, String.class);
 
-        CountOperator<String> countOperator = new CountOperator<String>(String.class);
+        CountOperator<String> countOperator = new CountOperator<>(String.class);
 
         LocalCallbackSink<Long> sink = LocalCallbackSink.createCollectingSink(collector, Long.class);
 
@@ -141,15 +139,13 @@ public class WayangPlansOperators extends WayangPlans{
     public static WayangPlan distinct(URI inputFileUri1, Collection<String> collector){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
-        MapOperator<String, String> mapOperator = new MapOperator<String, String>(
-                line -> {
-                    return line.toLowerCase();
-                },
+        MapOperator<String, String> mapOperator = new MapOperator<>(
+                String::toLowerCase,
                 String.class,
                 String.class
         );
 
-        DistinctOperator<String> distinctOperator = new DistinctOperator<String>(String.class);
+        DistinctOperator<String> distinctOperator = new DistinctOperator<>(String.class);
 
         LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, String.class);
 
@@ -163,10 +159,8 @@ public class WayangPlansOperators extends WayangPlans{
     public static WayangPlan filter(URI inputFileUri1, Collection<String> collector){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
-        FilterOperator<String> filterOperator = new FilterOperator<String>(
-                line -> {
-                    return line.contains("line");
-                },
+        FilterOperator<String> filterOperator = new FilterOperator<>(
+                line -> line.contains("line"),
                 String.class
         );
 
@@ -181,10 +175,8 @@ public class WayangPlansOperators extends WayangPlans{
     public static WayangPlan flatMap(URI inputFileUri1, Collection<String> collector){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
-        FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<String, String>(
-                line -> {
-                    return Arrays.asList(line.split(" "));
-                },
+        FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
+                line -> Arrays.asList(line.split(" ")),
                 String.class,
                 String.class
         );
@@ -208,13 +200,13 @@ public class WayangPlansOperators extends WayangPlans{
                     return new Tuple2<>(split[0], split[1]);
                 };
 
-        MapOperator<String, Tuple2<String, String>> mapOperator1 = new MapOperator<String, Tuple2<String, String>>(
+        MapOperator<String, Tuple2<String, String>> mapOperator1 = new MapOperator<>(
                 mapFunction,
                 String.class,
                 ReflectionUtils.specify(Tuple2.class)
         );
 
-        MapOperator<String, Tuple2<String, String>> mapOperator2 = new MapOperator<String, Tuple2<String, String>>(
+        MapOperator<String, Tuple2<String, String>> mapOperator2 = new MapOperator<>(
                 mapFunction,
                 String.class,
                 ReflectionUtils.specify(Tuple2.class)
@@ -222,7 +214,7 @@ public class WayangPlansOperators extends WayangPlans{
 
         FunctionDescriptor.SerializableFunction<Tuple2<String, String>, String> keyFunction = tuple -> tuple.field0;
 
-        JoinOperator<Tuple2<String, String>, Tuple2<String, String>, String> joinOperator = new JoinOperator<Tuple2<String, String>, Tuple2<String, String>, String>(
+        JoinOperator<Tuple2<String, String>, Tuple2<String, String>, String> joinOperator = new JoinOperator<>(
                 keyFunction,
                 keyFunction,
                 ReflectionUtils.specify(Tuple2.class),
@@ -251,7 +243,7 @@ public class WayangPlansOperators extends WayangPlans{
                 return new Tuple2<>(split[0], split[1]);
             };
 
-        MapOperator<String, Tuple2<String, String>> mapOperator = new MapOperator<String, Tuple2<String, String>>(
+        MapOperator<String, Tuple2<String, String>> mapOperator = new MapOperator<>(
                 mapFunction,
                 String.class,
                 ReflectionUtils.specify(Tuple2.class)
@@ -260,11 +252,9 @@ public class WayangPlansOperators extends WayangPlans{
 
         FunctionDescriptor.SerializableFunction<Tuple2<String, String>, String> keyFunction = tuple -> tuple.field0;
 
-        ReduceByOperator<Tuple2<String, String>, String> reduceByOperator = new ReduceByOperator<Tuple2<String, String>, String>(
+        ReduceByOperator<Tuple2<String, String>, String> reduceByOperator = new ReduceByOperator<>(
                 keyFunction,
-                (tuple, tuple2) -> {
-                    return new Tuple2<>(tuple.field0, tuple.field1+" - "+tuple2.field1);
-                },
+                (tuple, tuple2) -> new Tuple2<>(tuple.field0, tuple.field1 + " - " + tuple2.field1),
                 String.class,
                 ReflectionUtils.specify(Tuple2.class)
         );
@@ -282,17 +272,15 @@ public class WayangPlansOperators extends WayangPlans{
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
         FunctionDescriptor.SerializableFunction<String, Iterable<String>> flatMapFunction =
-                line -> {
-                    return  Arrays.asList(line.split(" "));
-                };
+                line -> Arrays.asList(line.split(" "));
 
-        FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<String, String>(
+        FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 flatMapFunction,
                 String.class,
                 String.class
         );
 
-        SortOperator<String, String> sortOperator = new SortOperator<String, String>(
+        SortOperator<String, String> sortOperator = new SortOperator<>(
                 word -> word,
                 String.class,
                 String.class
@@ -311,7 +299,7 @@ public class WayangPlansOperators extends WayangPlans{
     public static WayangPlan textFileSink(URI inputFileUri1, URI outputFileUri1){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
-        TextFileSink<String> sink = new TextFileSink<String>(outputFileUri1.toString(), String.class);
+        TextFileSink<String> sink = new TextFileSink<>(outputFileUri1.toString(), String.class);
 
         source.connectTo(0, sink, 0);
 
@@ -322,7 +310,7 @@ public class WayangPlansOperators extends WayangPlans{
         TextFileSource source1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource source2 = new TextFileSource(inputFileUri2.toString());
 
-        UnionAllOperator<String> unionAllOperator = new UnionAllOperator<String>(String.class);
+        UnionAllOperator<String> unionAllOperator = new UnionAllOperator<>(String.class);
 
         LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, String.class);
 
@@ -336,7 +324,7 @@ public class WayangPlansOperators extends WayangPlans{
     public static WayangPlan zipWithId(URI inputFileUri1, Collection<Tuple2<Long, String>> collector){
         TextFileSource source1 = new TextFileSource(inputFileUri1.toString());
 
-        ZipWithIdOperator<String> zipWithIdOperator = new ZipWithIdOperator<String>(String.class);
+        ZipWithIdOperator<String> zipWithIdOperator = new ZipWithIdOperator<>(String.class);
 
         LocalCallbackSink<Tuple2<Long, String>> sink = LocalCallbackSink.createCollectingSink(collector, ReflectionUtils.specify(Tuple2.class));
 
@@ -347,9 +335,9 @@ public class WayangPlansOperators extends WayangPlans{
     }
 
     public static WayangPlan mapPartitions(Collection<Tuple2<String, Integer>> collector, int... inputValues) {
-        CollectionSource<Integer> source = new CollectionSource<Integer>(WayangArrays.asList(inputValues), Integer.class);
+        CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(inputValues), Integer.class);
 
-        MapPartitionsOperator<Integer, Tuple2<String, Integer>> mapPartition = new MapPartitionsOperator<Integer, Tuple2<String, Integer>>(
+        MapPartitionsOperator<Integer, Tuple2<String, Integer>> mapPartition = new MapPartitionsOperator<>(
                 partition -> {
                     int numEvens = 0, numOdds = 0;
                     for (Integer value : partition) {
@@ -367,11 +355,9 @@ public class WayangPlansOperators extends WayangPlans{
 
         FunctionDescriptor.SerializableFunction<Tuple2<String, Integer>, String> keyFunction = tuple -> tuple.field0;
 
-        ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new ReduceByOperator<Tuple2<String, Integer>, String>(
+        ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new ReduceByOperator<>(
                 keyFunction,
-                (t1, t2) -> {
-                    return new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1());
-                },
+                (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1()),
                 String.class,
                 ReflectionUtils.specify(Tuple2.class)
         );

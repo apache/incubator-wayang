@@ -24,11 +24,11 @@
     <parent>
         <artifactId>wayang</artifactId>
         <groupId>org.apache.wayang</groupId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.1.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-api</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.0</version>
 
     <name>Wayang API</name>
     <description>
@@ -40,6 +40,7 @@
         <module>wayang-api-python</module>
         <module>wayang-api-sql</module>
         <module>wayang-api-json</module>
+        <module>wayang-api-utils</module>
     </modules>
 
 </project>

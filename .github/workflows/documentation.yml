@@ -36,11 +36,11 @@ jobs:
       API_KEY: $HOME/gems
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
-          java-version:  8
-          distribution: 'adopt'
+          java-version:  17
+          distribution: 'temurin'
       - name: Install ruby
         run: |
           sudo apt install -y ruby-full build-essential zlib1g-dev
@@ -49,7 +49,7 @@ jobs:
       - name: Install jekyll
         run: |
           sudo gem install jekyll bundler
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven

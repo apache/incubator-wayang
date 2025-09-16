@@ -33,7 +33,7 @@ import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.operators.SparkExecutionOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -45,8 +45,8 @@ public class OperatorTestBase {
 
     protected static Configuration configuration;
 
-    @BeforeClass
-    public static void init() {
+    @BeforeAll
+    static void init() {
         configuration = new Configuration();
     }
 

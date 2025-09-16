@@ -19,29 +19,31 @@
 package org.apache.wayang.basic.model.op;
 
 public class Input extends Op {
+    private final int[] shape;
 
-    public Input() {
-        this(DType.FLOAT32);
+    public Input(int[] shape) {
+        this(shape, DType.FLOAT32);
     }
 
-    public Input(String name) {
-        this(name, DType.FLOAT32);
+    public Input(int[] shape, String name) {
+        this(shape, name, DType.FLOAT32);
     }
 
-    public Input(Type type) {
-        this(type.getName(), DType.FLOAT32);
+    public Input(int[] shape, Type type) {
+        this(shape, type.getName(), DType.FLOAT32);
     }
 
-    public Input(DType dType) {
-        super(dType);
+    public Input(int[] shape, DType dType) {
+        this(shape, (String) null, dType);
     }
 
-    public Input(String name, DType dType) {
+    public Input(int[] shape, Type type, DType dType) {
+        this(shape, type.getName(), dType);
+    }
+
+    public Input(int[] shape, String name, DType dType) {
         super(name, dType);
-    }
-
-    public Input(Type type, DType dType) {
-        super(type.getName(), dType);
+        this.shape = shape;
     }
 
     @Override
@@ -49,10 +51,13 @@ public class Input extends Op {
         return 0;
     }
 
+    public int[] getShape() {
+        return shape;
+    }
+
     public enum Type {
         FEATURES("..FEATURES.."),
-        LABEL("..LABEL.."),
-        PREDICTED("..PREDICTED..");
+        LABEL("..LABEL..");
 
         private final String name;
 

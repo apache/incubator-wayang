@@ -1,3 +1,22 @@
+<!--
+  - Licensed to the Apache Software Foundation (ASF) under one
+  - or more contributor license agreements.  See the NOTICE file
+  - distributed with this work for additional information
+  - regarding copyright ownership.  The ASF licenses this file
+  - to you under the Apache License, Version 2.0 (the
+  - "License"); you may not use this file except in compliance
+  - with the License.  You may obtain a copy of the License at
+  -
+  -   http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing,
+  - software distributed under the License is distributed on an
+  - "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  - KIND, either express or implied.  See the License for the
+  - specific language governing permissions and limitations
+  - under the License.
+  -->
+
 # Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang Logo">
 
 ## The first open-source cross-platform data processing system
@@ -81,11 +100,13 @@ source ~/.zshrc
 
 ### Requirements at Runtime
 
-Since Apache Wayang (incubating) is not an execution engine itself but rather manages the execution engines for you, it is important to have the necessary requirements installed.
+Apache Wayang (incubating) relies on external execution engines and Java to function correctly. Below are the updated runtime requirements:
 
-- Apache Wayang supports Java versions 8 and above. However, the Wayang team recommends using Java version 11. Don’t forget to set the `JAVA_HOME` environment variable.
-- You need to install Apache Spark version 3 or higher. Don’t forget to set the `SPARK_HOME` environment variable.
-- You need to install Apache Hadoop version 3 or higher. Don’t forget to set the `HADOOP_HOME` environment variable.
+- **Java 17**: Make sure `JAVA_HOME` is correctly set to your Java 17 installation.
+- **Apache Spark 3.4.4**: Compatible with Scala 2.12. Set the `SPARK_HOME` environment variable.
+- **Apache Hadoop 3+**: Set the `HADOOP_HOME` environment variable.
+
+> 🛠️ **Note:** When using Java 17, you _must_ add JVM flags to allow Wayang and Spark to access internal Java APIs, or you will encounter `IllegalAccessError`. See below.
 
 ### Validating the installation
 
@@ -93,6 +114,26 @@ To execute your first application with Apache Wayang, you need to execute your p
 
 ```shell
 bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
+```
+
+### ⚙️ Java 17 Compatibility
+
+When running Wayang applications using Java 17 (especially with Spark), you must add JVM flags to open specific internal Java modules. These flags resolve access issues with `sun.nio.ch.DirectBuffer` and others.
+
+Update your `wayang-submit` (wayang-assembly/target/wayang-1.0.1-SNAPSHOT/bin/wayang-submit) script (or command) with:
+
+```bash
+eval "$RUNNER \
+  --add-exports=java.base/sun.nio.ch=ALL-UNNAMED \
+  --add-opens=java.base/java.nio=ALL-UNNAMED \
+  --add-opens=java.base/java.lang=ALL-UNNAMED \
+  --add-opens=java.base/java.util=ALL-UNNAMED \
+  --add-opens=java.base/java.io=ALL-UNNAMED \
+  --add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
+  --add-opens=java.base/java.util.concurrent=ALL-UNNAMED \
+  --add-opens=java.base/java.net=ALL-UNNAMED \
+  --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+  $FLAGS -cp \"${WAYANG_CLASSPATH}\" $CLASS ${ARGS}"
 ```
 
 ## Getting Started
@@ -128,15 +169,17 @@ In addition, you can obtain the most recent snapshot version of Wayang via Sonat
 ```
 
 ### Prerequisites
-Apache Wayang (incubating) is built with Java 11 and Scala 2.12. However, to run Apache Wayang it is sufficient to have just Java 11 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+Apache Wayang (incubating) is built with Java 17 and Scala 2.12. However, to run Apache Wayang it is sufficient to have just Java 17 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
 ```
-Java 11
-[Scala 2.12]
+Java 17
+Scala 2.12.17
+Spark 3.4.4, Compatible with Scala 2.12.
+Maven
 ```
 
 > **NOTE:** In windows, you need to define the variable `HADOOP_HOME` with the winutils.exe, an not official option to obtain [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
 
-> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to Java 11 as the prerequisite checker script currently supports up to Java 11 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running './mvnw clean install' before opening the project using IntelliJ.
+> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to Java 17 as the prerequisite checker script currently supports up to Java 17 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running './mvnw clean install' before opening the project using IntelliJ.
 
 
 ### Building
@@ -152,11 +195,24 @@ If you need to rebuild Wayang, e.g., to use a different Scala version, you can s
     ```
 > **NOTE:** If you receive an error about not finding `MathExBaseVisitor`, then the problem might be that you are trying to build from IntelliJ, without Maven. MathExBaseVisitor is generated code, and a Maven build should generate it automatically.
 
-> **NOTE:** In the current Maven setup, the version of scala is tied to the Java version, you can compile the profile `scala-11` with Java 8 and profile `scala-12` with Java 11.
+> **NOTE:**: In the current Maven setup, Wayang supports Java 17. The default Scala version is 2.12.17, which is compatible with Java 17. Ensure that your Spark distribution is also built with Scala 2.12 (e.g., `spark-3.4.4-bin-hadoop3-scala2.12`).
 
 > **NOTE:** For compiling and testing the code it is required to have Hadoop installed on your machine.
 
 > **NOTE:**  the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
+
+> **NOTE**: When running applications (e.g., WordCount) with Java 17, you must pass additional flags to allow internal module access:
+
+>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED \
+--add-opens=java.base/java.nio=ALL-UNNAMED \
+--add-opens=java.base/java.lang=ALL-UNNAMED \
+--add-opens=java.base/java.util=ALL-UNNAMED \
+--add-opens=java.base/java.io=ALL-UNNAMED \
+--add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
+--add-opens=java.base/java.util.concurrent=ALL-UNNAMED \
+--add-opens=java.base/java.net=ALL-UNNAMED \
+--add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+
 >
 > Also, note the `distro` profile, which assembles a binary Wayang distribution.
 To activate these profiles, you need to specify them when running maven, i.e.,
@@ -176,8 +232,8 @@ You can see examples on how to start using Wayang [here](guides/wayang-examples.
 
 ## Built With
 
-* [Java 11](https://www.oracle.com/de/java/technologies/javase/jdk11-archive-downloads.html)
-* [Scala 2.12](https://www.scala-lang.org/download/2.12.0.html)
+* [Java 17](https://www.oracle.com/java/technologies/javase/17-0-14-relnotes.html)
+* [Scala 2.12.17](https://www.scala-lang.org/download/2.12.17.html)
 * [Maven](https://maven.apache.org/)
 
 ## Contributing

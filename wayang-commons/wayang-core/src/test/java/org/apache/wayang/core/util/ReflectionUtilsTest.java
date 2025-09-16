@@ -18,12 +18,13 @@
 
 package org.apache.wayang.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for {@link ReflectionUtils}.
@@ -39,21 +40,21 @@ public class ReflectionUtilsTest {
     }
 
     @Test
-    public void testEvaluateWithInstantiation() {
+    void testEvaluateWithInstantiation() {
         final Object val = ReflectionUtils.evaluate("new java.lang.String()");
-        Assert.assertEquals("", val);
+        assertEquals("", val);
     }
 
     @Test
-    public void testEvaluateWithStaticVariable() {
+    void testEvaluateWithStaticVariable() {
         final Object val = ReflectionUtils.evaluate("org.apache.wayang.core.util.ReflectionUtilsTest.TEST_INT");
-        Assert.assertEquals(42, val);
+        assertEquals(42, val);
     }
 
     @Test
-    public void testEvaluateWithStaticMethod() {
+    void testEvaluateWithStaticMethod() {
         final Object val = ReflectionUtils.evaluate("org.apache.wayang.core.util.ReflectionUtilsTest.testInt()");
-        Assert.assertEquals(23, val);
+        assertEquals(23, val);
     }
 
     public interface MyParameterizedInterface<A> { }
@@ -68,7 +69,7 @@ public class ReflectionUtilsTest {
 
 
     @Test
-    public void testGetTypeParametersWithReusedTypeParameters() {
+    void testGetTypeParametersWithReusedTypeParameters() {
         MyParameterizedClassA<Integer, String> myParameterizedObject = new MyParameterizedClassB<Integer, String>() {
         };
         Map<String, Type> expectedTypeParameters = new HashMap<>();
@@ -80,11 +81,11 @@ public class ReflectionUtilsTest {
                 MyParameterizedClassA.class
         );
 
-        Assert.assertEquals(expectedTypeParameters, typeParameters);
+        assertEquals(expectedTypeParameters, typeParameters);
     }
 
     @Test
-    public void testGetTypeParametersWithIndirectTypeParameters() {
+    void testGetTypeParametersWithIndirectTypeParameters() {
         MyParameterizedClassC myParameterizedObject = new MyParameterizedClassC() {
         };
         Map<String, Type> expectedTypeParameters = new HashMap<>();
@@ -95,7 +96,7 @@ public class ReflectionUtilsTest {
                 MyParameterizedInterface.class
         );
 
-        Assert.assertEquals(expectedTypeParameters, typeParameters);
+        assertEquals(expectedTypeParameters, typeParameters);
     }
 
 }

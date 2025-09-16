@@ -18,7 +18,6 @@
 
 package org.apache.wayang.apps.wordcount;
 
-import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
@@ -27,6 +26,8 @@ import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.wayang.spark.Spark;
+import org.apache.wayang.api.JavaPlanBuilder;
+
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -34,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.OptionalDouble;
 
 public class Main {
 
@@ -102,4 +104,3 @@ public class Main {
         }
     }
 }
-

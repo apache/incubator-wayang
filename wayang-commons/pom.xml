@@ -24,11 +24,11 @@
     <parent>
         <groupId>org.apache.wayang</groupId>
         <artifactId>wayang</artifactId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.1.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>wayang-commons</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.0</version>
 
     <name>Wayang Commons</name>
     <description>
@@ -188,7 +188,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.12.0</version>
+                <version>3.18.0</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>

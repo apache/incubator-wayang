@@ -1,4 +1,3 @@
-
 #  Licensed to the Apache Software Foundation (ASF) under one or more
 #  contributor license agreements.  See the NOTICE file distributed with
 #  this work for additional information regarding copyright ownership.
@@ -17,18 +16,14 @@
 
 from typing import Set, Iterable, Dict
 import json
-import base64
-import cloudpickle
 import requests
-import subprocess
-import time
-import os
 
+from pywy.configuration import Configuration
 from pywy.core.platform import Platform
 from pywy.core.serializer import JSONSerializer
 from pywy.graph.graph import WayangGraph
-from pywy.graph.types import WGraphOfVec, NodeOperator, NodeVec
-from pywy.operators import SinkOperator, UnaryToUnaryOperator, SourceUnaryOperator
+from pywy.graph.types import WGraphOfVec
+from pywy.operators import SinkOperator, UnaryToUnaryOperator
 
 
 class Plugin:
@@ -74,7 +69,7 @@ class PywyPlan:
     """
     graph: WayangGraph
 
-    def __init__(self, plugins: Set[Plugin], configuration: Dict[str, str], sinks: Iterable[SinkOperator]):
+    def __init__(self, plugins: Set[Plugin], configuration: Configuration, sinks: Iterable[SinkOperator]):
         """basic Constructor of PywyPlan
 
         this constructor set the plugins and sinks element, and it prepares
@@ -106,7 +101,7 @@ class PywyPlan:
         context = {}
         context["origin"] = "python"
         context["platforms"] = {}
-        context["configuration"] = self.configuration
+        context["configuration"] = self.configuration.entries
 
         if len(self.plugins) > 0:
             context["platforms"] = list(map(lambda pl: next(iter(pl.platforms)).name, self.plugins))
@@ -115,14 +110,13 @@ class PywyPlan:
         json_data["operators"] = []
 
         nodes = []
-        pipeline = list()
+        pipeline = []
         self.graph.traversal(self.graph.starting_nodes, lambda x, parent: nodes.append(x))
         id_table = {(obj.current[0]): index + 1 for index, obj in enumerate(nodes)}
         serializer = JSONSerializer(id_table)
 
         for node in nodes:
             operator = node.current[0]
-
             if isinstance(operator, UnaryToUnaryOperator):
                 pipeline.append(operator)
             else:
@@ -130,10 +124,11 @@ class PywyPlan:
                     json_data["operators"].append(serializer.serialize_pipeline(pipeline))
 
                 json_data["operators"].append(serializer.serialize(operator))
-                pipeline = list()
+                pipeline = []
 
-        # This should either be configurable on the WayangContext or env
-        url = 'http://localhost:8080/wayang-api-json/submit-plan/json'
+        port = self.configuration.get_property("wayang.api.python.port") or 8080
+
+        url = f'http://localhost:{port}/wayang-api-json/submit-plan/json'
         headers = {'Content-type': 'application/json'}
         json_body = json.dumps(json_data)
         print(json_body)

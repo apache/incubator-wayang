@@ -84,7 +84,7 @@ public class FlinkRepeatOperator<Type>
 
                     this.iterativeDataSet = input_initial
                                 .iterate(this.getNumIterations())
-                            .setParallelism(flinkExecutor.getNumDefaultPartitions());
+                                .setParallelism(flinkExecutor.fee.getParallelism());
 
                     output_iteration.accept(this.iterativeDataSet, flinkExecutor);
                     outputs[FINAL_OUTPUT_INDEX] = null;
@@ -97,7 +97,9 @@ public class FlinkRepeatOperator<Type>
                     this.iterationCounter = this.getNumIterations();
                     DataSet<Type> input_iteration = ((DataSetChannel.Instance) inputs[ITERATION_INPUT_INDEX]).provideDataSet();
                     DataSetChannel.Instance output_final = ((DataSetChannel.Instance) outputs[FINAL_OUTPUT_INDEX]);
-                    output_final.accept(this.iterativeDataSet.setParallelism(flinkExecutor.getNumDefaultPartitions()).closeWith(input_iteration), flinkExecutor);
+                    output_final.accept(this.iterativeDataSet
+                            .setParallelism(flinkExecutor.fee.getParallelism())
+                            .closeWith(input_iteration), flinkExecutor);
                     outputs[ITERATION_OUTPUT_INDEX] = null;
                     this.setState(State.FINISHED);
 

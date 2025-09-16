@@ -25,8 +25,7 @@ import org.apache.wayang.basic.model.op.nn.Linear;
 import org.apache.wayang.basic.model.op.nn.Sigmoid;
 import org.apache.wayang.basic.model.optimizer.GradientDescent;
 import org.apache.wayang.basic.model.optimizer.Optimizer;
-import org.junit.Test;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Test;
 import org.tensorflow.ndarray.FloatNdArray;
 import org.tensorflow.ndarray.IntNdArray;
 import org.tensorflow.ndarray.NdArrays;
@@ -34,9 +33,10 @@ import org.tensorflow.ndarray.Shape;
 import org.tensorflow.op.Ops;
 import org.tensorflow.types.TFloat32;
 import org.tensorflow.types.TInt32;
-public class TensorflowModelTest {
+
+class TensorflowModelTest {
     @Test
-    public void test() {
+    void test() {
         FloatNdArray x = NdArrays.ofFloats(Shape.of(6, 4))
                 .set(NdArrays.vectorOf(5.1f, 3.5f, 1.4f, 0.2f), 0)
                 .set(NdArrays.vectorOf(4.9f, 3.0f, 1.4f, 0.2f), 1)
@@ -46,23 +46,28 @@ public class TensorflowModelTest {
                 .set(NdArrays.vectorOf(6.7f, 3.3f, 5.7f, 2.5f), 5)
                 ;
         IntNdArray y = NdArrays.vectorOf(0, 0, 1, 1, 2, 2);
-        Op l1 = new Linear(4, 64, true);
-        Op s1 = new Sigmoid();
-        Op l2 = new Linear(64, 3, true);
-        s1.with(l1.with(new Input(Input.Type.FEATURES)));
-        l2.with(s1);
-        DLModel model = new DLModel(l2);
+
+        Input features = new Input(null, Input.Type.FEATURES, Op.DType.FLOAT32);
+        Input labels = new Input(null, Input.Type.LABEL, Op.DType.INT32);
+
+        DLModel model = new DLModel.Builder()
+                .layer(features)
+                .layer(new Linear(4, 64, true))
+                .layer(new Sigmoid())
+                .layer(new Linear(64, 3, true))
+                .build();
+
         Op criterion = new CrossEntropyLoss(3);
-        criterion.with(
-                new Input(Input.Type.PREDICTED, Op.DType.FLOAT32),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
-        );
+        criterion.with(model.getOut(), labels);
+
         Op acc = new Mean(0);
         acc.with(new Cast(Op.DType.FLOAT32).with(new Eq().with(
-                new ArgMax(1).with(new Input(Input.Type.PREDICTED, Op.DType.FLOAT32)),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
+                new ArgMax(1).with(model.getOut()),
+                labels
         )));
+
         Optimizer optimizer = new GradientDescent(0.02f);
+
         try (TensorflowModel tfModel = new TensorflowModel(model, criterion, optimizer, acc)) {
             System.out.println(tfModel.getOut().getName());
             tfModel.train(x, y, 100, 6);

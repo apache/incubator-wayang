@@ -18,8 +18,6 @@
 
 package org.apache.wayang.core.optimizer.enumeration;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
@@ -28,16 +26,19 @@ import org.apache.wayang.core.plan.executionplan.test.TestChannel;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.test.MockFactory;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test suite for {@link StageAssignmentTraversal}.
  */
-public class StageAssignmentTraversalTest {
+class StageAssignmentTraversalTest {
 
     @Test
-    public void testCircularPlatformAssignment() {
+    void testCircularPlatformAssignment() {
         final Platform mockedPlatformA = MockFactory.createPlatform("A");
         final Platform mockedPlatformB = MockFactory.createPlatform("B");
         final Platform mockedPlatformC = MockFactory.createPlatform("C");
@@ -90,19 +91,19 @@ public class StageAssignmentTraversalTest {
         // Assign platforms.
         ExecutionTaskFlow executionTaskFlow = new ExecutionTaskFlow(Collections.singleton(sinkTaskA));
         final ExecutionPlan executionPlan = StageAssignmentTraversal.assignStages(executionTaskFlow);
-        Assert.assertEquals(1, executionPlan.getStartingStages().size());
+        assertEquals(1, executionPlan.getStartingStages().size());
 
         ExecutionStage stage1 = executionPlan.getStartingStages().stream().findAny().get();
-        Assert.assertEquals(1, stage1.getStartTasks().size());
+        assertEquals(1, stage1.getStartTasks().size());
 
         ExecutionTask stage1Task1 = stage1.getStartTasks().stream().findAny().get();
-        Assert.assertEquals(sourceTaskA, stage1Task1);
+        assertEquals(sourceTaskA, stage1Task1);
 
-        Assert.assertEquals(2, stage1.getSuccessors().size());
+        assertEquals(2, stage1.getSuccessors().size());
     }
 
     @Test
-    public void testZigZag() {
+    void testZigZag() {
         final Platform mockedPlatformA = MockFactory.createPlatform("A");
         final Platform mockedPlatformB = MockFactory.createPlatform("B");
 
@@ -152,15 +153,15 @@ public class StageAssignmentTraversalTest {
         ExecutionTaskFlow executionTaskFlow = new ExecutionTaskFlow(Collections.singleton(sinkTaskA));
         final ExecutionPlan executionPlan = StageAssignmentTraversal.assignStages(executionTaskFlow);
 
-        Assert.assertEquals(1, executionPlan.getStartingStages().size());
+        assertEquals(1, executionPlan.getStartingStages().size());
 
         ExecutionStage stage1 = executionPlan.getStartingStages().stream().findAny().get();
-        Assert.assertEquals(1, stage1.getStartTasks().size());
+        assertEquals(1, stage1.getStartTasks().size());
 
         ExecutionTask stage1Task1 = stage1.getStartTasks().stream().findAny().get();
-        Assert.assertEquals(sourceTaskA, stage1Task1);
+        assertEquals(sourceTaskA, stage1Task1);
 
-        Assert.assertEquals(2, stage1.getSuccessors().size());
+        assertEquals(2, stage1.getSuccessors().size());
 
     }
 

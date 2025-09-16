@@ -18,23 +18,23 @@
 
 package org.apache.wayang.core.optimizer.cardinality;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Test suite for {@link AggregatingCardinalityEstimator}.
  */
-public class AggregatingCardinalityEstimatorTest {
+class AggregatingCardinalityEstimatorTest {
 
     @Test
-    public void testEstimate() {
+    void testEstimate() {
         OptimizationContext optimizationContext = mock(OptimizationContext.class);
         when(optimizationContext.getConfiguration()).thenReturn(new Configuration());
 
@@ -48,7 +48,7 @@ public class AggregatingCardinalityEstimatorTest {
         CardinalityEstimate outputEstimate = estimator.estimate(optimizationContext, inputEstimate);
         CardinalityEstimate expectedEstimate = new CardinalityEstimate(2 * 10, 2 * 100, 0.3 * 0.9);
 
-        Assert.assertEquals(expectedEstimate, outputEstimate);
+        assertEquals(expectedEstimate, outputEstimate);
     }
 
 

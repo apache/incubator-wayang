@@ -15,8 +15,8 @@
 #  limitations under the License.
 #
 
-from typing import (TypeVar, Optional, List)
-from pywy.types import (typecheck, ConstrainedOperatorType)
+from typing import TypeVar, Optional, List
+from pywy.types import typecheck, ConstrainedOperatorType
 
 
 class PywyOperator:
@@ -29,15 +29,15 @@ class PywyOperator:
     output_type: ConstrainedOperatorType
 
     def __init__(self,
-                 name: str,
-                 cat: str,
-                 input_type: ConstrainedOperatorType = None,
-                 output_type: ConstrainedOperatorType = None,
-                 input_length: Optional[int] = 1,
-                 output_length: Optional[int] = 1,
-                 *args,
-                 **kwargs
-                 ):
+        name: str,
+        cat: str,
+        input_type: ConstrainedOperatorType = None,
+        output_type: ConstrainedOperatorType = None,
+        input_length: Optional[int] = 1,
+        output_length: Optional[int] = 1,
+        *args,
+        **kwargs
+    ):
         typecheck(input_type)
         typecheck(output_type)
         self.name = (self.prefix() + name + self.postfix()).strip()
@@ -91,5 +91,6 @@ class PywyOperator:
 
     def __repr__(self):
         return self.__str__()
+
 
 PO_T = TypeVar('PO_T', bound=PywyOperator)

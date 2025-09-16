@@ -20,6 +20,7 @@ package org.apache.wayang.api.sql.calcite.converter;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
 import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.sources.fs.JavaCSVTableSource;
@@ -28,52 +29,50 @@ import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.postgres.operators.PostgresTableSource;
 import org.apache.wayang.basic.data.Record;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
+import java.util.stream.Collectors;
 
 //TODO: create tablesource with column types
 //TODO: support other sources
 public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan> {
-    WayangTableScanVisitor(WayangRelConverter wayangRelConverter) {
+    WayangTableScanVisitor(final WayangRelConverter wayangRelConverter) {
         super(wayangRelConverter);
     }
 
     @Override
-    Operator visit(WayangTableScan wayangRelNode) {
-
-        String tableName = wayangRelNode.getTableName();
-        List<String> columnNames = wayangRelNode.getColumnNames();
+    Operator visit(final WayangTableScan wayangRelNode) {
+        final String tableName = wayangRelNode.getTableName();
+        final List<String> columnNames = wayangRelNode.getColumnNames();
 
         // Get the source platform for this table
-        String tableSource = wayangRelNode.getTable().getQualifiedName().get(0);
+        final String tableSource = wayangRelNode.getTable().getQualifiedName().get(0);
+
         if (tableSource.equals("postgres")) {
-            return new PostgresTableSource(tableName, columnNames.toArray(new String[]{}));
+            return new PostgresTableSource(tableName, columnNames.toArray(String[]::new));
         }
+
         if (tableSource.equals("fs")) {
-            ModelParser modelParser;
+            final ModelParser modelParser;
             try {
-                modelParser = new ModelParser();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                modelParser = this.wayangRelConverter.getConfiguration() == null
+                        ? new ModelParser()
+                        : new ModelParser(this.wayangRelConverter.getConfiguration());
+            } catch (final Exception e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException(
+                        "Could not initialize calcite model parser from current Wayang configuration");
             }
-            RelDataType rowType = wayangRelNode.getRowType();
-            List<RelDataType> fieldTypes = new ArrayList<>();
-            for (RelDataTypeField field : rowType.getFieldList()) {
-                fieldTypes.add(field.getType());
-            }
-            String url = String.format("file:/%s/%s.csv", modelParser.getFsPath(), wayangRelNode.getTableName());
 
-            String separator = modelParser.getSeparator();
+            final List<RelDataType> fieldTypes = wayangRelNode.getRowType().getFieldList().stream()
+                    .map(RelDataTypeField::getType)
+                    .collect(Collectors.toList());
 
-            if (Objects.equals(separator, "")) {
-                return new JavaCSVTableSource(url,
-                        DataSetType.createDefault(Record.class), fieldTypes);
-            } else {
-                return new JavaCSVTableSource(url,
-                        DataSetType.createDefault(Record.class), fieldTypes, separator.charAt(0));
-            }
-        } else throw new RuntimeException("Source not supported");
+            final String url = String.format("file:/%s/%s.csv", modelParser.getFsPath(), wayangRelNode.getTableName());
+
+            final char separator = modelParser.getSchemaDelimiter(tableSource);
+
+            return new JavaCSVTableSource<>(url, DataSetType.createDefault(Record.class), fieldTypes, separator);
+        } else
+            throw new RuntimeException("Source not supported");
     }
 }

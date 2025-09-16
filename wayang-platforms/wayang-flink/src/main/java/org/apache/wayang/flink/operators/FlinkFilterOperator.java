@@ -76,7 +76,8 @@ public class FlinkFilterOperator<Type> extends FilterOperator<Type> implements F
         final FilterFunction<Type> filterFunction = flinkExecutor.getCompiler().compile(this.predicateDescriptor.getJavaImplementation());
 
         final DataSet<Type> inputDataset = ((DataSetChannel.Instance) inputs[0]).provideDataSet();
-        final DataSet<Type> outputDataSet = inputDataset.filter(filterFunction);
+        final DataSet<Type> outputDataSet = inputDataset.filter(filterFunction)
+            .setParallelism(flinkExecutor.fee.getParallelism());
 
         ((DataSetChannel.Instance) outputs[0]).accept(outputDataSet, flinkExecutor);
 

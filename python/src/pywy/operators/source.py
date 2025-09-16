@@ -15,16 +15,20 @@
 #  limitations under the License.
 #
 
+from typing import List, Optional
+
 from pywy.operators.base import PywyOperator
+from pywy.basic.data.record import Record
+from pywy.types import GenericTco
 
 
 class SourceUnaryOperator(PywyOperator):
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, output_type: GenericTco):
         super(SourceUnaryOperator, self).__init__(
             name=name,
             input_type=None,
-            output_type=str,
+            output_type=output_type,
             cat="input",
             input_length=0,
             output_length=1
@@ -45,7 +49,7 @@ class TextFileSource(SourceUnaryOperator):
     json_name: str
 
     def __init__(self, path: str):
-        super(TextFileSource, self).__init__('TextFile')
+        super(TextFileSource, self).__init__('TextFile', output_type=str)
         self.path = path
         self.json_name = "textFileInput"
 
@@ -55,3 +59,20 @@ class TextFileSource(SourceUnaryOperator):
     def __repr__(self):
         return super().__repr__()
 
+
+class ParquetSource(SourceUnaryOperator):
+    path: str
+    projection: Optional[List[str]]
+    json_name: str
+
+    def __init__(self, path: str, projection: Optional[List[str]] = None):
+        super(ParquetSource, self).__init__('Parquet', output_type=Record)
+        self.path = path
+        self.projection = projection
+        self.json_name = "parquetInput"
+
+    def __str__(self):
+        return super().__str__()
+
+    def __repr__(self):
+        return super().__repr__()

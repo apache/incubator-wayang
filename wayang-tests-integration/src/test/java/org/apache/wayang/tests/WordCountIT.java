@@ -18,8 +18,6 @@
 
 package org.apache.wayang.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.FlatMapOperator;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
@@ -45,9 +43,9 @@ import org.apache.wayang.spark.Spark;
 import org.apache.wayang.spark.operators.SparkFlatMapOperator;
 import org.apache.wayang.spark.operators.SparkMapOperator;
 import org.apache.wayang.spark.operators.SparkTextFileSource;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -57,14 +55,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Word count integration test. Besides going through different {@link Platform} combinations, each test addresses a different
  * way of specifying the target {@link Platform}s.
  */
-public class WordCountIT {
+class WordCountIT {
 
     @Test
-    public void testOnJava() throws URISyntaxException, IOException {
+    void testOnJava() throws IOException {
         // Assignment mode: WayangContext.
 
         // Instantiate Wayang and activate the backend.
@@ -73,7 +74,7 @@ public class WordCountIT {
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
                         String.class,
                         String.class
                 )
@@ -86,9 +87,9 @@ public class WordCountIT {
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
-                        DataUnitType.<String>createBasic(String.class),
-                        DataUnitType.<Tuple2<String, Integer>>createBasicUnchecked(Tuple2.class)
+                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
@@ -145,18 +146,18 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
-        Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
+        assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
     }
 
     @Test
-    public void testOnSpark() throws URISyntaxException, IOException {
+    void testOnSpark() throws IOException {
         // Assignment mode: Job.
 
         TextFileSource textFileSource = new TextFileSource(WayangPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
                         String.class,
                         String.class
                 )
@@ -165,7 +166,7 @@ public class WordCountIT {
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
+                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasicUnchecked(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
@@ -216,11 +217,11 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
-        Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
+        assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
     }
 
     @Test
-    public void testOnSparkToJava() throws URISyntaxException, IOException {
+    void testOnSparkToJava() throws IOException {
         // Assignment mode: ExecutionOperators.
 
         // Instantiate Wayang and activate the backend.
@@ -292,11 +293,11 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
-        Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
+        assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
     }
 
     @Test
-    public void testOnJavaToSpark() throws URISyntaxException, IOException {
+    void testOnJavaToSpark() throws IOException {
         // Assignment mode: Constraints.
 
         TextFileSource textFileSource = new TextFileSource(WayangPlans.FILE_SOME_LINES_TXT.toString());
@@ -304,7 +305,7 @@ public class WordCountIT {
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
                         String.class,
                         String.class
                 )
@@ -371,11 +372,11 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
-        Assert.assertEquals(new HashSet<>(correctResults), new HashSet<>(results));
+        assertEquals(new HashSet<>(correctResults), new HashSet<>(results));
     }
 
     @Test
-    public void testOnJavaAndSpark() throws URISyntaxException, IOException {
+    void testOnJavaAndSpark() throws IOException {
         // Assignment mode: none.
 
         TextFileSource textFileSource = new TextFileSource(WayangPlans.FILE_SOME_LINES_TXT.toString());
@@ -384,7 +385,7 @@ public class WordCountIT {
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
                         String.class,
                         String.class
                 )
@@ -393,7 +394,7 @@ public class WordCountIT {
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
+                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasicUnchecked(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
@@ -444,7 +445,7 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
-        Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
+        assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
     }
 
 

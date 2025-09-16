@@ -20,23 +20,23 @@ package org.apache.wayang.api.json.operatorfromjson
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.databind.{DeserializationFeature, JsonNode}
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import com.fasterxml.jackson.databind.{DeserializationFeature, JsonNode}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.wayang.api.json.operatorfromjson.OperatorFromJson.OperatorNames
-import org.apache.wayang.api.json.operatorfromjson.binary.{CartesianOperatorFromJson, CoGroupOperatorFromJson, IntersectOperatorFromJson, JoinOperatorFromJson, PredictOperatorFromJson, DLTrainingOperatorFromJson,UnionOperatorFromJson}
-import org.apache.wayang.api.json.operatorfromjson.other.KMeansFromJson
-import org.apache.wayang.api.json.operatorfromjson.input.{InputCollectionFromJson, JDBCRemoteInputFromJson, TextFileInputFromJson}
-import org.apache.wayang.api.json.operatorfromjson.loop.{DoWhileOperatorFromJson, ForeachOperatorFromJson, RepeatOperatorFromJson}
-import org.apache.wayang.api.json.operatorfromjson.output.TextFileOutputFromJson
-import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson, DistinctOperatorFromJson, FilterOperatorFromJson, FlatMapOperatorFromJson, GroupByOpeartorFromJson, MapOperatorFromJson, MapPartitionsOperatorFromJson, ReduceByOperatorFromJson, SampleOperatorFromJson, SortOperatorFromJson}
+import org.apache.wayang.api.json.operatorfromjson.binary._
+import org.apache.wayang.api.json.operatorfromjson.input._
+import org.apache.wayang.api.json.operatorfromjson.loop._
+import org.apache.wayang.api.json.operatorfromjson.other._
+import org.apache.wayang.api.json.operatorfromjson.output._
+import org.apache.wayang.api.json.operatorfromjson.unary._
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "operatorName", visible = true)
 @JsonSubTypes(
   Array(
-
     // Input operators
     new JsonSubTypes.Type(value = classOf[TextFileInputFromJson], name = OperatorNames.TextFileInput),
+    new JsonSubTypes.Type(value = classOf[ParquetInputFromJson], name = OperatorNames.ParquetInput),
     new JsonSubTypes.Type(value = classOf[InputCollectionFromJson], name = OperatorNames.InputCollection),
     new JsonSubTypes.Type(value = classOf[InputCollectionFromJson], name = OperatorNames.Table),
     new JsonSubTypes.Type(value = classOf[JDBCRemoteInputFromJson], name = OperatorNames.JDBCRemoteInput),
@@ -50,7 +50,7 @@ import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson,
     new JsonSubTypes.Type(value = classOf[FilterOperatorFromJson], name = OperatorNames.Filter),
     new JsonSubTypes.Type(value = classOf[ReduceByOperatorFromJson], name = OperatorNames.ReduceBy),
     new JsonSubTypes.Type(value = classOf[CountOperatorFromJson], name = OperatorNames.Count),
-    new JsonSubTypes.Type(value = classOf[GroupByOpeartorFromJson], name = OperatorNames.GroupBy),
+    new JsonSubTypes.Type(value = classOf[GroupByOperatorFromJson], name = OperatorNames.GroupBy),
     new JsonSubTypes.Type(value = classOf[SortOperatorFromJson], name = OperatorNames.Sort),
     new JsonSubTypes.Type(value = classOf[DistinctOperatorFromJson], name = OperatorNames.Distinct),
     new JsonSubTypes.Type(value = classOf[ReduceByOperatorFromJson], name = OperatorNames.Reduce),
@@ -79,14 +79,14 @@ import org.apache.wayang.api.json.operatorfromjson.unary.{CountOperatorFromJson,
 
   )
 )
-class OperatorFromJson(val id: Long,
-                       val input: Array[Long],
-                       val output: Array[Long],
-                       val cat: String,
-                       val operatorName: String,
-                       val executionPlatform: String = null
-                      ) extends Serializable {
-
+class OperatorFromJson(
+  val id: Long,
+  val input: Array[Long],
+  val output: Array[Long],
+  val cat: String,
+  val operatorName: String,
+  val executionPlatform: String = null
+) extends Serializable {
   //
   // Because case classes combined with inheritance were kind of difficult to change a field,
   // we use a workaround with json serialization -> modification -> deserialization.
@@ -137,6 +137,7 @@ object OperatorFromJson {
   object OperatorNames {
     // Input
     final val TextFileInput = "textFileInput"
+    final val ParquetInput = "parquetInput"
     final val InputCollection = "inputCollection"
     final val Table = "table"
     final val JDBCRemoteInput = "jdbcRemoteInput"

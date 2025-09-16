@@ -23,13 +23,17 @@ import org.apache.wayang.basic.model.op.Input;
 import org.apache.wayang.basic.model.op.Op;
 import org.apache.wayang.basic.model.optimizer.Optimizer;
 import org.tensorflow.*;
-import org.tensorflow.ndarray.*;
+import org.tensorflow.ndarray.NdArray;
+import org.tensorflow.ndarray.Shape;
 import org.tensorflow.ndarray.index.Indices;
 import org.tensorflow.op.Ops;
-import org.tensorflow.types.*;
+import org.tensorflow.op.core.Placeholder;
+import org.tensorflow.types.TBool;
+import org.tensorflow.types.TFloat32;
 import org.tensorflow.types.family.TType;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TensorflowModel extends DLModel implements AutoCloseable {
     private final Op criterion;
@@ -38,8 +42,9 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
 
     private final Graph graph;
     private final Ops tf;
+    private final Placeholder<TBool> trainingMode;
     private final Session session;
-    private final Map<String, Operand<?>> opMap;
+    private final Map<Integer, Operand<?>> opMap;
     private final org.tensorflow.op.Op minimize;
 
     public TensorflowModel(DLModel model, Op criterion, Optimizer optimizer, Op accuracyCalculation) {
@@ -50,49 +55,29 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
 
         this.graph = new Graph();
         this.tf = Ops.create(graph);
+        this.trainingMode = tf.placeholder(TBool.class, Placeholder.shape(Shape.scalar()));
         this.session = new Session(graph);
         this.opMap = new HashMap<>();
 
-        connect(criterion);
         compile(criterion);
         if (accuracyCalculation != null) {
-            connect(accuracyCalculation);
             compile(accuracyCalculation);
         }
 
-        this.minimize = Convertor.convert(graph, optimizer).minimize(opMap.get(criterion.getName()));
-    }
-
-    private void connect(Op op) {
-        Deque<List<Op>> deque = new LinkedList<>();
-        deque.addLast(op.getFromList());
-        boolean changeInput = false;
-        while (!deque.isEmpty() && !changeInput) {
-            List<Op> fromList = deque.pollFirst();
-            for (int i = 0; i < fromList.size(); i++) {
-                if (fromList.get(i).getName().equals(Input.Type.PREDICTED.getName())) {
-                    fromList.set(i, out);
-                    changeInput = true;
-                    break;
-                }
-                deque.addLast(fromList.get(i).getFromList());
-            }
-        }
-        if (!changeInput) {
-            throw new RuntimeException("Op " + op.getName() + " operator must start with a Input named '__PREDICTED__'");
-        }
+        this.minimize = Convertor.convert(graph, optimizer).minimize(opMap.get(criterion.getId()));
     }
 
     private Operand<?> compile(Op op) {
-        Operand[] array = op.getFromList().stream().map(e -> {
-            Operand<?> operand = this.opMap.get(e.getName());
+        List<Operand<?>> inputs = op.getFromList().stream().map(e -> {
+            Operand<?> operand = this.opMap.get(e.getId());
             if (operand == null) {
                 operand = compile(e);
             }
             return operand;
-        }).toArray(Operand[]::new);
-        final Operand<?> ret = Convertor.convert(tf, op, array);
-        this.opMap.put(op.getName(), ret);
+        }).collect(Collectors.toList());
+        inputs.add(trainingMode);
+        final Operand<?> ret = Convertor.convert(graph, tf, op, inputs.toArray(Operand[]::new));
+        this.opMap.put(op.getId(), ret);
         return ret;
     }
 
@@ -114,6 +99,7 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
                     Session.Runner runner = session.runner()
                             .feed(Input.Type.FEATURES.getName(), tx)
                             .feed(Input.Type.LABEL.getName(), ty)
+                            .feed(trainingMode, TBool.scalarOf(true))
                             .addTarget(minimize)
                             .fetch(criterion.getName());
                     if (accuracyCalculation != null) {
@@ -123,8 +109,10 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
                         TFloat32 loss = (TFloat32) ret.get(0);
                         System.out.printf("[epoch %d, batch %d] loss: %f ", i + 1, start / batchSize + 1, loss.getFloat());
 
-                        TFloat32 acc = (TFloat32) ret.get(1);
-                        System.out.printf("accuracy: %f ", acc.getFloat());
+                        if (accuracyCalculation != null) {
+                            TFloat32 acc = (TFloat32) ret.get(1);
+                            System.out.printf("accuracy: %f ", acc.getFloat());
+                        }
                     }
                     System.out.println();
                 }
@@ -140,8 +128,9 @@ public class TensorflowModel extends DLModel implements AutoCloseable {
         try (Tensor tx = Convertor.ndArrayToTensor(x)) {
             Tensor predicted = session.runner()
                     .feed(Input.Type.FEATURES.getName(), tx)
+                    .feed(trainingMode, TBool.scalarOf(false))
                     .fetch(out.getName())
-                    .run()
+                    .run() // will be closed by global resource manager
                     .get(0);
             return (PT) predicted;
         }

@@ -18,24 +18,26 @@
 
 package org.apache.wayang.spark.operators;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 /**
  * Test suite for {@link SparkGlobalMaterializedGroupOperator}.
  */
-public class SparkGlobalMaterializedGroupOperatorTest extends SparkOperatorTestBase {
+class SparkGlobalMaterializedGroupOperatorTest extends SparkOperatorTestBase {
 
     @Test
-    public void testExecution() {
+    void testExecution() {
         // Prepare test data.
         Collection<Integer> inputCollection = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
@@ -53,13 +55,13 @@ public class SparkGlobalMaterializedGroupOperatorTest extends SparkOperatorTestB
 
         // Verify the outcome.
         final Collection<Iterable<Integer>> result = ((RddChannel.Instance) outputs[0]).<Iterable<Integer>>provideRdd().collect();
-        Assert.assertEquals(1, result.size());
-        Assert.assertEquals(inputCollection, result.iterator().next());
+        assertEquals(1, result.size());
+        assertEquals(inputCollection, result.iterator().next());
 
     }
 
     @Test
-    public void testExecutionWithoutData() {
+    void testExecutionWithoutData() {
         // Prepare test data.
         Collection<Integer> inputCollection = Collections.emptyList();
 
@@ -77,7 +79,7 @@ public class SparkGlobalMaterializedGroupOperatorTest extends SparkOperatorTestB
 
         // Verify the outcome.
         final Collection<Iterable<Integer>> result = ((RddChannel.Instance) outputs[0]).<Iterable<Integer>>provideRdd().collect();
-        Assert.assertEquals(1, result.size());
-        Assert.assertFalse(WayangCollections.getSingle(result).iterator().hasNext());
+        assertEquals(1, result.size());
+        assertFalse(WayangCollections.getSingle(result).iterator().hasNext());
     }
 }

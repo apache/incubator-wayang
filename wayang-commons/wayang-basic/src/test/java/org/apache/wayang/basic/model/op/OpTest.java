@@ -22,32 +22,28 @@ import org.apache.wayang.basic.model.DLModel;
 import org.apache.wayang.basic.model.op.nn.CrossEntropyLoss;
 import org.apache.wayang.basic.model.op.nn.Linear;
 import org.apache.wayang.basic.model.op.nn.ReLU;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class OpTest {
+class OpTest {
 
     @Test
-    public void testBuild() {
+    void testBuild() {
         // model
-        Linear l1 = new Linear(4, 4, true, "l1");
-        ReLU r1 = new ReLU("r1");
-        Linear out = new Linear(4, 3, true, "l2");
+        Input features = new Input(null, Input.Type.FEATURES);
+        Input labels = new Input(null, Input.Type.LABEL);
 
-        out.with(
-                r1.with(
-                        l1.with(
-                                new Input(Input.Type.FEATURES)
-                        )
-                )
-        );
-
-        DLModel model = new DLModel(out);
+        DLModel model = new DLModel.Builder()
+                .layer(features)
+                .layer(new Linear(4, 4, true, "l1"))
+                .layer(new ReLU("r1"))
+                .layer(new Linear(4, 3, true, "l2"))
+                .build();
 
         // loss function
         CrossEntropyLoss loss = new CrossEntropyLoss(3, "loss");
         loss.with(
-                new Input(Input.Type.PREDICTED),
-                new Input(Input.Type.LABEL)
+                model.getOut(),
+                labels
         );
 
         // accuracy calculation
@@ -56,9 +52,9 @@ public class OpTest {
                 new Cast(Op.DType.FLOAT32).with(
                         new Eq().with(
                                 new ArgMax(1).with(
-                                        new Input(Input.Type.PREDICTED)
+                                        model.getOut()
                                 ),
-                                new Input(Input.Type.LABEL)
+                                labels
                         )
                 )
         );

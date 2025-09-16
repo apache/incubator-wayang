@@ -35,8 +35,7 @@ import org.apache.wayang.jdbc.test.HsqldbPlatform;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -44,13 +43,15 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class SqlToRddOperatorTest extends OperatorTestBase {
+class SqlToRddOperatorTest extends OperatorTestBase {
 
     @Test
-    public void testWithHsqldb() throws SQLException {
+    void testWithHsqldb() throws SQLException {
         Configuration configuration = new Configuration();
 
         Job job = mock(Job.class);
@@ -108,11 +109,11 @@ public class SqlToRddOperatorTest extends OperatorTestBase {
                 new Record(2, "two")
         );
 
-        Assert.assertEquals(expected, output);
+        assertEquals(expected, output);
     }
 
     @Test
-    public void testWithEmptyHsqldb() throws SQLException {
+    void testWithEmptyHsqldb() throws SQLException {
         Configuration configuration = new Configuration();
 
         Job job = mock(Job.class);
@@ -161,7 +162,7 @@ public class SqlToRddOperatorTest extends OperatorTestBase {
         );
 
         List<Record> output = rddChannelInstance.<Record>provideRdd().collect();
-        Assert.assertTrue(output.isEmpty());
+        assertTrue(output.isEmpty());
     }
 
 }

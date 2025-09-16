@@ -30,8 +30,7 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.tensorflow.Tensorflow;
-import org.junit.Test;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,7 +68,7 @@ public class TensorflowIntegrationIT {
     public static String[] LABELS = new String[]{"Iris-setosa", "Iris-versicolor", "Iris-virginica"};
 
     @Test
-    public void test() {
+    void test() {
         /* training features */
         CollectionSource<float[]> trainXSource = new CollectionSource<>(trainX, float[].class);
 
@@ -79,28 +78,26 @@ public class TensorflowIntegrationIT {
         /* test features */
         CollectionSource<float[]> testXSource = new CollectionSource<>(testX, float[].class);
 
-        /* model */
-        Op l1 = new Linear(4, 64, true);
-        Op s1 = new Sigmoid();
-        Op l2 = new Linear(64, 3, true);
-        s1.with(l1.with(new Input(Input.Type.FEATURES)));
-        l2.with(s1);
+        /* model with layer api */
+        Input features = new Input(null, Input.Type.FEATURES);
+        Input labels = new Input(null, Input.Type.LABEL, Op.DType.INT32);
 
-        DLModel model = new DLModel(l2);
+        DLModel model = new DLModel.Builder()
+                .layer(features)
+                .layer(new Linear(4, 64, true))
+                .layer(new Sigmoid())
+                .layer(new Linear(64, 3, true))
+                .build();
 
         /* training options */
         // 1. loss function
         Op criterion = new CrossEntropyLoss(3);
-        criterion.with(
-                new Input(Input.Type.PREDICTED, Op.DType.FLOAT32),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
-        );
+        criterion.with(model.getOut(), labels);
 
         // 2. accuracy calculation function
         Op acc = new Mean(0);
         acc.with(new Cast(Op.DType.FLOAT32).with(new Eq().with(
-                new ArgMax(1).with(new Input(Input.Type.PREDICTED, Op.DType.FLOAT32)),
-                new Input(Input.Type.LABEL, Op.DType.INT32)
+                new ArgMax(1).with(model.getOut()), labels
         )));
 
         // 3. optimizer

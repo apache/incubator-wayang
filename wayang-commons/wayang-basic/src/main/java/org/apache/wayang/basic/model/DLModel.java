@@ -30,4 +30,26 @@ public class DLModel implements Model {
     public Op getOut() {
         return out;
     }
+
+    public static class Builder {
+        private Op out;
+
+        public DLModel build() {
+            return new DLModel(out);
+        }
+
+        public Builder layer(Op op) {
+            if (op == null) {
+                return this;
+            }
+
+            if (out == null) {
+                out = op;
+            } else {
+                out = op.with(out);
+            }
+
+            return this;
+        }
+    }
 }

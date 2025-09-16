@@ -27,3 +27,22 @@ class DLModel(Model):
 
     def get_out(self):
         return self.out
+
+class LogisticRegression(Op):
+    def __init__(self, name=None):
+        super().__init__(Op.DType.FLOAT32, name)
+
+
+class DecisionTreeRegression(Op):
+    def __init__(self, max_depth: int = 5, min_instances: int = 2, name=None):
+        super().__init__(Op.DType.FLOAT32, name)
+        self.max_depth = max_depth
+        self.min_instances = min_instances
+
+
+class LinearSVC(Op):
+    def __init__(self, max_iter: int = 10, reg_param: float = 0.1, name=None):
+        super().__init__(Op.DType.FLOAT32, name)
+        self.max_iter = max_iter
+        self.reg_param = reg_param
+

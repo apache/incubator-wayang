@@ -25,7 +25,7 @@ import java.util.{Collection => JavaCollection}
 import org.apache.commons.lang3.Validate
 import org.apache.wayang.api.util.DataQuantaBuilderCache
 import org.apache.wayang.basic.data.Record
-import org.apache.wayang.basic.operators.{TableSource, TextFileSource, KafkaTopicSource}
+import org.apache.wayang.basic.operators.{AmazonS3Source, AzureBlobStorageSource, GoogleCloudStorageSource, KafkaTopicSource, ParquetSource, TableSource, TextFileSource}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.WayangContext
 import org.apache.wayang.core.plan.wayangplan._
@@ -60,23 +60,66 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     * @return [[DataQuantaBuilder]] for the file
     */
   def readTextFile(url: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
-  createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
+    createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
 
   /**
-   * Read a textmessages from a Kafka topic and provide it as a dataset of [[String]]s, one per message.
+   * Read a parquet file and provide it as a dataset of [[Record]]s.
    *
-   * @param topicName the topic's name
-   * @return [[DataQuantaBuilder]] for the content in the topic
+   * @param url the URL of the Parquet file
+   * @param projection the projection, if any
+   * @return [[DataQuantaBuilder]] for the file
    */
+  def readParquet(url: String, projection: Array[String] = null): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, Record], Record] =
+    createSourceBuilder(ParquetSource.create(url, projection))(ClassTag(classOf[Record]))
+
+  /**
+    * Read a text file from a Google Cloud Storage bucket and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param bucket the bucket name of the file
+    * @param blobName the name of the blob within the bucket, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuantaBuilder]] for the file
+    */
+  def readGoogleCloudStorageFile(bucket: String, blobName: String, filePathToCredentialsFile: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+    createSourceBuilder(new GoogleCloudStorageSource(bucket, blobName, filePathToCredentialsFile))(ClassTag(classOf[String]))
+
+  /**
+    * Read a text file from a Amazon S3 bucket and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param bucket the bucket name of the file
+    * @param blobName the name of the blob within the bucket, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuantaBuilder]] for the file
+    */
+  def readAmazonS3File(bucket: String, blobName: String, filePathToCredentialsFile: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+    createSourceBuilder(new AmazonS3Source(bucket, blobName, filePathToCredentialsFile))(ClassTag(classOf[String]))
+
+  /**
+    * Read a text file from a Azure Blob Storage container and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param storageContainer the storage container of the file
+    * @param blobName the name of the blob within the container, including folder structure
+    * @param filePathToCredentialsFile the file path to credentials file
+    * @return [[DataQuantaBuilder]] for the file
+    */
+  def readAzureBlobStorageFile(storageContainer: String, blobName: String, filePathToCredentialsFile: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
+    createSourceBuilder(new AzureBlobStorageSource(storageContainer, blobName, filePathToCredentialsFile))(ClassTag(classOf[String]))
+
+  /**
+    * Read a textmessages from a Kafka topic and provide it as a dataset of [[String]]s, one per message.
+    *
+    * @param topicName the topic's name
+    * @return [[DataQuantaBuilder]] for the content in the topic
+  */
   def readKafkaTopic(topicName: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
     createSourceBuilder(new KafkaTopicSource(topicName))(ClassTag(classOf[String]))
 
-     /** 
-      * Read a remote text file and provide it as a dataset of [[String]]s, one per line.
-      *
-      * @param url the URL of the text file
-      * @return [[DataQuantaBuilder]] for the file
-      */
+  /**
+    * Read a remote text file and provide it as a dataset of [[String]]s, one per line.
+    *
+    * @param url the URL of the text file
+    * @return [[DataQuantaBuilder]] for the file
+  */
   def readRemoteTextFile(url: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
     createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
 
@@ -87,7 +130,6 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     * @return [[DataQuantaBuilder]] for the [[Record]]s in the table
     */
   def readTable(source: TableSource) = createSourceBuilder(source)(ClassTag(classOf[Record])).asRecords
-
 
   /**
     * Load [[DataQuanta]] from an arbitrary [[UnarySource]].

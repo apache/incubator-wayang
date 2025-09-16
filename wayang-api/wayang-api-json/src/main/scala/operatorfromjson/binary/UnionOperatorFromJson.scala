@@ -29,5 +29,3 @@ case class UnionOperatorFromJson(override val id: Long,
                                  override val executionPlatform: String = null)
   extends OperatorFromJson(id, input, output, cat, operatorName, executionPlatform) {
 }
-
-

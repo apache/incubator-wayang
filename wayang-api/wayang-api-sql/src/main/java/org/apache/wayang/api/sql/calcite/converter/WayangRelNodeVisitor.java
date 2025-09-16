@@ -19,6 +19,7 @@
 package org.apache.wayang.api.sql.calcite.converter;
 
 import org.apache.calcite.rel.RelNode;
+
 import org.apache.wayang.core.plan.wayangplan.Operator;
 
 abstract class WayangRelNodeVisitor<T extends RelNode> {

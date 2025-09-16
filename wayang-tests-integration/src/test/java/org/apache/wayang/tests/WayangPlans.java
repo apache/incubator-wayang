@@ -248,7 +248,7 @@ public class WayangPlans {
      * Then, they are unioned in a {@link UnionAllOperator}, go through a {@link SortOperator}, a {@link MapOperator}
      * (applies {@link String#toUpperCase()}), {@link DistinctOperator}, and finally a {@link LocalCallbackSink} (stdout).
      */
-    public static WayangPlan diverseScenario2(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+    public static WayangPlan diverseScenario2(URI inputFileUri1, URI inputFileUri2) {
         // Build a Wayang plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
@@ -278,8 +278,7 @@ public class WayangPlans {
      * then {@code k} times map each value to {@code 2n} and {@code 2n+1}. Finally, the outcome of the loop is
      * collected in the {@code collector}.
      */
-    public static WayangPlan simpleLoop(final int numIterations, Collection<Integer> collector, final int... values)
-            throws URISyntaxException {
+    public static WayangPlan simpleLoop(final int numIterations, Collection<Integer> collector, final int... values) {
         CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
@@ -370,8 +369,7 @@ public class WayangPlans {
      * Creates a {@link WayangPlan} with a {@link CollectionSource} that is fed into a {@link SampleOperator}. It will
      * then map each value to its double and output the results in the {@code collector}.
      */
-    public static WayangPlan simpleSample(int sampleSize, Collection<Integer> collector, final int... values)
-            throws URISyntaxException {
+    public static WayangPlan simpleSample(int sampleSize, Collection<Integer> collector, final int... values) {
         CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
@@ -440,8 +438,7 @@ public class WayangPlans {
      * Creates a {@link WayangPlan} with a {@link CollectionSource} that is fed into a {@link GlobalMaterializedGroupOperator}.
      * It will then push the results in the {@code collector}.
      */
-    public static WayangPlan globalMaterializedGroup(Collection<Iterable<Integer>> collector, final int... values)
-            throws URISyntaxException {
+    public static WayangPlan globalMaterializedGroup(Collection<Iterable<Integer>> collector, final int... values) {
         CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
@@ -499,8 +496,7 @@ public class WayangPlans {
      * Creates a {@link WayangPlan} with a {@link CollectionSource} that is fed into a {@link ZipWithIdOperator}.
      * It will then push the results in the {@code collector}.
      */
-    public static WayangPlan zipWithId(Collection<Long> collector, final int... values)
-            throws URISyntaxException {
+    public static WayangPlan zipWithId(Collection<Long> collector, final int... values) {
         CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
@@ -540,8 +536,7 @@ public class WayangPlans {
      * non-negative. Then, their squares are intersected using the {@link IntersectOperator}. The result is
      * pushed to the {@code collector}.
      */
-    public static WayangPlan intersectSquares(Collection<Integer> collector, final int... values)
-            throws URISyntaxException {
+    public static WayangPlan intersectSquares(Collection<Integer> collector, final int... values) {
 
         CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
@@ -653,7 +648,7 @@ public class WayangPlans {
         // Base the edge list on vertex IDs.
         MapOperator<Tuple2<Character, Character>, Tuple2<Long, Long>> translate = new MapOperator<>(
                 new TransformationDescriptor<>(
-                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Character, Character>, Tuple2<Long, Long>>() {
+                        new FunctionDescriptor.ExtendedSerializableFunction<>() {
 
                             private Map<Character, Long> dictionary;
 
@@ -684,7 +679,7 @@ public class WayangPlans {
         // Back-translate the page ranks.
         MapOperator<Tuple2<Long, Float>, Tuple2<Character, Float>> backtranslate = new MapOperator<>(
                 new TransformationDescriptor<>(
-                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Long, Float>, Tuple2<Character, Float>>() {
+                        new FunctionDescriptor.ExtendedSerializableFunction<>() {
 
                             private Map<Long, Character> dictionary;
 
@@ -709,7 +704,7 @@ public class WayangPlans {
 
         LocalCallbackSink callbackSink = LocalCallbackSink.createCollectingSink(
                 pageRankCollector,
-                DataSetType.<Tuple2<Character, Float>>createDefaultUnchecked(Tuple2.class)
+                DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         callbackSink.setName("sink");
         backtranslate.connectTo(0, callbackSink, 0);
@@ -724,9 +719,9 @@ public class WayangPlans {
                 .map(
                     line -> {
                         String[] parts = line.split(" ");
-                        return new Tuple2<Character, Float>(
-                            parts[0].charAt(0),
-                            Float.parseFloat(parts[1])
+                        return new Tuple2<>(
+                                parts[0].charAt(0),
+                                Float.parseFloat(parts[1])
                         );
                     }
                 )
@@ -798,7 +793,7 @@ public class WayangPlans {
     /**
      * Same as scenarion2 but repeat 10 times before output.
      */
-    public static WayangPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+    public static WayangPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) {
         // Build a Wayang plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
         textFileSource1.setName("Source 1");
@@ -859,7 +854,7 @@ public class WayangPlans {
     /**
      * Simple counter loop .
      */
-    public static WayangPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+    public static WayangPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) {
         // Build a Wayang plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
         textFileSource1.setName("file1");

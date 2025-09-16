@@ -21,7 +21,6 @@ package org.apache.wayang.api.python.function;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.types.BasicDataUnitType;
 import org.apache.wayang.api.python.executor.PythonWorkerManager;
-import org.apache.wayang.core.function.FunctionDescriptor;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -39,7 +38,12 @@ public class WrappedTransformationDescriptor<Input, Output> extends Transformati
                 input.add(item);
                 final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
                 final Iterable<Output> output = manager.execute();
-                return output.iterator().next();
+
+                if (output.iterator().hasNext()) {
+                    return output.iterator().next();
+                }
+
+                return null;
             },
             inputTypeClass,
             outputTypeClass

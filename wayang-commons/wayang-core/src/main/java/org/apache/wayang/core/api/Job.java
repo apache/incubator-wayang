@@ -67,6 +67,7 @@ import org.apache.wayang.core.util.Formats;
 import org.apache.wayang.core.util.OneTimeExecutable;
 import org.apache.wayang.core.util.ReflectionUtils;
 import org.apache.wayang.core.util.WayangCollections;
+import org.apache.wayang.core.util.ExplainUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -304,6 +305,22 @@ public class Job extends OneTimeExecutable {
                 this.logger.warn("Failed to initialize monitor: {}", e);
             }
 
+            if (this.configuration.getBooleanProperty("wayang.core.explain.enabled")) {
+                long unixTime = System.currentTimeMillis() / 1000L;
+
+                String sanitized = ("job-" + this.name + "-" + unixTime)
+                    .replaceAll("\\s+", "_")
+                    .replaceAll("[^a-zA-Z0-9._-]", "");
+
+                ExplainUtils.write(
+                    ExplainUtils.parsePlan(this.wayangPlan, true),
+                    this.configuration.getStringProperty("wayang.core.explain.directory") + sanitized + "-logical.json"
+                );
+                ExplainUtils.write(
+                    ExplainUtils.parsePlan(executionPlan, true),
+                    this.configuration.getStringProperty("wayang.core.explain.directory") + sanitized + "-execution.json"
+                );
+            }
 
             // Take care of the execution.
             while (!this.execute(executionPlan, executionId)) {

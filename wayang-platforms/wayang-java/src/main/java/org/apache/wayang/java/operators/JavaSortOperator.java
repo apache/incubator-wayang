@@ -76,7 +76,7 @@ public class JavaSortOperator<Type, Key>
         final Function<Type, Key> keyExtractor = javaExecutor.getCompiler().compile(this.keyDescriptor);
 
         ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream()
-                .sorted((e1, e2) -> ((Comparable)keyExtractor.apply(e1)).compareTo(keyExtractor.apply(e2))));
+                .sorted((e1, e2) -> ((Comparable) keyExtractor.apply(e1)).compareTo(keyExtractor.apply(e2))));
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }

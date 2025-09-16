@@ -24,7 +24,7 @@ import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.java.channels.CollectionChannel;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 
 import java.util.Collection;
@@ -38,8 +38,8 @@ public class ChannelFactory {
 
     private static FlinkExecutor flinkExecutor;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         flinkExecutor = mock(FlinkExecutor.class);
     }
 

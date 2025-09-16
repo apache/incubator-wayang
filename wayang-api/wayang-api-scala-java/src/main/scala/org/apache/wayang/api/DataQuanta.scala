@@ -37,7 +37,7 @@ import org.apache.wayang.core.plan.wayangplan._
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Tuple2 => WayangTuple2}
-import org.apache.wayang.basic.model.DLModel;
+import org.apache.wayang.basic.model.{DLModel, LogisticRegressionModel,DecisionTreeRegressionModel};
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.function._
@@ -104,6 +104,65 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                                       selectivity: ProbabilisticDoubleInterval = null,
                                       udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
     mapPartitionsJava(toSerializablePartitionFunction(udf), selectivity, udfLoad)
+
+  /**
+   * Feed this instance into a [[LogisticRegressionOperator]].
+   * Trains a logistic regression model using the provided feature and label data.
+   *
+   * @param labels DataQuanta containing the label values (0.0 or 1.0)
+   * @param fitIntercept whether to fit an intercept term
+   * @return a new [[DataQuanta]] instance containing the trained [[LogisticRegressionModel]]
+   */
+  def trainLogisticRegression(labels: DataQuanta[java.lang.Double], fitIntercept: Boolean): DataQuanta[LogisticRegressionModel] = {
+    val operator = new LogisticRegressionOperator(fitIntercept)
+    this.connectTo(operator, 0)
+    labels.connectTo(operator, 1)
+    operator
+  }
+
+  /**
+   * Feed this instance into a [[DecisionTreeRegressionOperator]].
+   * Trains a generic Decision Tree Regression model using feature vectors and label values.
+   *
+   * @param labels DataQuanta containing the target values (labels)
+   * @param maxDepth the maximum depth of the decision tree
+   * @param minInstances the minimum number of instances per node
+   * @return a new [[DataQuanta]] instance containing the predicted values
+   */
+  def trainDecisionTreeRegression(
+                                   labels: DataQuanta[java.lang.Double],
+                                   maxDepth: Int,
+                                   minInstances: Int
+                                 ): DataQuanta[DecisionTreeRegressionModel] = {
+    val operator = new DecisionTreeRegressionOperator(maxDepth, minInstances)
+    this.connectTo(operator, 0)
+    labels.connectTo(operator, 1)
+    operator
+  }
+
+  /**
+   * Feed this instance into a [[LinearSVCOperator]].
+   * Trains a linear support vector classification (SVM) model using feature vectors and label values.
+   *
+   * @param labels    DataQuanta containing the target binary labels (0.0 or 1.0)
+   * @param maxIter   the maximum number of iterations to optimize the linear SVM
+   * @param regParam  the regularization parameter (L2 penalty term)
+   * @return a new [[DataQuanta]] instance containing the trained [[SVMModel]]
+   */
+  def trainLinearSVC(
+                      labels: DataQuanta[java.lang.Double],
+                      maxIter: Int,
+                      regParam: Double
+                    ): DataQuanta[org.apache.wayang.basic.model.SVMModel] = {
+    val operator = new LinearSVCOperator(maxIter, regParam)
+    this.connectTo(operator, 0)
+    labels.connectTo(operator, 1)
+    operator
+  }
+
+
+
+
 
   /**
     * Feed this instance into a [[MapPartitionsOperator]].
@@ -588,6 +647,18 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     predictOperator
   }
 
+  def predictJava[ThatOut: ClassTag, Result: ClassTag](
+    that: DataQuanta[ThatOut]
+    ): DataQuanta[Result] = {
+    val predictOperator = new PredictOperator(
+      implicitly[ClassTag[ThatOut]].runtimeClass,
+      implicitly[ClassTag[Result]].runtimeClass
+    )
+    this.connectTo(predictOperator, 0)
+    that.connectTo(predictOperator, 1)
+    predictOperator
+  }
+
   def dlTraining[ThatOut: ClassTag](
     model: DLModel,
     option: DLTrainingOperator.Option,
@@ -609,6 +680,24 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
       option,
       xType,
       yType
+    )
+
+    this.connectTo(dlTrainingOperator, 0)
+    that.connectTo(dlTrainingOperator, 1)
+    dlTrainingOperator
+  }
+
+
+  def dlTrainingJava[ThatOut: ClassTag](
+    model: DLModel,
+    option: DLTrainingOperator.Option,
+    that: DataQuanta[ThatOut]
+  ): DataQuanta[DLModel] = {
+    val dlTrainingOperator = new DLTrainingOperator(
+      model,
+      option,
+      implicitly[ClassTag[Out]].runtimeClass,
+      implicitly[ClassTag[ThatOut]].runtimeClass
     )
 
     this.connectTo(dlTrainingOperator, 0)
@@ -912,7 +1001,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     collector
   }
 
-  def explain(): Unit = {
+  def explain(toJson: Boolean = false): Unit = {
     // Set up the sink.
     val collector = new java.util.LinkedList[Out]()
     val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
@@ -921,7 +1010,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
 
     // Do the explanation.
     this.planBuilder.sinks += sink
-    this.planBuilder.buildAndExplain()
+    this.planBuilder.buildAndExplain(toJson)
   }
 
 
