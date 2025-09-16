@@ -18,41 +18,36 @@
 
 package org.apache.wayang.api.python.function;
 
+import java.util.ArrayList;
+
 import org.apache.wayang.api.python.executor.PythonWorkerManager;
-import org.apache.wayang.core.function.FlatMapDescriptor;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.types.BasicDataUnitType;
 
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 
 public class WrappedPredicateDescriptor<Input> extends PredicateDescriptor<Input> {
 
     public WrappedPredicateDescriptor(
-        final ByteString serializedUDF,
-        BasicDataUnitType<Input> inputTypeClass,
-        ProbabilisticDoubleInterval selectivity,
-        LoadProfileEstimator udfLoad
-    ) {
-        super(
-            (item) -> {
-                final ArrayList<Input> input = new ArrayList<>();
-                input.add(item);
-                final PythonWorkerManager<Input, Object> manager = new PythonWorkerManager<>(serializedUDF, input);
-                final Iterable<Object> output = manager.execute();
-                if (output.iterator().hasNext()) {
-                    Object next = output.iterator().next();
-                    System.out.println((Integer) next == 1);
-                    return ((Integer) next) == 1;
-                }
-
-                return false;
-            },
-            inputTypeClass,
-            selectivity,
-            udfLoad
-        );
+            final ByteString serializedUDF,
+            final BasicDataUnitType<Input> inputTypeClass,
+            final ProbabilisticDoubleInterval selectivity,
+            final LoadProfileEstimator udfLoad) {
+        super(item -> {
+            final ArrayList<Input> input = new ArrayList<>();
+            input.add(item);
+            final PythonWorkerManager<Input, Object> manager = new PythonWorkerManager<>(serializedUDF, input);
+            final Iterable<Object> output = manager.execute();
+            if (output.iterator().hasNext()) {
+                final Object next = output.iterator().next();
+                return next.equals(1);
+            }
+            return false;
+        },
+                inputTypeClass,
+                selectivity,
+                udfLoad);
     }
 }
