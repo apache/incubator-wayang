@@ -9,11 +9,11 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied.  See the License for the specific
+ * language governing permissions and limitations under the License.
  */
 
 package org.apache.wayang.giraph.operators;
@@ -36,24 +36,25 @@ import org.apache.wayang.java.channels.StreamChannel;
 
 import java.io.IOException;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Test For GiraphPageRank
  */
 public class GiraphPagaRankOperatorTest {
 
-    private static GiraphExecutor giraphExecutor;
+    private GiraphExecutor giraphExecutor;
 
     @Before
     public void setUp() {
         giraphExecutor = mock(GiraphExecutor.class);
     }
 
-    //TODO Validate the mock of GiraphExecutor @Test
+    @Test
     public void testExecution() throws IOException {
-        // Ensure that the GraphChiPlatform is initialized.
+        // Ensure that the GiraphPlatform is initialized.
         GiraphPlatform.getInstance();
         final Configuration configuration = new Configuration();
         Giraph.plugin().configure(configuration);
@@ -61,7 +62,8 @@ public class GiraphPagaRankOperatorTest {
 
         final Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
-        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
+        when(job.getCrossPlatformExecutor())
+                .thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
 
         final ExecutionOperator outputOperator = mock(ExecutionOperator.class);
         when(outputOperator.getNumOutputs()).thenReturn(1);
@@ -79,13 +81,22 @@ public class GiraphPagaRankOperatorTest {
                         .createInstance(giraphExecutor, null, -1);
 
         final DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
-        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(giraphPageRankOperator);
+        final OptimizationContext.OperatorContext operatorContext =
+                optimizationContext.addOneTimeOperator(giraphPageRankOperator);
 
+        // When: execute the operator
         giraphPageRankOperator.execute(
                 new ChannelInstance[]{inputChannelInstance},
                 new ChannelInstance[]{outputFileChannelInstance},
                 giraphExecutor,
                 operatorContext
         );
+
+        // Then: validate interactions with GiraphExecutor
+        verify(giraphExecutor, atLeastOnce())
+                .executeJob(eq(configuration), any(ChannelInstance[].class), any(ChannelInstance[].class), eq(operatorContext));
+
+        // And: ensure output channel was created
+        assertNotNull(outputFileChannelInstance);
     }
 }
