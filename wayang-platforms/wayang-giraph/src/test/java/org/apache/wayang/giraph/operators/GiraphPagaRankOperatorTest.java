@@ -32,12 +32,11 @@ import org.apache.wayang.giraph.execution.GiraphExecutor;
 import org.apache.wayang.giraph.platform.GiraphPlatform;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -53,17 +52,9 @@ class GiraphPagaRankOperatorTest {
         giraphExecutor = mock(GiraphExecutor.class);
     }
 
-    main
-    @Test
-    public void testExecution() throws IOException {
-        // Ensure that the GiraphPlatform is initialized.
-      
-    //TODO Validate the mock of GiraphExecutor
-    @Disabled
     @Test
     void testExecution() throws IOException {
-        // Ensure that the GraphChiPlatform is initialized.
-        main
+        // Ensure that the GiraphPlatform is initialized.
         GiraphPlatform.getInstance();
         final Configuration configuration = new Configuration();
         Giraph.plugin().configure(configuration);
@@ -76,6 +67,7 @@ class GiraphPagaRankOperatorTest {
 
         final ExecutionOperator outputOperator = mock(ExecutionOperator.class);
         when(outputOperator.getNumOutputs()).thenReturn(1);
+
         FileChannel.Instance inputChannelInstance =
                 (FileChannel.Instance) new FileChannel(FileChannel.HDFS_TSV_DESCRIPTOR)
                         .createInstance(giraphExecutor, null, -1);
@@ -84,6 +76,7 @@ class GiraphPagaRankOperatorTest {
 
         final ExecutionOperator inputOperator = mock(ExecutionOperator.class);
         when(inputOperator.getNumOutputs()).thenReturn(1);
+
         StreamChannel.Instance outputFileChannelInstance =
                 (StreamChannel.Instance) StreamChannel.DESCRIPTOR
                         .createChannel(giraphPageRankOperator.getOutput(), configuration)
@@ -103,7 +96,10 @@ class GiraphPagaRankOperatorTest {
 
         // Then: validate interactions with GiraphExecutor
         verify(giraphExecutor, atLeastOnce())
-                .executeJob(eq(configuration), any(ChannelInstance[].class), any(ChannelInstance[].class), eq(operatorContext));
+                .executeJob(eq(configuration),
+                        any(ChannelInstance[].class),
+                        any(ChannelInstance[].class),
+                        eq(operatorContext));
 
         // And: ensure output channel was created
         assertNotNull(outputFileChannelInstance);
