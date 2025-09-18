@@ -223,3 +223,8 @@ Are copyright 2016 Sebastian Kruse from https://github.com/sekruse/profiledb-jav
 commit hash c28fe7f8e2034994e1c32e29ac8fdcfe7178d92b(https://github.com/sekruse/profiledb-java/commit/c28fe7f8e2034994e1c32e29ac8fdcfe7178d92b)
 
 mvnw files from https://github.com/apache/maven-wrapper Apache 2.0
+
+The files
+wayang-benchmark/src/main/java/org/apache/wayang/apps/terasort/Random16.java and
+wayang-benchmark/src/main/java/org/apache/wayang/apps/terasort/Unsigned.java
+are from Apache Hadoop: https://github.com/apache/hadoop/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-examples/src/main/java/org/apache/hadoop/examples/terasort/Random16.java
