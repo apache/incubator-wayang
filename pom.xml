@@ -796,6 +796,7 @@
             profile active.
         -->
 
+
         <pluginManagement>
 
             <plugins>
@@ -962,6 +963,7 @@
 
                     </configuration>
                 </plugin>
+
             </plugins>
 
         </pluginManagement>
@@ -1103,6 +1105,7 @@
                 <executions>
                     <execution>
                         <id>process-resource-bundles</id>
+                        <phase>generate-resources</phase>
                         <goals>
                             <goal>process</goal>
                         </goals>
@@ -1113,8 +1116,6 @@
                                 <!-- Will generate META-INF/DISCLAIMER  -->
                                 <resourceBundle>org.apache.apache.resources:apache-incubator-disclaimer-resource-bundle:1.7</resourceBundle>
                             </resourceBundles>
-                            <!-- Content in this directory will be appended to generated resources -->
-                            <appendedResourcesDirectory>${basedir}/src/remote-resources</appendedResourcesDirectory>
                         </configuration>
                     </execution>
                 </executions>
