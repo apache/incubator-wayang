@@ -31,16 +31,18 @@ import org.apache.wayang.giraph.Giraph;
 import org.apache.wayang.giraph.execution.GiraphExecutor;
 import org.apache.wayang.giraph.platform.GiraphPlatform;
 import org.apache.wayang.java.channels.StreamChannel;
+import org.apache.giraph.conf.GiraphConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Test for {@link GiraphPageRankOperator}.
+ * Test for GiraphPageRankOperator
  */
 class GiraphPagaRankOperatorTest {
 
@@ -49,23 +51,24 @@ class GiraphPagaRankOperatorTest {
     @BeforeEach
     void setUp() {
         giraphExecutor = mock(GiraphExecutor.class);
-        // Stub out getPlatform() so it won’t be null
-        when(giraphExecutor.getPlatform()).thenReturn(GiraphPlatform.getInstance());
+        // Stub configuration so executor doesn’t throw NPE
+        when(giraphExecutor.getConfiguration()).thenReturn(new GiraphConfiguration());
+        // Stub execute (void method)
+        doNothing().when(giraphExecutor).execute(any(), any());
     }
 
     @Test
     void testExecution() throws IOException {
-        // Ensure that the GiraphPlatform is initialized.
+        // Ensure GiraphPlatform is initialized
         GiraphPlatform.getInstance();
-
         final Configuration configuration = new Configuration();
-        // Do NOT call Giraph.plugin().configure(configuration); → causes NPE
+        Giraph.plugin().configure(configuration);
+
         final GiraphPageRankOperator giraphPageRankOperator = new GiraphPageRankOperator(20);
 
         final Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
-        when(job.getCrossPlatformExecutor())
-                .thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
+        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
 
         final ExecutionOperator outputOperator = mock(ExecutionOperator.class);
         when(outputOperator.getNumOutputs()).thenReturn(1);
@@ -76,10 +79,7 @@ class GiraphPagaRankOperatorTest {
         inputChannelInstance.addPath(this.getClass().getResource("/test.edgelist.input").toString());
         inputChannelInstance.getLineage().collectAndMark();
 
-        final ExecutionOperator inputOperator = mock(ExecutionOperator.class);
-        when(inputOperator.getNumOutputs()).thenReturn(1);
-
-        StreamChannel.Instance outputFileChannelInstance =
+        StreamChannel.Instance outputChannelInstance =
                 (StreamChannel.Instance) StreamChannel.DESCRIPTOR
                         .createChannel(giraphPageRankOperator.getOutput(), configuration)
                         .createInstance(giraphExecutor, null, -1);
@@ -88,18 +88,17 @@ class GiraphPagaRankOperatorTest {
         final OptimizationContext.OperatorContext operatorContext =
                 optimizationContext.addOneTimeOperator(giraphPageRankOperator);
 
-        // When: execute the operator
         giraphPageRankOperator.execute(
                 new ChannelInstance[]{inputChannelInstance},
-                new ChannelInstance[]{outputFileChannelInstance},
+                new ChannelInstance[]{outputChannelInstance},
                 giraphExecutor,
                 operatorContext
         );
 
-        // Then: no exception and output is created
-        assertNotNull(outputFileChannelInstance);
+        // ✅ Verify executor interactions
+        verify(giraphExecutor, times(1)).execute(any(), any());
 
-        // Verify our mock executor was touched
-        verify(giraphExecutor, atLeastOnce()).getPlatform();
+        // ✅ Assert output channel creation
+        assertNotNull(outputChannelInstance);
     }
 }
