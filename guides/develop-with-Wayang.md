@@ -23,27 +23,27 @@ This tutorial shows users how to import Wayang in their Java project using the m
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-core</artifactId>
-            <version>0.7.1</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-basic</artifactId>
-            <version>0.7.1</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-java</artifactId>
-            <version>0.7.1</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-spark</artifactId>
-            <version>0.7.1</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.wayang</groupId>
             <artifactId>wayang-api-scala-java</artifactId>
-            <version>0.7.1</version>
+            <version>1.1.0</version>
         </dependency>
 ```
 
