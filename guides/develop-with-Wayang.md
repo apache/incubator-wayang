@@ -120,3 +120,7 @@ public static void main(String[] args) {
 }
 ```
 A sample Java class file can be found [here](WordCount.java).
+
+
+# More Wayang jobs
+For more examples of Wayang jobs see [here](github.com/zkaoudi/wayang-examples).
