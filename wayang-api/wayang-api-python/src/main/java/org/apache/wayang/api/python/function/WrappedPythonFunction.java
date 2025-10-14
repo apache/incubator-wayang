@@ -18,23 +18,23 @@
 
 package org.apache.wayang.api.python.function;
 
-import com.google.protobuf.ByteString;
 import org.apache.wayang.api.python.executor.PythonWorkerManager;
 import org.apache.wayang.core.function.FunctionDescriptor;
 
-public class WrappedPythonFunction<Input, Output> implements FunctionDescriptor.SerializableFunction<Iterable<Input>, Iterable<Output>> {
+import com.google.protobuf.ByteString;
 
-    private ByteString serializedUDF;
+public class WrappedPythonFunction<Input, Output>
+        implements FunctionDescriptor.SerializableFunction<Iterable<Input>, Iterable<Output>> {
 
-    public WrappedPythonFunction(ByteString serializedUDF){
+    private final ByteString serializedUDF;
+
+    public WrappedPythonFunction(final ByteString serializedUDF) {
         this.serializedUDF = serializedUDF;
     }
 
     @Override
-    public Iterable<Output> apply(Iterable<Input> input) {
+    public Iterable<Output> apply(final Iterable<Input> input) {
         final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
-        final Iterable<Output> output = manager.execute();
-        return output;
+        return manager.execute();
     }
-
 }
