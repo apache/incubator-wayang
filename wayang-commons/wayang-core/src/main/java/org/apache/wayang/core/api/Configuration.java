@@ -819,7 +819,7 @@ public class Configuration implements Serializable {
     }
 
     public boolean getBooleanProperty(String key) {
-        return this.getOptionalBooleanProperty(key).get();
+        return this.getOptionalBooleanProperty(key).orElseThrow(() -> new WayangException(String.format("No value for \"%s\".", key)));
     }
 
     public boolean getBooleanProperty(String key, boolean fallback) {
