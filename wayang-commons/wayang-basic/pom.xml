@@ -92,7 +92,7 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>3.7.1</version> <!-- Use the latest version available -->
+            <version>3.9.1</version> <!-- Use the latest version available -->
         </dependency>
 
         <!-- Google Dependencies -->
