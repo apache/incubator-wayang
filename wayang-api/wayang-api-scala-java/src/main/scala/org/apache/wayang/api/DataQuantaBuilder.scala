@@ -664,11 +664,19 @@ abstract class BasicDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](im
   }
 
   /**
+   * Syntax sugar to avoid calling build().explain() on [[DataQuantaBuilder]]
+   */
+  def explain(): Unit = {
+    this.dataQuanta().explain(false)
+  }
+
+  /**
     * Create the [[DataQuanta]] built by this instance. Note the configuration being done in [[dataQuanta()]].
     *
     * @return the created and partially configured [[DataQuanta]]
     */
   protected def build: DataQuanta[Out]
+
 
 }
 
