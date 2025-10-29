@@ -20,6 +20,7 @@ package org.apache.wayang.api.json
 import zio._
 import zio.http._
 import scala.util.Try
+import java.io.{StringWriter, PrintWriter}
 
 import org.apache.wayang.api.json.builder.JsonPlanBuilder
 import org.apache.wayang.api.json.operatorfromdrawflow.OperatorFromDrawflowConverter
