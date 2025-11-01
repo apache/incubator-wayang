@@ -65,14 +65,15 @@ object Main extends ZIOAppDefault {
       // Error printed in server
       t.printStackTrace
 
-      // Error sent to clietn  
+      // Error sent to client
       val stringWriter = new StringWriter()
       val printWriter = new PrintWriter(stringWriter)
       t.printStackTrace(printWriter)
       printWriter.flush()
       val fullErrorOutput = stringWriter.toString()
 
-      ZIO.succeed(Response.error(Status.BadRequest, fullErrorOutput))
+      // Returns status code and the stacktrace (error message)
+      ZIO.succeed(Response(status = Status.BadRequest, body = Body.fromString(fullErrorOutput)))
      })
     }
 
