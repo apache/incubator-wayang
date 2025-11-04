@@ -1,0 +1,3 @@
+# we support python 3.11
+numpy==2.3.0
+cloudpickle==3.0.0
