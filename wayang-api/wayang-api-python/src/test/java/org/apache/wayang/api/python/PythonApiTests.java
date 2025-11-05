@@ -17,22 +17,14 @@
 
 package org.apache.wayang.api.python;
 
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.nio.file.Paths;
 
 import org.apache.wayang.api.python.executor.PythonProcessCaller;
-import org.apache.wayang.api.python.function.WrappedMapPartitionsDescriptor;
-import org.apache.wayang.api.python.function.WrappedPredicateDescriptor;
-
 import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.types.BasicDataUnitType;
 
 import org.junit.jupiter.api.Test;
-
-import com.google.protobuf.ByteString;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PythonApiTests {
     @Test
