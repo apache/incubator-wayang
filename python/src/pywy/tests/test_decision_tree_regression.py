@@ -42,8 +42,8 @@ def test_train_and_predict():
     result = predictions.collect()
     print("Predictions:", result)
 
-    assert len(result) is 4, f"Expected result to be 4, but got: {len(result)}"
+    assert len(result) is 4, f"Expected len(result) to be 4, but got: {len(result)}"
     for pred in result:
-        self.assertIsInstance(pred, float)
-        self.assertGreaterEqual(pred, 1.0)
-        self.assertLessEqual(pred, 7.0)
+        assert pred is float
+        assert pred > 1.0
+        assert pred <= 7.0
