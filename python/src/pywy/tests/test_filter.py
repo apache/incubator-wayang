@@ -15,26 +15,21 @@
 #  limitations under the License.
 #
 
-import unittest
 from pywy.dataquanta import WayangContext
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
 
-class TestWCPlanToJson(unittest.TestCase):
-    def test_to_json(self):
-        ctx = WayangContext() \
-            .register({JavaPlugin, SparkPlugin})
-        left = ctx.textfile("file:///var/www/html/README.md") \
-            .filter(lambda w: "Apache" in w, str) \
-            .flatmap(lambda w: w.split(), str, str) \
-            .map(lambda w: (len(w), w), str, (int, str))
-        right = ctx.textfile("file:///var/www/html/README.md") \
-            .filter(lambda w: "Wayang" in w, str) \
-            .map(lambda w: (len(w), w), str, (int, str))
-        join = left.join(lambda w: w[0], right, lambda w: w[0], (int, str)) \
-            .store_textfile("file:///var/www/html/data/wordcount-out-python.txt")
-
-        self.assertEqual(True, True)
-
-if __name__ == "__main__":
-    unittest.main()
+def test_filter_to_json():
+    ctx = WayangContext() \
+        .register({JavaPlugin, SparkPlugin})
+    left = ctx.textfile("file:///var/www/html/README.md") \
+        .filter(lambda w: "Apache" in w, str) \
+        .flatmap(lambda w: w.split(), str, str) \
+        .map(lambda w: (len(w), w), str, (int, str))
+    right = ctx.textfile("file:///var/www/html/README.md") \
+        .filter(lambda w: "Wayang" in w, str) \
+        .map(lambda w: (len(w), w), str, (int, str))
+    join = left.join(lambda w: w[0], right, lambda w: w[0], (int, str)) \
+        .store_textfile("file:///var/www/html/data/wordcount-out-python.txt")
+    
+    assert join is not None, "Could not construct join."

@@ -15,31 +15,27 @@
 #  limitations under the License.
 #
 
-import unittest
-#from typing import Tuple, Callable, Iterable
+from typing import Tuple
+
 from pywy.dataquanta import WayangContext
 from unittest.mock import Mock
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
 
-class TestJoin(unittest.TestCase):
-    def test_to_json(self):
-        ctx = WayangContext() \
-           .register({JavaPlugin, SparkPlugin})
+def test_join_to_json():
+    ctx = WayangContext() \
+        .register({JavaPlugin, SparkPlugin})
 
-        left = ctx.textfile("file:///var/www/html/data/left.csv").map(lambda x: tuple(x.split(",")), (int, str), (int, str))
-        right = ctx.textfile("file:///var/www/html/data/right.csv").map(lambda x: tuple(x.split(",")), (int, str), (int, str))
+    left = ctx.textfile("file:///var/www/html/data/left.csv").map(lambda x: tuple(x.split(",")), (int, str), (int, str))
+    right = ctx.textfile("file:///var/www/html/data/right.csv").map(lambda x: tuple(x.split(",")), (int, str), (int, str))
 
-        def join_key(item: (int, str)) -> (int):
-            print(f"join item {item}")
-            print(f"key: {item[0]}")
+    def join_key(item: Tuple[int, str]) -> int:
+        print(f"join item {item}")
+        print(f"key: {item[0]}")
 
-            return item[0]
+        return item[0]
 
-        join = left.join(join_key, right, join_key) \
-            .store_textfile("file:///var/www/html/data/join-out-python.txt")
+    join = left.join(join_key, right, join_key) \
+        .store_textfile("file:///var/www/html/data/join-out-python.txt")
 
-        self.assertEqual(True, True)
-
-if __name__ == "__main__":
-    unittest.main()
+    assert join is not None, "Could not construct join."

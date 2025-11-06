@@ -15,41 +15,35 @@
 #  limitations under the License.
 #
 
-import unittest
 from pywy.dataquanta import WayangContext
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
 
-class TestTrainDecisionTreeRegression(unittest.TestCase):
+def test_train_and_predict():
+    # Initialize context with platforms
+    ctx = WayangContext().register({JavaPlugin, SparkPlugin})
 
-    def test_train_and_predict(self):
-        # Initialize context with platforms
-        ctx = WayangContext().register({JavaPlugin, SparkPlugin})
+    # Input features and labels
+    features = ctx.load_collection([
+        [1.0, 2.0],
+        [2.0, 3.0],
+        [3.0, 4.0],
+        [4.0, 5.0]
+    ])
+    labels = ctx.load_collection([3.0, 4.0, 5.0, 6.0])
 
-        # Input features and labels
-        features = ctx.load_collection([
-            [1.0, 2.0],
-            [2.0, 3.0],
-            [3.0, 4.0],
-            [4.0, 5.0]
-        ])
-        labels = ctx.load_collection([3.0, 4.0, 5.0, 6.0])
+    # Train the model
+    model = features.train_decision_tree_regression(labels, max_depth=3, min_instances=1)
 
-        # Train the model
-        model = features.train_decision_tree_regression(labels, max_depth=3, min_instances=1)
+    # Run predictions on same features
+    predictions = model.predict(features)
 
-        # Run predictions on same features
-        predictions = model.predict(features)
+    # Collect and validate
+    result = predictions.collect()
+    print("Predictions:", result)
 
-        # Collect and validate
-        result = predictions.collect()
-        print("Predictions:", result)
-
-        self.assertEqual(len(result), 4)
-        for pred in result:
-            self.assertIsInstance(pred, float)
-            self.assertGreaterEqual(pred, 1.0)
-            self.assertLessEqual(pred, 7.0)
-
-if __name__ == "__main__":
-    unittest.main()
+    assert len(result) is 4, f"Expected result to be 4, but got: {len(result)}"
+    for pred in result:
+        self.assertIsInstance(pred, float)
+        self.assertGreaterEqual(pred, 1.0)
+        self.assertLessEqual(pred, 7.0)
