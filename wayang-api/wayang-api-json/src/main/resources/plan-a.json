@@ -14,7 +14,7 @@
         "output": [2],
         "operatorName": "textFileInput",
         "data": {
-          "filename": "file:///var/www/html/data/in.txt"
+          "filename": "file:///var/www/html/data/wordcount-out-python.txt"
         }
       },
       {
@@ -54,7 +54,7 @@
         "output": [],
         "operatorName": "textFileOutput",
         "data": {
-          "filename": "file:///var/www/html/data/out3.txt"
+          "filename": "file:///var/www/html/data/wordcount-out-python.txt"
         }
       }
     ]
