@@ -15,8 +15,12 @@
 #  limitations under the License.
 #
 
+from importlib import resources
 import json
+from pathlib import Path
+import subprocess
 import requests
+from pywy.tests import resources as resources_folder
 
 def test_json():
     # Specify the API URL we want to send our JSON to
@@ -24,9 +28,19 @@ def test_json():
     # Specify the appropriate header for the POST request
     headers = {'Content-type': 'application/json'}
 
-    with open("/var/www/html/wayang-api/wayang-api-json/src/main/resources/plan-a.json") as f:
-        with subprocess.Popen(["/var/www/html/wayang-assembly/target/wayang-0.7.1/bin/wayang-submit org.apache.wayang.api.json.springboot.SpringBootApplication"], stdout=subprocess.PIPE, shell=True) as proc:
-        plan = json.load(f)
-        print(plan)
-        response = requests.post(url, headers=headers, json=plan)
-        print(response)
+    wayang_runner_dir = Path.cwd() / 'wayang-assembly' / 'target' / 'wayang-1.1.0' / 'bin'
+
+    print("Opening subprocess")
+    with resources.path(resources_folder, "plan-a.json") as resource_path, \
+         resource_path.open() as resource, \
+         resources.path(resources_folder, "wayang.properties") as configuration_file_path: 
+            proc = subprocess.Popen([
+                f"{wayang_runner_dir}/wayang-submit",
+                f"-Dwayang.configuration=file://{configuration_file_path}",
+                f"org.apache.wayang.api.json.Main", 
+                f"8080"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    
+            plan = json.load(resource)
+            print(plan)
+            response = requests.post(url, headers=headers, json=plan)
+            print(response)
