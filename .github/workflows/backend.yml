@@ -65,4 +65,4 @@ jobs:
       - name: Run Maven Unit tests
         run: ./mvnw clean verify -B -Dmaven.test.skip=false -Dwayang.configuration=file:$(pwd)/tools/test/config/wayang.properties
       - name: Run Python Unit tests
-        run: pytest -r
+        run: pytest -ra
