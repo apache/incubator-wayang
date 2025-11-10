@@ -27,7 +27,6 @@ import java.util.Map;
 
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.util.ReflectionUtils;
 
 public class PythonProcessCaller {
 
@@ -61,18 +60,22 @@ public class PythonProcessCaller {
             workerEnv.put("PYTHON_WORKER_FACTORY_PORT", String.valueOf(this.serverSocket.getLocalPort()));
             workerEnv.put("PYTHONPATH", this.configuration.getStringProperty("wayang.api.python.env.path"));
 
+            // Redirect worker stdout and stderr
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-            this.process = pb.start();
 
-            // Redirect worker stdout and stderr
-            // IDK redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
+            this.process = pb.start();
 
             // Wait for it to connect to our socket
             this.serverSocket.setSoTimeout(10000);
 
         } catch (final Exception e) {
-            throw new WayangException("Python worker failed", e);
+            final String msg = String.format(
+                    "Python worker failed with config %s, using python path %s, using worker %s, using env %s", configuration,
+                    this.configuration.getStringProperty("wayang.api.python.path"),
+                    this.configuration.getStringProperty("wayang.api.python.worker"),
+                    this.configuration.getStringProperty("wayang.api.python.env.path"));
+            throw new WayangException(msg, e);
         }
 
         try {
@@ -81,9 +84,14 @@ public class PythonProcessCaller {
 
             if (socket.isConnected())
                 this.ready = true;
-                
         } catch (final Exception e) {
-            throw new WayangException("Python worker failed to connect back.", e);
+            final String msg = String.format(
+                    "Python worker failed to connect back, with config %s, using python path %s, using worker %s, using env %s",
+                    configuration,
+                    this.configuration.getStringProperty("wayang.api.python.path"),
+                    this.configuration.getStringProperty("wayang.api.python.worker"),
+                    this.configuration.getStringProperty("wayang.api.python.env.path"));
+            throw new WayangException(msg, e);
         }
     }
 
