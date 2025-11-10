@@ -52,17 +52,17 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r python/src/pywy/requirements.txt
-      - name: Run Python Unit tests
-        run: pytest -ra
       - uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven
       - name: Build And Install
         run: ./mvnw clean install -B -Dmaven.test.skip=true
-      - name: Run Unit tests
+      - name: Run Maven Unit tests
         run: ./mvnw clean verify -B -Dmaven.test.skip=false -Dwayang.configuration=file:$(pwd)/tools/test/config/wayang.properties
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/src/pywy/requirements.txt
+      - name: Run Python Unit tests
+        run: pytest -r
