@@ -25,6 +25,7 @@ def test_json():
     headers = {'Content-type': 'application/json'}
 
     with open("/var/www/html/wayang-api/wayang-api-json/src/main/resources/plan-a.json") as f:
+        with subprocess.Popen(["/var/www/html/wayang-assembly/target/wayang-0.7.1/bin/wayang-submit org.apache.wayang.api.json.springboot.SpringBootApplication"], stdout=subprocess.PIPE, shell=True) as proc:
         plan = json.load(f)
         print(plan)
         response = requests.post(url, headers=headers, json=plan)

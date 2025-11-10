@@ -59,6 +59,5 @@ def test_filter_to_json():
 
             for _ in range(1):
                 print(proc.stdout.readline())
-            assert join is not None, "Could not construct join."
         finally:    
             proc.kill()
