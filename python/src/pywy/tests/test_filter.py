@@ -30,7 +30,7 @@ def test_filter_to_json():
     wayang_runner_dir = Path.cwd() / 'wayang-assembly' / 'target' / 'wayang-1.1.0' / 'bin'
 
     print("Opening subprocess")
-    with resources.path(resources_folder, "sample_data.txt") as resource_path, \
+    with resources.path(resources_folder, "sample_data.md") as resource_path, \
          resources.path(resources_folder, "wordcount_out_python.txt") as output_path, \
          resources.path(resources_folder, "wayang.properties") as configuration_file_path:
         print(f"Using resource path: {resource_path}")
