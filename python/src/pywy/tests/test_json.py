@@ -19,6 +19,7 @@ from importlib import resources
 import json
 from pathlib import Path
 import subprocess
+import time
 import requests
 from pywy.tests import resources as resources_folder
 
@@ -31,16 +32,20 @@ def test_json():
     wayang_runner_dir = Path.cwd() / 'wayang-assembly' / 'target' / 'wayang-1.1.0' / 'bin'
 
     print("Opening subprocess")
-    with resources.path(resources_folder, "plan-a.json") as resource_path, \
-         resource_path.open() as resource, \
-         resources.path(resources_folder, "wayang.properties") as configuration_file_path: 
-            proc = subprocess.Popen([
-                f"{wayang_runner_dir}/wayang-submit",
-                f"-Dwayang.configuration=file://{configuration_file_path}",
-                f"org.apache.wayang.api.json.Main", 
-                f"8080"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    
-            plan = json.load(resource)
-            print(plan)
-            response = requests.post(url, headers=headers, json=plan)
-            print(response)
+    try:
+        with resources.path(resources_folder, "plan-a.json") as resource_path, \
+            resource_path.open() as resource, \
+            resources.path(resources_folder, "wayang.properties") as configuration_file_path: 
+                proc = subprocess.Popen([
+                    f"mvn", f"exec:java"
+                    f"-Dexec.mainClass=org.apache.wayang.api.json.Main", 
+                    f"-Dwayang.configuration=file://{configuration_file_path}", 
+                    f"-Dexec.args=\"8080\""], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                time.sleep(5)
+                
+                plan = json.load(resource)
+                print(plan)
+                response = requests.post(url, headers=headers, json=plan)
+                print(response)
+    finally:
+        proc.kill()

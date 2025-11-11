@@ -37,10 +37,10 @@ def test_filter_to_json():
         print(f"Using output path: {output_path}")
         print(f"Using configuration path: {configuration_file_path}")
         proc = subprocess.Popen([
-            f"{wayang_runner_dir}/wayang-submit",
-            f"-Dwayang.configuration=file://{configuration_file_path}",
-            f"org.apache.wayang.api.json.Main", 
-            f"8080"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            f"mvn", f"exec:java"
+            f"-Dexec.mainClass=\"org.apache.wayang.api.json.Main\"", 
+            f"-Dwayang.configuration=file://{configuration_file_path}", 
+            f"-Dexec.args=\"8080\""], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         time.sleep(5)
         try:
             print(f"Running process: {proc.pid} with args: {proc.args}")
