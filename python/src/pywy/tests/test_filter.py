@@ -15,24 +15,27 @@
 #  limitations under the License.
 #
 
-from pathlib import Path
 import subprocess
 import time
+import pytest
+
 from pywy.dataquanta import WayangContext
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
 from pywy.tests import resources as resources_folder
-
 from importlib import resources
-from pathlib import Path
 
-def test_filter_to_json():
-    wayang_runner_dir = Path.cwd() / 'wayang-assembly' / 'target' / 'wayang-1.1.0' / 'bin'
+@pytest.fixture(scope="session")
+def config(pytestconfig):
+    return pytestconfig.getoption("config")
 
-    print("Opening subprocess")
+def test_filter_to_json(config):
     with resources.path(resources_folder, "sample_data.md") as resource_path, \
          resources.path(resources_folder, "wordcount_out_python.txt") as output_path, \
          resources.path(resources_folder, "wayang.properties") as configuration_file_path:
+        
+        configuration_file_path = config if config is not None else configuration_file_path
+        
         print(f"Using resource path: {resource_path}")
         print(f"Using output path: {output_path}")
         print(f"Using configuration path: {configuration_file_path}")
