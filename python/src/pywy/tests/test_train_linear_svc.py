@@ -15,10 +15,14 @@
 #  limitations under the License.
 #
 
+import pytest
+
 from pywy.dataquanta import WayangContext
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
 
+# TODO: add functionality required for this test load_collection & collect
+@pytest.mark.skip(reason="no way of currently testing this, since we are missing implementations for load_collection & collect")
 def test_train_and_predict():
     ctx = WayangContext().register({JavaPlugin, SparkPlugin})
     
@@ -32,6 +36,6 @@ def test_train_and_predict():
     
     print("Predictions:", result)
 
-    assert len(result) is 4, f"Expected result to be 4, but got: {len(result)}"
+    assert len(result) is 4, f"Expected len(result) to be 4, but got: {len(result)}"
     for pred in result:
-        assert pred in [0.0, 1.0], f"Expected result to be prediction to be in [0.0, 0.1], but got: {pred}"
+        assert pred in [0.0, 1.0], f"Expected prediction to be in [0.0, 0.1], but got: {pred}"

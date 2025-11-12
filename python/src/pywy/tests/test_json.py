@@ -37,10 +37,10 @@ def test_json():
             resource_path.open() as resource, \
             resources.path(resources_folder, "wayang.properties") as configuration_file_path: 
                 proc = subprocess.Popen([
-                    f"mvn", f"exec:java"
+                    f"mvn", f"exec:java",
                     f"-Dexec.mainClass=org.apache.wayang.api.json.Main", 
                     f"-Dwayang.configuration=file://{configuration_file_path}", 
-                    f"-Dexec.args=\"8080\""], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    f"-Dexec.args=8080"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 time.sleep(5)
                 
                 plan = json.load(resource)

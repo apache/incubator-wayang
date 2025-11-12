@@ -18,7 +18,10 @@
 from pywy.dataquanta import WayangContext
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
+import pytest
 
+# TODO: add functionality required for this test load_collection & collect
+@pytest.mark.skip(reason="no way of currently testing this, since we are missing implementations for load_collection & collect")
 def test_train_and_predict():
     # Initialize context with platforms
     ctx = WayangContext().register({JavaPlugin, SparkPlugin})
