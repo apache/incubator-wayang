@@ -30,24 +30,20 @@ import java.util.ArrayList;
 public class WrappedFlatMapDescriptor<Input, Output> extends FlatMapDescriptor<Input, Output> {
 
     public WrappedFlatMapDescriptor(
-        final ByteString serializedUDF,
-        BasicDataUnitType<Input> inputTypeClass,
-        BasicDataUnitType<Output> outputTypeClass,
-        ProbabilisticDoubleInterval selectivity,
-        LoadProfileEstimator udfLoad
-    ) {
-        super(
-            (item) -> {
-                final ArrayList<Input> input = new ArrayList<>();
-                input.add(item);
-                final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
-                final Iterable<Output> output = manager.execute();
-                return output;
-            },
-            inputTypeClass,
-            outputTypeClass,
-            selectivity,
-            udfLoad
-        );
+            final ByteString serializedUDF,
+            final BasicDataUnitType<Input> inputTypeClass,
+            final BasicDataUnitType<Output> outputTypeClass,
+            final ProbabilisticDoubleInterval selectivity,
+            final LoadProfileEstimator udfLoad) {
+        super(item -> {
+            final ArrayList<Input> input = new ArrayList<>();
+            input.add(item);
+            final PythonWorkerManager<Input, Output> manager = new PythonWorkerManager<>(serializedUDF, input);
+            return manager.execute();
+        },
+                inputTypeClass,
+                outputTypeClass,
+                selectivity,
+                udfLoad);
     }
 }
