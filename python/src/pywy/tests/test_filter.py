@@ -44,7 +44,7 @@ def test_filter_to_json(config):
             f"-Dexec.mainClass=org.apache.wayang.api.json.Main", 
             f"-Dwayang.configuration=\"file://{configuration_file_path}\"", 
             f"-Dexec.args=\"8080\""], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        time.sleep(5)
+        print(proc.stdout.readline()), time.sleep(1) # wait for zio to print to output
         try:
             print(f"Running process: {proc.pid} with args: {proc.args}")
             ctx = WayangContext() \
