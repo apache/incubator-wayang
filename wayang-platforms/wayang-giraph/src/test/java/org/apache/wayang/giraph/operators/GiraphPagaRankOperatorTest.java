@@ -44,22 +44,20 @@ import static org.mockito.Mockito.*;
 /**
  * Test for GiraphPageRankOperator
  */
-class GiraphPagaRankOperatorTest {
+class GiraphPageRankOperatorTest {
 
     private GiraphExecutor giraphExecutor;
 
     @BeforeEach
     void setUp() {
         giraphExecutor = mock(GiraphExecutor.class);
-        // Stub configuration so executor doesn’t throw NPE
-        when(giraphExecutor.getConfiguration()).thenReturn(new GiraphConfiguration());
-        // Stub execute (void method)
+        GiraphConfiguration mockConfig = mock(GiraphConfiguration.class);
+        when(giraphExecutor.getConfiguration()).thenReturn(mockConfig);
         doNothing().when(giraphExecutor).execute(any(), any());
     }
 
     @Test
     void testExecution() throws IOException {
-        // Ensure GiraphPlatform is initialized
         GiraphPlatform.getInstance();
         final Configuration configuration = new Configuration();
         Giraph.plugin().configure(configuration);
@@ -95,10 +93,10 @@ class GiraphPagaRankOperatorTest {
                 operatorContext
         );
 
-        // ✅ Verify executor interactions
+        // Verify executor interactions
         verify(giraphExecutor, times(1)).execute(any(), any());
 
-        // ✅ Assert output channel creation
+        // Assert output channel creation
         assertNotNull(outputChannelInstance);
     }
 }
