@@ -15,6 +15,7 @@
 #  limitations under the License.
 #
 
+import os
 import subprocess
 import time
 import pytest
@@ -40,11 +41,11 @@ def test_filter_to_json(config):
         print(f"Using output path: {output_path}")
         print(f"Using configuration path: {configuration_file_path}")
         proc = subprocess.Popen([
-            f"mvn", f"-f", f"wayang-api/wayang-api-json/pom.xml", f"exec:java",
+            f"mvn", f"-q", f"-f", f"wayang-api/wayang-api-json/pom.xml", f"exec:java",
             f"-Dexec.mainClass=org.apache.wayang.api.json.Main", 
             f"-Dwayang.configuration=\"file://{configuration_file_path}\"", 
-            f"-Dexec.args=\"8080\""], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(proc.stdout.readline()), time.sleep(1) # wait for zio to print to output
+            f"-Dexec.args=\"8080\""], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy())
+        print(proc.stdout.readline()), print(proc.stdout.readline()), time.sleep(1) # wait for zio to print to output
         try:
             print(f"Running process: {proc.pid} with args: {proc.args}")
             ctx = WayangContext() \
@@ -59,8 +60,5 @@ def test_filter_to_json(config):
             join = left.join(lambda w: w[0], right, lambda w: w[0], (int, str)) \
                 .store_textfile(f"file://{output_path}")
             time.sleep(3)
-
-            for _ in range(1):
-                print(proc.stdout.readline())
         finally:    
             proc.kill()

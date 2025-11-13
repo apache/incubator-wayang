@@ -17,7 +17,7 @@
 
 from importlib import resources
 import json
-from pathlib import Path
+import os
 import subprocess
 import time
 import requests
@@ -29,22 +29,23 @@ def test_json():
     # Specify the appropriate header for the POST request
     headers = {'Content-type': 'application/json'}
 
-    wayang_runner_dir = Path.cwd() / 'wayang-assembly' / 'target' / 'wayang-1.1.0' / 'bin'
-
     print("Opening subprocess")
     try:
         with resources.path(resources_folder, "plan-a.json") as resource_path, \
             resource_path.open() as resource, \
             resources.path(resources_folder, "wayang.properties") as configuration_file_path: 
                 proc = subprocess.Popen([
-                    f"mvn", f"exec:java",
+                    f"mvn", f"-q", f"-f", f"wayang-api/wayang-api-json/pom.xml", f"exec:java",
                     f"-Dexec.mainClass=org.apache.wayang.api.json.Main", 
                     f"-Dwayang.configuration=file://{configuration_file_path}", 
                     f"-Dexec.args=8080"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                time.sleep(5)
                 
+                for i in range(2):
+                     print("[process.stdout]: ", proc.stdout.readline()), time.sleep(5) # wait for zio
+
                 plan = json.load(resource)
-                print(plan)
+
+
                 response = requests.post(url, headers=headers, json=plan)
                 print(response)
     finally:
