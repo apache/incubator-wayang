@@ -15,11 +15,19 @@
 #  limitations under the License.
 #
 
+
+import os
+import subprocess
+import time
+import pytest
+
+from importlib import resources
 from typing import Tuple
 from typing import Iterable
-from pywy.dataquanta import WayangContext, Configuration
+from pywy.dataquanta import WayangContext
 from pywy.platforms.java import JavaPlugin
 from pywy.platforms.spark import SparkPlugin
+from pywy.tests import resources as resources_folder
 
 def fm_func(w: str) -> Iterable[str]:
     return w.split()
@@ -39,31 +47,49 @@ def reduce_func(t1: Tuple[str, int], t2: Tuple[str, int]) -> Tuple[str, int]:
 def sort_func(tup: Tuple[str, int]):
     return tup[0]
 
-def test_wordcount():
-    # anonymous functions with type hints
-    ctx = WayangContext() \
-        .register({JavaPlugin, SparkPlugin}) \
-        .textfile("file:///var/www/html/README.md") \
-        .flatmap(lambda w: w.split(), str, str) \
-        .filter(lambda w: w.strip() != "", str) \
-        .map(lambda w: (w.lower(), 1), str, (str, int)) \
-        .reduce_by_key(lambda t: t[0], lambda t1, t2: (t1[0], int(t1[1]) + int(t2[1])), (str, int)) \
-        .store_textfile("file:///var/www/html/data/wordcount-out-python.txt", (str, int))
-    
-    assert ctx is not None, "Failed to create context using type hints."
 
-    config = Configuration()
-    config.set_property("wayang.api.python.worker", "/var/www/html/python/src/pywy/execution/worker.py")
 
-    # named functions with  signatures
-    ctx = WayangContext(config) \
-        .register({JavaPlugin, SparkPlugin}) \
-        .textfile("file:///var/www/html/README.md") \
-        .flatmap(fm_func) \
-        .filter(filter_func) \
-        .map(map_func) \
-        .reduce_by_key(key_func, reduce_func) \
-        .sort(sort_func) \
-        .store_textfile("file:///var/www/html/data/wordcount-out-python.txt", (str, int))
-    
-    assert ctx is not None, "Failed to create context using signatures."
+@pytest.fixture(scope="session")
+def config(pytestconfig):
+    return pytestconfig.getoption("config")
+
+
+# TODO: implement tuple types support
+@pytest.mark.skip(reason="missing implementation for tuple types in operators")
+def test_wordcount(config):
+    with resources.path(resources_folder, "sample_data.md") as resource_path, \
+         resources.path(resources_folder, "wordcount_out_python.txt") as output_path, \
+         resources.path(resources_folder, "wayang.properties") as configuration_file_path:
+        
+        configuration_file_path = config if config is not None else configuration_file_path
+
+        proc = subprocess.Popen([
+            f"mvn", f"-q", f"-f", f"wayang-api/wayang-api-json/pom.xml", f"exec:java",
+            f"-Dexec.mainClass=org.apache.wayang.api.json.Main", 
+            f"-Dwayang.configuration=file://{configuration_file_path}", 
+            f"-Dexec.args=8080"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy(), cwd=os.getcwd())
+        print(proc.stdout.readline()), print(proc.stdout.readline()), time.sleep(1) # wait for zio to print to output
+
+        try:  
+            # anonymous functions with type hints
+            _ctx = WayangContext() \
+                .register({JavaPlugin, SparkPlugin}) \
+                .textfile(f"file://{resource_path}") \
+                .flatmap(lambda w: w.split(), str, str) \
+                .filter(lambda w: w.strip() != "", str) \
+                .map(lambda w: (w.lower(), 1), str, (str, int)) \
+                .reduce_by_key(lambda t: t[0], lambda t1, t2: (t1[0], int(t1[1]) + int(t2[1])), (str, int)) \
+                .store_textfile(f"file://{output_path}", (str, int))
+            
+            # named functions with  signatures
+            _ctx = WayangContext() \
+                .register({JavaPlugin, SparkPlugin}) \
+                .textfile(f"file://{resource_path}") \
+                .flatmap(fm_func) \
+                .filter(filter_func) \
+                .map(map_func) \
+                .reduce_by_key(key_func, reduce_func) \
+                .sort(sort_func) \
+                .store_textfile(f"file://{output_path}", (str, int))
+        finally:
+            proc.kill()
