@@ -18,34 +18,35 @@
 
 package org.apache.wayang.api.python.executor;
 
-import com.google.protobuf.ByteString;
-import org.apache.wayang.core.api.exception.WayangException;
-
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.wayang.core.api.exception.WayangException;
+
+import com.google.protobuf.ByteString;
+
 public class ProcessFeeder<Input, Output> {
 
-    private Socket socket;
-    private ByteString serializedUDF;
-    private Iterable<Input> input;
+    // TODO add to a config file
+    static final int END_OF_DATA_SECTION = -1;
+    static final int NULL = -5;
 
-    //TODO add to a config file
-    int END_OF_DATA_SECTION = -1;
-    int NULL = -5;
+    private final Socket socket;
+    private final ByteString serializedUDF;
+    private final Iterable<Input> input;
 
     public ProcessFeeder(
-            Socket socket,
-            ByteString serializedUDF,
-            Iterable<Input> input){
+            final Socket socket,
+            final ByteString serializedUDF,
+            final Iterable<Input> input) {
 
-        if(input == null) throw new WayangException("Nothing to process with Python API");
+        if (input == null)
+            throw new WayangException("Nothing to process with Python API");
 
         this.socket = socket;
         this.serializedUDF = serializedUDF;
@@ -53,40 +54,40 @@ public class ProcessFeeder<Input, Output> {
 
     }
 
-    public void send(){
+    public void send() {
         try {
-            //TODO use config buffer size
-            int BUFFER_SIZE = 65536;
+            // TODO use config buffer size
+            final int BUFFER_SIZE = 65536;
 
-            BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), BUFFER_SIZE);
-            DataOutputStream dataOut = new DataOutputStream(stream);
+            final BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), BUFFER_SIZE);
+            final DataOutputStream dataOut = new DataOutputStream(stream);
 
             writeUDF(serializedUDF, dataOut);
             this.writeIteratorToStream(input.iterator(), dataOut);
             dataOut.writeInt(END_OF_DATA_SECTION);
             dataOut.flush();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void writeUDF(ByteString serializedUDF, DataOutputStream dataOut){
+    public void writeUDF(final ByteString serializedUDF, final DataOutputStream dataOut) {
         writeBytes(serializedUDF.toByteArray(), dataOut);
     }
 
-    public void writeIteratorToStream(Iterator<Input> iter, DataOutputStream dataOut){
-        for (Iterator<Input> it = iter; it.hasNext(); ) {
-            Input elem = it.next();
+    public void writeIteratorToStream(final Iterator<Input> iter, final DataOutputStream dataOut) {
+        for (final Iterator<Input> it = iter; it.hasNext();) {
+            final Input elem = it.next();
             write(elem, dataOut);
         }
     }
 
-    /*TODO Missing case PortableDataStream */
-    public void write(Object obj, DataOutputStream dataOut){
+    /* TODO Missing case PortableDataStream */
+    public void write(final Object obj, final DataOutputStream dataOut) {
         try {
 
-            if(obj == null)
-                dataOut.writeInt(this.NULL);
+            if (obj == null)
+                dataOut.writeInt(ProcessFeeder.NULL);
 
             /**
              * Byte Array cases
@@ -96,9 +97,9 @@ public class ProcessFeeder<Input, Output> {
             }
             /**
              * String case
-             * */
-            else if (obj instanceof String) {
-                writeUTF((String) obj, dataOut);
+             */
+            else if (obj instanceof final String str) {
+                writeUTF(str, dataOut);
             }
 
             // TODO: Properly type this in the future
@@ -108,63 +109,62 @@ public class ProcessFeeder<Input, Output> {
 
             /**
              * Key, Value case
-             * */
-            else if (obj instanceof Map.Entry) {
-                writeKeyValue((Map.Entry) obj, dataOut);
+             */
+            else if (obj instanceof final Map.Entry<?,?> entry) {
+                writeKeyValue(entry, dataOut);
             }
 
-            else{
+            else {
                 throw new WayangException("Unexpected element type " + obj.getClass());
             }
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void writeBytes(Object obj, DataOutputStream dataOut){
+    public void writeBytes(final Object obj, final DataOutputStream dataOut) {
 
-        try{
+        try {
 
-            if (obj instanceof Byte[]) {
+            if (obj instanceof final Byte[] objBytes) {
 
-                int length = ((Byte[]) obj).length;
+                final int length = objBytes.length;
 
-                byte[] bytes = new byte[length];
-                int j=0;
+                final byte[] bytes = new byte[length];
+                int j = 0;
 
                 // Unboxing Byte values. (Byte[] to byte[])
-                for(Byte b: ((Byte[]) obj))
+                for (final Byte b : objBytes)
                     bytes[j++] = b.byteValue();
 
                 dataOut.writeInt(length);
                 dataOut.write(bytes);
 
-            } else if (obj instanceof byte[]) {
+            } else if (obj instanceof final byte[] objBytes) {
 
-                dataOut.writeInt(((byte[]) obj).length);
-                dataOut.write(((byte[]) obj));
+                dataOut.writeInt(objBytes.length);
+                dataOut.write(objBytes);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void writeUTF(String str, DataOutputStream dataOut){
+    public void writeUTF(final String str, final DataOutputStream dataOut) {
 
-        byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
 
         try {
             dataOut.writeInt(bytes.length);
             dataOut.write(bytes);
-        } catch (Exception e){
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void writeKeyValue(Map.Entry obj, DataOutputStream dataOut){
+    public void writeKeyValue(final Map.Entry<?, ?> obj, final DataOutputStream dataOut) {
         write(obj.getKey(), dataOut);
         write(obj.getValue(), dataOut);
     }
-
 }
