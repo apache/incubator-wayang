@@ -81,7 +81,7 @@ class JsonPlanBuilder() {
 
   def setConfiguration(config: Map[String, String]): JsonPlanBuilder = {
     // Check if a wayang.properties file is declared using env variables, otherwise try default location.
-    val wayangPropertiesFile: String = sys.env.getOrElse("WAYANG_PROPERTIES_FILE", "file:///wayang.properties")
+    val wayangPropertiesFile: String = sys.props("wayang.configuration")
 
     if (Files.exists(Paths.get("wayang.properties"))) {
       println(s"Loading configuration from $wayangPropertiesFile.")

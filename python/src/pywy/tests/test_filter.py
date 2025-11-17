@@ -43,11 +43,12 @@ def test_filter_to_json(config):
         proc = subprocess.Popen([
             f"mvn", f"-q", f"-f", f"wayang-api/wayang-api-json/pom.xml", f"exec:java",
             f"-Dexec.mainClass=org.apache.wayang.api.json.Main", 
-            f"-Dwayang.configuration=\"file://{configuration_file_path}\"", 
-            f"-Dexec.args=\"8080\""], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy())
+            f"-Dwayang.configuration=file://{configuration_file_path}", 
+            f"-Dexec.args=8080"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy(), cwd=os.getcwd())
         print(proc.stdout.readline()), print(proc.stdout.readline()), time.sleep(1) # wait for zio to print to output
         try:
             print(f"Running process: {proc.pid} with args: {proc.args}")
+  
             ctx = WayangContext() \
                 .register({JavaPlugin, SparkPlugin})
             left = ctx.textfile(f"file://{resource_path}") \
