@@ -17,7 +17,7 @@
   - under the License.
   -->
 
-# Apache Wayang (incubating) <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang Logo">
+# Apache Wayang™ <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang Logo">
 
 ## The first open-source cross-platform data processing system
 
@@ -48,9 +48,9 @@
 
 ## Description
 
-In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang (incubating) can transparently and seamlessly integrate multiple execution engines and use them to perform a single task. We call this *cross-platform data processing*. In Wayang, users can specify any data processing application using one of Wayang's APIs and then Wayang will choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will perform the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
+In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang can transparently and seamlessly integrate multiple execution engines and use them to perform a single task. We call this *cross-platform data processing*. In Wayang, users can specify any data processing application using one of Wayang's APIs and then Wayang can choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will orchestrate the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
 
-Apache Wayang (incubating) aims at freeing data engineers and software developers from the burden of learning all different data processing systems, their APIs, strengths and weaknesses; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when trying a fixed set of processing platforms. As of now, Wayang has built-in support for the following processing platforms:
+Apache Wayang aims at freeing data engineers and software developers from the burden of learning all different data processing systems, their APIs, strengths and weaknesses; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when trying a fixed set of processing platforms. As of now, Wayang has built-in support for the following processing platforms:
 - [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
 - [Apache Spark](https://spark.apache.org/)
 - [Apache Flink](https://flink.apache.org/)
@@ -65,7 +65,9 @@ Apache Wayang (incubating) can be used via the following APIs:
 - Java scala-like
 - Scala
 - SQL
-- Java native (recommended only for low level)
+- Java native (recommended only for low level development)
+
+Apache Wayang provides a flexible architecture which enables easy addition of new operators and data processing platforms without requiring any change of the internals of the system. For details on how to add new operators, see [here](https://wayang.apache.org/docs/guide/adding-operators).
 
 ## Quick Guide for Running Wayang
 
