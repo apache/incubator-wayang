@@ -18,6 +18,7 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
@@ -43,6 +44,8 @@ public class ObjectFileSource<T> extends UnarySource<T> {
 
     private final Class<T> tClass;
 
+    private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION;
+
     public ObjectFileSource(String inputUrl, DataSetType<T> type) {
         super(type);
         this.inputUrl = inputUrl;
@@ -64,6 +67,7 @@ public class ObjectFileSource<T> extends UnarySource<T> {
         super(that);
         this.inputUrl = that.getInputUrl();
         this.tClass = that.getTypeClass();
+        this.serializationMode = that.getSerializationMode();
     }
 
     public String getInputUrl() {
@@ -72,6 +76,30 @@ public class ObjectFileSource<T> extends UnarySource<T> {
 
     public Class<T> getTypeClass(){
         return this.tClass;
+    }
+
+    public ObjectFileSerializationMode getSerializationMode() {
+        return this.serializationMode;
+    }
+
+    public ObjectFileSource<T> withSerializationMode(ObjectFileSerializationMode serializationMode) {
+        this.serializationMode = Objects.requireNonNull(serializationMode, "serializationMode");
+        return this;
+    }
+
+    /**
+     * Configure this source to use the deprecated legacy Java serialization.
+     */
+    @Deprecated
+    public ObjectFileSource<T> useLegacySerialization() {
+        return this.withSerializationMode(ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION);
+    }
+
+    /**
+     * Configure this source to use the JSON-based serialization.
+     */
+    public ObjectFileSource<T> useJsonSerialization() {
+        return this.withSerializationMode(ObjectFileSerializationMode.JSON);
     }
 
     @Override

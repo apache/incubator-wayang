@@ -32,15 +32,15 @@ import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.wayang.basic.operators.ObjectFileSerialization;
+import org.apache.wayang.basic.operators.ObjectFileSerializationMode;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
@@ -125,6 +125,7 @@ public class WayangFileOutputFormat<IT> extends FileOutputFormat<IT> implements 
 
     private transient DataOutputViewStreamWrapper outView;
 
+    private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION;
     // --------------------------------------------------------------------------------------------
 
     public WayangFileOutputFormat() {}
@@ -147,6 +148,13 @@ public class WayangFileOutputFormat<IT> extends FileOutputFormat<IT> implements 
 
     public Path getOutputFilePath() {
         return this.outputFilePath;
+    }
+
+    public void setSerializationMode(ObjectFileSerializationMode serializationMode) {
+        if (serializationMode == null) {
+            throw new NullPointerException("serializationMode");
+        }
+        this.serializationMode = serializationMode;
     }
 
 
@@ -258,15 +266,10 @@ public class WayangFileOutputFormat<IT> extends FileOutputFormat<IT> implements 
     @Override
     public void writeRecord(IT record) throws IOException {
         //this.blockBasedOutput.startRecord();
-        try{
-            ByteArrayOutputStream b = new ByteArrayOutputStream();
-            ObjectOutputStream objStream = new ObjectOutputStream(b);
-            objStream.writeObject(record);
-            BytesWritable bytesWritable = new BytesWritable(b.toByteArray());
-            writer.append(NullWritable.get(), bytesWritable);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+        Object[] chunk = new Object[]{record};
+        byte[] payload = ObjectFileSerialization.serializeChunk(chunk, chunk.length, this.serializationMode);
+        BytesWritable bytesWritable = new BytesWritable(payload);
+        writer.append(NullWritable.get(), bytesWritable);
     }
 
     protected String getDirectoryFileName(int taskNumber) {

@@ -18,13 +18,14 @@
 
 package org.apache.wayang.java.operators;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSerialization;
+import org.apache.wayang.basic.operators.ObjectFileSerializationMode;
 import org.apache.wayang.basic.operators.ObjectFileSink;
 import org.apache.wayang.basic.operators.TextFileSink;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -43,9 +44,9 @@ import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,6 +54,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link Operator} for the {@link JavaPlatform} that creates a sequence file. Consistent with Spark's object files.
@@ -60,6 +62,10 @@ import java.util.stream.Stream;
  * @see JavaObjectFileSource
  */
 public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExecutionOperator {
+
+    private static final Logger LOGGER = LogManager.getLogger(JavaObjectFileSink.class);
+
+    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
 
     public JavaObjectFileSink(ObjectFileSink<T> that) {
         super(that);
@@ -94,21 +100,17 @@ public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExec
         final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(path));
         final SequenceFile.Writer.Option keyClassOption = SequenceFile.Writer.keyClass(NullWritable.class);
         final SequenceFile.Writer.Option valueClassOption = SequenceFile.Writer.valueClass(BytesWritable.class);
+        final ObjectFileSerializationMode serializationMode = this.getSerializationMode();
+        if (serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION) {
+            logLegacyWarning();
+        }
         try (SequenceFile.Writer writer = SequenceFile.createWriter(new Configuration(true), fileOption, keyClassOption, valueClassOption)) {
 
             // Chunk the stream of data quanta and write the chunks into the sequence file.
             StreamChunker streamChunker = new StreamChunker(10, (chunk, size) -> {
-                if (chunk.length != size) {
-                    System.out.println("heer");
-                    System.out.println(chunk.length);
-                    System.out.println(size);
-                    chunk = Arrays.copyOfRange(chunk, 0, size);
-                }
                 try {
-                    final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    final ObjectOutputStream oos = new ObjectOutputStream(bos);
-                    oos.writeObject(chunk);
-                    BytesWritable bytesWritable = new BytesWritable(bos.toByteArray());
+                    byte[] payload = ObjectFileSerialization.serializeChunk(chunk, size, serializationMode);
+                    BytesWritable bytesWritable = new BytesWritable(payload);
                     writer.append(NullWritable.get(), bytesWritable);
                 } catch (IOException e) {
                     throw new UncheckedIOException("Writing or serialization failed.", e);
@@ -187,5 +189,12 @@ public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExec
         }
 
 
+    }
+
+    private static void logLegacyWarning() {
+        if (LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
+            LOGGER.warn("JavaObjectFileSink is using deprecated legacy Java serialization. "
+                    + "Please switch to the JSON serialization mode via ObjectFileSink#useJsonSerialization().");
+        }
     }
 }

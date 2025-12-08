@@ -36,6 +36,8 @@ public class ObjectFileSink<T> extends UnarySink<T> {
 
   protected final Class<T> tClass;
 
+  private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION;
+
   /**
    * Creates a new instance.
    *
@@ -69,5 +71,30 @@ public class ObjectFileSink<T> extends UnarySink<T> {
     super(that);
     this.textFileUrl = that.textFileUrl;
     this.tClass = that.tClass;
+    this.serializationMode = that.getSerializationMode();
+  }
+
+  public ObjectFileSerializationMode getSerializationMode() {
+    return this.serializationMode;
+  }
+
+  public ObjectFileSink<T> withSerializationMode(ObjectFileSerializationMode serializationMode) {
+    this.serializationMode = Objects.requireNonNull(serializationMode, "serializationMode");
+    return this;
+  }
+
+  /**
+   * Configure this sink to use the deprecated legacy Java serialization.
+   */
+  @Deprecated
+  public ObjectFileSink<T> useLegacySerialization() {
+    return this.withSerializationMode(ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION);
+  }
+
+  /**
+   * Configure this sink to use the JSON-based serialization.
+   */
+  public ObjectFileSink<T> useJsonSerialization() {
+    return this.withSerializationMode(ObjectFileSerializationMode.JSON);
   }
 }
