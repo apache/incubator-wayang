@@ -53,9 +53,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * {@link Operator} for the {@link JavaPlatform} that creates a sequence file. Consistent with Spark's object files.
+ * {@link Operator} for the {@link JavaPlatform} that creates a TSV text file.
  *
- * @see JavaObjectFileSink
+ * @see JavaTsvFileSink
  */
 public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutionOperator {
 

@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * Provides a {@link Collection} to a Spark job.
+ * Spark implementation of the {@link ParquetSource} operator.
  */
 public class SparkParquetSource extends ParquetSource implements SparkExecutionOperator {
 

@@ -53,6 +53,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implementation fo the {@link KafkaTopicSink} for the {@link JavaPlatform}.
+ *
+ * @see JavaKafkaTopicSource
  */
 public class JavaKafkaTopicSink<T> extends KafkaTopicSink<T> implements JavaExecutionOperator {
 

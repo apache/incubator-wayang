@@ -41,7 +41,7 @@ import java.util.List;
 
 
 /**
- * Spark implementation of the {@link MapOperator}.
+ * Spark implementation of the {@link ZipWithIdOperator}.
  */
 public class SparkZipWithIdOperator<InputType>
         extends ZipWithIdOperator<InputType>

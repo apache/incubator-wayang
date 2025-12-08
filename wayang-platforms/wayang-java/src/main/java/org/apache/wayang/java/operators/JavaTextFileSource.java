@@ -47,7 +47,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is execution operator implements the {@link TextFileSource}.
+ * This execution operator implements the {@link TextFileSource} for the {@link org.apache.wayang.java.platform.JavaPlatform}.
+ *
+ * @see JavaTextFileSink
  */
 public class JavaTextFileSource extends TextFileSource implements JavaExecutionOperator {
 

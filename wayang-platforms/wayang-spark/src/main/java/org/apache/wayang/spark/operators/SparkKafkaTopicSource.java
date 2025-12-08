@@ -36,7 +36,9 @@ import java.time.Duration;
 import java.util.*;
 
 /**
- * Provides a {@link Collection} to a Spark job.
+ * Spark implementation of the {@link KafkaTopicSource}. Reads topics from a Kafka cluster.
+ *
+ * @see SparkKafkaTopicSink
  */
 public class SparkKafkaTopicSource extends KafkaTopicSource implements SparkExecutionOperator {
 
@@ -67,7 +69,6 @@ public class SparkKafkaTopicSource extends KafkaTopicSource implements SparkExec
         assert outputs.length == this.getNumOutputs();
 
         // We use a single Kafka client for reading data from our Kafka topic.
-        System.out.println("### 7 ... ");
         this.initConsumer( (KafkaTopicSource) this );
 
         ConsumerRecords<String, String> records = this.getConsumer().poll(Duration.ofMillis(100));
@@ -76,8 +77,6 @@ public class SparkKafkaTopicSource extends KafkaTopicSource implements SparkExec
         for (ConsumerRecord<String, String> record : records) {
             collectedRecords.add( record.value() );
         }
-
-        System.out.println("### 8 ... ");
 
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 

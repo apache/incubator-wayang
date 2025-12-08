@@ -18,6 +18,7 @@
 
 package org.apache.wayang.tensorflow.operators;
 
+import org.apache.wayang.basic.operators.AzureBlobStorageSource;
 import org.apache.wayang.basic.operators.PredictOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -27,6 +28,8 @@ import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.wayang.java.operators.JavaAmazonS3Source;
+import org.apache.wayang.java.operators.JavaGoogleCloudStorageSource;
 import org.apache.wayang.tensorflow.channels.TensorChannel;
 import org.apache.wayang.tensorflow.execution.TensorflowExecutor;
 import org.apache.wayang.tensorflow.model.TensorflowModel;
@@ -37,6 +40,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Operator for making predictions using a TensorFlow model.
+ */
 public class TensorflowPredictOperator extends PredictOperator<NdArray<?>, NdArray<?>> implements TensorflowExecutionOperator {
 
     public TensorflowPredictOperator() {

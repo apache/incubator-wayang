@@ -39,7 +39,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by bertty on 31-10-17.
+ * Execution operator that writes tab-separated values (TSV) for {@link org.apache.wayang.flink.platform.FlinkPlatform}
+ *
  */
 public class FlinkTsvFileSink<Type extends Tuple2<?, ?>> extends UnarySink<Type> implements FlinkExecutionOperator {
 

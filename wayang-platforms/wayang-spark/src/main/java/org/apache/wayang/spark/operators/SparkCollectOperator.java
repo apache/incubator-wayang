@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Converts a {@link RddChannel} into a {@link CollectionChannel} of the {@link JavaPlatform}.
+ * Converts an {@link RddChannel} into a {@link CollectionChannel} of the {@link JavaPlatform}.
  */
 public class SparkCollectOperator<Type>
         extends UnaryToUnaryOperator<Type, Type>

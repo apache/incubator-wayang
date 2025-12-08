@@ -51,7 +51,7 @@ import java.util.List;
  * {@link Operator} for the {@link JavaPlatform} that creates a TSV file.
  * Only applicable to tuples with standard datatypes.
  *
- * @see JavaObjectFileSource
+ * @see JavaTsvFileSource
  */
 public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implements JavaExecutionOperator {
 

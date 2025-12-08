@@ -43,7 +43,7 @@ import java.util.List;
  * {@link Operator} for the {@link SparkPlatform} that creates a TSV file.
  * Only applicable to tuples with standard datatypes.
  *
- * @see SparkObjectFileSource
+ * @see SparkTsvFileSource
  */
 public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implements SparkExecutionOperator {
 
