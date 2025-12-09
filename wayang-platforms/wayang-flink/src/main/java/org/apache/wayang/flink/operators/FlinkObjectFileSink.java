@@ -36,13 +36,10 @@ import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.compiler.WayangFileOutputFormat;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link Operator} for the {@link FlinkPlatform} that creates a sequence file.
@@ -50,10 +47,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see FlinkObjectFileSink
  */
 public class FlinkObjectFileSink<Type> extends ObjectFileSink<Type> implements FlinkExecutionOperator {
-
-    private static final Logger LOGGER = LogManager.getLogger(FlinkObjectFileSink.class);
-
-    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
 
     public FlinkObjectFileSink(ObjectFileSink<Type> that) {
         super(that);
@@ -89,9 +82,6 @@ public class FlinkObjectFileSink<Type> extends ObjectFileSink<Type> implements F
         //TODO: remove the set parallelism 1
         DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         ObjectFileSerializationMode serializationMode = this.getSerializationMode();
-        if (serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION) {
-            logLegacyWarning();
-        }
         WayangFileOutputFormat<Type> outputFormat = new WayangFileOutputFormat<>(targetPath);
         outputFormat.setSerializationMode(serializationMode);
         final DataSink<Type> tDataSink = input.<Type>provideDataSet()
@@ -131,10 +121,4 @@ public class FlinkObjectFileSink<Type> extends ObjectFileSink<Type> implements F
         return true;
     }
 
-    private static void logLegacyWarning() {
-        if (LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
-            LOGGER.warn("FlinkObjectFileSink is using deprecated legacy Java serialization. "
-                    + "Please switch to the JSON serialization mode via ObjectFileSink#useJsonSerialization().");
-        }
-    }
 }

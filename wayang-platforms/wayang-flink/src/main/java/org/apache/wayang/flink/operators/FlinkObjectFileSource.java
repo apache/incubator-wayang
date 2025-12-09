@@ -42,13 +42,10 @@ import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.flink.platform.FlinkPlatform;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -57,10 +54,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see FlinkObjectFileSource
  */
 public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implements FlinkExecutionOperator {
-
-    private static final Logger LOGGER = LogManager.getLogger(FlinkObjectFileSource.class);
-
-    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
 
     public FlinkObjectFileSource(ObjectFileSource<Type> that) {
         super(that);
@@ -94,9 +87,6 @@ public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implemen
         }
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
         ObjectFileSerializationMode serializationMode = this.getSerializationMode();
-        if (serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION) {
-            logLegacyWarning();
-        }
         final Class<Type> typeClass = this.getTypeClass();
 
         HadoopInputFormat<NullWritable, BytesWritable> _file = HadoopInputs.readSequenceFile(NullWritable.class, BytesWritable.class, path);
@@ -150,12 +140,5 @@ public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implemen
 
     @Override public boolean isConversion() {
         return true;
-    }
-
-    private static void logLegacyWarning() {
-        if (LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
-            LOGGER.warn("FlinkObjectFileSource is using deprecated legacy Java serialization. "
-                    + "Please switch to the JSON serialization mode via ObjectFileSource#useJsonSerialization().");
-        }
     }
 }

@@ -44,7 +44,6 @@ import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -54,7 +53,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link Operator} for the {@link JavaPlatform} that creates a sequence file. Consistent with Spark's object files.
@@ -62,10 +60,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see JavaObjectFileSource
  */
 public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExecutionOperator {
-
-    private static final Logger LOGGER = LogManager.getLogger(JavaObjectFileSink.class);
-
-    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
 
     public JavaObjectFileSink(ObjectFileSink<T> that) {
         super(that);
@@ -101,9 +95,6 @@ public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExec
         final SequenceFile.Writer.Option keyClassOption = SequenceFile.Writer.keyClass(NullWritable.class);
         final SequenceFile.Writer.Option valueClassOption = SequenceFile.Writer.valueClass(BytesWritable.class);
         final ObjectFileSerializationMode serializationMode = this.getSerializationMode();
-        if (serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION) {
-            logLegacyWarning();
-        }
         try (SequenceFile.Writer writer = SequenceFile.createWriter(new Configuration(true), fileOption, keyClassOption, valueClassOption)) {
 
             // Chunk the stream of data quanta and write the chunks into the sequence file.
@@ -189,12 +180,5 @@ public class JavaObjectFileSink<T> extends ObjectFileSink<T> implements JavaExec
         }
 
 
-    }
-
-    private static void logLegacyWarning() {
-        if (LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
-            LOGGER.warn("JavaObjectFileSink is using deprecated legacy Java serialization. "
-                    + "Please switch to the JSON serialization mode via ObjectFileSink#useJsonSerialization().");
-        }
     }
 }

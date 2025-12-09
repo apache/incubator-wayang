@@ -39,7 +39,6 @@ import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import scala.Tuple2;
 
 import java.io.IOException;
@@ -49,7 +48,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.
@@ -57,8 +55,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see SparkObjectFileSource
  */
 public class SparkObjectFileSink<T> extends ObjectFileSink<T> implements SparkExecutionOperator {
-
-    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
 
     public SparkObjectFileSink(ObjectFileSink<T> that) {
         super(that);
@@ -91,9 +87,6 @@ public class SparkObjectFileSink<T> extends ObjectFileSink<T> implements SparkEx
 
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         ObjectFileSerializationMode serializationMode = this.getSerializationMode();
-        if (serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION) {
-            logLegacyWarning();
-        }
 
         final int chunkSize = 10;
         JavaPairRDD<NullWritable, BytesWritable> serializedRdd = input.provideRdd()
@@ -130,14 +123,6 @@ public class SparkObjectFileSink<T> extends ObjectFileSink<T> implements SparkEx
     @Override
     public boolean containsAction() {
         return true;
-    }
-
-    private static void logLegacyWarning() {
-        if (LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
-            Logger logger = LogManager.getLogger(SparkObjectFileSink.class);
-            logger.warn("SparkObjectFileSink is using deprecated legacy Java serialization. "
-                    + "Please switch to the JSON serialization mode via ObjectFileSink#useJsonSerialization().");
-        }
     }
 
     private static Tuple2<NullWritable, BytesWritable> encodeBuffer(Object[] buffer,

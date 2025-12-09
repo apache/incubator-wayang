@@ -19,6 +19,9 @@
 package org.apache.wayang.basic.operators;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.optimizer.costs.DefaultLoadEstimator;
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
@@ -36,7 +39,11 @@ public class ObjectFileSink<T> extends UnarySink<T> {
 
   protected final Class<T> tClass;
 
-  private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION;
+  private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
+
+  private final Logger logger = LogManager.getLogger(this.getClass());
+
+  private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.JSON;
 
   /**
    * Creates a new instance.
@@ -75,6 +82,11 @@ public class ObjectFileSink<T> extends UnarySink<T> {
   }
 
   public ObjectFileSerializationMode getSerializationMode() {
+    if (this.serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION
+        && LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
+      this.logger.warn("ObjectFileSink is using deprecated legacy Java serialization. "
+          + "Please switch to the JSON serialization mode via ObjectFileSink#useJsonSerialization().");
+    }
     return this.serializationMode;
   }
 

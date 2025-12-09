@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +45,9 @@ public class ObjectFileSource<T> extends UnarySource<T> {
 
     private final Class<T> tClass;
 
-    private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION;
+    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
+
+    private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.JSON;
 
     public ObjectFileSource(String inputUrl, DataSetType<T> type) {
         super(type);
@@ -79,6 +82,11 @@ public class ObjectFileSource<T> extends UnarySource<T> {
     }
 
     public ObjectFileSerializationMode getSerializationMode() {
+        if (this.serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION
+                && LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
+            this.logger.warn("ObjectFileSource is using deprecated legacy Java serialization. "
+                    + "Please switch to the JSON serialization mode via ObjectFileSource#useJsonSerialization().");
+        }
         return this.serializationMode;
     }
 

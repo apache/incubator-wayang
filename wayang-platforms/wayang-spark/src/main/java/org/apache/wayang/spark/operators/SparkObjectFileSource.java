@@ -48,7 +48,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.
@@ -58,7 +57,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SparkObjectFileSource<T> extends ObjectFileSource<T> implements SparkExecutionOperator {
 
     private final Logger logger = LogManager.getLogger(this.getClass());
-    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
 
     public SparkObjectFileSource(ObjectFileSource that) {
         super(that);
@@ -91,7 +89,7 @@ public class SparkObjectFileSource<T> extends ObjectFileSource<T> implements Spa
         final String actualInputPath = FileSystems.findActualSingleInputPath(sourcePath);
         final ObjectFileSerializationMode serializationMode = this.getSerializationMode();
         if (serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION) {
-            logLegacyWarning();
+            // Warning is emitted by ObjectFileSource#getSerializationMode.
         }
         final JavaPairRDD<NullWritable, BytesWritable> rawRdd =
                 sparkExecutor.sc.sequenceFile(actualInputPath, NullWritable.class, BytesWritable.class);
@@ -134,14 +132,6 @@ public class SparkObjectFileSource<T> extends ObjectFileSource<T> implements Spa
     @Override
     public boolean containsAction() {
         return false;
-    }
-
-    private static void logLegacyWarning() {
-        if (LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
-            LogManager.getLogger(SparkObjectFileSource.class)
-                    .warn("SparkObjectFileSource is using deprecated legacy Java serialization. "
-                            + "Please switch to the JSON serialization mode via ObjectFileSource#useJsonSerialization().");
-        }
     }
 
 }

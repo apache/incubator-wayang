@@ -125,7 +125,7 @@ public class WayangFileOutputFormat<IT> extends FileOutputFormat<IT> implements 
 
     private transient DataOutputViewStreamWrapper outView;
 
-    private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION;
+    private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.JSON;
     // --------------------------------------------------------------------------------------------
 
     public WayangFileOutputFormat() {}

@@ -44,7 +44,6 @@ import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -54,7 +53,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterators;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -64,10 +62,6 @@ import java.util.stream.StreamSupport;
  * @see JavaObjectFileSink
  */
 public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements JavaExecutionOperator {
-
-    private static final Logger LOGGER = LogManager.getLogger(JavaObjectFileSource.class);
-
-    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
 
     public JavaObjectFileSource(ObjectFileSource<T> that) {
         super(that);
@@ -100,9 +94,6 @@ public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements Java
         try {
             final String actualInputPath = FileSystems.findActualSingleInputPath(path);
             ObjectFileSerializationMode serializationMode = this.getSerializationMode();
-            if (serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION) {
-                logLegacyWarning();
-            }
             sequenceFileIterator = new SequenceFileIterator<>(actualInputPath, serializationMode, this.getTypeClass());
             Stream<?> sequenceFileStream =
                     StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
@@ -134,13 +125,6 @@ public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements Java
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
-    }
-
-    private static void logLegacyWarning() {
-        if (LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
-            LOGGER.warn("JavaObjectFileSource is using deprecated legacy Java serialization. "
-                    + "Please switch to the JSON serialization mode via ObjectFileSource#useJsonSerialization().");
-        }
     }
 
     private static class SequenceFileIterator<T> implements Iterator<T>, AutoCloseable, Closeable {
