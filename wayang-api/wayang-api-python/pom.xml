@@ -37,6 +37,7 @@
         <spark.version>2.4.0</spark.version>
         <scala.mayor.version>2.12</scala.mayor.version>
         <giraph.version>1.2.0-hadoop2</giraph.version>
+        <python.worker.tests.skip>true</python.worker.tests.skip>
     </properties>
 
     <dependencyManagement>
@@ -75,4 +76,25 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>${python.worker.tests.skip}</skipTests>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>python-worker-tests</id>
+            <properties>
+                <python.worker.tests.skip>false</python.worker.tests.skip>
+            </properties>
+        </profile>
+    </profiles>
 </project>

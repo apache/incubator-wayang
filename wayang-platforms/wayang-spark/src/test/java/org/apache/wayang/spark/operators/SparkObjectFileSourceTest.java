@@ -49,6 +49,7 @@ class SparkObjectFileSourceTest extends SparkOperatorTestBase {
             final URL inputUrl = this.getClass().getResource("/0-to-10000.input");
             SparkObjectFileSource<Integer> source = new SparkObjectFileSource<>(
                     inputUrl.toString(), DataSetType.createDefault(Integer.class));
+            source.useLegacySerialization();
 
             // Set up the ChannelInstances.
             final ChannelInstance[] inputs = new ChannelInstance[]{};
