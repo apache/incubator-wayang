@@ -48,6 +48,7 @@ class JavaObjectFileSourceTest extends JavaExecutionOperatorTestBase {
             final URL inputUrl = this.getClass().getResource("/0-to-10000.input");
             JavaObjectFileSource<Integer> source = new JavaObjectFileSource<>(
                     inputUrl.toString(), DataSetType.createDefault(Integer.class));
+            source.useLegacySerialization();
 
 
             // Execute.
