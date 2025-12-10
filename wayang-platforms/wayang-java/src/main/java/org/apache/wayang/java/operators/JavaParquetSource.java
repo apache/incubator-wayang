@@ -50,7 +50,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * This is execution operator implements the {@link ParquetSource}.
+ * This execution operator implements the {@link ParquetSource} for the {@link org.apache.wayang.java.platform.JavaPlatform}.
  */
 public class JavaParquetSource extends ParquetSource implements JavaExecutionOperator {
 

@@ -19,6 +19,7 @@
 package org.apache.wayang.java.operators;
 
 
+import org.apache.wayang.basic.operators.KafkaTopicSink;
 import org.apache.wayang.basic.operators.KafkaTopicSource;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -39,7 +40,13 @@ import java.util.stream.StreamSupport;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.wayang.java.platform.JavaPlatform;
 
+/**
+ * Reads Kafka topics for the {@link JavaPlatform}.
+ *
+ * @see JavaKafkaTopicSink
+ */
 public class JavaKafkaTopicSource extends KafkaTopicSource implements JavaExecutionOperator {
 
     public JavaKafkaTopicSource(String topicName) {

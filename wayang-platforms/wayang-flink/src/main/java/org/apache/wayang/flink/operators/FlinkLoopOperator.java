@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Flink implementation of the {@link RepeatOperator}.
+ * Flink implementation of the {@link LoopOperator}.
  */
 public class FlinkLoopOperator<InputType, ConvergenceType>
         extends LoopOperator<InputType, ConvergenceType>

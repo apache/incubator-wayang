@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import org.apache.wayang.basic.operators.AmazonS3Source;
 import org.apache.wayang.basic.operators.GoogleCloudStorageSource;
+import org.apache.wayang.basic.operators.KafkaTopicSink;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.OptimizationContext.OperatorContext;
@@ -40,9 +41,16 @@ import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
+import org.apache.wayang.java.platform.JavaPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Reads a text file from Google Cloud Storage for the {@link JavaPlatform}.
+ *
+ * @see JavaAmazonS3Source
+ * @see JavaAzureBlobStorageSource
+ */
 public class JavaGoogleCloudStorageSource extends GoogleCloudStorageSource implements JavaExecutionOperator {
     private static final Logger logger = LoggerFactory.getLogger(JavaGoogleCloudStorageSource.class);
 

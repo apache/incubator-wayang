@@ -36,7 +36,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Provides a {@link Collection} to a Spark job.
+ * {@link ExecutionOperator} for the {@link org.apache.wayang.spark.platform.SparkPlatform} that reads from a text file from a URL.
+ *
+ * @see SparkTextFileSink
  */
 public class SparkTextFileSource extends TextFileSource implements SparkExecutionOperator {
 

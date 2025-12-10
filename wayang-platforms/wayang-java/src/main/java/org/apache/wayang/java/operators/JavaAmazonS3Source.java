@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.wayang.basic.operators.AmazonS3Source;
+import org.apache.wayang.basic.operators.AzureBlobStorageSource;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext.OperatorContext;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimators;
@@ -40,7 +41,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is execution operator that implements the {@link AmazonS3Source}.
+ * This execution operator that implements the {@link AmazonS3Source}.
+ * Reads text file from Amazon S3 Storage for the {@link org.apache.wayang.java.platform.JavaPlatform}.
+ *
+ * @see JavaAzureBlobStorageSource
+ * @see JavaGoogleCloudStorageSource
  */
 public class JavaAmazonS3Source extends AmazonS3Source implements JavaExecutionOperator {
     private static final Logger logger = LoggerFactory.getLogger(JavaAmazonS3Source.class);

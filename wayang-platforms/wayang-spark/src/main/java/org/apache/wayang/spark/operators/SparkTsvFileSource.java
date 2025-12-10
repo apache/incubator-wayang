@@ -40,9 +40,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * {@link Operator} for the {@link SparkPlatform} that creates a sequence file. Consistent with Spark's object files.
+ * {@link Operator} for the {@link SparkPlatform} that creates a TSV text file.
  *
- * @see SparkObjectFileSink
+ * @see SparkTsvFileSink
  */
 public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecutionOperator {
 

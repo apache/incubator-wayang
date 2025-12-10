@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Provides a {@link Collection} to a Flink job.
+ * Implementation of the {@link TextFileSource} operator for {@link org.apache.wayang.flink.platform.FlinkPlatform}.
  */
 public class FlinkTextFileSource extends TextFileSource implements FlinkExecutionOperator {
 

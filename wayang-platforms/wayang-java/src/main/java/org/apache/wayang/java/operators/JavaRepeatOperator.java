@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Java implementation of the {@link DoWhileOperator}.
+ * Java implementation of the {@link RepeatOperator}.
  */
 public class JavaRepeatOperator<Type>
         extends RepeatOperator<Type>

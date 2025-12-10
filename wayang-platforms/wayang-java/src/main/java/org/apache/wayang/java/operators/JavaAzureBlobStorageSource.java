@@ -39,7 +39,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is execution operator that implements the {@link AzureBlobStorageSource}.
+ * This execution operator implements the {@link AzureBlobStorageSource} for {@link org.apache.wayang.java.platform.JavaPlatform}.
+ * Reads a text file from Azure Blob Storage.
+ *
+ * @see JavaAmazonS3Source
+ * @see JavaGoogleCloudStorageSource
  */
 
 public class JavaAzureBlobStorageSource extends AzureBlobStorageSource implements JavaExecutionOperator {

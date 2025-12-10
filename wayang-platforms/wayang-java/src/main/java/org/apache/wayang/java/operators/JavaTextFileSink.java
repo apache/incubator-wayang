@@ -50,6 +50,8 @@ import java.util.function.Function;
 
 /**
  * Implementation fo the {@link TextFileSink} for the {@link JavaPlatform}.
+ *
+ * @see JavaTextFileSource
  */
 public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutionOperator {
 

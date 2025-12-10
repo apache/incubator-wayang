@@ -42,6 +42,8 @@ import java.util.*;
 
 /**
  * Implementation of the {@link KafkaTopicSink} operator for the Spark platform.
+ *
+ * @see SparkKafkaTopicSource
  */
 public class SparkKafkaTopicSink<T> extends KafkaTopicSink<T> implements SparkExecutionOperator, Serializable {
 

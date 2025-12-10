@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Flink implementation of the {@link MapOperator}.
+ * Flink implementation of the {@link ZipWithIdOperator}.
  */
 public class FlinkZipWithIdOperator<InputType>
         extends ZipWithIdOperator<InputType>

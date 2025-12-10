@@ -44,7 +44,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Spark implementation of the {@link JoinOperator}.
+ * Spark implementation of the {@link CoGroupOperator}.
  */
 public class SparkCoGroupOperator<In0, In1, Key> extends CoGroupOperator<In0, In1, Key> implements SparkExecutionOperator {
 

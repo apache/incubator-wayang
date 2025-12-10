@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Spark implementation of the {@link JoinOperator}.
+ * Spark implementation of the {@link IntersectOperator}.
  */
 public class SparkIntersectOperator<Type> extends IntersectOperator<Type> implements SparkExecutionOperator {
 

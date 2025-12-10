@@ -41,6 +41,8 @@ import java.util.Optional;
 
 /**
  * Implementation of the {@link TextFileSink} operator for the Spark platform.
+ *
+ * @see SparkTextFileSource
  */
 public class SparkTextFileSink<T> extends TextFileSink<T> implements SparkExecutionOperator {
 

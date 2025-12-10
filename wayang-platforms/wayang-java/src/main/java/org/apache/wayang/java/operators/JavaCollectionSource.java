@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This is execution operator implements the {@link TextFileSource}.
+ * This execution operator implements the {@link TextFileSource}.
  */
 public class JavaCollectionSource<T> extends CollectionSource<T> implements JavaExecutionOperator {
 
