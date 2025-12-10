@@ -130,8 +130,8 @@ public class SparkObjectFileSink<T> extends ObjectFileSink<T> implements SparkEx
                                                                     ObjectFileSerializationMode mode) {
         try {
             byte[] payload = ObjectFileSerialization.serializeChunk(buffer, validLength, mode);
-            BytesWritable writable = new BytesWritable(payload);
-            return new Tuple2<>(NullWritable.get(), writable);
+
+            return new Tuple2<>(NullWritable.get(), new BytesWritable(payload));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to serialize Spark object file chunk.", e);
         }

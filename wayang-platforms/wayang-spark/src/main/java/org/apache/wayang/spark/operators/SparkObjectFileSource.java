@@ -88,17 +88,13 @@ public class SparkObjectFileSource<T> extends ObjectFileSource<T> implements Spa
 
         final String actualInputPath = FileSystems.findActualSingleInputPath(sourcePath);
         final ObjectFileSerializationMode serializationMode = this.getSerializationMode();
-        if (serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION) {
-            // Warning is emitted by ObjectFileSource#getSerializationMode.
-        }
         final JavaPairRDD<NullWritable, BytesWritable> rawRdd =
                 sparkExecutor.sc.sequenceFile(actualInputPath, NullWritable.class, BytesWritable.class);
         final Class<T> typeClass = this.getTypeClass();
         final JavaRDD<Object> rdd = rawRdd.flatMap(tuple -> {
             byte[] payload = Arrays.copyOf(tuple._2.getBytes(), tuple._2.getLength());
             try {
-                List<Object> chunk = ObjectFileSerialization.deserializeChunk(payload, serializationMode, typeClass);
-                return chunk.iterator();
+                return ObjectFileSerialization.deserializeChunk(payload, serializationMode, typeClass).iterator();
             } catch (IOException | ClassNotFoundException e) {
                 throw new UncheckedIOException(new IOException("Failed to deserialize Spark object file chunk.", e));
             }

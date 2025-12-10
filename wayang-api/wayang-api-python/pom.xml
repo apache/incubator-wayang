@@ -37,7 +37,6 @@
         <spark.version>2.4.0</spark.version>
         <scala.mayor.version>2.12</scala.mayor.version>
         <giraph.version>1.2.0-hadoop2</giraph.version>
-        <python.worker.tests.skip>true</python.worker.tests.skip>
     </properties>
 
     <dependencyManagement>
