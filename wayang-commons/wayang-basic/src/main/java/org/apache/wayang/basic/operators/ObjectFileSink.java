@@ -19,6 +19,9 @@
 package org.apache.wayang.basic.operators;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.optimizer.costs.DefaultLoadEstimator;
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
@@ -35,6 +38,12 @@ public class ObjectFileSink<T> extends UnarySink<T> {
   protected final String textFileUrl;
 
   protected final Class<T> tClass;
+
+  private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
+
+  private final Logger logger = LogManager.getLogger(this.getClass());
+
+  private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.JSON;
 
   /**
    * Creates a new instance.
@@ -69,5 +78,35 @@ public class ObjectFileSink<T> extends UnarySink<T> {
     super(that);
     this.textFileUrl = that.textFileUrl;
     this.tClass = that.tClass;
+    this.serializationMode = that.getSerializationMode();
+  }
+
+  public ObjectFileSerializationMode getSerializationMode() {
+    if (this.serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION
+        && LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
+      this.logger.warn("ObjectFileSink is using deprecated legacy Java serialization. "
+          + "Please switch to the JSON serialization mode via ObjectFileSink#useJsonSerialization().");
+    }
+    return this.serializationMode;
+  }
+
+  public ObjectFileSink<T> withSerializationMode(ObjectFileSerializationMode serializationMode) {
+    this.serializationMode = Objects.requireNonNull(serializationMode, "serializationMode");
+    return this;
+  }
+
+  /**
+   * Configure this sink to use the deprecated legacy Java serialization.
+   */
+  @Deprecated
+  public ObjectFileSink<T> useLegacySerialization() {
+    return this.withSerializationMode(ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION);
+  }
+
+  /**
+   * Configure this sink to use the JSON-based serialization.
+   */
+  public ObjectFileSink<T> useJsonSerialization() {
+    return this.withSerializationMode(ObjectFileSerializationMode.JSON);
   }
 }

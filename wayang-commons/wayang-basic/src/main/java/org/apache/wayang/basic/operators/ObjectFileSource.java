@@ -18,9 +18,11 @@
 
 package org.apache.wayang.basic.operators;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +45,10 @@ public class ObjectFileSource<T> extends UnarySource<T> {
 
     private final Class<T> tClass;
 
+    private static final AtomicBoolean LEGACY_WARNING_EMITTED = new AtomicBoolean(false);
+
+    private ObjectFileSerializationMode serializationMode = ObjectFileSerializationMode.JSON;
+
     public ObjectFileSource(String inputUrl, DataSetType<T> type) {
         super(type);
         this.inputUrl = inputUrl;
@@ -64,6 +70,7 @@ public class ObjectFileSource<T> extends UnarySource<T> {
         super(that);
         this.inputUrl = that.getInputUrl();
         this.tClass = that.getTypeClass();
+        this.serializationMode = that.getSerializationMode();
     }
 
     public String getInputUrl() {
@@ -72,6 +79,35 @@ public class ObjectFileSource<T> extends UnarySource<T> {
 
     public Class<T> getTypeClass(){
         return this.tClass;
+    }
+
+    public ObjectFileSerializationMode getSerializationMode() {
+        if (this.serializationMode == ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION
+                && LEGACY_WARNING_EMITTED.compareAndSet(false, true)) {
+            this.logger.warn("ObjectFileSource is using deprecated legacy Java serialization. "
+                    + "Please switch to the JSON serialization mode via ObjectFileSource#useJsonSerialization().");
+        }
+        return this.serializationMode;
+    }
+
+    public ObjectFileSource<T> withSerializationMode(ObjectFileSerializationMode serializationMode) {
+        this.serializationMode = Objects.requireNonNull(serializationMode, "serializationMode");
+        return this;
+    }
+
+    /**
+     * Configure this source to use the deprecated legacy Java serialization.
+     */
+    @Deprecated
+    public ObjectFileSource<T> useLegacySerialization() {
+        return this.withSerializationMode(ObjectFileSerializationMode.LEGACY_JAVA_SERIALIZATION);
+    }
+
+    /**
+     * Configure this source to use the JSON-based serialization.
+     */
+    public ObjectFileSource<T> useJsonSerialization() {
+        return this.withSerializationMode(ObjectFileSerializationMode.JSON);
     }
 
     @Override

@@ -21,6 +21,7 @@ package org.apache.wayang.flink.operators;
 import org.apache.flink.api.java.operators.DataSink;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSerializationMode;
 import org.apache.wayang.basic.operators.ObjectFileSink;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -80,8 +81,11 @@ public class FlinkObjectFileSink<Type> extends ObjectFileSink<Type> implements F
 
         //TODO: remove the set parallelism 1
         DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
+        ObjectFileSerializationMode serializationMode = this.getSerializationMode();
+        WayangFileOutputFormat<Type> outputFormat = new WayangFileOutputFormat<>(targetPath);
+        outputFormat.setSerializationMode(serializationMode);
         final DataSink<Type> tDataSink = input.<Type>provideDataSet()
-                .write(new WayangFileOutputFormat<Type>(targetPath), targetPath, FileSystem.WriteMode.OVERWRITE)
+                .write(outputFormat, targetPath, FileSystem.WriteMode.OVERWRITE)
                 .setParallelism(flinkExecutor.fee.getParallelism());
 
 
@@ -116,4 +120,5 @@ public class FlinkObjectFileSink<Type> extends ObjectFileSink<Type> implements F
     @Override public boolean isConversion() {
         return true;
     }
+
 }

@@ -27,6 +27,8 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.operators.ObjectFileSerialization;
+import org.apache.wayang.basic.operators.ObjectFileSerializationMode;
 import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -41,8 +43,6 @@ import org.apache.wayang.flink.channels.DataSetChannel;
 import org.apache.wayang.flink.execution.FlinkExecutor;
 import org.apache.wayang.flink.platform.FlinkPlatform;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -86,6 +86,8 @@ public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implemen
             path = this.getInputUrl();
         }
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
+        ObjectFileSerializationMode serializationMode = this.getSerializationMode();
+        final Class<Type> typeClass = this.getTypeClass();
 
         HadoopInputFormat<NullWritable, BytesWritable> _file = HadoopInputs.readSequenceFile(NullWritable.class, BytesWritable.class, path);
         final DataSet<Tuple2> dataSet =
@@ -95,8 +97,9 @@ public class FlinkObjectFileSource<Type> extends ObjectFileSource<Type> implemen
                         .flatMap(new FlatMapFunction<org.apache.flink.api.java.tuple.Tuple2<NullWritable,BytesWritable>, Tuple2>() {
                             @Override
                             public void flatMap(org.apache.flink.api.java.tuple.Tuple2<NullWritable, BytesWritable> value, Collector<Tuple2> out) throws Exception {
-                                Object tmp = new ObjectInputStream(new ByteArrayInputStream(value.f1.getBytes())).readObject();
-                                for(Object element: (Iterable)tmp){
+                                byte[] payload = value.f1.copyBytes();
+                                List<Object> chunk = ObjectFileSerialization.deserializeChunk(payload, serializationMode, typeClass);
+                                for (Object element : chunk) {
                                     out.collect((Tuple2) element);
                                 }
                             }

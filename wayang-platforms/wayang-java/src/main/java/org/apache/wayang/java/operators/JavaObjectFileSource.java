@@ -26,6 +26,8 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSerialization;
+import org.apache.wayang.basic.operators.ObjectFileSerializationMode;
 import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -43,11 +45,9 @@ import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.apache.logging.log4j.LogManager;
 
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -93,7 +93,8 @@ public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements Java
         }
         try {
             final String actualInputPath = FileSystems.findActualSingleInputPath(path);
-            sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);
+            ObjectFileSerializationMode serializationMode = this.getSerializationMode();
+            sequenceFileIterator = new SequenceFileIterator<>(actualInputPath, serializationMode, this.getTypeClass());
             Stream<?> sequenceFileStream =
                     StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
             ((StreamChannel.Instance) outputs[0]).accept(sequenceFileStream);
@@ -136,38 +137,38 @@ public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements Java
 
         private Object[] nextElements;
 
-        private ArrayList nextElements_cole;
-
         private int nextIndex;
 
-        SequenceFileIterator(String path) throws IOException {
+        private final ObjectFileSerializationMode serializationMode;
+
+        private final Class<T> typeClass;
+
+        SequenceFileIterator(String path,
+                             ObjectFileSerializationMode serializationMode,
+                             Class<T> typeClass) throws IOException {
             final SequenceFile.Reader.Option fileOption = SequenceFile.Reader.file(new Path(path));
             this.sequenceFileReader = new SequenceFile.Reader(new Configuration(true), fileOption);
             Validate.isTrue(this.sequenceFileReader.getKeyClass().equals(NullWritable.class));
             Validate.isTrue(this.sequenceFileReader.getValueClass().equals(BytesWritable.class));
+            this.serializationMode = serializationMode;
+            this.typeClass = typeClass;
             this.tryAdvance();
         }
 
         private void tryAdvance() {
             if (this.nextElements != null && ++this.nextIndex < this.nextElements.length) return;
-            if (this.nextElements_cole != null && ++this.nextIndex < this.nextElements_cole.size()) return;
             try {
                 if (!this.sequenceFileReader.next(this.nullWritable, this.bytesWritable)) {
                     this.nextElements = null;
                     return;
                 }
-                Object tmp = new ObjectInputStream(new ByteArrayInputStream(this.bytesWritable.getBytes())).readObject();
-                if(tmp instanceof Collection) {
-                    this.nextElements = null;
-                    this.nextElements_cole = (ArrayList) tmp;
-                }else if(tmp instanceof Object[]){
-                    this.nextElements = (Object[]) tmp;
-                    this.nextElements_cole = null;
-                }else {
-                    this.nextElements = new Object[1];
-                    this.nextElements[0] = tmp;
-
+                byte[] payload = Arrays.copyOf(this.bytesWritable.getBytes(), this.bytesWritable.getLength());
+                List<Object> chunk = ObjectFileSerialization.deserializeChunk(payload, this.serializationMode, this.typeClass);
+                if (chunk == null || chunk.isEmpty()) {
+                    this.tryAdvance();
+                    return;
                 }
+                this.nextElements = chunk.toArray();
                 this.nextIndex = 0;
             } catch (IOException | ClassNotFoundException e) {
                 this.nextElements = null;
@@ -178,22 +179,14 @@ public class JavaObjectFileSource<T> extends ObjectFileSource<T> implements Java
 
         @Override
         public boolean hasNext() {
-            return this.nextElements != null || this.nextElements_cole != null;
+            return this.nextElements != null;
         }
 
         @Override
         public T next() {
             Validate.isTrue(this.hasNext());
             @SuppressWarnings("unchecked")
-            final T result;
-            if(this.nextElements_cole != null){
-                result = (T) this.nextElements_cole.get(this.nextIndex);
-            }else if (this.nextElements != null) {
-                result = (T) this.nextElements[this.nextIndex];
-            }else{
-                result = null;
-            }
-
+            final T result = (T) this.nextElements[this.nextIndex];
             this.tryAdvance();
             return result;
         }

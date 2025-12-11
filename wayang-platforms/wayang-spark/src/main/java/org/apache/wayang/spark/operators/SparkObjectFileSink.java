@@ -18,7 +18,13 @@
 
 package org.apache.wayang.spark.operators;
 
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSerializationMode;
+import org.apache.wayang.basic.operators.ObjectFileSerialization;
 import org.apache.wayang.basic.operators.ObjectFileSink;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -33,9 +39,14 @@ import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.logging.log4j.LogManager;
+import scala.Tuple2;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -75,10 +86,15 @@ public class SparkObjectFileSink<T> extends ObjectFileSink<T> implements SparkEx
         }
 
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
+        ObjectFileSerializationMode serializationMode = this.getSerializationMode();
 
-        input.provideRdd()
-                .coalesce(1) // TODO: Remove. This only hotfixes the issue that JavaObjectFileSource reads only a single file.
-                .saveAsObjectFile(targetPath);
+        final int chunkSize = 10;
+        JavaPairRDD<NullWritable, BytesWritable> serializedRdd = input.provideRdd()
+                .mapPartitionsToPair(iterator -> encodePartition(iterator, serializationMode, chunkSize));
+        serializedRdd.saveAsNewAPIHadoopFile(targetPath,
+                NullWritable.class,
+                BytesWritable.class,
+                SequenceFileOutputFormat.class);
         LogManager.getLogger(this.getClass()).info("Writing dataset to {}.", targetPath);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
@@ -109,4 +125,34 @@ public class SparkObjectFileSink<T> extends ObjectFileSink<T> implements SparkEx
         return true;
     }
 
+    private static Tuple2<NullWritable, BytesWritable> encodeBuffer(Object[] buffer,
+                                                                    int validLength,
+                                                                    ObjectFileSerializationMode mode) {
+        try {
+            byte[] payload = ObjectFileSerialization.serializeChunk(buffer, validLength, mode);
+
+            return new Tuple2<>(NullWritable.get(), new BytesWritable(payload));
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to serialize Spark object file chunk.", e);
+        }
+    }
+
+    private static Iterator<Tuple2<NullWritable, BytesWritable>> encodePartition(Iterator<?> iterator,
+                                                                                 ObjectFileSerializationMode mode,
+                                                                                 int chunkSize) {
+        List<Tuple2<NullWritable, BytesWritable>> serialized = new ArrayList<>();
+        Object[] buffer = new Object[chunkSize];
+        int index = 0;
+        while (iterator.hasNext()) {
+            buffer[index++] = iterator.next();
+            if (index >= buffer.length) {
+                serialized.add(encodeBuffer(buffer, index, mode));
+                index = 0;
+            }
+        }
+        if (index > 0) {
+            serialized.add(encodeBuffer(buffer, index, mode));
+        }
+        return serialized.iterator();
+    }
 }

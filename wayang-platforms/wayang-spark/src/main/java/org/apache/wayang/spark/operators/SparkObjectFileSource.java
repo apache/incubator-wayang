@@ -18,8 +18,13 @@
 
 package org.apache.wayang.spark.operators;
 
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.operators.ObjectFileSerialization;
+import org.apache.wayang.basic.operators.ObjectFileSerializationMode;
 import org.apache.wayang.basic.operators.ObjectFileSource;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -37,6 +42,9 @@ import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -79,7 +87,18 @@ public class SparkObjectFileSource<T> extends ObjectFileSource<T> implements Spa
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final String actualInputPath = FileSystems.findActualSingleInputPath(sourcePath);
-        final JavaRDD<Object> rdd = sparkExecutor.sc.objectFile(actualInputPath);
+        final ObjectFileSerializationMode serializationMode = this.getSerializationMode();
+        final JavaPairRDD<NullWritable, BytesWritable> rawRdd =
+                sparkExecutor.sc.sequenceFile(actualInputPath, NullWritable.class, BytesWritable.class);
+        final Class<T> typeClass = this.getTypeClass();
+        final JavaRDD<Object> rdd = rawRdd.flatMap(tuple -> {
+            byte[] payload = Arrays.copyOf(tuple._2.getBytes(), tuple._2.getLength());
+            try {
+                return ObjectFileSerialization.deserializeChunk(payload, serializationMode, typeClass).iterator();
+            } catch (IOException | ClassNotFoundException e) {
+                throw new UncheckedIOException(new IOException("Failed to deserialize Spark object file chunk.", e));
+            }
+        });
         this.name(rdd);
         output.accept(rdd, sparkExecutor);
 
