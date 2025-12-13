@@ -58,14 +58,14 @@ interface CallTreeFactory extends Serializable {
      * @return a serializable function of +, -, * or /
      * @throws UnsupportedOperationException on unrecognized {@link SqlKind}
      */
-    public SerializableFunction<List<Object>, Object> deriveOperation(SqlKind kind);
+    public SerializableFunction<List<Object>, Object> deriveOperation(final SqlKind kind);
 }
 
 interface Node extends Serializable {
     public Object evaluate(final Record rec);
 }
 
-class Call implements Node {
+final class Call implements Node {
     private final List<Node> operands;
     final SerializableFunction<List<Object>, Object> operation;
 
@@ -83,7 +83,7 @@ class Call implements Node {
     }
 }
 
-class Literal implements Node {
+final class Literal implements Node {
     final Serializable value;
 
     Literal(final RexLiteral literal) {
@@ -109,7 +109,7 @@ class Literal implements Node {
     }
 }
 
-class InputRef implements Node {
+final class InputRef implements Node {
     private final int key;
 
     InputRef(final RexInputRef inputRef) {

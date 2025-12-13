@@ -17,43 +17,10 @@
 
 package org.apache.wayang.api.sql;
 
-import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.rules.CoreRules;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.tools.RuleSet;
-import org.apache.calcite.tools.RuleSets;
-import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
-import org.apache.wayang.api.sql.calcite.converter.functions.FilterPredicateImpl;
-import org.apache.wayang.api.sql.calcite.converter.functions.ProjectMapFuncImpl;
-import org.apache.wayang.api.sql.calcite.optimizer.Optimizer;
-import org.apache.wayang.api.sql.calcite.rules.WayangRules;
-import org.apache.wayang.api.sql.calcite.schema.SchemaUtils;
-import org.apache.wayang.api.sql.calcite.utils.ModelParser;
-import org.apache.wayang.api.sql.context.SqlContext;
-import org.apache.wayang.basic.data.Record;
-import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.function.FunctionDescriptor.SerializablePredicate;
-import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.java.Java;
-import org.apache.wayang.spark.Spark;
-
-import org.json.simple.parser.ParseException;
-import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -69,9 +36,67 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
+import org.apache.calcite.plan.Contexts;
+import org.apache.calcite.plan.ConventionTraitDef;
+import org.apache.calcite.plan.RelOptCluster;
+import org.apache.calcite.plan.RelOptCostImpl;
+import org.apache.calcite.plan.RelOptSchema;
+import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.plan.volcano.VolcanoPlanner;
+import org.apache.calcite.prepare.CalciteCatalogReader;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.logical.LogicalTableScan;
+import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
+import org.apache.calcite.rel.rules.CoreRules;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFactory.Builder;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.impl.AbstractTable;
+import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.tools.Frameworks;
+import org.apache.calcite.tools.RuleSet;
+import org.apache.calcite.tools.RuleSets;
+import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
+import org.apache.wayang.api.sql.calcite.converter.functions.FilterPredicateImpl;
+import org.apache.wayang.api.sql.calcite.converter.functions.ProjectMapFuncImpl;
+import org.apache.wayang.api.sql.calcite.optimizer.Optimizer;
+import org.apache.wayang.api.sql.calcite.rules.WayangRules;
+import org.apache.wayang.api.sql.calcite.schema.SchemaUtils;
+import org.apache.wayang.api.sql.calcite.utils.ModelParser;
+import org.apache.wayang.api.sql.context.SqlContext;
+import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.function.FunctionDescriptor.SerializablePredicate;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.java.Java;
+import org.apache.wayang.jdbc.execution.JdbcExecutor;
+import org.apache.wayang.jdbc.operators.JdbcProjectionOperator;
+import org.apache.wayang.jdbc.operators.JdbcTableSource;
+import org.apache.wayang.postgres.mapping.ProjectionMapping;
+import org.apache.wayang.spark.Spark;
+import org.json.simple.parser.ParseException;
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 class SqlToWayangRelTest {
 
@@ -117,10 +142,90 @@ class SqlToWayangRelTest {
 
         final Collection<Record> collector = new ArrayList<>();
 
-        final WayangPlan wayangPlan = optimizer.convertWithConfig(wayangRel, context.getConfiguration(),
+        final WayangPlan wayangPlan = Optimizer.convertWithConfig(wayangRel, context.getConfiguration(),
                 collector);
 
         return new Tuple2<>(collector, wayangPlan);
+    }
+
+    @Test
+    void sqlApiSourceTest() throws Exception {
+        final JavaTypeFactoryImpl typeFactory = new JavaTypeFactoryImpl();
+        final RexBuilder rexBuilder = new RexBuilder(typeFactory);
+
+        final VolcanoPlanner planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.empty());
+        planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
+        final RelOptCluster cluster = RelOptCluster.create(planner, rexBuilder);
+
+        final SchemaPlus rootSchema = Frameworks.createRootSchema(true);
+        final RelDataType rowType = new Builder(typeFactory)
+                .add("ID", typeFactory.createJavaType(Integer.class))
+                .add("NAME", typeFactory.createJavaType(String.class))
+                .build();
+
+        rootSchema.add("T1", new AbstractTable() {
+            @Override
+            public RelDataType getRowType(final RelDataTypeFactory typeFactory) {
+                return rowType;
+            }
+        });
+
+        final RelOptSchema relOptSchema = new CalciteCatalogReader(
+                CalciteSchema.from(rootSchema),
+                CalciteSchema.from(rootSchema).path(null),
+                typeFactory,
+                mock());
+
+        final RelOptTable t1 = relOptSchema.getTableForMember(Arrays.asList("T1"));
+
+        final TableScan scan1 = LogicalTableScan.create(cluster, t1, List.of());
+
+        final SqlDialect dialect = SqlDialect.DatabaseProduct.CALCITE.getDialect();
+        final RelToSqlConverter converter = new RelToSqlConverter(dialect);
+        final SqlNode sqlNode = converter.visitRoot(scan1).asStatement();
+
+        final Properties configProperties = Optimizer.ConfigProperties.getDefaults();
+        final RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
+
+        final Optimizer optimizer = Optimizer.create(
+                CalciteSchema.from(rootSchema),
+                configProperties,
+                relDataTypeFactory);
+
+        final SqlNode validatedSqlNode = optimizer.validate(sqlNode);
+        final RelNode relNode = optimizer.convert(validatedSqlNode);
+
+        final RuleSet rules = RuleSets.ofList(
+                CoreRules.FILTER_INTO_JOIN,
+                WayangRules.WAYANG_TABLESCAN_RULE,
+                WayangRules.WAYANG_TABLESCAN_ENUMERABLE_RULE,
+                WayangRules.WAYANG_PROJECT_RULE,
+                WayangRules.WAYANG_FILTER_RULE,
+                WayangRules.WAYANG_JOIN_RULE,
+                WayangRules.WAYANG_AGGREGATE_RULE,
+                WayangRules.WAYANG_SORT_RULE);
+
+        final RelNode wayangRel = optimizer.optimize(
+                relNode,
+                relNode.getTraitSet().plus(WayangConvention.INSTANCE),
+                rules);
+
+        final WayangPlan plan = Optimizer.convert(wayangRel, new ArrayList<Record>());
+
+        final ProjectionMapping projectionMapping = new ProjectionMapping();
+        final PlanTransformation projectionTransformation = projectionMapping.getTransformations().iterator().next().thatReplaces();
+
+        plan.applyTransformations(List.of(projectionTransformation));
+
+        final Collection<Operator> operators = PlanTraversal.upstream().traverse(plan.getSinks()).getTraversedNodes();
+
+        final JdbcTableSource table = operators.stream().filter(op -> op instanceof JdbcTableSource).map(JdbcTableSource.class::cast).findFirst().orElseThrow();
+        final JdbcProjectionOperator projection = operators.stream().filter(op -> op instanceof JdbcProjectionOperator).map(JdbcProjectionOperator.class::cast).findFirst().orElseThrow();
+
+        final JdbcExecutor jdbcExecutor = mock();
+        final StringBuilder query = JdbcExecutor.createSqlString(jdbcExecutor, table, List.of(), projection, List.of());
+
+        assertEquals("SELECT ID, NAME FROM T1;", query.toString());
     }
 
     @Test
@@ -637,7 +742,8 @@ class SqlToWayangRelTest {
                 "          \"type\": \"custom\",\r\n" + //
                 "          \"factory\": \"org.apache.calcite.adapter.file.FileSchemaFactory\",\r\n" + //
                 "          \"operand\": {\r\n" + //
-                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath() + "\",\r\n" + //
+                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath()
+                + "\",\r\n" + //
                 "            \"delimiter\": \"|\"" +
                 "          }\r\n" + //
                 "        }\r\n" + //
@@ -695,7 +801,8 @@ class SqlToWayangRelTest {
                 "          \"type\": \"custom\",\r\n" +
                 "          \"factory\": \"org.apache.calcite.adapter.file.FileSchemaFactory\",\r\n" +
                 "          \"operand\": {\r\n" +
-                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath() + "\"\r\n" +
+                "            \"directory\": \"" + "/" + this.getClass().getResource("/data").getPath()
+                + "\"\r\n" +
                 "          }\r\n" +
                 "        }\r\n" +
                 "      ]\r\n" +

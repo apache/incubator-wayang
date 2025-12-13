@@ -34,10 +34,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * /**
  * Mapping from {@link MapOperator} to {@link PostgresProjectionOperator}.
  */
-@SuppressWarnings("unchecked")
 public class ProjectionMapping implements Mapping {
 
     @Override
@@ -45,8 +43,7 @@ public class ProjectionMapping implements Mapping {
         return Collections.singleton(new PlanTransformation(
                 this.createSubplanPattern(),
                 this.createReplacementSubplanFactory(),
-                PostgresPlatform.getInstance()
-        ));
+                PostgresPlatform.getInstance()));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -55,10 +52,8 @@ public class ProjectionMapping implements Mapping {
                 new MapOperator<>(
                         null,
                         DataSetType.createDefault(Record.class),
-                        DataSetType.createDefault(Record.class)
-                ),
-                false
-        )
+                        DataSetType.createDefault(Record.class)),
+                false)
                 .withAdditionalTest(op -> op.getFunctionDescriptor() instanceof ProjectionDescriptor)
                 .withAdditionalTest(op -> op.getNumInputs() == 1); // No broadcasts.
         return SubplanPattern.createSingleton(operatorPattern);
@@ -66,7 +61,6 @@ public class ProjectionMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<MapOperator<Record, Record>>(
-                (matchedOperator, epoch) -> new PostgresProjectionOperator(matchedOperator).at(epoch)
-        );
+                (matchedOperator, epoch) -> new PostgresProjectionOperator(matchedOperator).at(epoch));
     }
 }

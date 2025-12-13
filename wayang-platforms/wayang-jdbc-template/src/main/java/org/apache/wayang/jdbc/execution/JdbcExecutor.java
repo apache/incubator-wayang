@@ -27,7 +27,6 @@ import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
-import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.platform.ExecutionState;
 import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.core.platform.ExecutorTemplate;
@@ -41,6 +40,7 @@ import org.apache.wayang.jdbc.operators.JdbcExecutionOperator;
 import org.apache.wayang.jdbc.operators.JdbcFilterOperator;
 import org.apache.wayang.jdbc.operators.JdbcJoinOperator;
 import org.apache.wayang.jdbc.operators.JdbcProjectionOperator;
+import org.apache.wayang.jdbc.operators.JdbcTableSource;
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,7 +78,7 @@ public class JdbcExecutor extends ExecutorTemplate {
 
     @Override
     public void execute(final ExecutionStage stage, final OptimizationContext optimizationContext, final ExecutionState executionState) {
-        final Tuple2<String, SqlQueryChannel.Instance> pair = this.createSqlQuery(stage, optimizationContext);
+        final Tuple2<String, SqlQueryChannel.Instance> pair = JdbcExecutor.createSqlQuery(stage, optimizationContext, this);
         final String query = pair.field0;
         final SqlQueryChannel.Instance queryChannel = pair.field1;
 
@@ -98,7 +98,7 @@ public class JdbcExecutor extends ExecutorTemplate {
      * @param stage in which the follow-up {@link ExecutionTask} should be
      * @return the said follow-up {@link ExecutionTask} or {@code null} if none
      */
-    private ExecutionTask findJdbcExecutionOperatorTaskInStage(final ExecutionTask task, final ExecutionStage stage) {
+    private static ExecutionTask findJdbcExecutionOperatorTaskInStage(final ExecutionTask task, final ExecutionStage stage) {
         assert task.getNumOuputChannels() == 1;
         final Channel outputChannel = task.getOutputChannel(0);
         final ExecutionTask consumer = WayangCollections.getSingle(outputChannel.getConsumers());
@@ -116,15 +116,15 @@ public class JdbcExecutor extends ExecutorTemplate {
      *                            {@link ExecutionTask}
      * @return the {@link SqlQueryChannel.Instance}
      */
-    private SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
-            final OptimizationContext optimizationContext) {
+    private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
+            final OptimizationContext optimizationContext, final JdbcExecutor jdbcExecutor) {
         assert task.getNumOuputChannels() == 1 : String.format("Illegal task: %s.", task);
         assert task.getOutputChannel(0) instanceof SqlQueryChannel : String.format("Illegal task: %s.", task);
 
         final SqlQueryChannel outputChannel = (SqlQueryChannel) task.getOutputChannel(0);
         final OptimizationContext.OperatorContext operatorContext = optimizationContext
                 .getOperatorContext(task.getOperator());
-        return outputChannel.createInstance(this, operatorContext, 0);
+        return outputChannel.createInstance(jdbcExecutor, operatorContext, 0);
     }
 
     /**
@@ -139,10 +139,10 @@ public class JdbcExecutor extends ExecutorTemplate {
      *                                   to keep track of lineage
      * @return the {@link SqlQueryChannel.Instance}
      */
-    private SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
+    private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
             final OptimizationContext optimizationContext,
-            final SqlQueryChannel.Instance predecessorChannelInstance) {
-        final SqlQueryChannel.Instance newInstance = this.instantiateOutboundChannel(task, optimizationContext);
+            final SqlQueryChannel.Instance predecessorChannelInstance, final JdbcExecutor jdbcExecutor) {
+        final SqlQueryChannel.Instance newInstance = JdbcExecutor.instantiateOutboundChannel(task, optimizationContext, jdbcExecutor);
         newInstance.getLineage().addPredecessor(predecessorChannelInstance.getLineage());
         return newInstance;
     }
@@ -154,8 +154,8 @@ public class JdbcExecutor extends ExecutorTemplate {
      * @param context
      * @return a tuple containing the sql statement
      */
-    protected Tuple2<String, SqlQueryChannel.Instance> createSqlQuery(final ExecutionStage stage,
-            final OptimizationContext context) {
+    protected static Tuple2<String, SqlQueryChannel.Instance> createSqlQuery(final ExecutionStage stage,
+            final OptimizationContext context, final JdbcExecutor jdbcExecutor) {
         final Collection<?> startTasks = stage.getStartTasks();
         final Collection<?> termTasks = stage.getTerminalTasks();
 
@@ -168,44 +168,49 @@ public class JdbcExecutor extends ExecutorTemplate {
                 : "Invalid JDBC stage: Start task has to be a TableSource";
 
         // Extract the different types of ExecutionOperators from the stage.
-        final TableSource tableOp = (TableSource) startTask.getOperator();
-        SqlQueryChannel.Instance tipChannelInstance = this.instantiateOutboundChannel(startTask, context);
-        final Collection<ExecutionTask> filterTasks = new ArrayList<>(4);
-        ExecutionTask projectionTask = null;
-        final Collection<ExecutionTask> joinTasks = new ArrayList<>();
+        final JdbcTableSource tableOp = (JdbcTableSource) startTask.getOperator();
+        SqlQueryChannel.Instance tipChannelInstance = JdbcExecutor.instantiateOutboundChannel(startTask, context, jdbcExecutor);
+        final Collection<JdbcFilterOperator> filterTasks = new ArrayList<>(4);
+        JdbcProjectionOperator projectionTask = null;
+        final Collection<JdbcJoinOperator<?>> joinTasks = new ArrayList<>();
         final Set<ExecutionTask> allTasks = stage.getAllTasks();
         assert allTasks.size() <= 3;
-        ExecutionTask nextTask = this.findJdbcExecutionOperatorTaskInStage(startTask, stage);
+        ExecutionTask nextTask = JdbcExecutor.findJdbcExecutionOperatorTaskInStage(startTask, stage);
         while (nextTask != null) {
             // Evaluate the nextTask.
-            if (nextTask.getOperator() instanceof JdbcFilterOperator) {
-                filterTasks.add(nextTask);
-            } else if (nextTask.getOperator() instanceof JdbcProjectionOperator) {
+            if (nextTask.getOperator() instanceof final JdbcFilterOperator filterOperator) {
+                filterTasks.add(filterOperator);
+            } else if (nextTask.getOperator() instanceof JdbcProjectionOperator projectionOperator) {
                 assert projectionTask == null; // Allow one projection operator per stage for now.
-                projectionTask = nextTask;
-            } else if (nextTask.getOperator() instanceof JdbcJoinOperator) {
-                joinTasks.add(nextTask);
+                projectionTask = projectionOperator;
+            } else if (nextTask.getOperator() instanceof JdbcJoinOperator joinOperator) {
+                joinTasks.add(joinOperator);
             } else {
                 throw new WayangException(String.format("Unsupported JDBC execution task %s", nextTask.toString()));
             }
 
             // Move the tipChannelInstance.
-            tipChannelInstance = this.instantiateOutboundChannel(nextTask, context, tipChannelInstance);
+            tipChannelInstance = JdbcExecutor.instantiateOutboundChannel(nextTask, context, tipChannelInstance, jdbcExecutor);
 
             // Go to the next nextTask.
-            nextTask = this.findJdbcExecutionOperatorTaskInStage(nextTask, stage);
+            nextTask = JdbcExecutor.findJdbcExecutionOperatorTaskInStage(nextTask, stage);
         }
 
         // Create the SQL query.
-        final String tableName = this.getSqlClause(tableOp);
+        final StringBuilder query = createSqlString(jdbcExecutor, tableOp, filterTasks, projectionTask, joinTasks);
+        return new Tuple2<>(query.toString(), tipChannelInstance);
+    }
+
+    public static StringBuilder createSqlString(final JdbcExecutor jdbcExecutor, final JdbcTableSource tableOp,
+            final Collection<JdbcFilterOperator> filterTasks, JdbcProjectionOperator projectionTask,
+            final Collection<JdbcJoinOperator<?>> joinTasks) {
+        final String tableName = tableOp.createSqlClause(jdbcExecutor.connection, jdbcExecutor.functionCompiler);
         final Collection<String> conditions = filterTasks.stream()
-                .map(ExecutionTask::getOperator)
-                .map(this::getSqlClause)
+                .map(op -> op.createSqlClause(jdbcExecutor.connection, jdbcExecutor.functionCompiler))
                 .collect(Collectors.toList());
-        final String projection = projectionTask == null ? "*" : this.getSqlClause(projectionTask.getOperator());
+        final String projection = projectionTask == null ? "*" : projectionTask.createSqlClause(jdbcExecutor.connection, jdbcExecutor.functionCompiler);
         final Collection<String> joins = joinTasks.stream()
-                .map(ExecutionTask::getOperator)
-                .map(this::getSqlClause)
+                .map(op -> op.createSqlClause(jdbcExecutor.connection, jdbcExecutor.functionCompiler))
                 .collect(Collectors.toList());
 
         final StringBuilder sb = new StringBuilder(1000);
@@ -225,17 +230,7 @@ public class JdbcExecutor extends ExecutorTemplate {
             }
         }
         sb.append(';');
-        return new Tuple2<>(sb.toString(), tipChannelInstance);
-    }
-
-    /**
-     * Creates a SQL clause that corresponds to the given {@link Operator}.
-     *
-     * @param operator for that the SQL clause should be generated
-     * @return the SQL clause
-     */
-    private String getSqlClause(final Operator operator) {
-        return ((JdbcExecutionOperator) operator).createSqlClause(this.connection, this.functionCompiler);
+        return sb;
     }
 
     @Override

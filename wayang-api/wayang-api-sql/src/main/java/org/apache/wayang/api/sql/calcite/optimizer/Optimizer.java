@@ -211,11 +211,11 @@ public class Optimizer {
         );
     }
 
-    public WayangPlan convert(RelNode relNode) {
+    public static WayangPlan convert(RelNode relNode) {
         return convert(relNode, new ArrayList<>());
     }
 
-    public WayangPlan convert(RelNode relNode, Collection<Record> collector) {
+    public static WayangPlan convert(RelNode relNode, Collection<Record> collector) {
 
         LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
@@ -225,8 +225,7 @@ public class Optimizer {
         return new WayangPlan(sink);
     }
 
-    public WayangPlan convertWithConfig(RelNode relNode, Configuration configuration, Collection<Record> collector) {
-
+    public static WayangPlan convertWithConfig(RelNode relNode, Configuration configuration, Collection<Record> collector) {
         LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
         Operator op = new WayangRelConverter(configuration).convert(relNode);
