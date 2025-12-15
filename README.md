@@ -263,4 +263,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ## Acknowledgements
-The [Logo](http://wayang.apache.org/assets/img/logo/Apache_Wayang/Apache_Wayang.pdf) was donated by Brian Vera.
+The [Logo](https://wayang.apache.org/img/wayang.png) was donated by Brian Vera.
