@@ -57,6 +57,8 @@ public class ParquetSource extends UnarySource<Record> {
 
     private MessageType schema;
 
+    private boolean preferDatasetOutput = false;
+
     /**
      * Creates a new instance.
      *
@@ -124,6 +126,16 @@ public class ParquetSource extends UnarySource<Record> {
         this.projection = that.getProjection();
         this.metadata = that.getMetadata();
         this.schema = that.getSchema();
+        this.preferDatasetOutput = that.preferDatasetOutput;
+    }
+
+    public ParquetSource preferDatasetOutput(boolean preferDataset) {
+        this.preferDatasetOutput = preferDataset;
+        return this;
+    }
+
+    public boolean isDatasetOutputPreferred() {
+        return this.preferDatasetOutput;
     }
 
     @Override

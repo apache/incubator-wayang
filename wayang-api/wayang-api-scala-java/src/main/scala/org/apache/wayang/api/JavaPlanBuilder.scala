@@ -73,6 +73,16 @@ class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
     createSourceBuilder(ParquetSource.create(url, projection))(ClassTag(classOf[Record]))
 
   /**
+    * Read a parquet file and provide it as a dataset of [[Record]]s backed by Spark Datasets.
+    *
+    * @param url the URL of the Parquet file
+    * @param projection the projection, if any
+    * @return [[DataQuantaBuilder]] for the file
+    */
+  def readParquetAsDataset(url: String, projection: Array[String] = null): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, Record], Record] =
+    createSourceBuilder(ParquetSource.create(url, projection).preferDatasetOutput(true))(ClassTag(classOf[Record]))
+
+  /**
     * Read a text file from a Google Cloud Storage bucket and provide it as a dataset of [[String]]s, one per line.
     *
     * @param bucket the bucket name of the file
