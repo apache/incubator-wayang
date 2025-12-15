@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -59,6 +60,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -67,6 +69,11 @@ import java.util.stream.Stream;
 public class PlanImplementation {
 
     private static final Logger logger = LogManager.getLogger(PlanImplementation.class);
+    private static final Comparator<PlanImplementation> COST_COMPARATOR =
+            Comparator.comparingDouble((PlanImplementation plan) -> plan.getSquashedCostEstimate(true))
+                    .thenComparing(PlanImplementation::getDeterministicIdentifier);
+    private static final Comparator<PlanImplementation> STRUCTURAL_COMPARATOR =
+            Comparator.comparing(PlanImplementation::getDeterministicIdentifier);
 
     /**
      * {@link ExecutionOperator}s contained in this instance.
@@ -180,6 +187,14 @@ public class PlanImplementation {
             .makeCost();
 
         assert this.planEnumeration != null;
+    }
+
+    public static Comparator<PlanImplementation> costComparator() {
+        return COST_COMPARATOR;
+    }
+
+    public static Comparator<PlanImplementation> structuralComparator() {
+        return STRUCTURAL_COMPARATOR;
     }
 
 
@@ -976,6 +991,67 @@ public class PlanImplementation {
             );
         }
         return operatorStream;
+    }
+
+    /**
+     * Provides a deterministic identifier that captures the current state of this plan. While not guaranteed to
+     * be unique, it is stable across runs for the same logical plan and can therefore be used for reproducible
+     * ordering.
+     *
+     * @return the deterministic identifier
+     */
+    public String getDeterministicIdentifier() {
+        final String operatorDescriptor = this.operators.stream()
+                .map(PlanImplementation::describeOperator)
+                .sorted()
+                .collect(Collectors.joining("|"));
+        final String junctionDescriptor = this.junctions.values().stream()
+                .map(PlanImplementation::describeJunction)
+                .sorted()
+                .collect(Collectors.joining("|"));
+        final String loopDescriptor = this.loopImplementations.entrySet().stream()
+                .map(entry -> describeLoop(entry.getKey(), entry.getValue()))
+                .sorted()
+                .collect(Collectors.joining("|"));
+        return operatorDescriptor + "#" + junctionDescriptor + "#" + loopDescriptor;
+    }
+
+    private static String describeOperator(Operator operator) {
+        final String name = operator.getName() == null ? "" : operator.getName();
+        return operator.getClass().getName() + ":" + name + ":" + operator.getEpoch();
+    }
+
+    private static String describeJunction(Junction junction) {
+        final String source = describeOutputSlot(junction.getSourceOutput());
+        final String targets = IntStream.range(0, junction.getNumTargets())
+                .mapToObj(i -> describeInputSlot(junction.getTargetInput(i)))
+                .sorted()
+                .collect(Collectors.joining(","));
+        return source + "->" + targets;
+    }
+
+    private static String describeLoop(LoopSubplan loop, LoopImplementation implementation) {
+        final String descriptor = describeOperator(loop);
+        final String iterationDescriptor = implementation.getIterationImplementations().stream()
+                .map(iteration -> Integer.toString(iteration.getNumIterations()))
+                .collect(Collectors.joining(","));
+        return descriptor + ":" + iterationDescriptor;
+    }
+
+    private static String describeInputSlot(InputSlot<?> slot) {
+        if (slot == null) {
+            return "null";
+        }
+        final Operator owner = slot.getOwner();
+        return describeOperator(owner) + ".in[" + slot.getIndex() + "]:" + slot.getName();
+    }
+
+    private static String describeOutputSlot(OutputSlot<?> slot) {
+        if (slot == null) {
+            return "null";
+        }
+        final Operator owner = slot.getOwner();
+        return describeOperator(owner) + ".out[" + slot.getIndex() + "]:" + slot.getName();
     }
 
     @Override

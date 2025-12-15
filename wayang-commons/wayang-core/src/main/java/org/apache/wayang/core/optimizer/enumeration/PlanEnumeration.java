@@ -412,16 +412,15 @@ public class PlanEnumeration {
             if (junction == null) continue;
 
             // If we found a junction, then we can enumerate all PlanImplementation combinations.
-            final List<Set<PlanImplementation>> groupPlans = WayangCollections.map(
-                    concatGroupCombo,
-                    concatGroup -> {
-                        Set<PlanImplementation.ConcatenationDescriptor> concatDescriptors = concatGroup2concatDescriptor.get(concatGroup);
-                        Set<PlanImplementation> planImplementations = new HashSet<>(concatDescriptors.size());
-                        for (PlanImplementation.ConcatenationDescriptor concatDescriptor : concatDescriptors) {
-                            planImplementations.add(concatDescriptor.getPlanImplementation());
-                        }
-                        return planImplementations;
-                    });
+        final List<List<PlanImplementation>> groupPlans = WayangCollections.map(
+                concatGroupCombo,
+                concatGroup -> {
+                    Set<PlanImplementation.ConcatenationDescriptor> concatDescriptors = concatGroup2concatDescriptor.get(concatGroup);
+                    return concatDescriptors.stream()
+                            .map(PlanImplementation.ConcatenationDescriptor::getPlanImplementation)
+                            .sorted(PlanImplementation.structuralComparator())
+                            .collect(Collectors.toList());
+                });
 
             for (List<PlanImplementation> planCombo : WayangCollections.streamedCrossProduct(groupPlans)) {
                 PlanImplementation basePlan = planCombo.get(0);
