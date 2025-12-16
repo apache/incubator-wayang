@@ -23,6 +23,9 @@ import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.java.channels.CollectionChannel;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.wayang.spark.channels.DatasetChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,6 +73,20 @@ public class ChannelFactory {
     public static CollectionChannel.Instance createCollectionChannelInstance(Collection<?> colleciton, Configuration configuration) {
         CollectionChannel.Instance instance = createCollectionChannelInstance(configuration);
         instance.accept(colleciton);
+        return instance;
+    }
+
+    public static DatasetChannel.Instance createDatasetChannelInstance(Configuration configuration) {
+        return (DatasetChannel.Instance) DatasetChannel.UNCACHED_DESCRIPTOR
+                .createChannel(null, configuration)
+                .createInstance(sparkExecutor, null, -1);
+    }
+
+    public static DatasetChannel.Instance createDatasetChannelInstance(Dataset<Row> dataset,
+                                                                       SparkExecutor sparkExecutor,
+                                                                       Configuration configuration) {
+        DatasetChannel.Instance instance = createDatasetChannelInstance(configuration);
+        instance.accept(dataset, sparkExecutor);
         return instance;
     }
 

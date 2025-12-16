@@ -140,6 +140,16 @@ class PlanBuilder(private[api] val wayangContext: WayangContext, private var job
    */
   def readParquet(url: String, projection: Array[String] = null): DataQuanta[Record] = load(ParquetSource.create(url, projection))
 
+  /**
+   * Read a parquet file and keep it backed by a Spark Dataset throughout execution.
+   *
+   * @param url the URL of the Parquet file
+   * @param projection the projection, if any
+   * @return [[DataQuanta]] of [[Record]]s backed by a Spark Dataset when executed on Spark
+   */
+  def readParquetAsDataset(url: String, projection: Array[String] = null): DataQuanta[Record] =
+    load(ParquetSource.create(url, projection).preferDatasetOutput(true))
+
  /**
     * Read a text file from a Google Cloud Storage bucket and provide it as a dataset of [[String]]s, one per line.
     *
