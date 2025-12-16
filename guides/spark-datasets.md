@@ -33,8 +33,8 @@ Wayang’s Spark backend can now run entire pipelines on Spark `Dataset[Row]` (a
 ## Enable Dataset sources and sinks
 
 1. **Plan builder APIs:**
-   - `PlanBuilder.readParquetAsDataset(...)` (Scala/Java) loads Parquet files into a `DatasetChannel` instead of an `RddChannel`.
-   - `DataQuanta.writeParquetAsDataset(...)` writes a dataset back to Parquet without converting to RDD first.
+   - `PlanBuilder.readParquet(..., preferDataset = true)` (Scala) or `JavaPlanBuilder.readParquet(..., ..., true)` loads Parquet files into a `DatasetChannel` instead of an `RddChannel`.
+   - `DataQuanta.writeParquet(..., preferDataset = true)` writes a dataset back to Parquet without converting to RDD first.
 2. **Prefer dataset-friendly operators:** Most unary/binary operators accept either channel type, but custom operators can advertise dataset descriptors explicitly. See `DatasetChannel` in `wayang-platforms/wayang-spark` for details.
 3. **Let the optimizer keep it:** The optimizer now assigns costs to Dataset↔RDD conversions, so once your plan starts with a dataset channel it will stay in dataset form unless an operator demands an RDD.
 

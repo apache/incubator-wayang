@@ -1027,11 +1027,10 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     writeTextFileJava(url, toSerializableFunction(formatterUdf), udfLoad)
   }
 
-  def writeParquet(url: String, overwrite: Boolean = false)(implicit ev: Out =:= Record): Unit =
-    writeParquetJava(url, overwrite, preferDataset = false)
-
-  def writeParquetAsDataset(url: String, overwrite: Boolean = true)(implicit ev: Out =:= Record): Unit =
-    writeParquetJava(url, overwrite, preferDataset = true)
+  def writeParquet(url: String,
+                   overwrite: Boolean = false,
+                   preferDataset: Boolean = false)(implicit ev: Out =:= Record): Unit =
+    writeParquetJava(url, overwrite, preferDataset)
 
  /**
   * Write the data quanta in this instance to a text file. Triggers execution.
