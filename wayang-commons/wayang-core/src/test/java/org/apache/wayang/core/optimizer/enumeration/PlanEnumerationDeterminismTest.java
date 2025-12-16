@@ -34,6 +34,7 @@ import org.apache.wayang.core.test.DummyExecutionOperator;
 import org.apache.wayang.core.test.DummyReusableChannel;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,32 +63,58 @@ class PlanEnumerationDeterminismTest {
 
         DummyExecutionOperator producer = new DummyExecutionOperator(0, 1, false);
         DummyExecutionOperator consumer = new DummyExecutionOperator(1, 0, false);
-        registerChannelDescriptors(producer, consumer);
+        registerChannelDescriptors(producer, Collections.singletonList(consumer));
         registerLoadEstimator(configuration, producer, 10);
         registerLoadEstimator(configuration, consumer, 5);
 
-        List<String> firstRun = enumerateDeterministicIds(job, producer, consumer);
-        List<String> secondRun = enumerateDeterministicIds(job, producer, consumer);
+        List<String> firstRun = enumerateDeterministicIds(job, producer, Collections.singletonList(consumer), 3, 2);
+        List<String> secondRun = enumerateDeterministicIds(job, producer, Collections.singletonList(consumer), 3, 2);
 
         assertTrue(firstRun.size() > 1, "Expected multiple plan implementations.");
         assertEquals(firstRun, secondRun, "Enumeration order must be deterministic.");
     }
 
+    @Test
+    void concatenationWithMultipleTargetsRemainsStable() {
+        Configuration configuration = new Configuration();
+        configuration.setPruningStrategyClassProvider(
+                new ExplicitCollectionProvider<Class<PlanEnumerationPruningStrategy>>(configuration)
+        );
+        Job job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+
+        DummyExecutionOperator producer = new DummyExecutionOperator(0, 1, false);
+        DummyExecutionOperator consumerA = new DummyExecutionOperator(1, 0, false);
+        DummyExecutionOperator consumerB = new DummyExecutionOperator(1, 0, false);
+        registerChannelDescriptors(producer, Arrays.asList(consumerA, consumerB));
+        registerLoadEstimator(configuration, producer, 10);
+        registerLoadEstimator(configuration, consumerA, 7);
+        registerLoadEstimator(configuration, consumerB, 3);
+
+        List<String> firstRun = enumerateDeterministicIds(job, producer, Arrays.asList(consumerA, consumerB), 4, 2);
+        List<String> secondRun = enumerateDeterministicIds(job, producer, Arrays.asList(consumerA, consumerB), 4, 2);
+
+        assertEquals(firstRun, secondRun, "Enumeration order with multiple targets must be deterministic.");
+    }
+
     private static List<String> enumerateDeterministicIds(Job job,
                                                           ExecutionOperator producer,
-                                                          ExecutionOperator consumer) {
+                                                          List<? extends ExecutionOperator> consumers,
+                                                          int numBaseCopies,
+                                                          int numTargetCopies) {
         DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         optimizationContext.addOneTimeOperator(producer);
-        optimizationContext.addOneTimeOperator(consumer);
+        consumers.forEach(optimizationContext::addOneTimeOperator);
 
         PlanEnumeration baseEnumeration = PlanEnumeration.createSingleton(producer, optimizationContext);
-        duplicatePlanImplementations(baseEnumeration, 3);
-
-        PlanEnumeration targetEnumeration = PlanEnumeration.createSingleton(consumer, optimizationContext);
-        duplicatePlanImplementations(targetEnumeration, 2);
+        duplicatePlanImplementations(baseEnumeration, numBaseCopies);
 
         Map<InputSlot<?>, PlanEnumeration> targets = new LinkedHashMap<>();
-        targets.put(consumer.getInput(0), targetEnumeration);
+        consumers.forEach(consumer -> {
+            PlanEnumeration targetEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) consumer, optimizationContext);
+            duplicatePlanImplementations(targetEnumeration, numTargetCopies);
+            targets.put(consumer.getInput(0), targetEnumeration);
+        });
 
         PlanEnumeration concatenated = baseEnumeration.concatenate(
                 producer.getOutput(0),
@@ -119,8 +146,8 @@ class PlanEnumerationDeterminismTest {
     }
 
     private static void registerChannelDescriptors(DummyExecutionOperator producer,
-                                                   DummyExecutionOperator consumer) {
+                                                   List<DummyExecutionOperator> consumers) {
         producer.getSupportedOutputChannels(0).add(DummyReusableChannel.DESCRIPTOR);
-        consumer.getSupportedInputChannels(0).add(DummyReusableChannel.DESCRIPTOR);
+        consumers.forEach(consumer -> consumer.getSupportedInputChannels(0).add(DummyReusableChannel.DESCRIPTOR));
     }
 }
