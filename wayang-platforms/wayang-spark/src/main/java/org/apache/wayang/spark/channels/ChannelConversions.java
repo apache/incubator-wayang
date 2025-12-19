@@ -19,9 +19,12 @@
 package org.apache.wayang.spark.channels;
 
 import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
 import org.apache.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.channels.CollectionChannel;
 import org.apache.wayang.java.platform.JavaPlatform;
@@ -29,8 +32,10 @@ import org.apache.wayang.spark.operators.SparkBroadcastOperator;
 import org.apache.wayang.spark.operators.SparkCacheOperator;
 import org.apache.wayang.spark.operators.SparkCollectOperator;
 import org.apache.wayang.spark.operators.SparkCollectionSource;
+import org.apache.wayang.spark.operators.SparkDatasetToRddOperator;
 import org.apache.wayang.spark.operators.SparkObjectFileSink;
 import org.apache.wayang.spark.operators.SparkObjectFileSource;
+import org.apache.wayang.spark.operators.SparkRddToDatasetOperator;
 import org.apache.wayang.spark.operators.SparkTsvFileSink;
 import org.apache.wayang.spark.operators.SparkTsvFileSource;
 
@@ -108,6 +113,32 @@ public class ChannelConversions {
             () -> new SparkObjectFileSource<>(DataSetType.createDefault(Void.class))
     );
 
+    public static final ChannelConversion DATASET_TO_UNCACHED_RDD = new DefaultChannelConversion(
+            DatasetChannel.UNCACHED_DESCRIPTOR,
+            RddChannel.UNCACHED_DESCRIPTOR,
+            () -> new SparkDatasetToRddOperator()
+    );
+
+    public static final ChannelConversion CACHED_DATASET_TO_UNCACHED_RDD = new DefaultChannelConversion(
+            DatasetChannel.CACHED_DESCRIPTOR,
+            RddChannel.UNCACHED_DESCRIPTOR,
+            () -> new SparkDatasetToRddOperator()
+    );
+
+    public static final ChannelConversion UNCACHED_RDD_TO_UNCACHED_DATASET = new DefaultChannelConversion(
+            RddChannel.UNCACHED_DESCRIPTOR,
+            DatasetChannel.UNCACHED_DESCRIPTOR,
+            ChannelConversions::createRddToDatasetOperator,
+            "via SparkRddToDatasetOperator"
+    );
+
+    public static final ChannelConversion CACHED_RDD_TO_UNCACHED_DATASET = new DefaultChannelConversion(
+            RddChannel.CACHED_DESCRIPTOR,
+            DatasetChannel.UNCACHED_DESCRIPTOR,
+            ChannelConversions::createRddToDatasetOperator,
+            "via SparkRddToDatasetOperator"
+    );
+
     public static Collection<ChannelConversion> ALL = Arrays.asList(
             UNCACHED_RDD_TO_CACHED_RDD,
             COLLECTION_TO_BROADCAST,
@@ -119,6 +150,24 @@ public class ChannelConversions {
             HDFS_OBJECT_FILE_TO_UNCACHED_RDD,
 //            HDFS_TSV_TO_UNCACHED_RDD,
             CACHED_RDD_TO_HDFS_TSV,
-            UNCACHED_RDD_TO_HDFS_TSV
+            UNCACHED_RDD_TO_HDFS_TSV,
+            DATASET_TO_UNCACHED_RDD,
+            CACHED_DATASET_TO_UNCACHED_RDD,
+            UNCACHED_RDD_TO_UNCACHED_DATASET,
+            CACHED_RDD_TO_UNCACHED_DATASET
     );
+
+    private static SparkRddToDatasetOperator createRddToDatasetOperator(Channel sourceChannel,
+                                                                        Configuration configuration) {
+        DataSetType<Record> type = DataSetType.createDefault(Record.class);
+        if (sourceChannel != null) {
+            DataSetType<?> sourceType = sourceChannel.getDataSetType();
+            if (Record.class.isAssignableFrom(sourceType.getDataUnitType().getTypeClass())) {
+                @SuppressWarnings("unchecked")
+                DataSetType<Record> casted = (DataSetType<Record>) sourceType;
+                type = casted;
+            }
+        }
+        return new SparkRddToDatasetOperator(type);
+    }
 }

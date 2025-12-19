@@ -29,6 +29,7 @@ import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.spark.channels.DatasetChannel;
 import org.apache.wayang.spark.channels.RddChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 
@@ -64,8 +65,6 @@ public class SparkParquetSource extends ParquetSource implements SparkExecutionO
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        RddChannel.Instance output = (RddChannel.Instance) outputs[0];
-
         Dataset<Row> table = sparkExecutor.ss.read().parquet(this.getInputUrl().trim());
 
         // Reads a projection, if any (loads the complete file if no projection defined)
@@ -73,16 +72,6 @@ public class SparkParquetSource extends ParquetSource implements SparkExecutionO
         if (projection != null && projection.length > 0) {
             table = table.selectExpr(projection);
         }
-
-        // Wrap dataset into a JavaRDD and convert Row's to Record's
-        JavaRDD<Record> rdd = table.toJavaRDD().map(row -> {
-            List<Object> values = IntStream.range(0, row.size())
-                    .mapToObj(row::get)
-                    .collect(Collectors.toList());
-            return new Record(values);
-        });
-        this.name(rdd);
-        output.accept(rdd, sparkExecutor);
 
         ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
         prepareLineageNode.add(LoadProfileEstimators.createFromSpecification(
@@ -92,7 +81,25 @@ public class SparkParquetSource extends ParquetSource implements SparkExecutionO
         mainLineageNode.add(LoadProfileEstimators.createFromSpecification(
                 "wayang.spark.parquetsource.load.main", sparkExecutor.getConfiguration()
         ));
-        output.getLineage().addPredecessor(mainLineageNode);
+
+        if (this.isDatasetOutputPreferred() && outputs[0] instanceof DatasetChannel.Instance) {
+            DatasetChannel.Instance datasetOutput =
+                    (DatasetChannel.Instance) outputs[0];
+            datasetOutput.accept(table, sparkExecutor);
+            datasetOutput.getLineage().addPredecessor(mainLineageNode);
+        } else {
+            RddChannel.Instance output = (RddChannel.Instance) outputs[0];
+            // Wrap dataset into a JavaRDD and convert Row's to Record's
+            JavaRDD<Record> rdd = table.toJavaRDD().map(row -> {
+                List<Object> values = IntStream.range(0, row.size())
+                        .mapToObj(row::get)
+                        .collect(Collectors.toList());
+                return new Record(values);
+            });
+            this.name(rdd);
+            output.accept(rdd, sparkExecutor);
+            output.getLineage().addPredecessor(mainLineageNode);
+        }
 
         return prepareLineageNode.collectAndMark();
     }
@@ -109,6 +116,9 @@ public class SparkParquetSource extends ParquetSource implements SparkExecutionO
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        if (this.isDatasetOutputPreferred()) {
+            return Arrays.asList(DatasetChannel.UNCACHED_DESCRIPTOR, RddChannel.UNCACHED_DESCRIPTOR);
+        }
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 

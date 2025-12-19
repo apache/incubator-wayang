@@ -73,6 +73,20 @@ Apache Wayang provides a flexible architecture which enables easy addition of ne
 
 For a quick guide on how to run WordCount see [here](guides/tutorial.md).
 
+### Spark Dataset / DataFrame pipelines
+
+Wayang’s Spark platform can now execute end-to-end pipelines on Spark `Dataset[Row]` (aka DataFrames). This is particularly useful when working with lakehouse-style storage (Parquet/Delta) or when you want to plug Spark ML stages into a Wayang plan without repeatedly falling back to RDDs.
+
+To build a Dataset-backed pipeline:
+
+1. **Use the Dataset-aware plan builder APIs.**
+   - `PlanBuilder.readParquet(..., preferDataset = true)` (or `JavaPlanBuilder.readParquet(..., ..., true)`) reads Parquet files directly into a Dataset channel.
+   - `DataQuanta.writeParquet(..., preferDataset = true)` writes a Dataset channel without converting it back to an RDD.
+2. **Keep operators dataset-compatible.** Most operators continue to work unchanged; if an operator explicitly prefers RDDs, Wayang will insert the necessary conversions automatically (at an additional cost). Custom operators can expose `DatasetChannel` descriptors to stay in the dataframe world.
+3. **Let the optimizer do the rest.** The optimizer now assigns a higher cost to Dataset↔RDD conversions, so once you opt into Dataset sources/sinks the plan will stay in Dataset form by default.
+
+No extra flags are required—just opt into the Dataset-based APIs where you want dataframe semantics. If you see unexpected conversions in your execution plan, check that the upstream/downstream operators you use can consume `DatasetChannel`s; otherwise Wayang will insert a conversion operator for you.
+
 ## Quick Guide for Developing with Wayang
 
 For a quick guide on how to use Wayang in your Java/Scala project see [here](guides/develop-with-Wayang.md).
