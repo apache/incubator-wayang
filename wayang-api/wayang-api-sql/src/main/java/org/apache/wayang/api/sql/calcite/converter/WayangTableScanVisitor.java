@@ -26,8 +26,11 @@ import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 import org.apache.wayang.api.sql.sources.fs.JavaCSVTableSource;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.jdbc.operators.JdbcTableSource;
+import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 import org.apache.wayang.postgres.operators.PostgresTableSource;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.operators.TableSource;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,9 +52,7 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
 
         if (tableSource.equals("postgres")) {
             return new PostgresTableSource(tableName, columnNames.toArray(String[]::new));
-        }
-
-        if (tableSource.equals("fs")) {
+        } else if (tableSource.equals("fs")) {
             final ModelParser modelParser;
             try {
                 modelParser = this.wayangRelConverter.getConfiguration() == null
@@ -72,7 +73,18 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
             final char separator = modelParser.getSchemaDelimiter(tableSource);
 
             return new JavaCSVTableSource<>(url, DataSetType.createDefault(Record.class), fieldTypes, separator);
+        } else if (wayangRelNode.getTable().getQualifiedName().size() == 1) {
+            // we assume that it is coming from a test environement or in memory db.
+
+            return new JdbcTableSource(wayangRelNode.getTable().getQualifiedName().get(0), wayangRelNode.getRowType().getFieldNames().toArray(String[]::new)) {
+
+                @Override
+                public JdbcPlatformTemplate getPlatform() {
+                    throw new UnsupportedOperationException("Unimplemented method 'getPlatform'");
+                }
+            };
         } else
-            throw new RuntimeException("Source not supported");
+            throw new RuntimeException(
+                    "Source not supported, got: " + tableSource + ", expected either postgres or filesystem (fs).");
     }
 }

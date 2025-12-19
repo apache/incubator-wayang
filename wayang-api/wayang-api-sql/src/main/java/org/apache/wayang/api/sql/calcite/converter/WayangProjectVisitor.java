@@ -19,14 +19,15 @@
 
 package org.apache.wayang.api.sql.calcite.converter;
 
-import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rex.RexNode;
 
 import org.apache.wayang.api.sql.calcite.converter.functions.ProjectMapFuncImpl;
 import org.apache.wayang.api.sql.calcite.rel.WayangProject;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.types.BasicDataUnitType;
 
 import java.util.List;
 
@@ -39,14 +40,15 @@ public class WayangProjectVisitor extends WayangRelNodeVisitor<WayangProject> {
     Operator visit(final WayangProject wayangRelNode) {
         final Operator childOp = wayangRelConverter.convert(wayangRelNode.getInput(0));
 
-        /* Quick check */
-        final List<RexNode> projects = ((Project) wayangRelNode).getProjects();
+        final List<RexNode> projects = wayangRelNode.getProjects();
 
-        // TODO: create a map with specific dataset type
-        final MapOperator<Record, Record> projection = new MapOperator<>(
+        final ProjectionDescriptor<Record, Record> projectionDescriptor = new ProjectionDescriptor<>(
                 new ProjectMapFuncImpl(projects),
-                Record.class,
-                Record.class);
+                wayangRelNode.getRowType().getFieldNames(),
+                BasicDataUnitType.createBasic(Record.class),
+                BasicDataUnitType.createBasic(Record.class));
+
+        final MapOperator<Record, Record> projection = new MapOperator<>(projectionDescriptor);
 
         childOp.connectTo(0, projection, 0);
 

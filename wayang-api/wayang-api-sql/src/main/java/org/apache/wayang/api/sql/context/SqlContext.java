@@ -167,7 +167,7 @@ public class SqlContext extends WayangContext {
         PrintUtils.print("After translating logical intermediate plan", wayangRel);
 
         final Collection<Record> collector = new ArrayList<>();
-        final WayangPlan wayangPlan = optimizer.convertWithConfig(wayangRel, configuration, collector);
+        final WayangPlan wayangPlan = Optimizer.convertWithConfig(wayangRel, configuration, collector);
         collector.add(new Record(wayangRel.getRowType().getFieldNames().toArray()));
         context.execute(getJobName(), wayangPlan);
 
@@ -182,7 +182,6 @@ public class SqlContext extends WayangContext {
     }
 
     public Collection<Record> executeSql(final String sql) throws SqlParseException {
-
         final Properties configProperties = Optimizer.ConfigProperties.getDefaults();
         final RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
 
@@ -216,7 +215,7 @@ public class SqlContext extends WayangContext {
         PrintUtils.print("After translating logical intermediate plan", wayangRel);
 
         final Collection<Record> collector = new ArrayList<>();
-        final WayangPlan wayangPlan = optimizer.convert(wayangRel, collector);
+        final WayangPlan wayangPlan = Optimizer.convert(wayangRel, collector);
 
         this.execute(getJobName(), wayangPlan);
 

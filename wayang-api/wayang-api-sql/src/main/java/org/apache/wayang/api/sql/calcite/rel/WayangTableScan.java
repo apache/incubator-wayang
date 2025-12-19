@@ -27,12 +27,12 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Table;
 import org.apache.wayang.api.sql.calcite.convention.WayangConvention;
-import org.apache.wayang.api.sql.calcite.utils.ModelParser;
 
 import java.util.List;
 
 public class WayangTableScan extends TableScan implements WayangRel {
 
+    //TODO: fields are never queried, why?
     private final int[] fields;
 
     public WayangTableScan(RelOptCluster cluster,
@@ -83,11 +83,15 @@ public class WayangTableScan extends TableScan implements WayangRel {
     }
 
     public String getQualifiedName() {
-        return table.getQualifiedName().get(1);
+        return table.getQualifiedName().size() == 1 
+            ? table.getQualifiedName().get(0) 
+            : table.getQualifiedName().get(1);
     }
 
     public String getTableName() {
-        return table.getQualifiedName().get(1);
+        return table.getQualifiedName().size() == 1 
+            ? table.getQualifiedName().get(0) 
+            : table.getQualifiedName().get(1);
     }
 
     public List<String> getColumnNames() {
