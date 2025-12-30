@@ -62,10 +62,10 @@ object Main extends ZIOAppDefault {
         }
         resBody <- ZIO.succeed(Response.text(responseBody))
      } yield resBody).catchAll(t => {
-      // Error printed in server
+      // Error messages printed in server
       t.printStackTrace
 
-      // Error sent to client
+      // Error messages sent to client
       val stringWriter = new StringWriter()
       val printWriter = new PrintWriter(stringWriter)
       t.printStackTrace(printWriter)
