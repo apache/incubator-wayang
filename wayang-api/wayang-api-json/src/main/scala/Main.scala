@@ -20,6 +20,7 @@ package org.apache.wayang.api.json
 import zio._
 import zio.http._
 import scala.util.Try
+import java.io.{StringWriter, PrintWriter}
 
 import org.apache.wayang.api.json.builder.JsonPlanBuilder
 import org.apache.wayang.api.json.operatorfromdrawflow.OperatorFromDrawflowConverter
@@ -61,8 +62,18 @@ object Main extends ZIOAppDefault {
         }
         resBody <- ZIO.succeed(Response.text(responseBody))
      } yield resBody).catchAll(t => {
-       t.printStackTrace
-       ZIO.succeed(Response.error(Status.BadRequest, t.getMessage))
+      // Error messages printed in server
+      t.printStackTrace
+
+      // Error messages sent to client
+      val stringWriter = new StringWriter()
+      val printWriter = new PrintWriter(stringWriter)
+      t.printStackTrace(printWriter)
+      printWriter.flush()
+      val fullErrorOutput = stringWriter.toString()
+
+      // Returns status code and the stacktrace (error message)
+      ZIO.succeed(Response(status = Status.BadRequest, body = Body.fromString(fullErrorOutput)))
      })
     }
 
