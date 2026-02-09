@@ -1,4 +1,17 @@
 ==============================================================
+Apache Wayang 1.1.1
+==============================================================
+This is a minor release of Apache Wayang. It is the first release as a top-level project.
+This release includes mainly bug fixes and minor improvements:
+
+- REST server can now output the error message in case of failure
+- Spark executor can submit dataframe queries to Spark and not only RDD jobs
+- Security fixes on the object file sources for Java platform and Spark
+- Bug fix in explain( ) to output the right plan
+- Changes in documentation to not include "incubator"
+- Support for bounded streaming textfile source, DataStream- map, join and collection sink in Flink platform
+
+==============================================================
 Apache Wayang (incubating) 1.1.0
 ==============================================================
 
