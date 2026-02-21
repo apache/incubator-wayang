@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.api.sql.sources.fs;
+package org.apache.wayang.java.operators;
 
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -38,6 +38,7 @@ import org.apache.wayang.core.util.fs.FileUtils;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
+import org.apache.wayang.java.operators.CsvRowConverter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,7 +52,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecutionOperator {
+public class JavaCSVFileSource<T> extends UnarySource<T> implements JavaExecutionOperator {
 
     private final String sourcePath;
 
@@ -63,12 +64,12 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
 
     /**
      * Table source with default seperator ';' <p>
-     * See {@link #JavaCSVTableSource(String, DataSetType, List, char)} for custom seperator
+     * See {@link #JavaCSVFileSource(String, DataSetType, List, char)} for custom seperator
      * @param sourcePath
      * @param type
      * @param fieldTypes
      */
-    public JavaCSVTableSource(final String sourcePath, final DataSetType<T> type, final List<RelDataType> fieldTypes) {
+    public JavaCSVFileSource(final String sourcePath, final DataSetType<T> type, final List<RelDataType> fieldTypes) {
         super(type);
         this.sourcePath = sourcePath;
         this.fieldTypes = fieldTypes;
@@ -83,7 +84,7 @@ public class JavaCSVTableSource<T> extends UnarySource<T> implements JavaExecuti
      * @param fieldTypes
      * @param separator
      */
-    public JavaCSVTableSource(final String sourcePath, final DataSetType<T> type, final List<RelDataType> fieldTypes,
+    public JavaCSVFileSource(final String sourcePath, final DataSetType<T> type, final List<RelDataType> fieldTypes,
             final char separator) {
         super(type);
         this.sourcePath = sourcePath;

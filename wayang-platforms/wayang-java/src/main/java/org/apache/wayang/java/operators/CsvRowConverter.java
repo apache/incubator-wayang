@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.api.sql.sources.fs;
+package org.apache.wayang.java.operators;
 
 import au.com.bytecode.opencsv.CSVParser;
 import org.apache.calcite.avatica.util.DateTimeUtils;

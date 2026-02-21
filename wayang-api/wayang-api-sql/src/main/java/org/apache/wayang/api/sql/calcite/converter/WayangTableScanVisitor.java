@@ -23,7 +23,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
 import org.apache.wayang.api.sql.calcite.utils.ModelParser;
-import org.apache.wayang.api.sql.sources.fs.JavaCSVTableSource;
+import org.apache.wayang.java.operators.JavaCSVFileSource;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.jdbc.operators.JdbcTableSource;
@@ -72,7 +72,7 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
 
             final char separator = modelParser.getSchemaDelimiter(tableSource);
 
-            return new JavaCSVTableSource<>(url, DataSetType.createDefault(Record.class), fieldTypes, separator);
+            return new JavaCSVFileSource<>(url, DataSetType.createDefault(Record.class), fieldTypes, separator);
         } else if (wayangRelNode.getTable().getQualifiedName().size() == 1) {
             // we assume that it is coming from a test environement or in memory db.
 
