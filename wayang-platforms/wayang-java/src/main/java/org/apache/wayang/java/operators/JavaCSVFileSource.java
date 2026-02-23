@@ -17,8 +17,6 @@
 
 package org.apache.wayang.java.operators;
 
-import org.apache.calcite.rel.type.RelDataType;
-
 import org.apache.commons.io.IOUtils;
 
 import org.apache.wayang.basic.channels.FileChannel;
@@ -56,7 +54,7 @@ public class JavaCSVFileSource<T> extends UnarySource<T> implements JavaExecutio
 
     private final String sourcePath;
 
-    private final List<RelDataType> fieldTypes;
+    private final List<CsvType> fieldTypes;
     private final char separator; // Default separator
 
     // TODO: incorporate fields later for projectable table scans
@@ -69,7 +67,7 @@ public class JavaCSVFileSource<T> extends UnarySource<T> implements JavaExecutio
      * @param type
      * @param fieldTypes
      */
-    public JavaCSVFileSource(final String sourcePath, final DataSetType<T> type, final List<RelDataType> fieldTypes) {
+    public JavaCSVFileSource(final String sourcePath, final DataSetType<T> type, final List<CsvType> fieldTypes) {
         super(type);
         this.sourcePath = sourcePath;
         this.fieldTypes = fieldTypes;
@@ -84,7 +82,7 @@ public class JavaCSVFileSource<T> extends UnarySource<T> implements JavaExecutio
      * @param fieldTypes
      * @param separator
      */
-    public JavaCSVFileSource(final String sourcePath, final DataSetType<T> type, final List<RelDataType> fieldTypes,
+    public JavaCSVFileSource(final String sourcePath, final DataSetType<T> type, final List<CsvType> fieldTypes,
             final char separator) {
         super(type);
         this.sourcePath = sourcePath;

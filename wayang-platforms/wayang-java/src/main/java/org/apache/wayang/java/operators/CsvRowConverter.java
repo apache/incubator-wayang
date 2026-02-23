@@ -18,16 +18,14 @@
 package org.apache.wayang.java.operators;
 
 import au.com.bytecode.opencsv.CSVParser;
-import org.apache.calcite.avatica.util.DateTimeUtils;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.commons.lang3.time.FastDateFormat;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+//import java.math.RoundingMode;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.Locale;
+//import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -57,11 +55,11 @@ public class CsvRowConverter {
 
 
 
-    public static Object convert(RelDataType fieldType, String string) {
+    public static Object convert(CsvType fieldType, String string) {
         if (fieldType == null || string == null) {
             return string;
         }
-        switch (fieldType.getSqlTypeName()) {
+        switch (fieldType) {
             case BOOLEAN:
                 if (string.length() == 0) {
                     return null;
@@ -101,14 +99,14 @@ public class CsvRowConverter {
                 if (string.length() == 0) {
                     return null;
                 }
-                return parseDecimal(fieldType.getPrecision(), fieldType.getScale(), string);
+                return new BigDecimal(string);
             case DATE:
                 if (string.length() == 0) {
                     return null;
                 }
                 try {
                     Date date = TIME_FORMAT_DATE.parse(string);
-                    return (int) (date.getTime() / DateTimeUtils.MILLIS_PER_DAY);
+                    return (int) (date.getTime() / (24 * 60 * 60 * 1000));
                 } catch (ParseException e) {
                     return null;
                 }
@@ -132,13 +130,13 @@ public class CsvRowConverter {
                 } catch (ParseException e) {
                     return null;
                 }
-            case VARCHAR:
+            case STRING:
             default:
                 return string;
         }
     }
 
-    private static BigDecimal parseDecimal(int precision, int scale, String string) {
+    /**private static BigDecimal parseDecimal(int precision, int scale, String string) {
         BigDecimal result = new BigDecimal(string);
         // If the parsed value has more fractional digits than the specified scale, round ties away
         // from 0.
@@ -148,7 +146,7 @@ public class CsvRowConverter {
                     "Decimal value {} exceeds declared scale ({}). Performing rounding to keep the "
                             + "first {} fractional digits.",
                     result, scale, scale);*/
-            result = result.setScale(scale, RoundingMode.HALF_UP);
+            /*result = result.setScale(scale, RoundingMode.HALF_UP);
         }
         // Throws an exception if the parsed value has more digits to the left of the decimal point
         // than the specified value.
@@ -158,7 +156,7 @@ public class CsvRowConverter {
                             result, precision, scale));
         }
         return result;
-    }
+    }*/
 
 
     public static String[] parseLine(String s) throws IOException {
