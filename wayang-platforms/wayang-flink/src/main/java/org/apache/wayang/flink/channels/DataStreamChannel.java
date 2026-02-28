@@ -39,8 +39,6 @@ public class DataStreamChannel extends Channel {
 
         private DataStream<?> dataStream;
 
-        // TODO: this.size is currently always 0
-        private long size;
 
         public Instance(final FlinkExecutor executor,
                 final OptimizationContext.OperatorContext producerOperatorContext,
@@ -59,7 +57,7 @@ public class DataStreamChannel extends Channel {
 
         @Override
         public OptionalLong getMeasuredCardinality() {
-            return this.size == 0 ? super.getMeasuredCardinality() : OptionalLong.of(this.size);
+            return super.getMeasuredCardinality();
         }
 
         @Override
