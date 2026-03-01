@@ -278,3 +278,25 @@ limitations under the License.
 
 ## Acknowledgements
 The [Logo](https://wayang.apache.org/img/wayang.png) was donated by Brian Vera.
+
+## CI Troubleshooting
+
+If CI workflows fail during dependency installation with errors such as:
+
+```
+404 Not Found
+Failed to fetch protobuf packages
+```
+
+this may be caused by outdated package metadata on the CI runner.
+
+Ubuntu mirrors may remove older package versions, causing installations to fail.
+
+### Solution
+
+Refresh the package index before installation:
+```bash
+sudo apt-get update
+sudo apt-get install -y protobuf-compiler
+```
+This ensures the latest available package version is installed.
