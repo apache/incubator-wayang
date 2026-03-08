@@ -83,7 +83,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         final SqlQueryChannel.Instance queryChannel = pair.field1;
 
         queryChannel.setSqlQuery(query);
-
+        // Return the tipChannelInstance.
         executionState.register(queryChannel);
     }
 
@@ -91,6 +91,11 @@ public class JdbcExecutor extends ExecutorTemplate {
      * Retrieves the follow-up {@link ExecutionTask} of the given {@code task}
      * unless it is not comprising a
      * {@link JdbcExecutionOperator} and/or not in the given {@link ExecutionStage}.
+     *
+     * @param task  whose follow-up {@link ExecutionTask} is requested; should have
+     *              a single follower
+     * @param stage in which the follow-up {@link ExecutionTask} should be
+     * @return the said follow-up {@link ExecutionTask} or {@code null} if none
      */
     private static ExecutionTask findJdbcExecutionOperatorTaskInStage(final ExecutionTask task, final ExecutionStage stage) {
 
@@ -125,6 +130,16 @@ public class JdbcExecutor extends ExecutorTemplate {
                 : null;
     }
 
+    /**
+     * Instantiates the outbound {@link SqlQueryChannel} of an
+     * {@link ExecutionTask}.
+     *
+     * @param task                whose outbound {@link SqlQueryChannel} should be
+     *                            instantiated
+     * @param optimizationContext provides information about the
+     *                            {@link ExecutionTask}
+     * @return the {@link SqlQueryChannel.Instance}
+     */
     private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
             final OptimizationContext optimizationContext, final JdbcExecutor jdbcExecutor) {
         assert task.getNumOuputChannels() == 1 : String.format("Illegal task: %s.", task);
@@ -136,6 +151,18 @@ public class JdbcExecutor extends ExecutorTemplate {
         return outputChannel.createInstance(jdbcExecutor, operatorContext, 0);
     }
 
+    /**
+     * Instantiates the outbound {@link SqlQueryChannel} of an
+     * {@link ExecutionTask}.
+     *
+     * @param task                       whose outbound {@link SqlQueryChannel}
+     *                                   should be instantiated
+     * @param optimizationContext        provides information about the
+     *                                   {@link ExecutionTask}
+     * @param predecessorChannelInstance preceeding {@link SqlQueryChannel.Instance}
+     *                                   to keep track of lineage
+     * @return the {@link SqlQueryChannel.Instance}
+     */
     private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
             final OptimizationContext optimizationContext,
             final SqlQueryChannel.Instance predecessorChannelInstance, final JdbcExecutor jdbcExecutor) {
@@ -144,19 +171,26 @@ public class JdbcExecutor extends ExecutorTemplate {
         newInstance.getLineage().addPredecessor(predecessorChannelInstance.getLineage());
         return newInstance;
     }
-
+    
+    /**
+     * Creates a query channel and the sql statement
+     * 
+     * @param stage
+     * @param context
+     * @return a tuple containing the sql statement
+     */
     protected static Tuple2<String, SqlQueryChannel.Instance> createSqlQuery(final ExecutionStage stage,
             final OptimizationContext context, final JdbcExecutor jdbcExecutor) {
         final Collection<?> startTasks = stage.getStartTasks();
         final Collection<?> termTasks = stage.getTerminalTasks();
-
+        // Verify that we can handle this instance.
         assert startTasks.size() == 1 : "Invalid jdbc stage: multiple sources are not currently supported";
         final ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
         assert termTasks.size() == 1 : "Invalid JDBC stage: multiple terminal tasks are not currently supported.";
         final ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
         assert startTask.getOperator() instanceof TableSource
                 : "Invalid JDBC stage: Start task has to be a TableSource";
-
+        // Extract the different types of ExecutionOperators from the stage.
         final JdbcTableSource tableOp = (JdbcTableSource) startTask.getOperator();
         SqlQueryChannel.Instance tipChannelInstance =
                 JdbcExecutor.instantiateOutboundChannel(startTask, context, jdbcExecutor);
@@ -171,7 +205,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         ExecutionTask nextTask = JdbcExecutor.findJdbcExecutionOperatorTaskInStage(startTask, stage);
 
         while (nextTask != null) {
-
+            // Evaluate the nextTask.
             if (nextTask.getOperator() instanceof final JdbcFilterOperator filterOperator) {
                 filterTasks.add(filterOperator);
             } else if (nextTask.getOperator() instanceof JdbcProjectionOperator projectionOperator) {
@@ -183,13 +217,13 @@ public class JdbcExecutor extends ExecutorTemplate {
                 throw new WayangException(
                         String.format("Unsupported JDBC execution task %s", nextTask.toString()));
             }
-
+            // Move the tipChannelInstance.
             tipChannelInstance =
                     JdbcExecutor.instantiateOutboundChannel(nextTask, context, tipChannelInstance, jdbcExecutor);
-
+            // Go to the next nextTask.
             nextTask = JdbcExecutor.findJdbcExecutionOperatorTaskInStage(nextTask, stage);
         }
-
+        // Create the SQL query.
         final StringBuilder query =
                 createSqlString(jdbcExecutor, tableOp, filterTasks, projectionTask, joinTasks);
 
@@ -257,7 +291,7 @@ public class JdbcExecutor extends ExecutorTemplate {
 
     private void saveResult(final FileChannel.Instance outputFileChannelInstance, final ResultSet rs)
             throws IOException, SQLException {
-
+        // Output results.
         final FileSystem outFs =
                 FileSystems.getFileSystem(outputFileChannelInstance.getSinglePath()).get();
 
@@ -265,7 +299,7 @@ public class JdbcExecutor extends ExecutorTemplate {
                      new OutputStreamWriter(outFs.create(outputFileChannelInstance.getSinglePath()))) {
 
             while (rs.next()) {
-
+                // System.out.println(rs.getInt(1) + " " + rs.getString(2));
                 final ResultSetMetaData rsmd = rs.getMetaData();
 
                 for (int i = 1; i <= rsmd.getColumnCount(); i++) {
