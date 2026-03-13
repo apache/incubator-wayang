@@ -1,6 +1,10 @@
 package org.apache.wayang.api
 
+import org.apache.wayang.basic.data.Row
 import org.apache.wayang.basic.operators.SelectOperator
+
+import java.util
+import java.util.{ArrayList => JArrayList}
 
 /**
  * DataFrame abstraction for Apache Wayang, specializing DataQuanta for Row types.
@@ -19,7 +23,9 @@ class DataFrame(df: DataQuanta[Row]) {
    * @return A new DataFrame containing only the selected columns.
    */
   def select(columns: String*): DataFrame = {
-    val selectOperator = new SelectOperator(columns)
+    val cols = new JArrayList[String](util.Arrays.asList(columns: _*))
+    //still need to create a proper constructor
+    val selectOperator = new SelectOperator(cols)
     this.df.connectTo(selectOperator, 0)
     implicit val pb: PlanBuilder = df.planBuilder
     val dq =new DataQuanta[Row](selectOperator)

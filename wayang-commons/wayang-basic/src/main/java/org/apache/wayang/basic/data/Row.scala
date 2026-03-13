@@ -1,4 +1,4 @@
-package org.apache.wayang.api
+package org.apache.wayang.basic.data
 
 /**
  * Represents a single row of data with an associated schema.

@@ -1,6 +1,7 @@
 package org.apache.wayang.spark.operators;
 
 import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.apache.wayang.basic.operators.SelectOperator;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -16,14 +17,15 @@ import org.apache.wayang.spark.execution.SparkExecutor;
  * This class exploits Spark DataSet intead of JavaRDD, in Spark a DataFrame is nothing but a DataSet<Row>
  */
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import java.util.Collection;
 import java.util.List;
 
 public class SparkSelectOperator extends SelectOperator
         implements SparkExecutionOperator{
 
-
+    public SparkSelectOperator(SelectOperator that) {
+        super(that);
+    }
     /**
      * evaluate function may work as follows (inspired ny SparkParquetSink and SparkFiterOperator)
      */

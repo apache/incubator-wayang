@@ -1,6 +1,8 @@
 package org.apache.wayang.basic.operators;
 
+import org.apache.wayang.basic.data.Row;
 import org.apache.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.wayang.core.types.DataSetType;
 
 import java.util.ArrayList;
 
@@ -28,8 +30,22 @@ public class SelectOperator extends UnaryToUnaryOperator<Row, Row> {
      */
     protected final ArrayList<String> columns;
 
+    public SelectOperator(ArrayList<String> cols, DataSetType<Row> type) {
+        super(type, type, true);
+        this.columns = cols;
+    }
+
+    public SelectOperator(SelectOperator that) {
+        super(that);
+        this.columns = that.getColumns();
+    }
+
+    private ArrayList<String> getColumns() {
+        return this.columns;
+    }
+
     /**
-     Obviously, this class lacks of constructors but most importantly it lacks a region for cardinality estimation.
+     Obviously, this class lacks a region for cardinality estimation.
      */
 
 }
