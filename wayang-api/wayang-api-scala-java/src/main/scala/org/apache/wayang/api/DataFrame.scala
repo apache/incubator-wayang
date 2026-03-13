@@ -32,4 +32,10 @@ class DataFrame(df: DataQuanta[Row]) {
     new DataFrame(dq)
   }
 
+  /**
+   * schema operator will be a sink as it triggers the execution of the plan.
+   */
+
+
+
 }

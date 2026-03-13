@@ -14,7 +14,7 @@ import org.apache.wayang.spark.channels.DatasetChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 
 /**
- * This class exploits Spark DataSet intead of JavaRDD, in Spark a DataFrame is nothing but a DataSet<Row>
+ * This class exploits Spark DataSet instead of JavaRDD, in Spark a DataFrame is nothing but a DataSet<Row>
  */
 import org.apache.spark.sql.Dataset;
 import java.util.Collection;
@@ -53,6 +53,7 @@ public class SparkSelectOperator extends SelectOperator
 
     @Override
     public boolean containsAction() {
+        //this operator does not trigger the execution of the plan
         return false;
     }
 
