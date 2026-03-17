@@ -22,6 +22,7 @@ import org.apache.wayang.core.mapping.Mapping;
 
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.wayang.genericjdbc.mapping.JoinMapping;
 
 /**
  * Register for the {@link Mapping}s supported for this platform.
@@ -30,7 +31,8 @@ public class Mappings {
 
     public static final Collection<Mapping> ALL = Arrays.asList(
             new FilterMapping(),
-            new ProjectionMapping()
+            new ProjectionMapping(),
+            new JoinMapping()
     );
 
 }
