@@ -14,7 +14,7 @@ import org.apache.wayang.spark.channels.DatasetChannel;
 import org.apache.wayang.spark.execution.SparkExecutor;
 
 /**
- * This class exploits Spark DataSet instead of JavaRDD, in Spark a DataFrame is nothing but a DataSet<Row>
+ * This class exploits Spark Dataset, in Spark a DataFrame is nothing but a Dataset<Row>
  */
 import org.apache.spark.sql.Dataset;
 import java.util.Collection;

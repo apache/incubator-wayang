@@ -1,12 +1,11 @@
 package org.apache.wayang.spark.mapping;
 
-import org.apache.wayang.basic.data.Row;
 import org.apache.wayang.basic.operators.SelectOperator;
 import org.apache.wayang.core.mapping.*;
-import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.operators.SparkSelectOperator;
 import org.apache.wayang.spark.platform.SparkPlatform;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -25,7 +24,7 @@ public class SelectMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         OperatorPattern<SelectOperator> operatorPattern = new OperatorPattern<>(
-                "select", new SelectOperator(null, DataSetType.createDefault(Row.class)), false);
+                "select", new SelectOperator((ArrayList<String>) null), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

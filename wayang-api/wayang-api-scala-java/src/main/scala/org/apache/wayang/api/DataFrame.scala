@@ -9,10 +9,11 @@ import java.util.{ArrayList => JArrayList}
 /**
  * DataFrame abstraction for Apache Wayang, specializing DataQuanta for Row types.
  * The idea is the following: DataQuanta[] is a good abstraction for both typed and untyped data structures.
- * Taking spark as example, DQ can abstract both hard-typed JavaRdd (e.g. DataQuanta[Person]) and an untyped Dataset[Row] (i.e. DataFrame)
- * (so, DataQuanta[Row]).
+ * Taking spark as example, DataQuanta currently abstracts the hard-typed JavaRdd (e.g. DataQuanta[Person]);
+ * however it is also able to abstract untyped Dataset[Row] i.e. DataFrame (so, DataQuanta[Row]).
+ *
  * For this reason it is possible for a Wayang DataFrame to be a wrapper around a DataQuanta[Row].
- * Row's core is list of untyped (Any) elements and a schema
+ * Row's core is list of untyped (Object) elements and a schema
  * that allows to associate names of columns to both elements of row and their actual type.
  * Taking Spark as example, a DataQuanta[Row] is translated into a Dataset[Row].
  */
@@ -24,18 +25,10 @@ class DataFrame(df: DataQuanta[Row]) {
    */
   def select(columns: String*): DataFrame = {
     val cols = new JArrayList[String](util.Arrays.asList(columns: _*))
-    //still need to create a proper constructor
     val selectOperator = new SelectOperator(cols)
     this.df.connectTo(selectOperator, 0)
     implicit val pb: PlanBuilder = df.planBuilder
     val dq =new DataQuanta[Row](selectOperator)
     new DataFrame(dq)
   }
-
-  /**
-   * schema operator will be a sink as it triggers the execution of the plan.
-   */
-
-
-
 }

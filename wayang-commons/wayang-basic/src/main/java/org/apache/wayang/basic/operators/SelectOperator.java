@@ -17,21 +17,25 @@ public class SelectOperator extends UnaryToUnaryOperator<Row, Row> {
      *
      * Regarding SelectOperator, it might have a String (maybe wrapped) that will be exploited
      * by the engine chosen for the actual execution. (it is common for big data
-     * engines to have this signature for the select method). Other Operator (e.g. filter)
-     * will need an untyped expression instead of PredicateDescriptor
+     * engines to have this signature for the select method). Also other Operators (e.g. filter)
+     * will need an untyped expression instead of PredicateDescriptor.
      *
      * The untyped architecture of DF makes the compilation time less prone to find errors.
-     * However, big data engines exploit this in order to increase performances. For these reasons, in order to have a proper
-     * DF API, it is necessary to create new implementations of existing Operators (e.g. FilterOperator) that will
-     * exploit different backends (e.g. currently there is SparkFilterOperator that exploits JavaRDD,
-     * while it would be optimal for a DF API to exploit Dataset<Row> (i.e. DataFrame) instead of JavaRDD).
+     * However, big data engines exploit this in order to increase performances
+     * (see Predicate Pushdown). For these reasons, in order to have a proper
+     * DF API, it is necessary to create new versions of existing Operators that will
+     * be based on untyped expressions instead of UDF and will be able to properly exploit
+     * the most performative backends. An example:
+     * SparkFilterOperator extends FilterOperator whose core is an udf and exploits JavaRDD,
+     * instead Spark_Df_FilterOperator extends Filter_Df_Operator whose core is an untyped expression
+     * and exploits Spark Dataframe.
      *
      * Note that both In an Out type is Row (due to DF's untyped architecture)
      */
     protected final ArrayList<String> columns;
 
-    public SelectOperator(ArrayList<String> cols, DataSetType<Row> type) {
-        super(type, type, true);
+    public SelectOperator(ArrayList<String> cols) {
+        super(DataSetType.createDefault(Row.class), DataSetType.createDefault(Row.class), true);
         this.columns = cols;
     }
 

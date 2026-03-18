@@ -20,7 +20,7 @@ public record Schema(List<Map.Entry<String, DataUnitType<Row>>> schema) {
                 return i;
             }
         }
-        return -1; // Not found
+        return -1; // Not found, of course in a real implementation an exception would be thrown
     }
 
 }
