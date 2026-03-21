@@ -26,9 +26,7 @@ public class SparkSelectOperator extends SelectOperator
     public SparkSelectOperator(SelectOperator that) {
         super(that);
     }
-    /**
-     * evaluate function may work as follows (inspired ny SparkParquetSink and SparkFiterOperator)
-     */
+
     @Override
     public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(ChannelInstance[] inputs,
                                                                                          ChannelInstance[] outputs, SparkExecutor sparkExecutor,
@@ -47,15 +45,15 @@ public class SparkSelectOperator extends SelectOperator
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
-    /**
-     * TODO...
-     */
-
     @Override
     public boolean containsAction() {
         //this operator does not trigger the execution of the plan
         return false;
     }
+
+    /**
+     * Following methods are obviously TODO
+     */
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {

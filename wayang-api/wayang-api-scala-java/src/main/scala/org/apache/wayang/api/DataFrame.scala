@@ -1,34 +1,34 @@
 package org.apache.wayang.api
 
-import org.apache.wayang.basic.data.Row
+import org.apache.wayang.basic.data.Record
 import org.apache.wayang.basic.operators.SelectOperator
+import org.apache.wayang.core.plan.wayangplan.ElementaryOperator
 
-import java.util
-import java.util.{ArrayList => JArrayList}
+import java.util.{Arrays, ArrayList => JArrayList}
 
 /**
- * DataFrame abstraction for Apache Wayang, specializing DataQuanta for Row types.
- * The idea is the following: DataQuanta[] is a good abstraction for both typed and untyped data structures.
- * Taking spark as example, DataQuanta currently abstracts the hard-typed JavaRdd (e.g. DataQuanta[Person]);
- * however it is also able to abstract untyped Dataset[Row] i.e. DataFrame (so, DataQuanta[Row]).
+ * DataFrame abstraction for Apache Wayang, specializing DataQuanta for [[Record]](s).
+ * The idea is the following: DataQuanta[] is a good abstraction for both hard-typed structures and Dataframes.
+ * Taking Wayang-Spark as example, DataQuanta can abstract both JavaRdd (DataQuanta[Person]);
+ * and Dataset[Row] i.e. DataFrame (DataQuanta[Record]).
  *
- * For this reason it is possible for a Wayang DataFrame to be a wrapper around a DataQuanta[Row].
- * Row's core is list of untyped (Object) elements and a schema
- * that allows to associate names of columns to both elements of row and their actual type.
- * Taking Spark as example, a DataQuanta[Row] is translated into a Dataset[Row].
+ * For this reason, it is possible for a Wayang DataFrame to be a wrapper around a DataQuanta[[Record]].
+ * DataFrame API will provide methods that take expressions as input instead of udf. This allows the new API
+ * to leverage modern engines (e.g. Spark Dataframe) with their advanced optimizations (e.g. Predicate Pushdown).
+ *
+ * In this draft, DataFrame extends DataQuanta allowing the user to call Dataframe-style methods.
+ *
  */
-class DataFrame(df: DataQuanta[Row]) {
+class DataFrame private (operator: ElementaryOperator)(implicit planBuilder: PlanBuilder)
+  extends DataQuanta[Record](operator) {
 
   /**
-   * Selects specific columns based on the provided input strings.
-   * @return A new DataFrame containing only the selected columns.
+   * Selects specific columns and returns a new DataFrame.
    */
   def select(columns: String*): DataFrame = {
-    val cols = new JArrayList[String](util.Arrays.asList(columns: _*))
+    val cols = new JArrayList[String](Arrays.asList(columns: _*))
     val selectOperator = new SelectOperator(cols)
-    this.df.connectTo(selectOperator, 0)
-    implicit val pb: PlanBuilder = df.planBuilder
-    val dq =new DataQuanta[Row](selectOperator)
-    new DataFrame(dq)
+    this.connectTo(selectOperator, 0)
+    new DataFrame(selectOperator)
   }
 }
