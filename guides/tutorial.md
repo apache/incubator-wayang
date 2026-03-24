@@ -83,3 +83,42 @@ eval "$RUNNER \
 Then you should be able to see outputs like this:
 
 ![img.png](../images/wordcount_result.png)
+## Running SQL Queries in Wayang
+
+Wayang provides support for executing SQL queries using its SQL API.
+
+### Example
+
+```sql
+SELECT * FROM my_table;
+### Steps to execute SQL queries
+
+1. Configure the Wayang Calcite model using the property:
+   `wayang.calcite.model`
+
+2. Create a `SqlContext` instance:
+
+```java
+SqlContext context = new SqlContext(configuration);
+Example configuration:
+
+```java
+configuration.setProperty(
+    "wayang.calcite.model",
+    "{ \"version\": \"1.0\", \"defaultSchema\": \"MY_SCHEMA\", \"schemas\": [] }"
+);
+
+---
+
+## 👉 Step 2 — Improve SQL execution step
+
+Below this:
+
+```md
+3. Execute your SQL query:
+```java
+Collection<Record> result = context.executeSql("SELECT * FROM my_table");
+
+for (Record record : result) {
+    System.out.println(record);
+}
