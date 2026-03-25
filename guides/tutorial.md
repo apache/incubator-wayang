@@ -122,3 +122,32 @@ Collection<Record> result = context.executeSql("SELECT * FROM my_table");
 for (Record record : result) {
     System.out.println(record);
 }
+### Example: Running a simple SQL query
+
+Wayang allows executing SQL queries using the `SqlContext` API.
+
+```java
+import org.apache.wayang.api.sql.context.SqlContext;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.basic.data.Record;
+
+import java.util.Collection;
+
+public class Example {
+    public static void main(String[] args) throws Exception {
+        Configuration configuration = new Configuration();
+
+        configuration.setProperty(
+            "wayang.calcite.model",
+            "{ \"version\": \"1.0\", \"defaultSchema\": \"MY_SCHEMA\", \"schemas\": [] }"
+        );
+
+        SqlContext context = new SqlContext(configuration);
+
+        Collection<Record> result = context.executeSql("SELECT * FROM my_table");
+
+        for (Record record : result) {
+            System.out.println(record);
+        }
+    }
+}
