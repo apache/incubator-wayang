@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class can describe the structure of a Row in a DataFrame.
+ * This class can describe the structure of a DataFrame [Record].
  */
-public record Schema(List<Map.Entry<String, DataUnitType<Row>>> schema) {
+public record Schema(List<Map.Entry<String, DataUnitType<?>>> schema) {
 
     public int getIndexOfAttribute(String columnName) {
         if (columnName == null || schema == null) {
