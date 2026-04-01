@@ -89,21 +89,21 @@ public final class SqlRuntimeCast {
         if (v instanceof Date) {
             return (float) ((Date) v).getTime();
         }
-        if (v instanceof final Calendar cal) {
-            return (float) cal.getTimeInMillis();
+        if (v instanceof Calendar) {
+            return (float) ((Calendar) v).getTimeInMillis();
         }
         return SqlFunctions.toFloat(v);
     }
 
     private static double castToDouble(final Object v) {
-        if (v instanceof final DateString ds) {
-            return (double) ds.getMillisSinceEpoch();
+        if (v instanceof DateString) {
+            return (double) ((DateString) v).getMillisSinceEpoch();
         }
-        if (v instanceof final Date d) {
-            return (double) d.getTime();
+        if (v instanceof Date) {
+            return (double) ((Date) v).getTime();
         }
-        if (v instanceof final Calendar cal) {
-            return (double) cal.getTimeInMillis();
+        if (v instanceof Calendar) {
+            return (double) ((Calendar) v).getTimeInMillis();
         }
         return SqlFunctions.toDouble(v);
     }
