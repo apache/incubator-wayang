@@ -27,3 +27,36 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.DateString;
 import org.apache.calcite.util.NlsString;
 
+/**
+ * Runtime SQL {@code CAST} for Wayang Java filter evaluation, delegating to
+ * {@link SqlFunctions} where possible.
+ */
+public final class SqlRuntimeCast {
+
+    private SqlRuntimeCast() {}
+
+    /**
+     * @param input  evaluated operand (SQL NULL is {@code null})
+     * @param target destination SQL type name of the cast (from the RexCall result type)
+     * @return value suitable for comparisons and filter logic
+     */
+    public static Object castValue(final Object input, final SqlTypeName target) {
+        if (input == null) {
+            return null;
+        }
+        final Object v = unwrapForCast(input);
+        return switch (target) {
+            case BOOLEAN -> SqlFunctions.toBoolean(v);
+            case TINYINT -> SqlFunctions.toByte(v);
+            case SMALLINT -> SqlFunctions.toShort(v);
+            case INTEGER -> SqlFunctions.toInt(v);
+            case BIGINT -> SqlFunctions.toLong(v);
+            case DECIMAL -> SqlFunctions.toBigDecimal(v);
+            case FLOAT, REAL -> castToFloat(v);
+            case DOUBLE -> castToDouble(v);
+            case CHAR, VARCHAR -> castToString(v);
+            default -> throw new UnsupportedOperationException(
+                    "CAST to " + target + " is not supported in Java filter evaluation yet.");
+        };
+    }
+
