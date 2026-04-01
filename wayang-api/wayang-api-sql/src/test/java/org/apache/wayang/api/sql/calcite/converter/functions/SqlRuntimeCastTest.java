@@ -35,4 +35,14 @@ class SqlRuntimeCastTest {
         assertNull(SqlRuntimeCast.castValue(null, SqlTypeName.INTEGER));
     }
 
+    @Test
+    void castIntegerToVarchar() {
+        assertEquals("1", SqlRuntimeCast.castValue(1, SqlTypeName.VARCHAR));
+    }
+
+    @Test
+    void castStringToInteger() {
+        assertEquals(42, SqlRuntimeCast.castValue("42", SqlTypeName.INTEGER));
+    }
+
 }
