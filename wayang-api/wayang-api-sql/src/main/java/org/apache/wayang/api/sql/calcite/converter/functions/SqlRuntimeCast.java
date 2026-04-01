@@ -127,3 +127,9 @@ public final class SqlRuntimeCast {
         if (v instanceof final Date d) {
             return d.toString();
         }
+        if (v instanceof final Calendar cal) {
+            return cal.getTime().toString();
+        }
+        return String.valueOf(v);
+    }
+}
