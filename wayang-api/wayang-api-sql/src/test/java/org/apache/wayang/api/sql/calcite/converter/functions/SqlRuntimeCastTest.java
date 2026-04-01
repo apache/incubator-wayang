@@ -28,3 +28,11 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.NlsString;
 import org.junit.jupiter.api.Test;
 
+class SqlRuntimeCastTest {
+
+    @Test
+    void castNullYieldsNull() {
+        assertNull(SqlRuntimeCast.castValue(null, SqlTypeName.INTEGER));
+    }
+
+}
