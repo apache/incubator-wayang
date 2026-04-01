@@ -62,4 +62,20 @@ class SqlRuntimeCastTest {
         assertEquals(true, SqlRuntimeCast.castValue("TRUE", SqlTypeName.BOOLEAN));
     }
 
+    @Test
+    void castInvalidBooleanThrows() {
+        assertThrows(RuntimeException.class, () -> SqlRuntimeCast.castValue("maybe", SqlTypeName.BOOLEAN));
+    }
+
+    @Test
+    void castBigDecimalToVarcharUsesSqlFormat() {
+        final String s = SqlRuntimeCast.castValue(BigDecimal.valueOf(1, 1), SqlTypeName.VARCHAR).toString();
+        assertTrue(s.contains("1"));
+    }
+
+    @Test
+    void castToDateUnsupported() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> SqlRuntimeCast.castValue("2020-01-01", SqlTypeName.DATE));
+    }
 }
