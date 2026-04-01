@@ -84,16 +84,6 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
         }
 
         /**
-         * Java implementation of SQL cast.
-         * @param input input field
-         * @param type the new return type of the field
-         * @return Java-type equivalent to {@link SqlTypeName} counterpart.
-         */
-        private static Object sqlCast(Object input, SqlTypeName type){
-            throw new UnsupportedOperationException("sqlCasting is not yet implemented.");
-        }
-
-        /**
          * Java equivalent of SQL like clauses
          * 
          * @param s1
