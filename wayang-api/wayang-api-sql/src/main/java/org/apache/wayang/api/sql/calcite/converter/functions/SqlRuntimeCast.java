@@ -45,6 +45,31 @@ public final class SqlRuntimeCast {
             return null;
         }
         final Object v = unwrapForCast(input);
+        switch (target) {
+            case BOOLEAN:
+                return SqlFunctions.toBoolean(v);
+            case TINYINT:
+                return SqlFunctions.toByte(v);
+            case SMALLINT:
+                return SqlFunctions.toShort(v);
+            case INTEGER:
+                return SqlFunctions.toInt(v);
+            case BIGINT:
+                return SqlFunctions.toLong(v);
+            case DECIMAL:
+                return SqlFunctions.toBigDecimal(v);
+            case FLOAT:
+            case REAL:
+                return castToFloat(v);
+            case DOUBLE:
+                return castToDouble(v);
+            case CHAR:
+            case VARCHAR:
+                return castToString(v);
+            default:
+                throw new UnsupportedOperationException(
+                        "CAST to " + target + " is not supported in Java filter evaluation yet.");
+        }
     }
 
     private static Object unwrapForCast(final Object o) {
