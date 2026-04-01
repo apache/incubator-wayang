@@ -112,3 +112,18 @@ public final class SqlRuntimeCast {
         if (v instanceof final Double d) {
             return SqlFunctions.toString(d);
         }
+        if (v instanceof final BigDecimal bd) {
+            return SqlFunctions.toString(bd);
+        }
+        if (v instanceof final Number n) {
+            return n.toString();
+        }
+        if (v instanceof final DateString ds) {
+            return ds.toString();
+        }
+        if (v instanceof final Character c) {
+            return c.toString();
+        }
+        if (v instanceof final Date d) {
+            return d.toString();
+        }
