@@ -56,8 +56,7 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
                 case OR -> input.stream().anyMatch(obj -> Boolean.class.cast(obj).booleanValue());
                 case MINUS -> widenToDouble.apply(input.get(0)) - widenToDouble.apply(input.get(1));
                 case PLUS -> widenToDouble.apply(input.get(0)) + widenToDouble.apply(input.get(1));
-                // TODO: may need better support for CASTing in the future. See sqlCast() in this file.
-                case CAST -> input.get(0) instanceof Number ? widenToDouble.apply(input.get(0)) : ensureComparable.apply(input.get(0));
+                case CAST -> SqlRuntimeCast.castValue(input.get(0), returnType);
                 case SEARCH -> {
                     if (input.get(0) instanceof final ImmutableRangeSet range) {
                         assert input.get(1) instanceof Comparable
