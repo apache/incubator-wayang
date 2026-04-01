@@ -60,3 +60,12 @@ public final class SqlRuntimeCast {
         };
     }
 
+    private static Object unwrapForCast(final Object o) {
+        if (o instanceof final NlsString nls) {
+            return nls.getValue();
+        }
+        if (o instanceof final Character c) {
+            return c.toString();
+        }
+        return o;
+    }
