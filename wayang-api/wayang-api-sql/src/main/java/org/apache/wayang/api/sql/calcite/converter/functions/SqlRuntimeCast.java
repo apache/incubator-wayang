@@ -96,3 +96,19 @@ public final class SqlRuntimeCast {
         return SqlFunctions.toDouble(v);
     }
 
+    private static String castToString(final Object v) {
+        if (v instanceof final String s) {
+            return s;
+        }
+        if (v instanceof final NlsString nls) {
+            return nls.getValue();
+        }
+        if (v instanceof final Boolean b) {
+            return SqlFunctions.toString(b);
+        }
+        if (v instanceof final Float f) {
+            return SqlFunctions.toString(f);
+        }
+        if (v instanceof final Double d) {
+            return SqlFunctions.toString(d);
+        }
