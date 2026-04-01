@@ -56,4 +56,10 @@ class SqlRuntimeCastTest {
         assertEquals(7, SqlRuntimeCast.castValue(nls, SqlTypeName.INTEGER));
     }
 
+    @Test
+    void castStringToBoolean() {
+        assertTrue(SqlRuntimeCast.castValue("TRUE", SqlTypeName.BOOLEAN) instanceof Boolean);
+        assertEquals(true, SqlRuntimeCast.castValue("TRUE", SqlTypeName.BOOLEAN));
+    }
+
 }
