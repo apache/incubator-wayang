@@ -69,3 +69,17 @@ public final class SqlRuntimeCast {
         }
         return o;
     }
+
+    private static float castToFloat(final Object v) {
+        if (v instanceof final DateString ds) {
+            return (float) ds.getMillisSinceEpoch();
+        }
+        if (v instanceof final Date d) {
+            return (float) d.getTime();
+        }
+        if (v instanceof final Calendar cal) {
+            return (float) cal.getTimeInMillis();
+        }
+        return SqlFunctions.toFloat(v);
+    }
+
