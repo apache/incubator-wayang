@@ -83,3 +83,16 @@ public final class SqlRuntimeCast {
         return SqlFunctions.toFloat(v);
     }
 
+    private static double castToDouble(final Object v) {
+        if (v instanceof final DateString ds) {
+            return (double) ds.getMillisSinceEpoch();
+        }
+        if (v instanceof final Date d) {
+            return (double) d.getTime();
+        }
+        if (v instanceof final Calendar cal) {
+            return (double) cal.getTimeInMillis();
+        }
+        return SqlFunctions.toDouble(v);
+    }
+
