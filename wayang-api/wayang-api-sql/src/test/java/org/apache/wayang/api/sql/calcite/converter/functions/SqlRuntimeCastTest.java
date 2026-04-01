@@ -45,4 +45,15 @@ class SqlRuntimeCastTest {
         assertEquals(42, SqlRuntimeCast.castValue("42", SqlTypeName.INTEGER));
     }
 
+    @Test
+    void castStringToDouble() {
+        assertEquals(1.5d, (Double) SqlRuntimeCast.castValue("1.5", SqlTypeName.DOUBLE), 1e-9);
+    }
+
+    @Test
+    void castNlsStringToInteger() {
+        final NlsString nls = new NlsString("7", "UTF-8", null);
+        assertEquals(7, SqlRuntimeCast.castValue(nls, SqlTypeName.INTEGER));
+    }
+
 }
