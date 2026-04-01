@@ -118,14 +118,14 @@ public final class SqlRuntimeCast {
         if (v instanceof Boolean) {
             return SqlFunctions.toString((Boolean) v);
         }
-        if (v instanceof final Float f) {
-            return SqlFunctions.toString(f);
+        if (v instanceof Float) {
+            return SqlFunctions.toString((Float) v);
         }
-        if (v instanceof final Double d) {
-            return SqlFunctions.toString(d);
+        if (v instanceof Double) {
+            return SqlFunctions.toString((Double) v);
         }
-        if (v instanceof final BigDecimal bd) {
-            return SqlFunctions.toString(bd);
+        if (v instanceof BigDecimal) {
+            return SqlFunctions.toString((BigDecimal) v);
         }
         if (v instanceof final Number n) {
             return n.toString();
