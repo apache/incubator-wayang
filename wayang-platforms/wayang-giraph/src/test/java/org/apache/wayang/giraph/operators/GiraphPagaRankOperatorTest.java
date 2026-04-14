@@ -18,9 +18,11 @@
 
 package org.apache.wayang.giraph.operators;
 
+import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.api.configuration.KeyValueProvider;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
@@ -32,12 +34,13 @@ import org.apache.wayang.giraph.execution.GiraphExecutor;
 import org.apache.wayang.giraph.platform.GiraphPlatform;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -50,10 +53,9 @@ class GiraphPagaRankOperatorTest {
     @BeforeEach
     void setUp() {
         giraphExecutor = mock(GiraphExecutor.class);
+        when(giraphExecutor.getGiraphConfiguration()).thenReturn(new GiraphConfiguration());
     }
 
-    //TODO Validate the mock of GiraphExecutor
-    @Disabled
     @Test
     void testExecution() throws IOException {
         // Ensure that the GraphChiPlatform is initialized.
@@ -84,11 +86,16 @@ class GiraphPagaRankOperatorTest {
         final DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(giraphPageRankOperator);
 
-        giraphPageRankOperator.execute(
-                new ChannelInstance[]{inputChannelInstance},
-                new ChannelInstance[]{outputFileChannelInstance},
-                giraphExecutor,
-                operatorContext
+        assertThrows(
+                KeyValueProvider.NoSuchKeyException.class,
+                () -> giraphPageRankOperator.execute(
+                        new ChannelInstance[]{inputChannelInstance},
+                        new ChannelInstance[]{outputFileChannelInstance},
+                        giraphExecutor,
+                        operatorContext
+                )
         );
+
+        verify(giraphExecutor).getGiraphConfiguration();
     }
 }
