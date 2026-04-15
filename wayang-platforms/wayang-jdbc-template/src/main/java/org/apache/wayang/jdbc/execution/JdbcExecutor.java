@@ -171,7 +171,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         newInstance.getLineage().addPredecessor(predecessorChannelInstance.getLineage());
         return newInstance;
     }
-    
+
     /**
      * Creates a query channel and the sql statement
      * 
@@ -194,7 +194,6 @@ public class JdbcExecutor extends ExecutorTemplate {
         final JdbcTableSource tableOp = (JdbcTableSource) startTask.getOperator();
         SqlQueryChannel.Instance tipChannelInstance =
                 JdbcExecutor.instantiateOutboundChannel(startTask, context, jdbcExecutor);
-
         final Collection<JdbcFilterOperator> filterTasks = new ArrayList<>(4);
         JdbcProjectionOperator projectionTask = null;
         final Collection<JdbcJoinOperator<?>> joinTasks = new ArrayList<>();
@@ -209,7 +208,7 @@ public class JdbcExecutor extends ExecutorTemplate {
             if (nextTask.getOperator() instanceof final JdbcFilterOperator filterOperator) {
                 filterTasks.add(filterOperator);
             } else if (nextTask.getOperator() instanceof JdbcProjectionOperator projectionOperator) {
-                assert projectionTask == null;
+                assert projectionTask == null; // Allow one projection operator per stage for now.
                 projectionTask = projectionOperator;
             } else if (nextTask.getOperator() instanceof JdbcJoinOperator joinOperator) {
                 joinTasks.add(joinOperator);
@@ -218,8 +217,7 @@ public class JdbcExecutor extends ExecutorTemplate {
                         String.format("Unsupported JDBC execution task %s", nextTask.toString()));
             }
             // Move the tipChannelInstance.
-            tipChannelInstance =
-                    JdbcExecutor.instantiateOutboundChannel(nextTask, context, tipChannelInstance, jdbcExecutor);
+            tipChannelInstance = JdbcExecutor.instantiateOutboundChannel(nextTask, context, tipChannelInstance, jdbcExecutor);
             // Go to the next nextTask.
             nextTask = JdbcExecutor.findJdbcExecutionOperatorTaskInStage(nextTask, stage);
         }
