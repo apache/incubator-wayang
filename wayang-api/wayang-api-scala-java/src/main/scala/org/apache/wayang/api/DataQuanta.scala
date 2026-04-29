@@ -1245,6 +1245,20 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
 
   override def toString = s"DataQuanta[$output]"
 
+  /**
+   * Casts this DataQuanta to a DataFrame if the underlying type is Record
+   * Throws an exception otherwise.
+   */
+  def asDataFrame(): DataFrame = {
+    if (scala.reflect.classTag[Out].runtimeClass == classOf[Record]) {
+      this.asInstanceOf[DataFrame]
+    } else {
+      throw new UnsupportedOperationException(
+        s"Cannot cast DataQuanta[${scala.reflect.classTag[Out].runtimeClass.getSimpleName}] to DataFrame. " +
+          "Only DataQuanta[Record] is allowed."
+      )
+    }
+  }
 }
 
 /**
