@@ -194,9 +194,9 @@ def typecheck(input_type: Type[ConstrainedOperatorType]):
     origin = get_origin(input_type)
     args = get_args(input_type)
 
-    if isinstance(input_type, List) and args:
+    if origin is list and args:
         typecheck(args[0])
-    elif isinstance(input_type, Tuple):
+    elif origin is tuple:
         if all(arg in allowed_types for arg in args):
             return
         else:
