@@ -1,0 +1,1 @@
+SELECT COUNT(*) FROM postgres.title t, postgres.movie_info mi, postgres.movie_info_idx mi_idx, postgres.cast_info ci WHERE t.id=mi.movie_id AND t.id=mi_idx.movie_id AND t.id=ci.movie_id AND mi.info_type_id=105 AND mi_idx.info_type_id=100;

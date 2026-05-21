@@ -1,0 +1,1 @@
+SELECT COUNT(*) FROM postgres.title t, postgres.movie_info mi, postgres.movie_companies mc, postgres.cast_info ci, postgres.movie_keyword mk WHERE t.id=mi.movie_id AND t.id=mc.movie_id AND t.id=ci.movie_id AND t.id=mk.movie_id AND ci.role_id=2 AND mi.info_type_id=16 AND t.production_year>2010 AND mc.company_id=22956;

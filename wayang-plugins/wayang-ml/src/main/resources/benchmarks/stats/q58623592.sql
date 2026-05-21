@@ -1,0 +1,1 @@
+SELECT COUNT(*) FROM postgres.comments as c, postgres.posts as p, postgres.postLinks as pl, postgres.postHistory as ph, postgres.votes as v, postgres.badges as b WHERE p.Id = c.PostId AND p.Id = pl.RelatedPostId AND p.Id = ph.PostId AND p.Id = v.PostId AND b.UserId = c.UserId AND p.CommentCount>=0 AND ph.PostHistoryTypeId=2 AND v.VoteTypeId=5;

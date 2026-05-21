@@ -1,0 +1,1 @@
+SELECT COUNT(*) FROM postgres.comments as c, postgres.votes as v, postgres.badges as b, postgres.users as u WHERE u.Id = c.UserId AND u.Id = v.UserId AND u.Id = b.UserId AND c.Score=0 AND v.BountyAmount>=0 AND v.BountyAmount<=300 AND v.CreationDate>='2010-07-29 00:00:00'::timestamp AND u.UpVotes>=0 AND u.UpVotes<=18;

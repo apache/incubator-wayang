@@ -1,0 +1,1 @@
+SELECT COUNT(*) FROM postgres.votes as v, postgres.posts as p, postgres.badges as b, postgres.users as u WHERE u.Id = b.UserId AND u.Id = p.OwnerUserId AND u.Id = v.UserId AND p.PostTypeId=1 AND p.CommentCount>=0 AND p.CommentCount<=15 AND u.Reputation>=1 AND u.DownVotes>=0 AND u.DownVotes<=1;

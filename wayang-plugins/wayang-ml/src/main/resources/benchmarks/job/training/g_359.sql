@@ -1,0 +1,1 @@
+SELECT MIN(t.title) AS movie_title FROM postgres.company_name AS cn, postgres.keyword AS k, postgres.movie_companies AS mc, postgres.movie_keyword AS mk, postgres.title AS t WHERE cn.country_code = '[us]' AND k.keyword like '%character-name-in%' AND cn.id = mc.company_id AND mc.movie_id = t.id AND t.id = mk.movie_id AND mk.keyword_id = k.id AND mc.movie_id = mk.movie_id;

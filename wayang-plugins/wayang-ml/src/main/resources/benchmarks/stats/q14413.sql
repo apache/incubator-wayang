@@ -1,0 +1,1 @@
+SELECT COUNT(*) FROM postgres.tags as t, postgres.posts as p, postgres.users as u, postgres.postHistory as ph, postgres.badges as b WHERE p.Id = t.ExcerptPostId AND u.Id = ph.UserId AND u.Id = b.UserId AND u.Id = p.OwnerUserId AND p.CommentCount>=0 AND u.DownVotes<=0 AND b.Date<='2014-08-22 02:21:55'::timestamp;
