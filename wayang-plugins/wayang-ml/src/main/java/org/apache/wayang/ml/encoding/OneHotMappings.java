@@ -1,93 +1,23 @@
 package org.apache.wayang.ml.encoding;
 
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.OperatorBase;
-import org.apache.wayang.ml.util.Operators;
-import org.apache.wayang.ml.util.Platforms;
-import org.apache.wayang.core.platform.Platform;
-import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
-import org.apache.wayang.spark.operators.SparkExecutionOperator;
-import org.apache.wayang.core.optimizer.OptimizationContext;
-
-import org.reflections.*;
-import org.reflections.scanners.SubTypesScanner;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.Vector;
-import java.util.stream.Collectors;
-import java.util.Arrays;
-import java.util.Comparator;
+
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.wayang.core.plan.wayangplan.Operator;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.ml.util.Operators;
+import org.apache.wayang.ml.util.Platforms;
 
 public class OneHotMappings {
-
     private static final int PADDING_SIZE = 1;
+    private static final HashMap<String, Integer> operatorMapping = createOperatorMapping();
+    private static final HashMap<String, Integer> platformsMapping = createPlatformMapping();
+    private static final HashSet<Operator> originalOperators = new HashSet<>();
 
-    private static OneHotMappings INSTANCE;
-
-    private static HashMap<String, Integer> operatorMapping = createOperatorMapping();
-
-    private static HashMap<String, Integer> platformsMapping = createPlatformMapping();
-
-    private static HashSet<Operator> originalOperators = new HashSet<>();
-
-    private static OptimizationContext optimizationContext;
-
-    public static boolean encodeIds = false;
-
-    private OneHotMappings() {}
-
-    public static OneHotMappings getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new OneHotMappings();
-        }
-
-        return INSTANCE;
-    }
-
-    public HashMap<String, Integer> getOperatorMapping() {
-        return operatorMapping;
-    }
-
-    public HashMap<String, Integer> getPlatformsMapping() {
-        return platformsMapping;
-    }
-
-    private static HashMap<String, Integer> createOperatorMapping() {
-        HashMap<String, Integer> mappings = new HashMap<>();
-        Operators.getOperators()
-          .stream()
-          .filter(operator -> operator.getName().contains("org.apache.wayang.basic.operators") || operator.getName().contains("org.apache.wayang.core.plan.wayangplan"))
-          .distinct()
-          .sorted(Comparator.comparing(c -> c.getName()))
-          .forEachOrdered(entry -> mappings.put(entry.getName(), mappings.size()));
-
-        // add a null operator for encoding
-        //mappings.put(null, mappings.size());
-        //mappings.forEach((k,v) -> System.out.println(k + ": " + v));
-
-        return mappings;
-    }
-
-    private static HashMap<String, Integer> createPlatformMapping() {
-        HashMap<String, Integer> mappings = new HashMap<>();
-
-        //Add a null/padding platform for representation of null operators
-        //mappings.put(null, 0);
-
-        Platforms.getPlatforms()
-        .stream()
-        .sorted(Comparator.comparing(c -> c.getName()))
-        .forEachOrdered(entry -> mappings.put(entry.getName(), mappings.size()));
-
-        //mappings.forEach((k,v) -> System.out.println(k + ": " + v));
-
-        return mappings;
-    }
-
-    public static void addOriginalOperator(Operator operator) {
+    public static void addOriginalOperator(final Operator operator) {
         originalOperators.add(operator);
     }
 
@@ -95,27 +25,19 @@ public class OneHotMappings {
         return originalOperators;
     }
 
-    public static void setOptimizationContext(OptimizationContext context) {
-        optimizationContext = context;
-    }
-
-    public static OptimizationContext getOptimizationContext() {
-        return optimizationContext;
-    }
-
-    public static Optional<Platform> getOperatorPlatformFromEncoding(long[] encoded) {
-        int platformsCount = platformsMapping.size();
-        int operatorsCount = operatorMapping.size();
+    public static Optional<Platform> getOperatorPlatformFromEncoding(final long[] encoded) {
+        final int platformsCount = platformsMapping.size();
+        final int operatorsCount = operatorMapping.size();
 
         if (platformsCount > encoded.length) {
             return Optional.empty();
         }
 
         int platformIndex = -1;
-        int offset = PADDING_SIZE + operatorsCount;
+        final int offset = PADDING_SIZE + operatorsCount;
 
         for (int i = offset; i < platformsCount + offset && platformIndex == -1; i++) {
-            if(encoded[i] == 1)  {
+            if (encoded[i] == 1) {
                 platformIndex = i;
             }
         }
@@ -126,35 +48,54 @@ public class OneHotMappings {
 
         for (final Object entry : platformsMapping.keySet()) {
             if (platformsMapping.get(entry).equals(platformIndex - offset)) {
-                return Platforms.getPlatforms()
-                .stream()
-                .filter(pl -> pl.getName().equals(entry))
-                .map(cl -> Platform.load(cl.getName()))
-                .findAny();
+                return Platforms.getPlatforms().stream().filter(pl -> pl.getName().equals(entry))
+                        .map(cl -> Platform.load(cl.getName())).findAny();
             }
         }
-
 
         return Optional.empty();
     }
 
-    public static Optional<Operator> getOperatorFromEncoding(long[] encoded) {
+    public static Optional<Operator> getOperatorFromEncoding(final long[] encoded) {
         final long hashCode = encoded[0];
 
-        Optional<Operator> original = originalOperators.stream()
-            .filter(op -> (long) new HashCodeBuilder(17, 37)
-                .append(op.toString())
-                .append(op.getName())
-                .append(op.getAllInputs().length)
-                .append(op.getAllOutputs().length)
-                .toHashCode() == hashCode
-            )
-            .findAny();
+        final Optional<Operator> original = originalOperators.stream()
+                .filter(op -> (long) new HashCodeBuilder(17, 37).append(op.toString()).append(op.getName())
+                        .append(op.getAllInputs().length).append(op.getAllOutputs().length).toHashCode() == hashCode)
+                .findAny();
 
         if (original.isPresent()) {
             return original;
         }
 
         return Optional.empty();
+    }
+
+    private static HashMap<String, Integer> createOperatorMapping() {
+        final HashMap<String, Integer> mappings = new HashMap<>();
+        Operators.getOperators().stream()
+                .filter(operator -> operator.getName().contains("org.apache.wayang.basic.operators")
+                        || operator.getName().contains("org.apache.wayang.core.plan.wayangplan"))
+                .distinct().sorted(Comparator.comparing(c -> c.getName()))
+                .forEachOrdered(entry -> mappings.put(entry.getName(), mappings.size()));
+
+        return mappings;
+    }
+
+    private static HashMap<String, Integer> createPlatformMapping() {
+        final HashMap<String, Integer> mappings = new HashMap<>();
+
+        Platforms.getPlatforms().stream().sorted(Comparator.comparing(c -> c.getName()))
+                .forEachOrdered(entry -> mappings.put(entry.getName(), mappings.size()));
+
+        return mappings;
+    }
+
+    public static HashMap<String, Integer> getOperatorMapping() {
+        return operatorMapping;
+    }
+
+    public static HashMap<String, Integer> getPlatformsMapping() {
+        return platformsMapping;
     }
 }

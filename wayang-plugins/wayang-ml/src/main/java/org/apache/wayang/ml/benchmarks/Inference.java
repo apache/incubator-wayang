@@ -18,57 +18,22 @@
 
 package org.apache.wayang.ml.benchmarks;
 
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.WayangContext;
-import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.basic.operators.JoinOperator;
-import org.apache.wayang.java.Java;
-import org.apache.wayang.spark.Spark;
-import org.apache.wayang.flink.Flink;
-import org.apache.wayang.postgres.Postgres;
-import org.apache.wayang.ml.MLContext;
-import org.apache.wayang.spark.Spark;
-import org.apache.logging.log4j.Level;
-import org.apache.wayang.api.DataQuanta;
-import org.apache.wayang.api.PlanBuilder;
-import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.wayang.apps.util.Parameters;
-import org.apache.wayang.core.plugin.Plugin;
-import org.apache.wayang.ml.costs.PairwiseCost;
-import org.apache.wayang.ml.costs.PointwiseCost;
-import org.apache.wayang.ml.encoding.TreeEncoder;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.plan.wayangplan.OutputSlot;
-import org.apache.wayang.core.plan.wayangplan.PlanTraversal;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
-import org.apache.wayang.basic.operators.TextFileSource;
-import org.apache.wayang.basic.operators.TableSource;
-import org.apache.wayang.basic.operators.MapOperator;
-import org.apache.wayang.basic.data.Record;
-import org.apache.wayang.core.util.ExplainUtils;
-import org.apache.wayang.api.sql.calcite.utils.PrintUtils;
-import org.apache.wayang.api.sql.context.SqlContext;
-import org.apache.wayang.apps.tpch.queries.Query1Wayang;
-import org.apache.wayang.api.DataQuanta;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.wayang.core.api.Job;
-import org.apache.wayang.ml.encoding.OneHotMappings;
-
-import java.io.StringWriter;
-import java.lang.reflect.Constructor;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.LinkedList;
-import scala.collection.Seq;
+
+import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.plugin.Plugin;
+import org.apache.wayang.core.util.ExplainUtils;
+import org.apache.wayang.core.util.ReflectionUtils;
+import org.apache.wayang.ml.MLContext;
+import org.apache.wayang.ml.costs.PointwiseCost;
+//import org.apache.wayang.ml.encoding.OneHotMappings;
+
 import scala.collection.JavaConversions;
-import java.util.Collection;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 
 public class Inference {
 
@@ -170,6 +135,7 @@ public class Inference {
             final MLContext wayangContext = new MLContext(config);
             plugins.stream().forEach(plug -> wayangContext.register(plug));
 
+            /*
             String[] jars = ArrayUtils.addAll(
                 ReflectionUtils.getAllJars(JOBenchmark.class),
                 ReflectionUtils.getLibs(JOBenchmark.class)
@@ -178,28 +144,24 @@ public class Inference {
             jars = ArrayUtils.addAll(
                 jars,
                 ReflectionUtils.getAllJars(org.apache.calcite.runtime.SqlFunctions.class)
-            );
+            ); */
 
             try {
-                WayangPlan plan = IMDBJOBenchmark.getWayangPlan(args[3], config, plugins.toArray(Plugin[]::new), jars);
+                WayangPlan plan = IMDBJOBenchmark.getWayangPlan(args[3], config, plugins.toArray(Plugin[]::new));
 
                 IMDBJOBenchmark.setSources(plan, args[1]);
 
                 ExecutionPlan executionPlan;
 
                 if (!"vae".equals(modelType) && !"bvae".equals(modelType)) {
-                    executionPlan = wayangContext.buildInitialExecutionPlan("", plan, jars);
+                    executionPlan = wayangContext.buildInitialExecutionPlan("", plan);
 
-                    Job job = wayangContext.createJob("", plan, jars);
+                    Job job = wayangContext.createJob("", plan);
                     Configuration jobConfig = job.getConfiguration();
-                    job.estimateKeyFigures();
-                    OneHotMappings.setOptimizationContext(job.getOptimizationContext());
-                    OneHotMappings.encodeIds = false;
-                } else {
-                    OneHotMappings.encodeIds = true;
-                    executionPlan = wayangContext.buildWithVAE(plan, jars);
-                    OneHotMappings.encodeIds = false;
-                }
+                    //job.estimateKeyFigures();
+                    //OneHotMappings.setOptimizationContext(job.getOptimizationContext());
+                    //OneHotMappings.encodeIds = false;
+                } 
 
                 ExplainUtils.parsePlan(executionPlan, true);
                 //System.out.println(TreeEncoder.encode(executionPlan, true).toStringEncoding());
@@ -224,12 +186,6 @@ public class Inference {
                 config.setProperty("wayang.ml.experience.file", experiencePath + "experience-cost.txt");
 
                 config.setCostModel(new PointwiseCost());
-
-                break;
-            case "pairwise":
-                config.setProperty("wayang.ml.experience.enabled", "true");
-                config.setProperty("wayang.ml.experience.file", experiencePath + "experience-pairwise.txt");
-                config.setCostModel(new PairwiseCost());
 
                 break;
             case "bvae":

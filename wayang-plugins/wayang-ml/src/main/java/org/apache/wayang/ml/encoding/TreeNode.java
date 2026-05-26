@@ -19,126 +19,30 @@
 package org.apache.wayang.ml.encoding;
 
 import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.util.BinaryTree;
 
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.ArrayUtils;
 
-public class TreeNode extends BinaryTree<long[]>{
-
+public class TreeNode {
     private static final int PADDING_SIZE = 1;
 
-    public long[] encoded;
-    //public TreeNode left;
-    //public TreeNode right;
-    public Operator operator = null;
+    private static final Pattern pattern = Pattern.compile(
+            "\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<children>(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))|\\)*)",
+            Pattern.CASE_INSENSITIVE);
 
-    //private static Pattern pattern = Pattern.compile("\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))", Pattern.CASE_INSENSITIVE);
-    private static Pattern pattern = Pattern.compile("\\(\\((?<value>[+,-]?\\d+(?:,\\s*\\d+)*)\\),(?<children>(?<left>\\s*\\(.+\\)),(?<right>\\s*\\(.+\\))|\\)*)", Pattern.CASE_INSENSITIVE);
-
-    public TreeNode() {
-        this.encoded = OneHotEncoder.encodeNullOperator();
-        this.value = OneHotEncoder.encodeNullOperator();
-    }
-
-    public TreeNode(long[] encoded, TreeNode left, TreeNode right) {
-        this.encoded = encoded;
-        this.value = encoded;
-        this.left = left;
-        this.right = right;
-    }
-
-    public TreeNode(Operator operator, long[] encoded, TreeNode left, TreeNode right) {
-        this.operator = operator;
-        this.encoded = encoded;
-        this.value = encoded;
-        this.left = left;
-        this.right = right;
-    }
-
-    @Override
-    public TreeNode create() {
-        return new TreeNode();
-    }
-
-    @Override
-    public TreeNode getLeft() {
-        return TreeNode.class.cast(left);
-    }
-
-    @Override
-    public TreeNode getRight() {
-        return TreeNode.class.cast(right);
-    }
-
-    @Override
-    public String display() {
-        return Long.toString(this.encoded[0]);
-    }
-
-    public String toStringEncoding() {
-        String encodedString = Arrays.toString(encoded).replace("[", "(").replace("]", ")").replaceAll("\\s+", "");
-
-        if (this.getLeft() == null && this.getRight() == null) {
-            return '(' + encodedString + ",)";
-        }
-
-        /*
-        if (left.isNullOperator() && right.operator == null) {
-            return '(' + encodedString + ",)";
-        }*/
-
-        String leftString = "";
-        String rightString = "";
-
-        if (this.getLeft() != null) {
-            TreeNode castLeft = this.getLeft();
-
-            if (castLeft.isNullOperator()) {
-                leftString = Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "((").replace("]", "),)").replaceAll("\\s+", "");
-            } else {
-                leftString = castLeft.toStringEncoding();
-            }
-        }
-
-        if (this.getRight() != null) {
-            TreeNode castRight = this.getRight();
-
-            if (castRight.isNullOperator()) {
-                rightString = Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "((").replace("]", "),)").replaceAll("\\s+", "");
-            } else {
-                rightString = castRight.toStringEncoding();
-            }
-        }
-
-        /*
-        if (left == null) {
-            leftString = Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "((").replace("]", "),)").replaceAll("\\s+", "");
-        } else {
-            leftString = left.toString();
-        }
-
-        if (right == null) {
-            rightString = Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "((").replace("]", "),)").replaceAll("\\s+", "");
-        } else {
-            rightString = right.toString();
-        }*/
-
-        return "(" + encodedString + "," + leftString + "," + rightString + ")";
-    }
-
-    public static TreeNode fromString(String encoded) {
-        TreeNode result = new TreeNode();
-        Matcher matcher = pattern.matcher(encoded);
+    public static TreeNode fromString(final String encoded) {
+        final TreeNode result = new TreeNode();
+        final Matcher matcher = pattern.matcher(encoded);
         String value = "";
 
         if (!matcher.find()) {
@@ -146,11 +50,10 @@ public class TreeNode extends BinaryTree<long[]>{
         }
 
         value = matcher.group("value");
-        String left = matcher.group("left");
-        String right = matcher.group("right");
-        Long[] encodedLongs = Stream.of(value.split(","))
-            .map(val -> Long.valueOf(val.replaceAll("\\s+","")))
-            .collect(Collectors.toList()).toArray(Long[]::new);
+        final String left = matcher.group("left");
+        final String right = matcher.group("right");
+        final Long[] encodedLongs = Stream.of(value.split(",")).map(val -> Long.valueOf(val.replaceAll("\\s+", "")))
+                .collect(Collectors.toList()).toArray(Long[]::new);
 
         // ignore if no platform choices given
         if (Stream.of(encodedLongs).reduce(0l, Long::sum) == 0) {
@@ -170,9 +73,88 @@ public class TreeNode extends BinaryTree<long[]>{
         return result;
     }
 
-    public TreeNode withIdsFrom(TreeNode node) {
-        this.encoded[0] = node.encoded[0];
+    public static TreeNode create() {
+        return new TreeNode();
+    }
+    public long[] encoded;
 
+    public TreeNode left;
+
+    public TreeNode right;
+
+    public Operator operator;
+
+    public TreeNode() {
+        this.operator = null;
+        this.encoded = OneHotEncoder.encodeNullOperator();
+        this.left = null;
+        this.right = null;
+    }
+
+    public TreeNode(final long[] encoded, final TreeNode left, final TreeNode right) {
+        this.operator = null;
+        this.encoded = encoded;
+        this.left = left;
+        this.right = right;
+    }
+
+    public TreeNode(final Operator operator, final long[] encoded, final TreeNode left, final TreeNode right) {
+        this.operator = operator;
+        this.encoded = encoded;
+        this.left = left;
+        this.right = right;
+    }
+
+    public TreeNode getLeft() {
+        return TreeNode.class.cast(left);
+    }
+
+    public TreeNode getRight() {
+        return TreeNode.class.cast(right);
+    }
+
+    public String display() {
+        return Long.toString(this.encoded[0]);
+    }
+
+    public String toStringEncoding() {
+        final String encodedString = Arrays.toString(encoded).replace("[", "(").replace("]", ")").replaceAll("\\s+",
+                "");
+
+        if (this.getLeft() == null && this.getRight() == null) {
+            return '(' + encodedString + ",)";
+        }
+
+        String leftString = "";
+        String rightString = "";
+
+        if (this.getLeft() != null) {
+            final TreeNode castLeft = this.getLeft();
+
+            if (castLeft.isNullOperator()) {
+                leftString = Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "((").replace("]", "),)")
+                        .replaceAll("\\s+", "");
+            } else {
+                leftString = castLeft.toStringEncoding();
+            }
+        }
+
+        if (this.getRight() != null) {
+            final TreeNode castRight = this.getRight();
+
+            if (castRight.isNullOperator()) {
+                rightString = Arrays.toString(OneHotEncoder.encodeNullOperator()).replace("[", "((").replace("]", "),)")
+                        .replaceAll("\\s+", "");
+            } else {
+                rightString = castRight.toStringEncoding();
+            }
+        }
+
+        return "(" + encodedString + "," + leftString + "," + rightString + ")";
+    }
+
+    public TreeNode withIdsFrom(final TreeNode node) {
+        this.encoded[0] = node.encoded[0];
 
         if (this.getLeft() != null && node.getLeft() != null) {
             this.left = this.getLeft().withIdsFrom(node.getLeft());
@@ -185,7 +167,7 @@ public class TreeNode extends BinaryTree<long[]>{
         return this;
     }
 
-    public TreeNode withPlatformChoicesFrom(TreeNode node) {
+    public TreeNode withPlatformChoicesFrom(final TreeNode node) {
         if (this.isNullOperator()) {
             return this;
         }
@@ -198,14 +180,16 @@ public class TreeNode extends BinaryTree<long[]>{
             assert this.encoded != null;
             return this;
         }
-        HashMap<String, Integer> platformMappings = OneHotMappings.getInstance().getPlatformsMapping();
-        HashMap<String, Integer> operatorMappings = OneHotMappings.getInstance().getOperatorMapping();
-        int operatorsCount = operatorMappings.size();
-        int platformsCount = platformMappings.size();
+        final HashMap<String, Integer> platformMappings = OneHotMappings.getPlatformsMapping();
+        final HashMap<String, Integer> operatorMappings = OneHotMappings.getOperatorMapping();
+        final int operatorsCount = operatorMappings.size();
+        final int platformsCount = platformMappings.size();
 
         if (this.encoded.length > 0) {
             // Check if this already encodes a platform specific operator
-            long[] platformChoices = Arrays.copyOfRange(this.encoded, PADDING_SIZE + operatorsCount, PADDING_SIZE + operatorsCount + platformsCount);
+            final long[] platformChoices = Arrays.copyOfRange(this.encoded, PADDING_SIZE + operatorsCount,
+                    PADDING_SIZE + operatorsCount + platformsCount);
+
             if (ArrayUtils.indexOf(platformChoices, 1) != -1) {
                 System.out.println("Encoding while choices: " + Arrays.toString(platformChoices));
                 return this;
@@ -219,7 +203,7 @@ public class TreeNode extends BinaryTree<long[]>{
 
         assert platformPosition >= 0;
 
-        for (Map.Entry<String, Integer> pair : platformMappings.entrySet()) {
+        for (final Map.Entry<String, Integer> pair : platformMappings.entrySet()) {
             if (pair.getValue() == platformPosition) {
                 platform = pair.getKey();
             }
@@ -228,17 +212,6 @@ public class TreeNode extends BinaryTree<long[]>{
         assert platform != "";
 
         this.encoded[PADDING_SIZE + operatorsCount + platformPosition] = 1;
-
-        /*
-        if (this.getLeft() != null) {
-            assert node.getLeft() != null;
-            this.getLeft() = left.withPlatformChoicesFrom(node.getLeft());
-        }
-
-        if (this.getRight() != null) {
-            assert node.getRight() != null;
-            this.getRight() = right.withPlatformChoicesFrom(node.getRight());
-        }*/
 
         if (this.getLeft() != null && node.getLeft() != null) {
             this.left = this.getLeft().withPlatformChoicesFrom(node.getLeft());
@@ -258,22 +231,11 @@ public class TreeNode extends BinaryTree<long[]>{
 
         // All set to 1, aka null operator
         if (Arrays.stream(this.encoded).sum() == 9) {
-           return;
+            return;
         }
 
-
         final long maxValue = Arrays.stream(this.encoded).max().getAsLong();
-        long[] values = Arrays.stream(this.encoded).map(value -> value == maxValue ? 1 : 0).toArray();
-
-        /*
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] == 1 && disallowed.contains(i)) {
-                this.encoded[i] = 0;
-                this.softmax();
-
-                return;
-            }
-        }*/
+        final long[] values = Arrays.stream(this.encoded).map(value -> value == maxValue ? 1 : 0).toArray();
 
         this.encoded = values;
 
@@ -290,33 +252,70 @@ public class TreeNode extends BinaryTree<long[]>{
         return this.operator == null && Arrays.equals(this.encoded, OneHotEncoder.encodeNullOperator());
     }
 
-    public TreeNode getNode(int index) {
-        List<TreeNode> nodes = new ArrayList<>();
+    /*
+     * Utility function for tree traversal without return value. Can be used for
+     * mutation.
+     *
+     * @param Consumer<BinaryTree<T>> func
+     * 
+     * @return void
+     */
+    public void traverse(final Consumer<TreeNode> func) {
+        func.accept(this);
 
-        //Add null operator
+        if (isLeaf()) {
+            return;
+        }
+
+        if (left != null) {
+            left.traverse(func);
+        }
+
+        if (right != null) {
+            right.traverse(func);
+        }
+    }
+
+    public boolean isLeaf() {
+        return left == null && right == null;
+    }
+
+    public TreeNode getNode(final int index) {
+        final List<TreeNode> nodes = new ArrayList<>();
+
         nodes.add(new TreeNode());
 
-        this.traverse((node) -> {
-            //if (!((TreeNode) node).isNullOperator()) {
-                nodes.add((TreeNode) node);
-            //}
-        });
+        this.traverse(nodes::add);
 
         return nodes.get(index);
     }
 
     public int getNumberOfNodes() {
-        List<TreeNode> nodes = new ArrayList<>();
+        final List<TreeNode> nodes = new ArrayList<>();
 
-        //Add null operator
+        // Add null operator
         nodes.add(new TreeNode());
 
-        this.traverse((node) -> {
-            //if (!((TreeNode) node).isNullOperator()) {
-                nodes.add((TreeNode) node);
-            //}
-        });
+        this.traverse(nodes::add);
 
         return nodes.size();
+    }
+
+    public int size() {
+        int size = 1;
+
+        if (isLeaf()) {
+            return 1;
+        }
+
+        if (left != null) {
+            size += left.size();
+        }
+
+        if (right != null) {
+            size += right.size();
+        }
+
+        return size;
     }
 }

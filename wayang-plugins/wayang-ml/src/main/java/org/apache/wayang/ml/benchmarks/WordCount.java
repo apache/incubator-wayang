@@ -37,7 +37,7 @@ import org.apache.wayang.spark.platform.SparkPlatform;
 import org.apache.wayang.ml.MLContext;
 import org.apache.wayang.ml.costs.MLCost;
 import org.apache.wayang.ml.costs.PairwiseCost;
-import org.apache.wayang.ml.costs.PointwiseCost;
+import org.apache.wayang.ml.costs.DefaultPointwiseCost;
 import org.apache.logging.log4j.Level;
 import org.apache.wayang.apps.util.Parameters;
 import org.apache.wayang.core.plugin.Plugin;
@@ -62,10 +62,10 @@ public class WordCount {
      *
      * @param inputFileUrl the file whose words should be counted
      */
-    public static WayangPlan createWayangPlan(String inputFileUrl, Collection<Tuple2<String, Integer>> collector) throws URISyntaxException, IOException {
+    public static WayangPlan createWayangPlan(final String inputFileUrl, final Collection<Tuple2<String, Integer>> collector) throws URISyntaxException, IOException {
         // Assignment mode: none.
 
-        TextFileSource textFileSource = new TextFileSource(inputFileUrl);
+        final TextFileSource textFileSource = new TextFileSource(inputFileUrl);
         textFileSource.setName("Load file");
 
         // for each line (input) output an iterator of the words
@@ -153,7 +153,7 @@ public class WordCount {
             );
 
             //config.setCostModel(new PairwiseCost());
-            config.setCostModel(new PointwiseCost());
+            config.setCostModel(new DefaultPointwiseCost());
             final MLContext wayangContext = new MLContext(config);
             //wayangContext.setLogLevel(Level.DEBUG);
 
