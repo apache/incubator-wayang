@@ -34,17 +34,10 @@ public class OrtTensorEncoder {
     }
 
     public static Tuple<ArrayList<long[][]>, ArrayList<long[][]>> encode(final TreeNode node) {
-        // matrix transpose test
-        final OrtTensorEncoder testo = new OrtTensorEncoder();
-
         assert node != null : "Node is null and can't be encoded";
-
-        // testo.treeConvIndexes(node);
-        // testo.preorderIndexes(node,1);
-
         final ArrayList<TreeNode> testArr = new ArrayList<>();
         testArr.add(node);
-        final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> t = testo.prepareTrees(testArr);
+        final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> t = OrtTensorEncoder.prepareTrees(testArr);
 
         return t;
     }
@@ -55,19 +48,20 @@ public class OrtTensorEncoder {
      * @param trees
      * @return returns a tuple of (flatTrees, indexes)
      */
-    public Tuple<ArrayList<long[][]>, ArrayList<long[][]>> prepareTrees(final ArrayList<TreeNode> trees) {
+    public static Tuple<ArrayList<long[][]>, ArrayList<long[][]>> prepareTrees(final ArrayList<TreeNode> trees) {
         ArrayList<long[][]> flatTrees = new ArrayList<>();
 
         for (final TreeNode tree : trees) {
-            flatTrees.add(this.flatten(tree));
+            flatTrees.add(OrtTensorEncoder.flatten(tree));
         }
 
         flatTrees = padAndCombine(flatTrees);
 
         flatTrees = transpose(flatTrees);
 
-        ArrayList<long[][]> indexes = trees.stream().map(this::treeConvIndexes)
-                .collect(Collectors.toCollection(ArrayList::new)); // weird structure
+        ArrayList<long[][]> indexes = trees.stream().map(OrtTensorEncoder::treeConvIndexes)
+                .collect(Collectors.toCollection(ArrayList::new));
+
         indexes = padAndCombine(indexes);
 
         return new Tuple<>(flatTrees, indexes);
@@ -81,7 +75,7 @@ public class OrtTensorEncoder {
      * @param root
      * @return
      */
-    public long[][] treeConvIndexes(final TreeNode root) {
+    public static long[][] treeConvIndexes(final TreeNode root) {
         final TreeNode indexTree = preorderIndexes(root, 1);
 
         final ArrayList<long[]> acc = new ArrayList<>(); // in place of a generator
@@ -92,7 +86,7 @@ public class OrtTensorEncoder {
         return Arrays.stream(flatAcc).mapToObj(v -> new long[] { v }).toArray(long[][]::new);
     }
 
-    public void treeConvIndexesStep(final TreeNode root, final ArrayList<long[]> acc) {
+    public static void treeConvIndexesStep(final TreeNode root, final ArrayList<long[]> acc) {
         if (root == null) {
             return;
         }
@@ -118,7 +112,7 @@ public class OrtTensorEncoder {
      * @return
      * @param idx needs to default to one.
      */
-    public TreeNode preorderIndexes(final TreeNode root, final long idx) {
+    public static TreeNode preorderIndexes(final TreeNode root, final long idx) {
         if (root == null) {
             return null;
         }
@@ -147,7 +141,7 @@ public class OrtTensorEncoder {
         return new TreeNode(new long[] { idx }, leftSubTree, rightSubTree);
     }
 
-    public long rightMost(final TreeNode root) {
+    public static long rightMost(final TreeNode root) {
         if (root == null)
             return 0;
 
@@ -174,7 +168,7 @@ public class OrtTensorEncoder {
      * @param flatTrees
      * @return
      */
-    public ArrayList<long[][]> padAndCombine(final List<long[][]> flatTrees) {
+    public static ArrayList<long[][]> padAndCombine(final List<long[][]> flatTrees) {
         assert flatTrees.size() >= 1;
 
         final ArrayList<long[][]> vecs = new ArrayList<>();
@@ -183,8 +177,8 @@ public class OrtTensorEncoder {
             return vecs;
         }
 
-        final int secondDim = flatTrees.get(0)[0].length; 
-        final int maxFirstDim = flatTrees.stream().map(a -> a.length).max(Integer::compare).get(); 
+        final int secondDim = flatTrees.get(0)[0].length;
+        final int maxFirstDim = flatTrees.stream().map(a -> a.length).max(Integer::compare).get();
 
         for (final long[][] tree : flatTrees) {
             final long[][] padding = new long[maxFirstDim][secondDim];
@@ -203,7 +197,7 @@ public class OrtTensorEncoder {
      * @param root
      * @return
      */
-    public long[][] flatten(final TreeNode root) {
+    public static long[][] flatten(final TreeNode root) {
         if (root == null) {
             return new long[0][0];
         }
@@ -213,21 +207,16 @@ public class OrtTensorEncoder {
 
         acc.add(0, new long[acc.get(0).length]);
 
-        return acc.toArray(long[][]::new); 
+        return acc.toArray(long[][]::new);
     }
 
-    public void flattenStep(final TreeNode v, final ArrayList<long[]> acc) {
+    public static void flattenStep(final TreeNode v, final ArrayList<long[]> acc) {
         if (v == null) {
             return;
         }
 
-        long[] values;
+        long[] values = v.isNullOperator() ? OneHotEncoder.encodeNullOperator() : Arrays.copyOf(v.encoded, v.encoded.length);
 
-        if (v.isNullOperator()) {
-            values = OneHotEncoder.encodeNullOperator();
-        } else {
-            values = Arrays.copyOf(v.encoded, v.encoded.length);
-        }
         values[0] = 0;
         acc.add(values);
 

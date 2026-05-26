@@ -26,7 +26,8 @@ import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
 import org.junit.BeforeClass;
-import org.apache.wayang.ml.costs.MLCost;
+import org.apache.wayang.ml.costs.DefaultPointwiseCost;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +43,7 @@ public class JavaExecutionTestBase {
     @BeforeClass
     public static void init() {
         configuration = new Configuration();
-        configuration.setCostModel(new MLCost());
+        configuration.setCostModel(new DefaultPointwiseCost());
         job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
         DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);

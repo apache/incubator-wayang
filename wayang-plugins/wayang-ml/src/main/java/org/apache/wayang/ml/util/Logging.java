@@ -22,19 +22,19 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 
 public class Logging {
-    public static void writeToFile(String content, String path) {
+    public static void writeToFile(final String content, final String path) {
         try {
-            FileWriter fw = new FileWriter(
+            final FileWriter fw = new FileWriter(
                 path,
                 true
             );
-            BufferedWriter writer = new BufferedWriter(fw);
+            final BufferedWriter writer = new BufferedWriter(fw);
 
             writer.write(content);
             writer.newLine();
             writer.flush();
             writer.close();
-        } catch(Exception e) {
+        } catch(final Exception e) {
             e.printStackTrace();
         }
     }

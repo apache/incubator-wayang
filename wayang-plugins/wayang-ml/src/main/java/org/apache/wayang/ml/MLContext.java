@@ -18,50 +18,33 @@
 
 package org.apache.wayang.ml;
 
-import org.apache.wayang.core.api.WayangContext;
-import org.apache.wayang.core.api.exception.WayangException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+
 import org.apache.logging.log4j.Level;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
-import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
-import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
-import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.util.ReflectionUtils;
-import org.apache.wayang.ml.costs.PairwiseCost;
-import org.apache.wayang.ml.encoding.OneHotMappings;
-import org.apache.wayang.ml.encoding.OrtTensorEncoder;
+import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.ml.encoding.OrtMLModel;
 import org.apache.wayang.ml.encoding.TreeEncoder;
 import org.apache.wayang.ml.encoding.TreeNode;
-import org.apache.wayang.ml.util.EnumerationStrategy;
 import org.apache.wayang.ml.util.Logging;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.logging.log4j.Level;
-
-import java.io.IOException;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.time.Instant;
-import java.time.Duration;
-
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.Collection;
 
 /**
  * This is the entry point for users to work with Wayang ML.
  */
 public class MLContext extends WayangContext {
-
-    private OrtMLModel model;
-
-    private EnumerationStrategy enumerationStrategy = EnumerationStrategy.NONE;
-
     public MLContext() {
         super();
     }
 
-    public MLContext(Configuration configuration) {
+    public MLContext(final Configuration configuration) {
         super(configuration);
     }
 
@@ -69,123 +52,89 @@ public class MLContext extends WayangContext {
      * Execute a plan.
      *
      * @param wayangPlan the plan to execute
-     * @param udfJars   JARs that declare the code for the UDFs
+     * @param udfJars    JARs that declare the code for the UDFs
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
     @Override
-    public void execute(WayangPlan wayangPlan, String... udfJars) {
+    public void execute(final WayangPlan wayangPlan, final String... udfJars) {
         this.setLogLevel(Level.ERROR);
-        Job wayangJob = this.createJob("", wayangPlan, udfJars);
-        OneHotMappings.setOptimizationContext(wayangJob.getOptimizationContext());
+        final Job wayangJob = this.createJob("", wayangPlan, udfJars);
 
-        Configuration config = this.getConfiguration();
-        Configuration jobConfig = wayangJob.getConfiguration();
+        final Configuration config = this.getConfiguration();
+        final Configuration jobConfig = wayangJob.getConfiguration();
 
         wayangJob.execute();
 
         if (config.getBooleanProperty("wayang.ml.experience.enabled")) {
-            String original;
+            final Optional<String> originalOption = config.getOptionalStringProperty("wayang.ml.experience.original");
+            final String original = originalOption.orElse(TreeEncoder.encode(wayangPlan, wayangJob.getOptimizationContext(), false).toString());
 
-            Optional<String> originalOption = config.getOptionalStringProperty("wayang.ml.experience.original");
-            if (originalOption.isPresent()) {
-                original = originalOption.get();
-            } else {
-                original = TreeEncoder.encode(wayangPlan).toString();
-            }
+            final Optional<String> choicesOption = config
+                    .getOptionalStringProperty("wayang.ml.experience.with-platforms");
+            final String withChoices = choicesOption
+                    .orElse(jobConfig.getStringProperty("wayang.ml.experience.with-platforms"));
 
-            String withChoices;
-
-            Optional<String> choicesOption = config.getOptionalStringProperty("wayang.ml.experience.with-platforms");
-            if (choicesOption.isPresent()) {
-                withChoices = choicesOption.get();
-            } else {
-                withChoices = jobConfig.getStringProperty("wayang.ml.experience.with-platforms");
-            }
-
-            long execTime = jobConfig.getLongProperty("wayang.ml.experience.exec-time");
+            final long execTime = jobConfig.getLongProperty("wayang.ml.experience.exec-time");
 
             this.logExperience(original, withChoices, execTime);
         }
     }
 
-    public void executeVAE(WayangPlan wayangPlan, String ...udfJars) {
+    public void executeVAE(final WayangPlan wayangPlan, final String... udfJars) {
         this.setLogLevel(Level.ERROR);
         try {
-            Job job = this.createJob("", wayangPlan, udfJars);
-            Configuration jobConfig = job.getConfiguration();
-            //job.prepareWayangPlan();
-            job.estimateKeyFigures();
-            OneHotMappings.setOptimizationContext(job.getOptimizationContext());
-            OneHotMappings.encodeIds = true;
+            final Job job = this.createJob("", wayangPlan, udfJars);
 
             // Log Encoding time
-            Instant start = Instant.now();
-            TreeNode wayangNode = TreeEncoder.encode(wayangPlan);
+            final Instant start = Instant.now();
+            final TreeNode wayangNode = TreeEncoder.encode(wayangPlan, job.getOptimizationContext(), false);
+            final Instant end = Instant.now();
+            final long execTime = Duration.between(start, end).toMillis();
+            Logging.writeToFile(String.format("Encoding: %d", execTime),
+                    this.getConfiguration().getStringProperty("wayang.ml.optimizations.file"));
+            final OrtMLModel model = OrtMLModel.getInstance(job.getConfiguration());
 
-            Instant end = Instant.now();
-            long execTime = Duration.between(start, end).toMillis();
-            Logging.writeToFile(
-                String.format("Encoding: %d", execTime),
-                this.getConfiguration().getStringProperty("wayang.ml.optimizations.file")
-            );
-            OrtMLModel model = OrtMLModel.getInstance(job.getConfiguration());
             // Log inference time
-            start = Instant.now();
-            Tuple<WayangPlan, TreeNode> resultTuple = model.runVAE(wayangPlan, wayangNode);
-            end = Instant.now();
-            execTime = Duration.between(start, end).toMillis();
+            final Instant inferenceStart = Instant.now();
+            final Tuple<WayangPlan, TreeNode> resultTuple = model.runVAE(wayangPlan, wayangNode);
+            final Instant inferenceEnd = Instant.now();
+            final long inferenceTime = Duration.between(inferenceStart, inferenceEnd).toMillis();
+            Logging.writeToFile(String.format("Inference: %d", inferenceTime),
+                    this.getConfiguration().getStringProperty("wayang.ml.optimizations.file"));
 
-            WayangPlan platformPlan = resultTuple.field0;
+            final WayangPlan platformPlan = resultTuple.field0;
 
-            this.getConfiguration().setProperty(
-                "wayang.ml.experience.original",
-                wayangNode.toStringEncoding()
-            );
-
-            this.getConfiguration().setProperty(
-                "wayang.ml.experience.with-platforms",
-                resultTuple.field1.toString()
-            );
+            this.getConfiguration().setProperty("wayang.ml.experience.original", wayangNode.toStringEncoding());
+            this.getConfiguration().setProperty("wayang.ml.experience.with-platforms", resultTuple.field1.toString());
 
             this.execute(platformPlan, udfJars);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
             throw new WayangException("Executing WayangPlan with VAE model failed");
         }
     }
 
-    public ExecutionPlan buildWithVAE(WayangPlan wayangPlan, String ...udfJars) {
+    public ExecutionPlan buildWithVAE(final WayangPlan wayangPlan, final String... udfJars) {
         try {
-            Job job = this.createJob("", wayangPlan, udfJars);
-            job.estimateKeyFigures();
-            OneHotMappings.setOptimizationContext(job.getOptimizationContext());
-            OneHotMappings.encodeIds = true;
-
-            TreeNode wayangNode = TreeEncoder.encode(wayangPlan);
-            OrtMLModel model = OrtMLModel.getInstance(job.getConfiguration());
-            Tuple<WayangPlan, TreeNode> resultTuple = model.runVAE(wayangPlan, wayangNode);
-            WayangPlan platformPlan = resultTuple.field0;
+            final Job job = this.createJob("", wayangPlan, udfJars);
+            final TreeNode wayangNode = TreeEncoder.encode(wayangPlan, job.getOptimizationContext(), false);
+            final OrtMLModel model = OrtMLModel.getInstance(job.getConfiguration());
+            final Tuple<WayangPlan, TreeNode> resultTuple = model.runVAE(wayangPlan, wayangNode);
+            final WayangPlan platformPlan = resultTuple.field0;
 
             return this.buildInitialExecutionPlan("", platformPlan, udfJars);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
             throw new WayangException("Executing WayangPlan with VAE model failed");
         }
     }
 
-    public void setModel(OrtMLModel model) {
-        this.model = model;
-    }
-
-    private void logExperience(String original, String withChoices, long execTime) {
+    private void logExperience(final String original, final String withChoices, final long execTime) {
         if (!this.getConfiguration().getBooleanProperty("wayang.ml.experience.enabled")) {
             return;
         }
 
-        String content = String.format("%s:%s:%d", original, withChoices, execTime);
-        Logging.writeToFile(
-            content,
-            this.getConfiguration().getStringProperty("wayang.ml.experience.file")
-        );
+        final String content = String.format("%s:%s:%d", original, withChoices, execTime);
+        Logging.writeToFile(content, this.getConfiguration().getStringProperty("wayang.ml.experience.file"));
     }
 }

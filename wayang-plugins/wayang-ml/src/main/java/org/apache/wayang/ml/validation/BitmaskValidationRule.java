@@ -18,32 +18,28 @@
 
 package org.apache.wayang.ml.validation;
 
-import org.apache.wayang.core.util.Tuple;
+import java.util.Set;
+
 import org.apache.wayang.ml.encoding.TreeNode;
 
-import com.google.common.primitives.Longs;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
 /**
- * ValidationRule to forbid certain platforms
- * when input has not been on Postgres before
+ * ValidationRule to forbid certain platforms when input has not been on
+ * Postgres before
  */
-public class BitmaskValidationRule extends ValidationRule {
+public class BitmaskValidationRule implements ValidationRule {
     /*
      * Index of disallowed platform choices
      */
-    private Set<Integer> disallowed = Set.of(0, 1);
+    private final Set<Integer> disallowed = Set.of(0, 1);
 
-    public BitmaskValidationRule() {}
+    public BitmaskValidationRule() {
+    }
 
-    public void validate(Float[][] choices, long[][][] indexes, TreeNode tree) {
-        //Start at 1, 0th platform choice is for null operators
-        for(int i = 1; i < choices.length; i++) {
-            for (Integer disallowedId : disallowed) {
-                    choices[i][disallowedId] = -Float.MAX_VALUE;
+    public void validate(final Float[][] choices, final long[][][] indexes, final TreeNode tree) {
+        // Start at 1, 0th platform choice is for null operators
+        for (int i = 1; i < choices.length; i++) {
+            for (final Integer disallowedId : disallowed) {
+                choices[i][disallowedId] = -Float.MAX_VALUE;
             }
         }
     }

@@ -12,6 +12,8 @@ import org.apache.wayang.ml.util.Operators;
 import org.apache.wayang.ml.util.Platforms;
 
 public class OneHotMappings {
+    protected OneHotMappings(){}
+
     private static final int PADDING_SIZE = 1;
     private static final HashMap<String, Integer> operatorMapping = createOperatorMapping();
     private static final HashMap<String, Integer> platformsMapping = createPlatformMapping();
@@ -25,7 +27,7 @@ public class OneHotMappings {
         return originalOperators;
     }
 
-    public static Optional<Platform> getOperatorPlatformFromEncoding(final long[] encoded) {
+        public static Optional<Platform> getOperatorPlatformFromEncoding(final long[] encoded) {
         final int platformsCount = platformsMapping.size();
         final int operatorsCount = operatorMapping.size();
 
@@ -73,6 +75,7 @@ public class OneHotMappings {
 
     private static HashMap<String, Integer> createOperatorMapping() {
         final HashMap<String, Integer> mappings = new HashMap<>();
+ 
         Operators.getOperators().stream()
                 .filter(operator -> operator.getName().contains("org.apache.wayang.basic.operators")
                         || operator.getName().contains("org.apache.wayang.core.plan.wayangplan"))

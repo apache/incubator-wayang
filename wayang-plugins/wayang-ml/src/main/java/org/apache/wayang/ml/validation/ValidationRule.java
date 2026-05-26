@@ -23,10 +23,6 @@ import org.apache.wayang.ml.encoding.TreeNode;
 /**
  * Class used for specifying validation rules on given platform choices
  */
-public abstract class ValidationRule {
-    public void validate(
-        Float[][] choices,
-        long[][][] indexes,
-        TreeNode tree
-    ) {}
+public interface ValidationRule {
+    public void validate(final Float[][] choices, final long[][][] indexes, final TreeNode tree);
 }

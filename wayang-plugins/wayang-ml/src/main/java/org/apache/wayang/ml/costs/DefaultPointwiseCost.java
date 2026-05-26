@@ -19,8 +19,16 @@
 package org.apache.wayang.ml.costs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
@@ -37,12 +45,15 @@ import org.apache.wayang.ml.encoding.OrtTensorEncoder;
 import org.apache.wayang.ml.encoding.TreeEncoder;
 import org.apache.wayang.ml.encoding.TreeNode;
 
+import ai.onnxruntime.OrtException;
 
 /**
- * Default {@link EstimatableCost} for pointwise/cost-based ML models.
- * <br> Takes config {@code wayang.ml.experience.enabled}
+ * Default {@link EstimatableCost} for pointwise/cost-based ML models. <br>
+ * Takes config {@code wayang.ml.experience.enabled}
  */
 public class DefaultPointwiseCost extends DefaultEstimatableCost {
+    private static final Logger logger = LogManager.getLogger(DefaultPointwiseCost.class);
+
     public static class Factory implements EstimatableCostFactory {
         @Override
         public EstimatableCost makeCost() {
@@ -52,29 +63,15 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
 
     @Override
     public PlanImplementation pickBestExecutionPlan(final Collection<PlanImplementation> executionPlans,
-            final ExecutionPlan existingPlan, final Set<Channel> openChannels, final Set<ExecutionStage> executedStages) {
+            final ExecutionPlan existingPlan, final Set<Channel> openChannels,
+            final Set<ExecutionStage> executedStages) {
 
-        final PlanImplementation bestPlanImplementation = executionPlans.stream().reduce((p1, p2) -> {
-            try {
-                final Configuration config = p1.getOptimizationContext().getConfiguration();
+        final Map<PlanImplementation, Double> planCostMapping = executionPlans.stream()
+                .collect(Collectors.toMap(Function.identity(), DefaultPointwiseCost::getCost));
 
-                final OrtMLModel model = OrtMLModel.getInstance(config);
-
-                final TreeNode encodedOne = TreeEncoder.encode(p1);
-                final TreeNode encodedTwo = TreeEncoder.encode(p2);
-
-                final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple1 = OrtTensorEncoder.encode(encodedOne);
-                final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple2 = OrtTensorEncoder.encode(encodedTwo);
-
-                final double leftCost = Math.exp(model.runModel(tuple1)) - 1;
-                final double rightCost = Math.exp(model.runModel(tuple2)) - 1;
-
-                return leftCost < rightCost ? p1 : p2;
-            } catch (final Exception e) {
-                e.printStackTrace();
-                return p1;
-            }
-        }).orElseThrow(() -> new WayangException("Could not find an execution plan."));
+        final PlanImplementation bestPlanImplementation = executionPlans.stream()
+                .min(Comparator.comparingDouble(planCostMapping::get))
+                .orElseThrow(() -> new WayangException("Could not find an execution plan."));
 
         final Configuration config = bestPlanImplementation.getOptimizationContext().getConfiguration();
 
@@ -84,5 +81,27 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
         }
 
         return bestPlanImplementation;
+    }
+
+    /**
+     * Estimates the runtime cost for a given plan.
+     * 
+     * @param plan
+     * @return
+     */
+    public static Double getCost(final PlanImplementation plan) {
+        try {
+            final Configuration config = plan.getOptimizationContext().getConfiguration();
+            final OrtMLModel model = OrtMLModel.getInstance(config);
+            final TreeNode encodedOne = TreeEncoder.encode(plan);
+            final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple1 = OrtTensorEncoder.encode(encodedOne);
+            System.out.println("tup1: " + Arrays.deepToString(tuple1.field0.get(0)) +  Arrays.deepToString(tuple1.field1.get(0)));
+            final double cost = Math.exp(model.runModel(tuple1)) - 1;
+
+            return cost;
+        } catch (final OrtException e) {
+            logger.warn("Failed to estimate ML cost for plan {" + plan + "}. Falling back to MAX_VALUE.", e);
+            return Double.MAX_VALUE;
+        }
     }
 }

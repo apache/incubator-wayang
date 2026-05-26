@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
 import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
@@ -41,18 +42,20 @@ import org.apache.wayang.core.plan.wayangplan.OutputSlot;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.platform.Junction;
 
-public class TreeEncoder implements Encoder {
+public class TreeEncoder {
     public static TreeNode encode(final PlanImplementation plan) {
         final List<TreeNode> result = new ArrayList<TreeNode>();
 
         final HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
-        final List<ExecutionOperator> sinks = plan.getOperators().stream().filter(Operator::isSink)
-                .toList();
+        final List<ExecutionOperator> sinks = plan.getOperators().stream().filter(Operator::isSink).toList();
 
         final Map<OutputSlot<?>, Junction> junctions = plan.getJunctions();
 
+        // TODO: convert to config
+        final boolean encodeIds = false;
+
         for (final Operator sink : sinks) {
-            final TreeNode sinkNode = traversePIOperator(sink, junctions, tree);
+            final TreeNode sinkNode = traversePIOperator(sink, plan.getOptimizationContext(), encodeIds, junctions, tree);
             result.add(sinkNode);
         }
 
@@ -61,12 +64,12 @@ public class TreeEncoder implements Encoder {
         }
 
         final TreeNode resultNode = result.get(0);
-        // resultNode.rebalance();
+        resultNode.rebalance();
 
         return resultNode;
     }
 
-    public static TreeNode encode(final WayangPlan plan) {
+    public static TreeNode encode(final WayangPlan plan, final OptimizationContext optimizationContext, final boolean encodeIds) {
         final List<TreeNode> result = new ArrayList<TreeNode>();
         plan.prune();
 
@@ -74,32 +77,35 @@ public class TreeEncoder implements Encoder {
         final Collection<Operator> sinks = plan.getSinks();
 
         for (final Operator sink : sinks) {
-            final TreeNode sinkNode = traverse(sink, tree);
+            final TreeNode sinkNode = traverse(sink, tree, optimizationContext, encodeIds);
             result.add(sinkNode);
         }
 
         if (result.size() == 0) {
             return null;
         }
+
+        System.out.println("result size: " + result.size());
+        assert result.size() == 1 : "result size was not 1";    
 
         final TreeNode resultNode = result.get(0);
 
         // rebalance to make it a guaranteed binary tree
-        // resultNode.rebalance();
+        resultNode.rebalance();
 
         return resultNode;
     }
 
-    public static TreeNode encode(final ExecutionPlan plan, final boolean ignoreConversions) {
+    public static TreeNode encode(final ExecutionPlan plan, final boolean ignoreConversions,
+            final OptimizationContext optimizationContext, final boolean encodeIds) {
         final List<TreeNode> result = new ArrayList<TreeNode>();
         final HashMap<Operator, Collection<ExecutionTask>> tree = new HashMap<>();
         final Set<ExecutionTask> tasks = plan.collectAllTasks();
 
-        final Collection<ExecutionTask> sinks = tasks.stream().filter(task -> task.getOperator().isSink())
-                .toList();
+        final Collection<ExecutionTask> sinks = tasks.stream().filter(task -> task.getOperator().isSink()).toList();
 
         for (final ExecutionTask sink : sinks) {
-            final TreeNode sinkNode = traverse(sink, tree, ignoreConversions);
+            final TreeNode sinkNode = traverse(sink, tree, ignoreConversions, optimizationContext, encodeIds);
             result.add(sinkNode);
         }
 
@@ -109,12 +115,13 @@ public class TreeEncoder implements Encoder {
 
         final TreeNode resultNode = result.get(0);
 
-        // resultNode.rebalance();
+        resultNode.rebalance();
 
         return resultNode;
     }
 
-    private static TreeNode traversePIOperator(final Operator current, final Map<OutputSlot<?>, Junction> junctions,
+    private static TreeNode traversePIOperator(final Operator current, final OptimizationContext optimizationContext,
+            final boolean encodeIds, final Map<OutputSlot<?>, Junction> junctions,
             final HashMap<Operator, Collection<Operator>> visited) {
         if (visited.containsKey(current)) {
             return null;
@@ -128,14 +135,15 @@ public class TreeEncoder implements Encoder {
                     .orElseThrow(() -> new WayangException("Operator could not be retrieved from Alternatives"));
             OneHotMappings.addOriginalOperator(original);
 
-            currentNode.encoded = OneHotEncoder.encodeOperator(original);
+            currentNode.encoded = OneHotEncoder.encodeOperator(original, optimizationContext, encodeIds);
         } else {
             OneHotMappings.addOriginalOperator(current);
 
             if (current.isExecutionOperator()) {
-                currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current);
+                currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current, optimizationContext,
+                        encodeIds);
             } else {
-                currentNode.encoded = OneHotEncoder.encodeOperator(current);
+                currentNode.encoded = OneHotEncoder.encodeOperator(current, optimizationContext, encodeIds);
             }
         }
 
@@ -149,8 +157,8 @@ public class TreeEncoder implements Encoder {
             return false;
         }).toList();
 
-        final Collection<ExecutionOperator> inputs = currentJunctions.stream()
-                .map(Junction::getSourceOperator).toList();
+        final Collection<ExecutionOperator> inputs = currentJunctions.stream().map(Junction::getSourceOperator)
+                .toList();
 
         for (final Operator input : inputs) {
             TreeNode next;
@@ -163,9 +171,9 @@ public class TreeEncoder implements Encoder {
                 final Queue<ExecutionTask> conversionQueue = new LinkedList<>();
                 conversionQueue.addAll(conversions);
 
-                next = traverseWithNext(conversionQueue, junctions, visited, input);
+                next = traverseWithNext(conversionQueue, junctions, visited, input, optimizationContext, encodeIds);
             } else {
-                next = traversePIOperator(input, junctions, visited);
+                next = traversePIOperator(input, optimizationContext, encodeIds, junctions, visited);
             }
 
             if (currentNode.left == null) {
@@ -180,13 +188,13 @@ public class TreeEncoder implements Encoder {
 
     private static TreeNode traverseWithNext(final Queue<ExecutionTask> conversions,
             final Map<OutputSlot<?>, Junction> junctions, final HashMap<Operator, Collection<Operator>> visited,
-            final Operator next) {
+            final Operator next, final OptimizationContext optimizationContext, final boolean encodeIds) {
         if (visited.containsKey(next)) {
             return null;
         }
 
         if (conversions.isEmpty()) {
-            return traversePIOperator(next, junctions, visited);
+            return traversePIOperator(next, optimizationContext, encodeIds, junctions, visited);
         }
 
         final ExecutionTask currentTask = conversions.poll();
@@ -199,20 +207,22 @@ public class TreeEncoder implements Encoder {
                     .orElseThrow(() -> new WayangException("Operator could not be retrieved from Alternatives"));
             OneHotMappings.addOriginalOperator(original);
 
-            currentNode.encoded = OneHotEncoder.encodeOperator(original);
+            currentNode.encoded = OneHotEncoder.encodeOperator(original, optimizationContext, encodeIds);
             currentNode.operator = original;
         } else {
             OneHotMappings.addOriginalOperator(current);
             currentNode.operator = current;
 
             if (current.isExecutionOperator()) {
-                currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current);
+                currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current, optimizationContext,
+                        encodeIds);
             } else {
-                currentNode.encoded = OneHotEncoder.encodeOperator(current);
+                currentNode.encoded = OneHotEncoder.encodeOperator(current, optimizationContext, encodeIds);
             }
         }
 
-        final TreeNode nextNode = traverseWithNext(conversions, junctions, visited, next);
+        final TreeNode nextNode = traverseWithNext(conversions, junctions, visited, next, optimizationContext,
+                encodeIds);
 
         if (currentNode.left == null) {
             currentNode.left = nextNode;
@@ -223,7 +233,8 @@ public class TreeEncoder implements Encoder {
         return currentNode;
     }
 
-    private static TreeNode traverse(final Operator current, final HashMap<Operator, Collection<Operator>> visited) {
+    private static TreeNode traverse(final Operator current, final HashMap<Operator, Collection<Operator>> visited,
+            final OptimizationContext optimizationContext, final boolean encodeIds) {
         if (visited.containsKey(current)) {
             return null;
         }
@@ -236,16 +247,17 @@ public class TreeEncoder implements Encoder {
                     .orElseThrow(() -> new WayangException("Operator could not be retrieved from Alternatives"));
             OneHotMappings.addOriginalOperator(original);
 
-            currentNode.encoded = OneHotEncoder.encodeOperator(original);
+            currentNode.encoded = OneHotEncoder.encodeOperator(original, optimizationContext, encodeIds);
             currentNode.operator = original;
         } else {
             OneHotMappings.addOriginalOperator(current);
             currentNode.operator = current;
 
             if (current.isExecutionOperator()) {
-                currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current);
+                currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current, optimizationContext,
+                        encodeIds);
             } else {
-                currentNode.encoded = OneHotEncoder.encodeOperator(current);
+                currentNode.encoded = OneHotEncoder.encodeOperator(current, optimizationContext, encodeIds);
             }
         }
 
@@ -254,7 +266,7 @@ public class TreeEncoder implements Encoder {
                 .map(input -> input.getOccupant().getOwner()).toList();
 
         for (final Operator input : inputs) {
-            final TreeNode next = traverse(input, visited);
+            final TreeNode next = traverse(input, visited, optimizationContext, encodeIds);
 
             if (currentNode.getLeft() == null) {
                 currentNode.left = next;
@@ -267,8 +279,8 @@ public class TreeEncoder implements Encoder {
     }
 
     private static TreeNode traverse(final ExecutionTask current,
-            final HashMap<Operator, Collection<ExecutionTask>> visited, final boolean ignoreConversions) {
-        System.out.println("running something uncertain");
+            final HashMap<Operator, Collection<ExecutionTask>> visited, final boolean ignoreConversions,
+            final OptimizationContext optimizationContext, final boolean encodeIds) {
         if (visited.containsKey(current.getOperator())) {
             return null;
         }
@@ -278,11 +290,11 @@ public class TreeEncoder implements Encoder {
 
         final ExecutionOperator operator = current.getOperator();
         final TreeNode currentNode = new TreeNode();
-        currentNode.encoded = OneHotEncoder.encodeOperator(operator);
+        currentNode.encoded = OneHotEncoder.encodeOperator(operator, optimizationContext, encodeIds);
         currentNode.operator = operator;
 
         for (final ExecutionTask producer : producers) {
-            final TreeNode next = traverse(producer, visited, ignoreConversions);
+            final TreeNode next = traverse(producer, visited, ignoreConversions, optimizationContext, encodeIds);
 
             if (operator.isConversion() && ignoreConversions) {
                 return next;

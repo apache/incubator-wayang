@@ -18,40 +18,34 @@
 
 package org.apache.wayang.ml.validation;
 
-import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.ml.encoding.TreeNode;
 import org.apache.wayang.basic.operators.TextFileSource;
+import org.apache.wayang.ml.encoding.TreeNode;
 import org.apache.wayang.postgres.operators.PostgresTableSource;
 
-import com.google.common.primitives.Longs;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
 /**
- * ValidationRule to forbid certain platforms
- * when an operator doesn't exist for that platform
+ * ValidationRule to forbid certain platforms when an operator doesn't exist for
+ * that platform
  */
-public class OperatorValidationRule extends ValidationRule {
+public class OperatorValidationRule implements ValidationRule {
 
-    private int postgresIndex = 3;
+    private final int postgresIndex = 3;
 
-    public OperatorValidationRule() {}
+    public OperatorValidationRule() {
+    }
 
-    public void validate(Float[][] choices, long[][][] indexes, TreeNode tree) {
-        //Start at 1, 0th platform choice is for null operators
-        for(int i = 1; i < tree.getNumberOfNodes(); i++) {
-            TreeNode node = (TreeNode) tree.getNode(i);
+    public void validate(final Float[][] choices, final long[][][] indexes, final TreeNode tree) {
+        // Start at 1, 0th platform choice is for null operators
+        for (int i = 1; i < tree.getNumberOfNodes(); i++) {
+            final TreeNode node = (TreeNode) tree.getNode(i);
 
             if (node != null && !node.isNullOperator()) {
 
-                //Prevent TextFileSources from being in postgres
+                // Prevent TextFileSources from being in postgres
                 if (node.operator instanceof TextFileSource) {
                     choices[i][postgresIndex] = -Float.MAX_VALUE;
                 }
 
-                //Prevent TextFileSources from being outside of postgres
+                // Prevent TextFileSources from being outside of postgres
                 if (node.operator instanceof PostgresTableSource) {
                     choices[i][postgresIndex] = Float.MAX_VALUE;
                 }

@@ -24,18 +24,17 @@ import org.apache.wayang.sqlite3.platform.Sqlite3Platform;
 import org.apache.wayang.giraph.platform.GiraphPlatform;
 import org.apache.wayang.genericjdbc.platform.GenericJdbcPlatform;
 import org.apache.wayang.tensorflow.platform.TensorflowPlatform;
-
-import org.reflections.*;
+import org.reflections.Reflections;
 
 import java.util.Set;
 import java.util.HashSet;
 
 public class Platforms {
     public static Set<Class<? extends Platform>> getPlatforms() {
-        Reflections reflections = new Reflections("org.apache.wayang");
-        Set<Class<? extends Platform>> platforms = reflections.getSubTypesOf(Platform.class);
+        final Reflections reflections = new Reflections("org.apache.wayang");
+        final Set<Class<? extends Platform>> platforms = reflections.getSubTypesOf(Platform.class);
 
-        Set<Class<? extends Platform>> disallowedPlatforms = new HashSet<>();
+        final Set<Class<? extends Platform>> disallowedPlatforms = new HashSet<>();
         disallowedPlatforms.add(JdbcPlatformTemplate.class);
         disallowedPlatforms.add(Sqlite3Platform.class);
         disallowedPlatforms.add(GiraphPlatform.class);
@@ -47,9 +46,9 @@ public class Platforms {
         return platforms;
     }
 
-    public static String getNamespace(String platformName) {
-        String[] exploded = platformName.split("\\.");
-        StringBuilder strBuilder = new StringBuilder();
+    public static String getNamespace(final String platformName) {
+        final String[] exploded = platformName.split("\\.");
+        final StringBuilder strBuilder = new StringBuilder();
         for (int i = 0; i < 4; i++) {
             strBuilder.append(exploded[i]);
             if (i != 3)  {

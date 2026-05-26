@@ -23,17 +23,35 @@ import org.apache.wayang.core.util.json.WayangJsonArray;
 import org.apache.wayang.core.util.json.WayangJsonObj;
 
 public class SampledCardinality {
+    public static class Serializer implements JsonSerializer<SampledCardinality> {
 
-    private WayangJsonArray inputs;
+        @Override
+        public WayangJsonObj serialize(final SampledCardinality sample) {
+            return new WayangJsonObj();
+        }
 
-    private WayangJsonObj operator;
+        @Override
+        public SampledCardinality deserialize(final WayangJsonObj json, final Class<? extends SampledCardinality> cls) {
+            final WayangJsonArray inputs = json.getJSONArray("inputs");
+            final WayangJsonObj operator = json.getJSONObject("operator");
+            final WayangJsonObj output = json.getJSONObject("output");
 
-    private WayangJsonObj output;
+            return new SampledCardinality(
+                inputs, operator, output
+            );
+        }
+    }
+
+    private final WayangJsonArray inputs;
+
+    private final WayangJsonObj operator;
+
+    private final WayangJsonObj output;
 
     public SampledCardinality(
-        WayangJsonArray inputs,
-        WayangJsonObj operator,
-        WayangJsonObj output
+        final WayangJsonArray inputs,
+        final WayangJsonObj operator,
+        final WayangJsonObj output
     ) {
         this.inputs = inputs;
         this.operator = operator;
@@ -43,30 +61,11 @@ public class SampledCardinality {
     public WayangJsonArray getInputs() {
         return this.inputs;
     }
-
     public WayangJsonObj getOperator() {
         return this.operator;
     }
+
     public WayangJsonObj getOutput() {
         return this.output;
-    }
-
-    public static class Serializer implements JsonSerializer<SampledCardinality> {
-
-        @Override
-        public WayangJsonObj serialize(SampledCardinality sample) {
-            return new WayangJsonObj();
-        }
-
-        @Override
-        public SampledCardinality deserialize(WayangJsonObj json, Class<? extends SampledCardinality> cls) {
-            final WayangJsonArray inputs = json.getJSONArray("inputs");
-            final WayangJsonObj operator = json.getJSONObject("operator");
-            final WayangJsonObj output = json.getJSONObject("output");
-
-            return new SampledCardinality(
-                inputs, operator, output
-            );
-        }
     }
 }

@@ -1,1 +1,0 @@
-SELECT * FROM postgres.role_type;

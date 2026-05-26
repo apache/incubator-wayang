@@ -18,34 +18,34 @@
 
 package org.apache.wayang.ml.validation;
 
-import org.apache.wayang.ml.encoding.TreeNode;
-
 import java.util.Arrays;
 import java.util.Comparator;
+
+import org.apache.wayang.ml.encoding.TreeNode;
 /**
  * Class used for enforcing validation rules on given platform choices
  */
 public class PlatformChoiceValidator {
 
     public static long[][] validate(
-        float[][][] tensor,
-        long[][][] indexes,
-        TreeNode tree,
-        ValidationRule... rules
+        final float[][][] tensor,
+        final long[][][] indexes,
+        final TreeNode tree,
+        final ValidationRule... rules
     ) {
-        Float[][] transposed = transpose(tensor);
+        final Float[][] transposed = transpose(tensor);
 
-        for (ValidationRule rule : rules) {
+        for (final ValidationRule rule : rules) {
             rule.validate(transposed, indexes, tree);
         }
 
         return getPlatformChoices(transposed);
     }
 
-    public static Float[][] transpose(float[][][] tensor) {
-        int cols = tensor[0][0].length;
-        int rows = tensor[0].length;
-        Float[][] transposed = new Float[cols][rows];
+    public static Float[][] transpose(final float[][][] tensor) {
+        final int cols = tensor[0][0].length;
+        final int rows = tensor[0].length;
+        final Float[][] transposed = new Float[cols][rows];
 
 
         for (int i = 0; i < rows; i++) {
@@ -57,11 +57,11 @@ public class PlatformChoiceValidator {
         return transposed;
     }
 
-    public static long[][] getPlatformChoices(Float[][] transposed) {
+    public static long[][] getPlatformChoices(final Float[][] transposed) {
         return Arrays.stream(transposed)
             .map(row -> {
-                Float max = Arrays.stream(row).max(Comparator.naturalOrder()).orElse(-Float.MAX_VALUE);
-                long[] result = Arrays.stream(row)
+                final Float max = Arrays.stream(row).max(Comparator.naturalOrder()).orElse(-Float.MAX_VALUE);
+                final long[] result = Arrays.stream(row)
                         .mapToLong(v -> v.equals(max) ? 1L : 0L)
                         .toArray();
 

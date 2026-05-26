@@ -18,51 +18,44 @@
 
 package org.apache.wayang.ml.costs;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.Collection;
+import java.util.Set;
+
 import org.apache.wayang.commons.util.profiledb.instrumentation.StopWatch;
 import org.apache.wayang.commons.util.profiledb.model.Experiment;
 import org.apache.wayang.commons.util.profiledb.model.Subject;
 import org.apache.wayang.commons.util.profiledb.model.measurement.TimeMeasurement;
+
+import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.costs.DefaultEstimatableCost;
 import org.apache.wayang.core.optimizer.costs.EstimatableCost;
 import org.apache.wayang.core.optimizer.costs.EstimatableCostFactory;
-import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
-import org.apache.wayang.core.optimizer.enumeration.LoopImplementation;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
-import org.apache.wayang.core.platform.Junction;
+import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
-import org.apache.wayang.core.plan.wayangplan.Operator;
-import org.apache.wayang.core.util.Tuple;
-import org.apache.wayang.ml.encoding.OneHotEncoder;
-import org.apache.wayang.core.api.Configuration;
-import org.apache.wayang.core.api.exception.WayangException;
-import org.apache.wayang.core.plan.executionplan.Channel;
-
-import java.util.Collection;
-import java.util.Set;
-import java.util.List;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 
 public class BenchmarkCost extends DefaultEstimatableCost  {
-    public EstimatableCostFactory getFactory() {
-        return new Factory();
-    }
-
     public static class Factory implements EstimatableCostFactory {
         public EstimatableCost makeCost() {
             return new BenchmarkCost();
         }
     }
 
+    public EstimatableCostFactory getFactory() {
+        return new Factory();
+    }
+
     public PlanImplementation pickBestExecutionPlan(
-            Collection<PlanImplementation> executionPlans,
-            ExecutionPlan existingPlan,
-            Set<Channel> openChannels,
-            Set<ExecutionStage> executedStages) {
+            final Collection<PlanImplementation> executionPlans,
+            final ExecutionPlan existingPlan,
+            final Set<Channel> openChannels,
+            final Set<ExecutionStage> executedStages) {
         // Measure time needed for a decision: picking the better plan.
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("/var/www/html/data/decisions.txt", true));
+            final BufferedWriter writer = new BufferedWriter(new FileWriter("/var/www/html/data/decisions.txt", true));
             final Experiment experiment = new Experiment("wayang-ml", new Subject("Wayang", "0.1"));
             final StopWatch stopWatch = new StopWatch(experiment);
             final TimeMeasurement decisionRound = stopWatch.getOrCreateRound("Decision");
@@ -80,7 +73,7 @@ public class BenchmarkCost extends DefaultEstimatableCost  {
             writer.close();
 
             return bestPlanImplementation;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.out.println("Couldnt write to File error: " + e);
         }
 

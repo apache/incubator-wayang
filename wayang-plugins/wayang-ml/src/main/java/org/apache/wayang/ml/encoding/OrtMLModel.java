@@ -71,11 +71,42 @@ public class OrtMLModel {
 
     /**
      * placeholder
+     * 
      * @param encoded
      * @return
      */
     public double runModel(final long[] encoded) {
         return 0;
+    }
+
+    public static void printTupleDeep(Tuple<ArrayList<long[][]>, ArrayList<long[][]>> input) {
+        System.out.println("=== VALUES (field0) ===");
+        for (int k = 0; k < input.field0.size(); k++) {
+            System.out.println("Tree " + k + ":");
+
+            long[][] arr = input.field0.get(k);
+            for (int i = 0; i < arr.length; i++) {
+                System.out.print("  Node " + i + ": ");
+                for (int j = 0; j < arr[i].length; j++) {
+                    System.out.print(arr[i][j] + " ");
+                }
+                System.out.println();
+            }
+        }
+
+        System.out.println("\n=== INDEXES (field1) ===");
+        for (int k = 0; k < input.field1.size(); k++) {
+            System.out.println("Tree " + k + ":");
+
+            long[][] arr = input.field1.get(k);
+            for (int i = 0; i < arr.length; i++) {
+                System.out.print("  Idx " + i + ": ");
+                for (int j = 0; j < arr[i].length; j++) {
+                    System.out.print(arr[i][j] + " ");
+                }
+                System.out.println();
+            }
+        }
     }
 
     /**
@@ -89,13 +120,22 @@ public class OrtMLModel {
         double costPrediction;
 
         final Map<String, NodeInfo> inputInfoList = this.session.getInputInfo();
-        final long[] input1Dims = ((TensorInfo) inputInfoList.get("input1").getInfo()).getShape();
-        final long[] input2Dims = ((TensorInfo) inputInfoList.get("input2").getInfo()).getShape();
+
+        final long[] input1Dims = ((TensorInfo) inputInfoList.get("trees").getInfo()).getShape();
+        final long[] input2Dims = ((TensorInfo) inputInfoList.get("onnx::Expand_1").getInfo()).getShape();
 
         final Instant start = Instant.now();
         final float[][][] inputValueStructure = new float[1][(int) input1Dims[1]][(int) input1Dims[2]];
         final long[][][] inputIndexStructure = new long[1][(int) input2Dims[1]][(int) input2Dims[2]];
 
+        System.out.println("len1: " + input1.field0.get(0).length);
+        System.out.println("len2: " + input1.field0.get(0)[0].length);
+
+        System.out.println("len value structure 0: " + inputValueStructure[0].length);
+        System.out.println("len value structure 0 0: " + inputValueStructure[0][0].length);
+
+        printTupleDeep(input1);
+        
         for (int i = 0; i < input1.field0.get(0).length; i++) {
             for (int j = 0; j < input1.field0.get(0)[i].length; j++) {
                 inputValueStructure[0][i][j] = Long.valueOf(input1.field0.get(0)[i][j]).floatValue();
@@ -228,11 +268,6 @@ public class OrtMLModel {
         final long[] input1Dims = ((TensorInfo) inputInfoList.get("input1").getInfo()).getShape();
         final long[] input2Dims = ((TensorInfo) inputInfoList.get("input2").getInfo()).getShape();
 
-        System.out.println(encoded.toStringEncoding());
-        System.out.println("Feature dims: " + Arrays.toString(input1Dims));
-        System.out.println("Index dims: " + Arrays.toString(input2Dims));
-        System.out.println("Tree size: " + encoded.size());
-
         final long featureDims = input1Dims[1];
         Instant start = Instant.now();
 
@@ -289,8 +324,9 @@ public class OrtMLModel {
             System.out.println("ResultTensor: " + resultTensor.length + ", " + resultTensor[0].length + ", "
                     + resultTensor[0][0].length);
 
-            final long[][] platformChoices = PlatformChoiceValidator.validate(resultTensor, inputIndexStructure, encoded,
-                    new BitmaskValidationRule(), new OperatorValidationRule(), new PostgresSourceValidationRule());
+            final long[][] platformChoices = PlatformChoiceValidator.validate(resultTensor, inputIndexStructure,
+                    encoded, new BitmaskValidationRule(), new OperatorValidationRule(),
+                    new PostgresSourceValidationRule());
 
             System.out.println("Choices: " + Arrays.deepToString(platformChoices));
 

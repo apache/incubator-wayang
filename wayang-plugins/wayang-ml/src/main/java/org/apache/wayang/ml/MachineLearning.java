@@ -18,16 +18,16 @@
 
 package org.apache.wayang.ml;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.mapping.Mapping;
 import org.apache.wayang.core.optimizer.channels.ChannelConversion;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.plugin.Plugin;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import org.apache.wayang.java.platform.JavaPlatform;
+import org.apache.wayang.spark.platform.SparkPlatform;
 
 /**
  * Provides {@link Plugin}s that enable usage of the xxxx.
@@ -55,7 +55,7 @@ public class MachineLearning {
         }
 
         @Override
-        public void setProperties(Configuration configuration) {
+        public void setProperties(final Configuration configuration) {
         }
     };
 

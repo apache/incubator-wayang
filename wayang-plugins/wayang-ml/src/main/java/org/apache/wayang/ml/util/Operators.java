@@ -19,8 +19,7 @@
 package org.apache.wayang.ml.util;
 
 import org.apache.wayang.core.plan.wayangplan.OperatorBase;
-
-import org.reflections.*;
+import org.reflections.Reflections;
 
 import java.util.stream.Collectors;
 import java.util.Set;
@@ -28,23 +27,23 @@ import java.util.Comparator;
 
 public class Operators {
     public static Set<Class<? extends OperatorBase>> getOperators() {
-        Reflections reflections = new Reflections("org.apache.wayang.basic.operators");
-        Set<Class<? extends OperatorBase>> basics = reflections.getSubTypesOf(OperatorBase.class);
+        final Reflections reflections = new Reflections("org.apache.wayang.basic.operators");
+        final Set<Class<? extends OperatorBase>> basics = reflections.getSubTypesOf(OperatorBase.class);
 
-        Reflections coreReflections = new Reflections("org.apache.wayang.core.plan.wayangplan");
-        Set<Class<? extends OperatorBase>> core = reflections.getSubTypesOf(OperatorBase.class);
+        final Reflections coreReflections = new Reflections("org.apache.wayang.core.plan.wayangplan");
+        final Set<Class<? extends OperatorBase>> core = coreReflections.getSubTypesOf(OperatorBase.class);
 
         basics.addAll(core);
         return basics;
     }
 
-    public static Set<Class<? extends OperatorBase>> getPlatformOperators(String namespace) {
-        Reflections reflections = new Reflections(namespace + ".operators");
+    public static Set<Class<? extends OperatorBase>> getPlatformOperators(final String namespace) {
+        final Reflections reflections = new Reflections(namespace + ".operators");
         return reflections.getSubTypesOf(OperatorBase.class)
             .stream()
             .filter(operator -> operator.getName().contains(namespace))
             .distinct()
-            .sorted(Comparator.comparing(c -> c.getName()))
+            .sorted(Comparator.comparing(Class::getName))
             .collect(Collectors.toSet());
     }
 }

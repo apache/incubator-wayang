@@ -76,6 +76,7 @@ public class TreeNode {
     public static TreeNode create() {
         return new TreeNode();
     }
+    
     public long[] encoded;
 
     public TreeNode left;
@@ -105,12 +106,42 @@ public class TreeNode {
         this.right = right;
     }
 
+    /*
+     * Utility function to rebalance the tree to a guaranteed
+     * BinaryTree
+     *
+     * @return void
+     */
+    public void rebalance() {
+        if (this.isLeaf()) {
+            this.left  = TreeNode.create();
+            this.right = TreeNode.create();
+            return;
+        }
+
+        if (this.left != null) {
+            this.left.rebalance();
+        }
+
+        if (this.right != null) {
+            this.right.rebalance();
+        }
+
+        if (this.left == null && this.right != null) {
+            this.left = TreeNode.create();
+        }
+
+        if (this.left != null && this.right == null) {
+            this.right = TreeNode.create();
+        }
+    }
+
     public TreeNode getLeft() {
-        return TreeNode.class.cast(left);
+        return this.left;
     }
 
     public TreeNode getRight() {
-        return TreeNode.class.cast(right);
+        return this.right;
     }
 
     public String display() {
@@ -263,21 +294,21 @@ public class TreeNode {
     public void traverse(final Consumer<TreeNode> func) {
         func.accept(this);
 
-        if (isLeaf()) {
+        if (this.isLeaf()) {
             return;
         }
 
-        if (left != null) {
-            left.traverse(func);
+        if (this.left != null) {
+            this.left.traverse(func);
         }
 
-        if (right != null) {
-            right.traverse(func);
+        if (this.right != null) {
+            this.right.traverse(func);
         }
     }
 
     public boolean isLeaf() {
-        return left == null && right == null;
+        return this.left == null && this.right == null;
     }
 
     public TreeNode getNode(final int index) {
@@ -304,16 +335,16 @@ public class TreeNode {
     public int size() {
         int size = 1;
 
-        if (isLeaf()) {
+        if (this.isLeaf()) {
             return 1;
         }
 
         if (left != null) {
-            size += left.size();
+            size += this.left.size();
         }
 
         if (right != null) {
-            size += right.size();
+            size += this.right.size();
         }
 
         return size;

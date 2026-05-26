@@ -27,14 +27,14 @@ import org.apache.wayang.core.util.Tuple;
 import com.google.common.primitives.Longs;
 
 public class OrtTensorDecoder {
-    private final HashMap<Long, TreeNode> nodeToIDMap = new HashMap<>();
 
     /**
      * Decodes the output from a tree based NN model
      * 
      * @param mlOutput takes the out put from @
      */
-    public TreeNode decode(final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> mlOutput) {
+    public static TreeNode decode(final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> mlOutput) {
+        final HashMap<Long, TreeNode> nodeToIDMap = new HashMap<>();
         final long[][] platformChoices = mlOutput.field0.get(0);
         final long[][] indexedTree = mlOutput.field1.get(0);
         final long[] flatIndexTree = Arrays.stream(indexedTree).reduce(Longs::concat).orElseThrow();
@@ -43,8 +43,7 @@ public class OrtTensorDecoder {
             final long curID = flatIndexTree[j];
             final long[] value = platformChoices[(int) curID];
 
-            final TreeNode curTreeNode = nodeToIDMap.containsKey(curID) 
-                    ? nodeToIDMap.get(curID)
+            final TreeNode curTreeNode = nodeToIDMap.containsKey(curID) ? nodeToIDMap.get(curID)
                     : new TreeNode(value, null, null);
 
             curTreeNode.encoded = value;
@@ -91,6 +90,6 @@ public class OrtTensorDecoder {
             nodeToIDMap.put(curID, curTreeNode);
         }
 
-        return this.nodeToIDMap.get(1L);
+        return nodeToIDMap.get(1L);
     }
 }
