@@ -22,6 +22,7 @@ import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval;
 import org.apache.wayang.core.optimizer.costs.LoadEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.apache.wayang.core.profiling.ComplexityClass;
 
 import java.io.Serializable;
 import java.util.Optional;
@@ -32,9 +33,12 @@ import java.util.function.*;
  */
 public abstract class FunctionDescriptor implements Serializable {
 
-    public FunctionDescriptor() {}
+    public FunctionDescriptor() {
+    }
 
     private LoadProfileEstimator loadProfileEstimator;
+
+    private ComplexityClass complexityClass = null;
 
     public FunctionDescriptor(LoadProfileEstimator loadProfileEstimator) {
         this.setLoadProfileEstimator(loadProfileEstimator);
@@ -46,6 +50,14 @@ public abstract class FunctionDescriptor implements Serializable {
 
     public Optional<LoadProfileEstimator> getLoadProfileEstimator() {
         return Optional.ofNullable(this.loadProfileEstimator);
+    }
+
+    public Optional<ComplexityClass> getComplexityClass(){
+        return Optional.ofNullable(complexityClass);
+    }
+
+    public Optional<ComplexityClass> setComplexityClass(){
+        return Optional.ofNullable(complexityClass);
     }
 
     /**
