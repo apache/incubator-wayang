@@ -25,8 +25,9 @@ import org.apache.wayang.ml.util.SampledCardinality;
 
 public class OneHotEncoder {
 
-    protected OneHotEncoder(){}
-    
+    protected OneHotEncoder() {
+    }
+
     public static final int PADDING_SIZE = 1;
 
     public static long[] encode(final PlanImplementation plan) {
@@ -56,20 +57,20 @@ public class OneHotEncoder {
         final HashMap<String, Integer> platformMappings = OneHotMappings.getPlatformsMapping();
         final int platformsCount = platformMappings.size();
 
-        final List<Object> distinctOperators = operators.stream().map((operator) -> operator.getClass().getSuperclass())
+        final List<Object> distinctOperators = operators.stream().map(operator -> operator.getClass().getSuperclass())
                 .distinct().collect(Collectors.toList());
 
         for (final Object operator : distinctOperators) {
             // build the features
             final long encodedOperator[] = new long[OneHotVector.OPERATOR_SIZE];
             final List<ExecutionOperator> executionOperators = operators.stream()
-                    .filter(op -> operator == op.getClass().getSuperclass()).collect(Collectors.toList());
+                    .filter(op -> operator == op.getClass().getSuperclass()).toList();
 
             encodedOperator[0] = (long) executionOperators.size();
 
-            final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream().filter(sample -> {
-                return sample.getOperator().get("class").equals(((Class<?>) operator).getName());
-            }).collect(Collectors.toList());
+            final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream()
+                    .filter(sample -> sample.getOperator().get("class").equals(((Class<?>) operator).getName()))
+                    .toList();
 
             final long inputCardinality = operatorSamples.stream().mapToLong(sample -> {
                 long card = 0;
@@ -83,7 +84,8 @@ public class OneHotEncoder {
                     .mapToLong(sample -> sample.getOutput().getLong("cardinality")).sum();
 
             for (final ExecutionOperator executionOperator : executionOperators) {
-                final Integer platformPosition = platformMappings.get(executionOperator.getPlatform().getClass().getName());
+                final Integer platformPosition = platformMappings
+                        .get(executionOperator.getPlatform().getClass().getName());
 
                 if (platformPosition == null) {
                     continue;
@@ -124,19 +126,19 @@ public class OneHotEncoder {
         final int platformsCount = platformMappings.size();
 
         final List<ExecutionTask> conversionTasks = plan.getJunctions().values().stream()
-                .map(junction -> junction.getConversionTasks()).flatMap(Collection::stream)
-                .collect(Collectors.toList());
+                .map(Junction::getConversionTasks).flatMap(Collection::stream).toList();
 
-        final List<Object> distinctOperators = conversionTasks.stream().map(task -> task.getOperator().getClass()).distinct()
-                .collect(Collectors.toList());
+        final List<Object> distinctOperators = conversionTasks.stream().map(task -> task.getOperator().getClass())
+                .distinct().collect(Collectors.toList());
 
         for (final Object operator : distinctOperators) {
             final long encodedOperator[] = new long[OneHotVector.CONVERSION_SIZE];
-            final List<ExecutionOperator> executionOperators = conversionTasks.stream().map(task -> task.getOperator())
-                    .filter(op -> operator == op.getClass()).collect(Collectors.toList());
+            final List<ExecutionOperator> executionOperators = conversionTasks.stream().map(ExecutionTask::getOperator)
+                    .filter(op -> operator == op.getClass()).toList();
 
             for (final ExecutionOperator executionOperator : executionOperators) {
-                final Integer platformPosition = platformMappings.get(executionOperator.getPlatform().getClass().getName());
+                final Integer platformPosition = platformMappings
+                        .get(executionOperator.getPlatform().getClass().getName());
 
                 if (platformPosition == null) {
                     continue;
@@ -177,12 +179,12 @@ public class OneHotEncoder {
     public static void encodeTopologies(final PlanImplementation plan, final OneHotVector vector) {
         final long[] topologies = new long[OneHotVector.TOPOLOGIES_LENGTH];
 
-        final long replicatorCount = plan.getOperators().stream().filter((operator) -> operator.getAllOutputs().length > 1)
-                .count();
+        final long replicatorCount = plan.getOperators().stream()
+                .filter((operator) -> operator.getAllOutputs().length > 1).count();
         topologies[0] = replicatorCount;
         topologies[1] = getPipelineCount(plan);
-        final long junctionCounter = plan.getOperators().stream().filter((operator) -> operator.getAllInputs().length > 1)
-                .count();
+        final long junctionCounter = plan.getOperators().stream()
+                .filter((operator) -> operator.getAllInputs().length > 1).count();
         topologies[2] = junctionCounter;
         topologies[3] = (long) plan.getLoopImplementations().size();
 
@@ -194,16 +196,17 @@ public class OneHotEncoder {
      * sum of UDF complexities 2 - sum of input cardinalities 3 - sum of output
      * cardinalities (4 ... end) - one hot marking type of operator
      */
-    public static long[] encodeOperator(final Operator operator, final OptimizationContext optimizationContext, final boolean encodeIds) {
-        final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream().filter(sample -> {
-            return sample.getOperator().get("class").equals(operator.getClass().getName());
-        }).collect(Collectors.toList());
+    public static long[] encodeOperator(final Operator operator, final OptimizationContext optimizationContext,
+            final boolean encodeIds) {
+        final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream()
+                .filter(sample -> sample.getOperator().get("class").equals(operator.getClass().getName())).toList();
 
         long inputCardinality = 0;
         long outputCardinality = 0;
 
         if (operatorSamples.size() == 0) {
-            final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(operator);
+            final OptimizationContext.OperatorContext operatorContext = optimizationContext
+                    .getOperatorContext(operator);
 
             if (operatorContext != null) {
                 for (final InputSlot<?> input : operator.getAllInputs()) {
@@ -239,7 +242,6 @@ public class OneHotEncoder {
         final int operatorsCount = operatorMappings.size();
         final int platformsCount = platformMappings.size();
 
-        // long[] result = new long[PADDING_SIZE + operatorsCount + platformsCount + 3];
         final long[] result = new long[PADDING_SIZE + operatorsCount + platformsCount + 3];
 
         if (encodeIds) {
@@ -259,15 +261,15 @@ public class OneHotEncoder {
 
     public static long[] encodeOperator(final ExecutionOperator operator, final OptimizationContext optimizationContext,
             final boolean encodeIds) {
-        final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream().filter(sample -> {
-            return sample.getOperator().get("class").equals(operator.getClass().getName());
-        }).collect(Collectors.toList());
+        final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream()
+                .filter(sample -> sample.getOperator().get("class").equals(operator.getClass().getName())).toList();
 
         long inputCardinality = 0;
         long outputCardinality = 0;
 
         if (operatorSamples.size() == 0) {
-            final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(operator);
+            final OptimizationContext.OperatorContext operatorContext = optimizationContext
+                    .getOperatorContext(operator);
 
             if (operatorContext != null) {
                 for (final InputSlot<?> input : operator.getAllInputs()) {
@@ -353,8 +355,8 @@ public class OneHotEncoder {
         return pipelineCount;
     }
 
-    private static long traverse(final PlanImplementation plan, final Operator current, final HashMap<Operator, Integer> visited,
-            final int steps, int pipelineCount) {
+    private static long traverse(final PlanImplementation plan, final Operator current,
+            final HashMap<Operator, Integer> visited, final int steps, int pipelineCount) {
 
         if (visited.containsKey(current)) {
             return pipelineCount;

@@ -126,7 +126,7 @@ public class WordCount {
 
             config.setProperty("wayang.core.log.enabled", "false");
 
-            config.setCostModel(new DefaultPointwiseCost());
+            config.setCostModel(DefaultPointwiseCost.FACTORY.makeCost());
             final MLContext wayangContext = new MLContext(config);
 
             final List<Plugin> plugins = JavaConversions.seqAsJavaList(Parameters.loadPlugins(args[0]));

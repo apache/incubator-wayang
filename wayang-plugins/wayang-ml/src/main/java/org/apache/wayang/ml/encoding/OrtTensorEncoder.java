@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.annotation.Nonnull;
+
 import org.apache.wayang.core.util.Tuple;
 
 public class OrtTensorEncoder {
@@ -33,13 +35,14 @@ public class OrtTensorEncoder {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static Tuple<ArrayList<long[][]>, ArrayList<long[][]>> encode(final TreeNode node) {
-        assert node != null : "Node is null and can't be encoded";
-        final ArrayList<TreeNode> testArr = new ArrayList<>();
-        testArr.add(node);
-        final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> t = OrtTensorEncoder.prepareTrees(testArr);
-
-        return t;
+    /**
+     * Encodes a single tree
+     * 
+     * @param node root tree node
+     * @return a flat struture of (trees, indexes)
+     */
+    public static Tuple<ArrayList<long[][]>, ArrayList<long[][]>> encode(final @Nonnull TreeNode node) {
+        return OrtTensorEncoder.prepareTrees(List.of(node));
     }
 
     /**
@@ -48,23 +51,23 @@ public class OrtTensorEncoder {
      * @param trees
      * @return returns a tuple of (flatTrees, indexes)
      */
-    public static Tuple<ArrayList<long[][]>, ArrayList<long[][]>> prepareTrees(final ArrayList<TreeNode> trees) {
-        ArrayList<long[][]> flatTrees = new ArrayList<>();
+    public static Tuple<ArrayList<long[][]>, ArrayList<long[][]>> prepareTrees(final List<TreeNode> trees) {
+        final List<long[][]> flatTrees = trees.stream().map(OrtTensorEncoder::flatten).toList();
 
         for (final TreeNode tree : trees) {
             flatTrees.add(OrtTensorEncoder.flatten(tree));
         }
 
-        flatTrees = padAndCombine(flatTrees);
+        final ArrayList<long[][]> paddedTrees = padAndCombine(flatTrees);
 
-        flatTrees = transpose(flatTrees);
+        final ArrayList<long[][]> transposedTrees = transpose(paddedTrees);
 
-        ArrayList<long[][]> indexes = trees.stream().map(OrtTensorEncoder::treeConvIndexes)
+        final ArrayList<long[][]> indexes = trees.stream().map(OrtTensorEncoder::treeConvIndexes)
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        indexes = padAndCombine(indexes);
+        final ArrayList<long[][]> paddedIndexes = padAndCombine(indexes);
 
-        return new Tuple<>(flatTrees, indexes);
+        return new Tuple<>(transposedTrees, paddedIndexes);
     }
 
     /**
@@ -93,7 +96,6 @@ public class OrtTensorEncoder {
 
         if (root.isLeaf()) {
             acc.add(new long[] { root.encoded[0], 0, 0 });
-
             return;
         }
 
@@ -126,17 +128,11 @@ public class OrtTensorEncoder {
                     new TreeNode(new long[] { 0 }, null, null));
         }
 
-        TreeNode rightSubTree = null;
-        TreeNode leftSubTree = null;
+        final TreeNode leftSubTree = root.getLeft() != null ? preorderIndexes(root.getLeft(), idx + 1) : null;
 
-        if (root.getLeft() != null) {
-            leftSubTree = preorderIndexes(root.getLeft(), idx + 1);
-        }
-
-        if (root.getRight() != null) {
-            final long maxIndexInLeftSubTree = rightMost(leftSubTree);
-            rightSubTree = preorderIndexes(root.getRight(), maxIndexInLeftSubTree + 1);
-        }
+        final TreeNode rightSubTree = root.getRight() != null
+                ? preorderIndexes(root.getRight(), rightMost(leftSubTree) + 1)
+                : null;
 
         return new TreeNode(new long[] { idx }, leftSubTree, rightSubTree);
     }
@@ -215,7 +211,8 @@ public class OrtTensorEncoder {
             return;
         }
 
-        long[] values = v.isNullOperator() ? OneHotEncoder.encodeNullOperator() : Arrays.copyOf(v.encoded, v.encoded.length);
+        final long[] values = v.isNullOperator() ? OneHotEncoder.encodeNullOperator()
+                : Arrays.copyOf(v.encoded, v.encoded.length);
 
         values[0] = 0;
         acc.add(values);

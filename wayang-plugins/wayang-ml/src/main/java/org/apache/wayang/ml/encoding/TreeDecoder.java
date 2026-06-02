@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
@@ -30,13 +31,18 @@ import org.apache.wayang.core.platform.Platform;
 
 public class TreeDecoder {
     private static final Logger logger = LogManager.getLogger(TreeDecoder.class);
+    private final OneHotMappings mappings;
 
-    public static WayangPlan decode(final String encoded) {
+    public TreeDecoder(final TreeEncoder encoder) {
+        this.mappings = encoder.getMappings();
+    }
+
+    public WayangPlan decode(final String encoded) {
         final TreeNode node = TreeNode.fromString(encoded);
 
         updateOperatorPlatforms(node);
 
-        final Operator sink = OneHotMappings.getOperatorFromEncoding(node.encoded)
+        final Operator sink = mappings.getOperatorFromEncoding(node.encoded)
                 .orElseThrow(() -> new WayangException("Couldnt recover sink operator during decoding"));
 
         final Operator definitiveSink = sink;
@@ -48,10 +54,13 @@ public class TreeDecoder {
         }
     }
 
-    public static WayangPlan decode(final TreeNode node) {
+    public WayangPlan decode(final TreeNode node) {
         updateOperatorPlatforms(node);
 
-        final Operator sink = OneHotMappings.getOperatorFromEncoding(node.encoded)
+        System.out.println("mappings, original operators: " + mappings.getOriginalOperators());
+        System.out.println("node.encoded: " + Arrays.toString(node.encoded));
+        
+        final Operator sink = mappings.getOperatorFromEncoding(node.encoded)
                 .orElseThrow(() -> new WayangException("Couldnt recover sink operator during decoding"));
 
         final Operator definitiveSink = sink;
@@ -63,12 +72,12 @@ public class TreeDecoder {
         }
     }
 
-    private static void updateOperatorPlatforms(final TreeNode node) {
+    private void updateOperatorPlatforms(final TreeNode node) {
         if (node.isNullOperator()) {
             return;
         }
 
-        final Optional<Operator> operator = OneHotMappings.getOperatorFromEncoding(node.encoded);
+        final Optional<Operator> operator = mappings.getOperatorFromEncoding(node.encoded);
 
         if (operator.isPresent()) {
             final Platform platform = OneHotMappings.getOperatorPlatformFromEncoding(node.encoded)
@@ -90,3 +99,4 @@ public class TreeDecoder {
         }
     }
 }
+ 

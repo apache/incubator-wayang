@@ -40,6 +40,7 @@ import org.apache.wayang.core.plan.executionplan.Channel;
 import org.apache.wayang.core.plan.executionplan.ExecutionPlan;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 import org.apache.wayang.core.util.Tuple;
+import org.apache.wayang.ml.encoding.OneHotMappings;
 import org.apache.wayang.ml.encoding.OrtMLModel;
 import org.apache.wayang.ml.encoding.OrtTensorEncoder;
 import org.apache.wayang.ml.encoding.TreeEncoder;
@@ -55,10 +56,18 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
     private static final Logger logger = LogManager.getLogger(DefaultPointwiseCost.class);
 
     public static class Factory implements EstimatableCostFactory {
+        private final TreeEncoder encoder = new TreeEncoder(new OneHotMappings());
+
         @Override
         public EstimatableCost makeCost() {
-            return new DefaultPointwiseCost();
+            return new DefaultPointwiseCost(encoder);
         }
+    }
+    
+    private final TreeEncoder encoder;
+
+    public DefaultPointwiseCost(TreeEncoder encoder) {
+        this.encoder = encoder;
     }
 
     @Override
@@ -67,7 +76,7 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
             final Set<ExecutionStage> executedStages) {
 
         final Map<PlanImplementation, Double> planCostMapping = executionPlans.stream()
-                .collect(Collectors.toMap(Function.identity(), DefaultPointwiseCost::getCost));
+                .collect(Collectors.toMap(Function.identity(), this::getCost));
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .min(Comparator.comparingDouble(planCostMapping::get))
@@ -76,7 +85,7 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
         final Configuration config = bestPlanImplementation.getOptimizationContext().getConfiguration();
 
         if (config.getBooleanProperty("wayang.ml.experience.enabled")) {
-            final TreeNode encodedPlan = TreeEncoder.encode(bestPlanImplementation);
+            final TreeNode encodedPlan = encoder.encode(bestPlanImplementation);
             config.setProperty("wayang.ml.experience.with-platforms", encodedPlan.toString());
         }
 
@@ -89,11 +98,11 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
      * @param plan
      * @return
      */
-    public static Double getCost(final PlanImplementation plan) {
+    public Double getCost(final PlanImplementation plan) {
         try {
             final Configuration config = plan.getOptimizationContext().getConfiguration();
             final OrtMLModel model = OrtMLModel.getInstance(config);
-            final TreeNode encodedOne = TreeEncoder.encode(plan);
+            final TreeNode encodedOne = encoder.encode(plan);
             final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple1 = OrtTensorEncoder.encode(encodedOne);
             System.out.println("tup1: " + Arrays.deepToString(tuple1.field0.get(0)) +  Arrays.deepToString(tuple1.field1.get(0)));
             final double cost = Math.exp(model.runModel(tuple1)) - 1;
