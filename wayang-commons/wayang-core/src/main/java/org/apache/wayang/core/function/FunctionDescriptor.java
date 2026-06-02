@@ -56,8 +56,8 @@ public abstract class FunctionDescriptor implements Serializable {
         return Optional.ofNullable(complexityClass);
     }
 
-    public Optional<ComplexityClass> setComplexityClass(){
-        return Optional.ofNullable(complexityClass);
+    public void setComplexityClass(final ComplexityClass complexityClass){
+        this.complexityClass = complexityClass;
     }
 
     /**
