@@ -84,7 +84,7 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
 
         final Configuration config = bestPlanImplementation.getOptimizationContext().getConfiguration();
 
-        if (config.getBooleanProperty("wayang.ml.experience.enabled")) {
+        if (config.getOptionalBooleanProperty("wayang.ml.experience.enabled").orElse(false)) {
             final TreeNode encodedPlan = encoder.encode(bestPlanImplementation);
             config.setProperty("wayang.ml.experience.with-platforms", encodedPlan.toString());
         }
@@ -99,12 +99,12 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
      * @return
      */
     public Double getCost(final PlanImplementation plan) {
+        System.out.println("getting cost!");
         try {
             final Configuration config = plan.getOptimizationContext().getConfiguration();
             final OrtMLModel model = OrtMLModel.getInstance(config);
             final TreeNode encodedOne = encoder.encode(plan);
             final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> tuple1 = OrtTensorEncoder.encode(encodedOne);
-            System.out.println("tup1: " + Arrays.deepToString(tuple1.field0.get(0)) +  Arrays.deepToString(tuple1.field1.get(0)));
             final double cost = Math.exp(model.runModel(tuple1)) - 1;
 
             return cost;

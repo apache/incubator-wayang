@@ -57,9 +57,6 @@ public class TreeDecoder {
     public WayangPlan decode(final TreeNode node) {
         updateOperatorPlatforms(node);
 
-        System.out.println("mappings, original operators: " + mappings.getOriginalOperators());
-        System.out.println("node.encoded: " + Arrays.toString(node.encoded));
-        
         final Operator sink = mappings.getOperatorFromEncoding(node.encoded)
                 .orElseThrow(() -> new WayangException("Couldnt recover sink operator during decoding"));
 

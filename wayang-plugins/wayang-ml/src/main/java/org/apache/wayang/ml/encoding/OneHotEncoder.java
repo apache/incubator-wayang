@@ -57,10 +57,10 @@ public class OneHotEncoder {
         final HashMap<String, Integer> platformMappings = OneHotMappings.getPlatformsMapping();
         final int platformsCount = platformMappings.size();
 
-        final List<Object> distinctOperators = operators.stream().map(operator -> operator.getClass().getSuperclass())
+        final List<Class<?>> distinctOperators = operators.stream().map(operator -> operator.getClass().getSuperclass())
                 .distinct().collect(Collectors.toList());
 
-        for (final Object operator : distinctOperators) {
+        for (final Class<?> operator : distinctOperators) {
             // build the features
             final long encodedOperator[] = new long[OneHotVector.OPERATOR_SIZE];
             final List<ExecutionOperator> executionOperators = operators.stream()
@@ -69,8 +69,7 @@ public class OneHotEncoder {
             encodedOperator[0] = (long) executionOperators.size();
 
             final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream()
-                    .filter(sample -> sample.getOperator().get("class").equals(((Class<?>) operator).getName()))
-                    .toList();
+                    .filter(sample -> sample.getOperator().get("class").equals(operator.getName())).toList();
 
             final long inputCardinality = operatorSamples.stream().mapToLong(sample -> {
                 long card = 0;
@@ -111,7 +110,7 @@ public class OneHotEncoder {
             encodedOperator[platformsCount + 5] += inputCardinality;
             encodedOperator[platformsCount + 6] += outputCardinality;
 
-            vector.addOperator(encodedOperator, ((Class<?>) operator).getName());
+            vector.addOperator(encodedOperator, operator.getName());
         }
     }
 
@@ -128,10 +127,10 @@ public class OneHotEncoder {
         final List<ExecutionTask> conversionTasks = plan.getJunctions().values().stream()
                 .map(Junction::getConversionTasks).flatMap(Collection::stream).toList();
 
-        final List<Object> distinctOperators = conversionTasks.stream().map(task -> task.getOperator().getClass())
+        final List<Class<?>> distinctOperators = conversionTasks.stream().map(task -> task.getOperator().getClass())
                 .distinct().collect(Collectors.toList());
 
-        for (final Object operator : distinctOperators) {
+        for (final Class<?> operator : distinctOperators) {
             final long encodedOperator[] = new long[OneHotVector.CONVERSION_SIZE];
             final List<ExecutionOperator> executionOperators = conversionTasks.stream().map(ExecutionTask::getOperator)
                     .filter(op -> operator == op.getClass()).toList();
@@ -153,9 +152,9 @@ public class OneHotEncoder {
                     continue;
                 }
 
-                final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream().filter(sample -> {
-                    return sample.getOperator().get("class").equals(executionOperator.getClass().getName());
-                }).collect(Collectors.toList());
+                final List<SampledCardinality> operatorSamples = CardinalitySampler.samples.stream().filter(
+                        sample -> sample.getOperator().get("class").equals(executionOperator.getClass().getName()))
+                        .toList();
 
                 final long inputCardinality = operatorSamples.stream().mapToLong(sample -> {
                     long card = 0;
@@ -172,7 +171,7 @@ public class OneHotEncoder {
                 encodedOperator[platformsCount + 1] = outputCardinality;
             }
 
-            vector.addDataMovement(encodedOperator, ((Class<?>) operator).getName());
+            vector.addDataMovement(encodedOperator, operator.getName());
         }
     }
 

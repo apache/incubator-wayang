@@ -19,6 +19,14 @@
 
 package org.apache.wayang.ml.test;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.FlatMapOperator;
@@ -48,16 +56,8 @@ import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.java.execution.JavaExecutor;
 import org.apache.wayang.java.operators.JavaExecutionOperator;
 import org.apache.wayang.java.platform.JavaPlatform;
-import org.junit.BeforeClass;
 import org.apache.wayang.ml.costs.DefaultPointwiseCost;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
+import org.junit.BeforeClass;
 
 /**
  * Superclass for tests of {@link JavaExecutionOperator}s.
@@ -89,8 +89,8 @@ public class JavaExecutionTestBase {
      *
      * @param inputFileUrl the file whose words should be counted
      */
-    static WayangPlan createWayangPlan(final String inputFileUrl,
-            final Collection<Tuple2<String, Integer>> collector) throws URISyntaxException, IOException {
+    static WayangPlan createWayangPlan(final String inputFileUrl, final Collection<Tuple2<String, Integer>> collector)
+            throws URISyntaxException, IOException {
         // Assignment mode: none.
 
         final TextFileSource textFileSource = new TextFileSource(inputFileUrl);
@@ -137,7 +137,7 @@ public class JavaExecutionTestBase {
 
         return new WayangPlan(sink);
     }
-    
+
     Collection<PlanImplementation> buildPlanImplementations(final WayangPlan wayangPlan,
             final WayangContext wayangContext) {
         final Job job = wayangContext.createJob("encodingTestJob", wayangPlan, "");

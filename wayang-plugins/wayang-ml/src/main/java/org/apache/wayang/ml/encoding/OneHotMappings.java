@@ -1,6 +1,5 @@
 package org.apache.wayang.ml.encoding;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,8 +18,6 @@ public class OneHotMappings {
     private static final HashMap<String, Integer> platformsMapping = createPlatformMapping();
 
     public static Optional<Platform> getOperatorPlatformFromEncoding(final long[] encoded) {
-        System.out.println("getOperatorPlatformFromEncoding() encoded: " + Arrays.toString(encoded));
-
         final int platformsCount = platformsMapping.size();
         final int operatorsCount = operatorMapping.size();
 
@@ -77,7 +74,6 @@ public class OneHotMappings {
         Platforms.getPlatforms().stream().sorted(Comparator.comparing(Class::getName))
                 .forEachOrdered(entry -> mappings.put(entry.getName(), mappings.size()));
 
-        System.out.println("created platforms mappings: " + mappings);
         return mappings;
     }
 
@@ -96,15 +92,12 @@ public class OneHotMappings {
 
     public Optional<Operator> getOperatorFromEncoding(final long[] encoded) {
         final long hashCode = encoded[0];
-        System.out.println("hashcode: " + hashCode);
 
         final Optional<Operator> original = originalOperators.stream()
                 .filter(op -> 
                     (long) new HashCodeBuilder(17, 37).append(op.toString()).append(op.getName())
                         .append(op.getAllInputs().length).append(op.getAllOutputs().length).toHashCode() == hashCode)
                 .findAny();
-
-        System.out.println("original: " + original);
 
         if (original.isPresent()) {
             return original;

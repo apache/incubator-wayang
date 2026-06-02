@@ -2,8 +2,6 @@ package org.apache.wayang.ml.encoding;
 
 import java.util.HashMap;
 
-import org.apache.wayang.core.api.exception.WayangException;
-
 public class OneHotVector {
     public static final int TOPOLOGIES_LENGTH = 4;
     
@@ -24,11 +22,6 @@ public class OneHotVector {
     private final long[] entries = new long[OneHotVector.LENGTH];
 
     public OneHotVector(){
-        System.out.println("initialized onehot vector with sizes:");
-        System.out.println("op size: " + OPERATOR_SIZE);
-        System.out.println("conversions size: " + CONVERSION_SIZE);
-        System.out.println("op length: " + OPERATORS_LENGTH);
-        System.out.println("conv length: " + CONVERSIONS_LENGTH);
     }
 
     public void addOperator(final long[] encodedOperator, final String operator) {
@@ -41,7 +34,8 @@ public class OneHotVector {
 
         // position of operator couldnt be found
         if (position == -1) {
-            throw new WayangException("Could not find position of operator, potentially illegal operator, got operator: " + operator);
+            return;
+            //throw new WayangException("Could not find position of operator, potentially illegal operator, got operator: " + operator);
         }
 
         for (int i = 0; i < encodedOperator.length; i++) {
@@ -50,12 +44,13 @@ public class OneHotVector {
     }
 
     public void addDataMovement(final long[] encodedConversion, final String operator) {
-        assert encodedConversion.length == CONVERSIONS_LENGTH : "amount of encoded operators was not equal to the operator size defined in one hot. Got: " + encodedConversion.length + ", expected: " + CONVERSIONS_LENGTH;
+        assert encodedConversion.length == CONVERSION_SIZE : "amount of encoded operators was not equal to the operator size defined in one hot. Got: " + encodedConversion.length + ", expected: " + CONVERSION_SIZE;
         final int position = getPosition(operator);
 
         // position of operator couldnt be found
         if (position == -1) {
-            throw new WayangException("Could not find position of operator, potentially illegal operator, got operator: " + operator);
+            return;
+            //throw new WayangException("Could not find position of operator, potentially illegal operator, got operator: " + operator);
         }
 
         for (int i = 0; i < encodedConversion.length; i++) {

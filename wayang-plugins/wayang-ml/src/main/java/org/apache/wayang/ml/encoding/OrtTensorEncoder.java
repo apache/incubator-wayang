@@ -54,10 +54,6 @@ public class OrtTensorEncoder {
     public static Tuple<ArrayList<long[][]>, ArrayList<long[][]>> prepareTrees(final List<TreeNode> trees) {
         final List<long[][]> flatTrees = trees.stream().map(OrtTensorEncoder::flatten).toList();
 
-        for (final TreeNode tree : trees) {
-            flatTrees.add(OrtTensorEncoder.flatten(tree));
-        }
-
         final ArrayList<long[][]> paddedTrees = padAndCombine(flatTrees);
 
         final ArrayList<long[][]> transposedTrees = transpose(paddedTrees);
@@ -174,7 +170,7 @@ public class OrtTensorEncoder {
         }
 
         final int secondDim = flatTrees.get(0)[0].length;
-        final int maxFirstDim = flatTrees.stream().map(a -> a.length).max(Integer::compare).get();
+        final int maxFirstDim = flatTrees.stream().mapToInt(a -> a.length).max().orElseThrow();
 
         for (final long[][] tree : flatTrees) {
             final long[][] padding = new long[maxFirstDim][secondDim];

@@ -19,13 +19,13 @@
 package org.apache.wayang.ml.encoding;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.stream.Stream;
 
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
@@ -94,7 +94,6 @@ public class TreeEncoder {
             return null;
         }
 
-        System.out.println("result size: " + result.size());
         assert result.size() == 1 : "result size was not 1";
 
         final TreeNode resultNode = result.get(0);
@@ -128,7 +127,6 @@ public class TreeEncoder {
                 currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current, optimizationContext,
                         encodeIds);
             } else {
-                System.out.println("current is not execution: " + current);
                 currentNode.encoded = OneHotEncoder.encodeOperator(current, optimizationContext, encodeIds);
             }
         }
@@ -203,7 +201,6 @@ public class TreeEncoder {
                 currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current, optimizationContext,
                         encodeIds);
             } else {
-                    System.out.println("2current is not execution: " + current);
                 currentNode.encoded = OneHotEncoder.encodeOperator(current, optimizationContext, encodeIds);
             }
         }
@@ -244,13 +241,12 @@ public class TreeEncoder {
                 currentNode.encoded = OneHotEncoder.encodeOperator((ExecutionOperator) current, optimizationContext,
                         encodeIds);
             } else {
-                                System.out.println("current is not 3execution: " + current);
                 currentNode.encoded = OneHotEncoder.encodeOperator(current, optimizationContext, encodeIds);
             }
         }
 
         // Add for later reconstruction in TreeDecoder
-        final List<Operator> inputs = Stream.of(current.getAllInputs()).filter(input -> input.getOccupant() != null)
+        final List<Operator> inputs = Arrays.stream(current.getAllInputs()).filter(input -> input.getOccupant() != null)
                 .map(input -> input.getOccupant().getOwner()).toList();
 
         for (final Operator input : inputs) {

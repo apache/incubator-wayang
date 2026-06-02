@@ -18,20 +18,17 @@
 
 package org.apache.wayang.ml.encoding;
 
-import org.apache.wayang.core.plan.wayangplan.Operator;
-
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.wayang.core.plan.wayangplan.Operator;
 
 public class TreeNode {
     private static final int PADDING_SIZE = 1;
@@ -43,24 +40,25 @@ public class TreeNode {
     public static TreeNode fromString(final String encoded) {
         final TreeNode result = new TreeNode();
         final Matcher matcher = pattern.matcher(encoded);
-        String value = "";
 
         if (!matcher.find()) {
             return null;
         }
 
-        value = matcher.group("value");
+        final String value = matcher.group("value");
         final String left = matcher.group("left");
         final String right = matcher.group("right");
-        final Long[] encodedLongs = Stream.of(value.split(",")).map(val -> Long.valueOf(val.replaceAll("\\s+", "")))
-                .collect(Collectors.toList()).toArray(Long[]::new);
+        final long[] encodedLongs = Arrays.stream(value.split(","))
+            .map(String::trim)
+            .mapToLong(Long::parseLong)
+            .toArray();
 
         // ignore if no platform choices given
-        if (Stream.of(encodedLongs).reduce(0l, Long::sum) == 0) {
+        if (Arrays.stream(encodedLongs).sum() == 0L) {
             return null;
         }
 
-        result.encoded = ArrayUtils.toPrimitive(encodedLongs);
+        result.encoded = encodedLongs;
 
         if (left != null) {
             result.left = TreeNode.fromString(left);
@@ -76,7 +74,7 @@ public class TreeNode {
     public static TreeNode create() {
         return new TreeNode();
     }
-    
+
     public long[] encoded;
 
     public TreeNode left;
@@ -107,14 +105,13 @@ public class TreeNode {
     }
 
     /*
-     * Utility function to rebalance the tree to a guaranteed
-     * BinaryTree
+     * Utility function to rebalance the tree to a guaranteed BinaryTree
      *
      * @return void
      */
     public void rebalance() {
         if (this.isLeaf()) {
-            this.left  = TreeNode.create();
+            this.left = TreeNode.create();
             this.right = TreeNode.create();
             return;
         }
@@ -157,7 +154,6 @@ public class TreeNode {
         }
 
         String leftString = "";
-        String rightString = "";
 
         if (this.getLeft() != null) {
             final TreeNode castLeft = this.getLeft();
@@ -170,6 +166,8 @@ public class TreeNode {
             }
         }
 
+        String rightString = "";
+        
         if (this.getRight() != null) {
             final TreeNode castRight = this.getRight();
 
@@ -222,14 +220,12 @@ public class TreeNode {
                     PADDING_SIZE + operatorsCount + platformsCount);
 
             if (ArrayUtils.indexOf(platformChoices, 1) != -1) {
-                System.out.println("Encoding while choices: " + Arrays.toString(platformChoices));
                 return this;
             }
         }
 
         int platformPosition = -1;
         platformPosition = ArrayUtils.indexOf(node.encoded, 1);
-        System.out.println("Encoding while choices: " + Arrays.toString(node.encoded));
         String platform = "";
 
         assert platformPosition >= 0;

@@ -31,13 +31,11 @@ import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.util.Tuple;
 import org.apache.wayang.ml.util.Logging;
 
-import ai.onnxruntime.NodeInfo;
 import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
 import ai.onnxruntime.OrtSession.Result;
-import ai.onnxruntime.TensorInfo;
 
 public class OrtMLModel {
     private static OrtMLModel INSTANCE;
@@ -103,7 +101,6 @@ public class OrtMLModel {
         }
     }
 
-    final static int treeSize = 22;
     /**
      * Close the session after running, {@link #closeSession()}
      * 
@@ -112,23 +109,14 @@ public class OrtMLModel {
      * @throws OrtException
      */
     public double runModel(final Tuple<ArrayList<long[][]>, ArrayList<long[][]>> input1) throws OrtException {
-        double costPrediction;
-
-        printTupleDeep(input1);
-        final Map<String, NodeInfo> inputInfoList = this.session.getInputInfo();
-        System.out.println("inputinfolist: " + inputInfoList);
-        final long[] input1Dims = ((TensorInfo) inputInfoList.get("values").getInfo()).getShape();
-        final long[] input2Dims = ((TensorInfo) inputInfoList.get("indexes").getInfo()).getShape();
+        final int batchSize = input1.getField0().size();
+        final long[][] firstValues = input1.getField0().get(0);
+        final int featureSize = firstValues.length;
+        final int sequenceLength = firstValues[0].length; 
 
         final Instant start = Instant.now();
-        final float[][][] inputValueStructure = new float[1][(int) input1Dims[1]][treeSize];
-        final long[][][] inputIndexStructure = new long[1][(int) input2Dims[1]][treeSize];
-
-        System.out.println("len1: " + input1.field0.get(0).length);
-        System.out.println("len2: " + input1.field0.get(0)[0].length);
-
-        System.out.println("len value structure 0: " + inputValueStructure[0].length);
-        System.out.println("len value structure 0 0: " + inputValueStructure[0][0].length);
+        final float[][][] inputValueStructure = new float[batchSize][featureSize][sequenceLength];
+        final long[][][] inputIndexStructure = new long[batchSize][featureSize][sequenceLength];
 
         for (int i = 0; i < input1.field0.get(0).length; i++) {
             for (int j = 0; j < input1.field0.get(0)[i].length; j++) {
@@ -158,6 +146,8 @@ public class OrtMLModel {
                 return Float.NaN;
             }
         };
+
+        final double costPrediction;
 
         try (Result r = session.run(inputMap, requestedOutputs)) {
             costPrediction = unwrapFunc.apply(r, "output");
