@@ -99,7 +99,6 @@ public class DefaultPointwiseCost extends DefaultEstimatableCost {
      * @return
      */
     public Double getCost(final PlanImplementation plan) {
-        System.out.println("getting cost!");
         try {
             final Configuration config = plan.getOptimizationContext().getConfiguration();
             final OrtMLModel model = OrtMLModel.getInstance(config);
