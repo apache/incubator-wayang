@@ -373,7 +373,7 @@ public class OneHotEncoder {
     }
 
     private static long traverse(final PlanImplementation plan, final Operator current,
-            final HashMap<Operator, Integer> visited, final int steps, int pipelineCount) {
+            final HashMap<Operator, Integer> visited, final int steps, long pipelineCount) {
 
         if (visited.containsKey(current)) {
             return pipelineCount;
