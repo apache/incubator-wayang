@@ -116,7 +116,9 @@ public class JdbcExecutor extends ExecutorTemplate {
             ));
         }
 
-        sb.append(';');
+        // Intentionally no trailing ';'. A trailing semicolon is unnecessary for a
+        // single-statement JDBC executeQuery and is rejected by strict SQL parsers
+        // such as Trino and BigQuery. Postgres/SQLite/HSQLDB accept its absence.
         return sb;
     }
 
@@ -157,13 +159,16 @@ public class JdbcExecutor extends ExecutorTemplate {
             } else if (operator instanceof JdbcProjectionOperator) {
                 assert projectionTask == null; // Allow one projection operator per stage for now.
                 projectionTask = (JdbcProjectionOperator) operator;
-            } else if (operator instanceof final JdbcGlobalReduceOperator globalReduce) {
+            } else if (operator instanceof JdbcGlobalReduceOperator) {
+                final JdbcGlobalReduceOperator globalReduce = (JdbcGlobalReduceOperator) operator;
                 assert globalReduceTask == null; // Allow one projection operator per stage for now.
                 globalReduceTask = globalReduce;
-            } else if (operator instanceof final JdbcReduceByOperator reduceBy) {
+            } else if (operator instanceof JdbcReduceByOperator) {
+                final JdbcReduceByOperator reduceBy = (JdbcReduceByOperator) operator;
                 assert reduceByTask == null; // Allow one projection operator per stage for now.
                 reduceByTask = reduceBy;
-            } else if (operator instanceof final JdbcSortOperator sort) {
+            } else if (operator instanceof JdbcSortOperator) {
+                final JdbcSortOperator sort = (JdbcSortOperator) operator;
                 assert sortTask == null; // Allow one projection operator per stage for now.
                 sortTask = sort;
             } else if (operator instanceof JoinOperator || (operator instanceof SpatialJoinOperator)) {
@@ -219,12 +224,15 @@ public class JdbcExecutor extends ExecutorTemplate {
         // Walk through intermediate operators, stopping at the sink
         ExecutionTask nextTask = JdbcExecutor.findJdbcExecutionOperatorTaskInStage(startTask, stage);
         while (nextTask != null && !(nextTask.getOperator() instanceof JdbcTableSinkOperator)) {
-            if (nextTask.getOperator() instanceof final JdbcFilterOperator filterOperator) {
+            if (nextTask.getOperator() instanceof JdbcFilterOperator) {
+                final JdbcFilterOperator filterOperator = (JdbcFilterOperator) nextTask.getOperator();
                 filterTasks.add(filterOperator);
-            } else if (nextTask.getOperator() instanceof final JdbcProjectionOperator projectionOperator) {
+            } else if (nextTask.getOperator() instanceof JdbcProjectionOperator) {
+                final JdbcProjectionOperator projectionOperator = (JdbcProjectionOperator) nextTask.getOperator();
                 assert projectionTask == null;
                 projectionTask = projectionOperator;
-            } else if (nextTask.getOperator() instanceof final JdbcJoinOperator joinOperator) {
+            } else if (nextTask.getOperator() instanceof JdbcJoinOperator) {
+                final JdbcJoinOperator joinOperator = (JdbcJoinOperator) nextTask.getOperator();
                 joinTasks.add(joinOperator);
             } else {
                 throw new WayangException(String.format("Unsupported JDBC execution task %s", nextTask.toString()));
