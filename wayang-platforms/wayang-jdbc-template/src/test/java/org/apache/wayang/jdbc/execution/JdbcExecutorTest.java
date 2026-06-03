@@ -81,7 +81,7 @@ class JdbcExecutorTest {
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
         assertEquals(
-                "SELECT * FROM customer;",
+                "SELECT * FROM customer",
                 sqlQueryChannelInstance.getSqlQuery()
         );
     }
@@ -130,7 +130,7 @@ class JdbcExecutorTest {
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
         assertEquals(
-                "SELECT * FROM customer WHERE age >= 18;",
+                "SELECT * FROM customer WHERE age >= 18",
                 sqlQueryChannelInstance.getSqlQuery()
         );
     }
@@ -172,7 +172,7 @@ class JdbcExecutorTest {
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
         assertEquals(
-                "SELECT name, age FROM customer;",
+                "SELECT name, age FROM customer",
                 sqlQueryChannelInstance.getSqlQuery()
         );
     }
@@ -240,7 +240,7 @@ class JdbcExecutorTest {
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
         assertEquals(
-                "SELECT name, age FROM customer WHERE age >= 18 AND name IS NOT NULL;",
+                "SELECT name, age FROM customer WHERE age >= 18 AND name IS NOT NULL",
                 sqlQueryChannelInstance.getSqlQuery()
         );
     }
