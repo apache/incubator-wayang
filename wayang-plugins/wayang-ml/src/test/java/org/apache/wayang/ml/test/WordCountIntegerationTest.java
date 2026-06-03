@@ -41,14 +41,13 @@ public class WordCountIntegerationTest extends JavaExecutionTestBase {
         config.setProperty("wayang.ml.model.file", modelPath);
 
         config.setCostModel(new DefaultPointwiseCost.Factory().makeCost());
-        final WayangPlan wayangPlan = createWayangPlan("file:///var/www/html/README.md", collector);
+        final String filePath = JavaExecutionMLTest.class.getResource("/README.md").toURI().toString();
+        final WayangPlan wayangPlan = createWayangPlan(filePath, collector);
         final WayangContext wayangContext = new WayangContext(config);
         
         wayangContext.register(Java.basicPlugin());
         wayangContext.register(Spark.basicPlugin());
 
         wayangContext.execute(wayangPlan);
-       
-        System.out.println(collector);
     }
 }

@@ -43,7 +43,8 @@ public class TreeEncoderTest extends JavaExecutionTestBase {
     public void testTreeEncoding() throws IOException, URISyntaxException {
         final List<Tuple2<String, Integer>> collector = new LinkedList<>();
         final Configuration config = new Configuration();
-        final WayangPlan wayangPlan = createWayangPlan("file:///var/www/html/README.md", collector);
+        final String filePath = JavaExecutionMLTest.class.getResource("/README.md").toURI().toString();
+        final WayangPlan wayangPlan = createWayangPlan(filePath, collector);
         final WayangContext wayangContext = new WayangContext(config);
         final Job wayangJob = wayangContext.createJob("", wayangPlan, "");
         wayangContext.register(Java.basicPlugin());
