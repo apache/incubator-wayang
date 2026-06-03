@@ -43,7 +43,7 @@ public class JavaBasicPlugin implements Plugin {
 
     @Override
     public Collection<ChannelConversion> getChannelConversions() {
-        return ChannelConversions.ALL;
+        return ChannelConversions.getAll();
     }
 
     @Override
