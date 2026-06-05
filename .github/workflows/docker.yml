@@ -47,7 +47,30 @@ jobs:
           ./mvnw package -B -pl :wayang-assembly -Pdistribution -Dmaven.test.skip=true
 
       - name: Build Docker image
-        run: docker build -t apache-wayang:ci .
+        run: docker buildx build --load -t apache-wayang:ci .
 
-      - name: Smoke test Java platform
-        run: docker run --rm apache-wayang:ci
+      - name: Smoke test WordCount on Java platform
+        run: |
+          docker run --rm apache-wayang:ci \
+            org.apache.wayang.apps.wordcount.Main \
+            java \
+            file:///opt/wayang/smoke/wordcount.txt
+
+      - name: Build Python API Docker image
+        run: docker buildx build --load -f python/Dockerfile -t apache-wayang-python:ci .
+
+      - name: Smoke test Python API against REST host
+        run: |
+          set -e
+          docker network create wayang-python-smoke
+          cleanup() {
+            docker rm -f wayang-rest >/dev/null 2>&1 || true
+            docker network rm wayang-python-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker run -d --name wayang-rest --network wayang-python-smoke apache-wayang-python:ci
+          docker run --rm --network wayang-python-smoke \
+            --entrypoint /usr/local/bin/wayang-python-entrypoint \
+            -e WAYANG_API_HOST=wayang-rest \
+            apache-wayang-python:ci \
+            python python/examples/wordcount.py
