@@ -2,6 +2,20 @@
 
 Local Trino environment backed by an **Iceberg** data lake, completely containerised.
 
+The current validation has two parts:
+
+1. Build the Wayang Trino platform and run the shared JDBC SQL-generation tests.
+2. Run JDBC integration tests against the local Trino, Iceberg, and MinIO stack.
+
+Run the commands below from the repository root. Java 17 and Docker with
+Docker Compose are required; Maven is provided by the repository wrapper.
+
+The pure Trino platform branch is named `wayang-trino`:
+
+```bash
+git checkout wayang-trino
+```
+
 ## Stack
 
 | Component | Image | Port | Role |
@@ -17,52 +31,103 @@ HMS is the battle-tested Iceberg catalog for Trino. Parquet data files are writt
 
 ```
 trino-setup/
-├── docker-compose.yml          # Full stack definition
-├── trino/
-│   ├── config.properties       # Trino node config
-│   └── catalog/
-│       ├── iceberg.properties  # Iceberg via HMS + MinIO
-│       └── tpch.properties     # Built-in TPC-H (no storage needed)
-├── scripts/
-│   ├── init.sql                # Creates iceberg.sales.orders + sample rows
-│   └── run-init.sh             # Helper: waits for Trino then runs init.sql
-├── pom.xml                     # Standalone Maven project (Java 17)
-└── src/test/java/.../
-    └── TrinoIntegrationTest.java   # JUnit 5 integration tests
+|-- docker-compose.yml          # Full stack definition
+|-- trino/
+|   |-- config.properties       # Trino node config
+|   `-- catalog/
+|       |-- iceberg.properties  # Iceberg via HMS + MinIO
+|       `-- tpch.properties     # Built-in TPC-H (no storage needed)
+|-- scripts/
+|   |-- init.sql                # Creates iceberg.sales.orders + sample rows
+|   `-- run-init.sh             # Helper: waits for Trino then runs init.sql
+|-- pom.xml                     # Standalone Maven project (Java 17)
+`-- src/test/java/.../
+    `-- TrinoIntegrationTest.java   # JUnit 5 integration tests
 ```
 
-## Quick Start
+## 1. Test the Wayang Trino Platform
+
+Build the Trino platform and its required modules:
+
+```bash
+./mvnw -Pskip-prerequisite-check -pl wayang-platforms/wayang-trino -am -DskipTests -Drat.skip=true test
+```
+
+On PowerShell:
+
+```powershell
+.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-trino -am -DskipTests -Drat.skip=true test
+```
+
+Then run the shared JDBC SQL-generation tests:
+
+```bash
+./mvnw -Pskip-prerequisite-check -pl wayang-platforms/wayang-jdbc-template -am -Dtest=JdbcExecutorTest -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Drat.skip=true test
+```
+
+On PowerShell:
+
+```powershell
+.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-jdbc-template -am -Dtest=JdbcExecutorTest -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Drat.skip=true test
+```
+
+Expected result:
+
+```text
+Wayang Platform Trino ... SUCCESS
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+## 2. Test the Local Trino Stack
 
 ### 1. Start the stack
 
 ```bash
-cd trino-setup
-docker-compose up -d
+docker compose -f trino-setup/docker-compose.yml up -d
 ```
 
 Wait ~30 seconds for all services to become healthy. Check with:
 
 ```bash
-docker-compose ps
+docker compose -f trino-setup/docker-compose.yml ps
 # or watch the Trino UI at http://localhost:8080
 ```
 
 ### 2. Load sample Iceberg data
 
 ```bash
-./scripts/run-init.sh
+bash trino-setup/scripts/run-init.sh
 ```
 
-This creates the schema `iceberg.sales` and inserts 10 sample orders into
+On PowerShell:
+
+```powershell
+Get-Content -Raw trino-setup/scripts/init.sql | docker exec -i trino trino --server http://localhost:8080 --user admin
+```
+
+This creates the schema `iceberg.sales` and inserts 20 sample orders into
 `iceberg.sales.orders` (Parquet files on MinIO).
 
 ### 3. Run the integration tests
 
 ```bash
-mvn test -Pintegration
+./mvnw -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
+```
+
+On PowerShell:
+
+```powershell
+.\mvnw.cmd --% -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
 ```
 
 Tests are skipped by default (no `-Pintegration`) to avoid requiring Docker in CI.
+
+Expected result:
+
+```text
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```
 
 ### 4. Manual exploration
 
@@ -94,18 +159,20 @@ Look for Parquet files under `warehouse/sales/orders/`.
 ### 5. Tear down
 
 ```bash
-docker-compose down -v   # -v removes volumes (clears MinIO data)
+docker compose -f trino-setup/docker-compose.yml down -v
 ```
+
+The `-v` option removes volumes and clears the local MinIO and PostgreSQL data.
 
 ## Test Coverage
 
 | Test | What it checks |
 |------|----------------|
-| `testConnectivity` | `SELECT 1` — JDBC connection works |
+| `testConnectivity` | `SELECT 1`, JDBC connection works |
 | `testTpchConnector` | TPC-H built-in connector, no storage needed |
 | `testTpchTopOrders` | ORDER BY + LIMIT on TPC-H |
 | `testIcebergSchemaVisible` | Schema created by `init.sql` is visible |
-| `testIcebergSelectAll` | Full table scan, 10 rows |
+| `testIcebergSelectAll` | Full table scan, 20 rows |
 | `testIcebergFilterByRegion` | WHERE pushdown on string column |
 | `testIcebergAggregate` | GROUP BY + SUM aggregation |
 | `testIcebergFilterByAmount` | WHERE pushdown on double column |
@@ -117,5 +184,5 @@ docker-compose down -v   # -v removes volumes (clears MinIO data)
 Override defaults if running Trino on a different host/port:
 
 ```bash
-TRINO_HOST=my-trino-host TRINO_PORT=8080 mvn test -Pintegration
+TRINO_HOST=my-trino-host TRINO_PORT=8080 ./mvnw -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
 ```
