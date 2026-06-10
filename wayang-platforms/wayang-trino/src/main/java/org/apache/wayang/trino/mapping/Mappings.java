@@ -30,8 +30,12 @@ public class Mappings {
 
     public static final Collection<Mapping> ALL = Arrays.asList(
             new FilterMapping(),
+            new GlobalReduceMapping(),
             new JoinMapping(),
-            new ProjectionMapping()
+            new ProjectionMapping(),
+            new ReduceByMapping(),
+            new SortMapping(),
+            new TableSinkMapping()
     );
 
 }
