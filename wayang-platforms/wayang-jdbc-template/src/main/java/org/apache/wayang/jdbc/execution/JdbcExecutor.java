@@ -151,7 +151,9 @@ public class JdbcExecutor extends ExecutorTemplate {
             ));
         }
 
-        sb.append(';');
+        // Intentionally no trailing ';'. A trailing semicolon is unnecessary for a
+        // single-statement JDBC executeQuery and is rejected by strict SQL parsers
+        // such as Trino and BigQuery. Postgres/SQLite/HSQLDB accept its absence.
         return sb;
     }
 

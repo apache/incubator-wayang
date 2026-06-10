@@ -1,0 +1,31 @@
+---
+# Stack: a single PrestoDB coordinator/worker with the in-memory connector.
+#
+# The `memory` connector supports CREATE SCHEMA / CREATE TABLE / INSERT / SELECT
+# entirely in-memory, so the integration test is fully self-contained — no Hive
+# metastore, object storage, or external catalog required.
+#
+# Ports:
+#   Presto:  http://localhost:8081   (UI + JDBC; container listens on 8080)
+#
+# The host port is 8081 to avoid clashing with the Trino stack (which uses 8080).
+
+services:
+
+  presto:
+    image: prestodb/presto:0.289
+    container_name: presto
+    ports:
+      - "8081:8080"
+    volumes:
+      # Enable the in-memory connector by adding a catalog properties file.
+      - ./etc/catalog/memory.properties:/opt/presto-server/etc/catalog/memory.properties
+    # Presto needs ~20-60s before it accepts queries. Gate on /v1/info so callers
+    # (and `docker compose up -d --wait`) can wait for readiness; the container
+    # reports "Up" long before the coordinator is ready.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/info"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
