@@ -1,0 +1,27 @@
+---
+# Stack: BigQuery Emulator (goccy/bigquery-emulator)
+#
+# Single container — no metastore, no object storage needed.
+# Data is seeded from data.yaml on startup and lives in memory.
+#
+# Ports:
+#   HTTP (REST API): http://localhost:9050
+#   gRPC (Storage API): localhost:9060
+
+services:
+
+  bigquery:
+    image: ghcr.io/goccy/bigquery-emulator:0.6.6
+    platform: linux/amd64
+    container_name: bigquery-emulator
+    ports:
+      - "9050:9050"
+      - "9060:9060"
+    volumes:
+      - ./data.yaml:/data.yaml
+    command: --project=test-project --data-from-yaml=/data.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ': >/dev/tcp/localhost/9050'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
