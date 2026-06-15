@@ -28,7 +28,7 @@ import org.apache.wayang.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaB
 import org.apache.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.apache.wayang.basic.data.{Record, Tuple2 => RT2}
 import org.apache.wayang.basic.model.{DLModel, Model, LogisticRegressionModel,DecisionTreeRegressionModel}
-import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator, LinearSVCOperator}
+import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, JoinOperator, LocalCallbackSink, MapOperator, ReduceByOperator, SampleOperator, SortOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator, LinearSVCOperator}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
 import org.apache.wayang.core.api.spatial.{SpatialGeometry, SpatialPredicate}
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
@@ -1020,6 +1020,10 @@ class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
   /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf]]. */
   private var keyUdfRamEstimator: LoadEstimator = _
 
+  /** SQL column and direction implementing the sort key. */
+  private var sqlColumnName: String = _
+  private var sqlDirection: String = _
+
 
   // Try to infer the type classes from the UDFs.
   locally {
@@ -1060,8 +1064,27 @@ class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
     this
   }
 
-  override protected def build =
-    applyTargetPlatforms(inputDataQuanta.dataQuanta().sortJava(keyUdf)(this.keyTag), this.getTargetPlatforms())
+  /**
+    * Add a SQL implementation of the sort key.
+    *
+    * @param columnName SQL column to sort by
+    * @param direction SQL sort direction, e.g. `ASC` or `DESC`
+    * @return this instance
+    */
+  def withSqlUdf(columnName: String, direction: String) = {
+    this.sqlColumnName = columnName
+    this.sqlDirection = direction
+    this
+  }
+
+  override protected def build = {
+    val result = inputDataQuanta.dataQuanta().sortJava(keyUdf)(this.keyTag)
+    if (this.sqlColumnName != null) {
+      result.operator.asInstanceOf[SortOperator[T, Key]]
+        .getKeyDescriptor.withSqlImplementation(this.sqlColumnName, this.sqlDirection)
+    }
+    applyTargetPlatforms(result, this.getTargetPlatforms())
+  }
 
 }
 
@@ -1283,6 +1306,10 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
   /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
   private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
+  /** SQL implementations of the grouping key and reduction. */
+  private var keySqlUdf: String = _
+  private var reduceSqlUdf: String = _
+
   // TODO: Add these estimators.
   //  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf]]. */
   //  private var keyUdfCpuEstimator: LoadEstimator = _
@@ -1322,7 +1349,29 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
     this
   }
 
-  override protected def build = applyTargetPlatforms(inputDataQuanta.dataQuanta().reduceByKeyJava(keyUdf, udf, this.udfLoadProfileEstimator), this.getTargetPlatforms())
+  /**
+    * Add SQL implementations of the grouping key and reduction.
+    *
+    * @param keySqlUdf SQL grouping column
+    * @param reduceSqlUdf SQL aggregate expression
+    * @return this instance
+    */
+  def withSqlUdfs(keySqlUdf: String, reduceSqlUdf: String) = {
+    this.keySqlUdf = keySqlUdf
+    this.reduceSqlUdf = reduceSqlUdf
+    this
+  }
+
+  override protected def build = {
+    val result = inputDataQuanta.dataQuanta()
+      .reduceByKeyJava(keyUdf, udf, this.udfLoadProfileEstimator)
+    if (this.keySqlUdf != null) {
+      val operator = result.operator.asInstanceOf[ReduceByOperator[T, Key]]
+      operator.getKeyDescriptor.withSqlImplementation(this.keySqlUdf, this.keySqlUdf)
+      operator.getReduceDescriptor.withSqlImplementation(this.reduceSqlUdf)
+    }
+    applyTargetPlatforms(result, this.getTargetPlatforms())
+  }
 }
 
 /**
@@ -1402,6 +1451,9 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
   /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
   private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
+  /** SQL implementation of the reduction. */
+  private var sqlUdf: String = _
+
   // Try to infer the type classes from the udf.
   locally {
     val parameters = ReflectionUtils.getTypeParameters(udf.getClass, classOf[SerializableBinaryOperator[_]])
@@ -1422,7 +1474,25 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
     this
   }
 
-  override protected def build = applyTargetPlatforms(inputDataQuanta.dataQuanta().reduceJava(udf, this.udfLoadProfileEstimator), this.getTargetPlatforms())
+  /**
+    * Add a SQL implementation of the reduction.
+    *
+    * @param sqlUdf SQL aggregate expression
+    * @return this instance
+    */
+  def withSqlUdf(sqlUdf: String) = {
+    this.sqlUdf = sqlUdf
+    this
+  }
+
+  override protected def build = {
+    val result = inputDataQuanta.dataQuanta().reduceJava(udf, this.udfLoadProfileEstimator)
+    if (this.sqlUdf != null) {
+      result.operator.asInstanceOf[GlobalReduceOperator[T]]
+        .getReduceDescriptor.withSqlImplementation(this.sqlUdf)
+    }
+    applyTargetPlatforms(result, this.getTargetPlatforms())
+  }
 
 }
 
@@ -1489,6 +1559,12 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
 
   /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf1]]. */
   private var keyUdf1RamEstimator: LoadEstimator = _
+
+  /** SQL implementations of both join keys. */
+  private var keyUdf0TableName: String = _
+  private var keyUdf0SqlUdf: String = _
+  private var keyUdf1TableName: String = _
+  private var keyUdf1SqlUdf: String = _
 
   // Try to infer the type classes from the UDFs.
   locally {
@@ -1569,6 +1645,22 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
   }
 
   /**
+    * Add SQL implementations of both join keys.
+    *
+    * @return this instance
+    */
+  def withSqlUdfs(thisTableName: String,
+                  thisKeySqlUdf: String,
+                  thatTableName: String,
+                  thatKeySqlUdf: String) = {
+    this.keyUdf0TableName = thisTableName
+    this.keyUdf0SqlUdf = thisKeySqlUdf
+    this.keyUdf1TableName = thatTableName
+    this.keyUdf1SqlUdf = thatKeySqlUdf
+    this
+  }
+
+  /**
     * Assemble the joined elements to new elements.
     *
     * @param udf produces a joined element from two joinable elements
@@ -1579,8 +1671,16 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
       override def apply(joinTuple: RT2[In0, In1]): NewOut = udf.apply(joinTuple.field0, joinTuple.field1)
     })
 
-  override protected def build =
-    applyTargetPlatforms(inputDataQuanta0.dataQuanta().joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag), this.getTargetPlatforms())
+  override protected def build = {
+    val result = inputDataQuanta0.dataQuanta()
+      .joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag)
+    if (this.keyUdf0SqlUdf != null) {
+      val operator = result.operator.asInstanceOf[JoinOperator[In0, In1, Key]]
+      operator.getKeyDescriptor0.withSqlImplementation(this.keyUdf0TableName, this.keyUdf0SqlUdf)
+      operator.getKeyDescriptor1.withSqlImplementation(this.keyUdf1TableName, this.keyUdf1SqlUdf)
+    }
+    applyTargetPlatforms(result, this.getTargetPlatforms())
+  }
 
 }
 
