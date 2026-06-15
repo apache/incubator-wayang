@@ -69,7 +69,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>Coverage: {@code TableSource}, {@code Filter}, {@code Projection},
  * {@code Join}, {@code GlobalReduce}, {@code ReduceBy}, {@code Sort},
- * {@code TableSink} — plus the SQL→Stream channel conversion that materialises
+ * {@code TableSink}, plus the SQL-to-Stream channel conversion that materialises
  * every result. Each test also asserts, via Trino's {@code system.runtime.queries},
  * that the expected SQL actually reached Trino (i.e. the operator was pushed
  * down, not silently executed elsewhere).
@@ -101,7 +101,7 @@ class TrinoOperatorsIT {
 
     private static boolean trinoAvailable = false;
 
-    // ── Lifecycle ───────────────────────────────────────────────────────────
+    // Lifecycle
 
     @BeforeAll
     static void setUp() {
@@ -161,7 +161,7 @@ class TrinoOperatorsIT {
         }
     }
 
-    // ── Tests (one per operator) ──────────────────────────────────────────────
+    // Tests (one per operator)
 
     /** TableSource: full scan returns every row. */
     @Test
@@ -285,7 +285,7 @@ class TrinoOperatorsIT {
             return sink;
         });
         assertEquals(1, rows.size(), "global reduce must collapse to a single row");
-        // 6 base rows sum to 7231.25; scaled x20000 → 144,625,000 (exact in doubles).
+        // 6 base rows sum to 7231.25; scaled x20000 gives 144,625,000 (exact in doubles).
         assertEquals(144_625_000.0, ((Number) rows.get(0).getField(0)).doubleValue(), 0.01);
         assertSqlReachedTrino("SELECT SUM(amount) FROM " + ORDERS);
     }
@@ -351,7 +351,7 @@ class TrinoOperatorsIT {
 
     /**
      * TableSink: filter + sink composed into a single {@code CREATE TABLE ... AS
-     * SELECT} that runs entirely inside Trino — no data leaves the database.
+     * SELECT} that runs entirely inside Trino; no data leaves the database.
      */
     @Test
     @Order(8)
@@ -381,7 +381,7 @@ class TrinoOperatorsIT {
         assertSqlReachedTrino("CREATE TABLE " + SINK_TABLE + " AS");
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // JavaPlanBuilder combination tests
 
     /**
      * JavaPlanBuilder API: read a table, filter it, project two columns, and
