@@ -18,10 +18,14 @@
 
 package org.apache.wayang.trino;
 
+import org.apache.wayang.api.DataQuantaBuilder;
+import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
+import org.apache.wayang.basic.operators.JoinOperator;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.basic.operators.ReduceByOperator;
@@ -36,10 +40,7 @@ import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.java.Java;
-import org.apache.wayang.jdbc.compiler.FunctionCompiler;
-import org.apache.wayang.trino.operators.TrinoJoinOperator;
 import org.apache.wayang.trino.operators.TrinoTableSource;
-import org.apache.wayang.trino.platform.TrinoPlatform;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -53,6 +54,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -226,45 +228,44 @@ class TrinoOperatorsIT {
     }
 
     /**
-     * Join: orders ⋈ customers on customer_id.
+     * Join: orders and customers on customer_id.
      *
-     * <p>Unlike the other operators, a JDBC join cannot be driven through the
-     * high-level {@link WayangContext} API here: the logical {@link JoinOperator}
-     * emits {@code Tuple2<Record,Record>}, which has no valid connection to a
-     * {@code Record} sink (the SQL pushdown that would flatten it happens only
-     * after optimization). So we verify the operator's real contract directly:
-     * {@link TrinoJoinOperator#createSqlClause} must produce a Trino-valid JOIN
-     * clause that, executed against live Trino, returns the correct rows.
+     * <p>The logical {@link JoinOperator} emits {@code Tuple2<Record,Record>},
+     * while a pushed-down JDBC join already emits a flat {@link Record}. The
+     * following map normalizes both representations before the result reaches
+     * the sink.
      */
     @Test
     @Order(4)
-    void join() throws Exception {
+    void join() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
-        TrinoJoinOperator<Record> join = new TrinoJoinOperator<>(
-                new TransformationDescriptor<>(
-                        (Record r) -> new Record(r.getField(1)), Record.class, Record.class
-                ).withSqlImplementation(ORDERS, "customer_id"),
-                new TransformationDescriptor<>(
-                        (Record r) -> new Record(r.getField(0)), Record.class, Record.class
-                ).withSqlImplementation(CUSTOMERS, "customer_id"));
+        List<Record> rows = execute(results -> {
+            TrinoTableSource orders = new TrinoTableSource(
+                    ORDERS, "order_id", "customer_id", "region", "amount");
+            TrinoTableSource customers = new TrinoTableSource(
+                    CUSTOMERS, "customer_id", "name", "tier");
+            JoinOperator<Record, Record, Record> join = new JoinOperator<>(
+                    new TransformationDescriptor<>(
+                            (Record r) -> new Record(r.getField(1)), Record.class, Record.class
+                    ).withSqlImplementation(ORDERS, "customer_id"),
+                    new TransformationDescriptor<>(
+                            (Record r) -> new Record(r.getField(0)), Record.class, Record.class
+                    ).withSqlImplementation(CUSTOMERS, "customer_id"));
+            MapOperator<Object, Record> flatten = new MapOperator<>(
+                    TrinoOperatorsIT::flattenJoinResult, Object.class, Record.class);
+            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
+            orders.connectTo(0, join, 0);
+            customers.connectTo(0, join, 1);
+            join.connectTo(0, flatten, 0);
+            flatten.connectTo(0, sink, 0);
+            return sink;
+        });
 
-        // The operator routes to the Trino platform.
-        assertEquals(TrinoPlatform.getInstance(), join.getPlatform());
-
-        try (Connection c = jdbc()) {
-            // Operator-generated JOIN clause, assembled into the full SELECT exactly
-            // as JdbcExecutor would (FROM <left> + <join clause>).
-            String joinClause = join.createSqlClause(c, new FunctionCompiler());
-            assertTrue(joinClause.startsWith("JOIN " + CUSTOMERS + " ON"),
-                    "unexpected join clause: " + joinClause);
-
-            String sql = "SELECT * FROM " + ORDERS + " " + joinClause;
-            ResultSet rs = c.createStatement().executeQuery(sql);
-            int n = 0;
-            while (rs.next()) n++;
-            // Every order's customer_id exists in customers → one joined row per order.
-            assertEquals(120000, n, "join should yield one row per order");
-        }
+        assertEquals(120000, rows.size(), "join should yield one row per order");
+        // Every order's customer_id exists in customers, so there is one joined row per order.
+        assertTrue(rows.stream().allMatch(r -> r.getField(1).equals(r.getField(4))),
+                "joined customer IDs should match");
+        assertSqlReachedTrino("JOIN " + CUSTOMERS);
     }
 
     /** GlobalReduce: SUM(amount) over the whole table collapses to a single row. */
@@ -382,6 +383,153 @@ class TrinoOperatorsIT {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * JavaPlanBuilder API: read a table, filter it, project two columns, and
+     * collect the result through a complete high-level Wayang plan.
+     */
+    @Test
+    @Order(9)
+    void javaPlanBuilderReadTableFilterProjection() {
+        Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
+
+        Collection<Record> rows = new JavaPlanBuilder(
+                wayangContext(), "Trino JavaPlanBuilder readTable integration test")
+                .readTable(new TrinoTableSource(
+                        ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                .collect();
+
+        assertEquals(60000, rows.size(), "60000 projected AMER orders expected");
+        assertTrue(rows.stream().allMatch(record -> record.size() == 2),
+                "projection should retain only order_id and amount");
+        assertTrue(rows.stream().allMatch(record -> {
+            double amount = ((Number) record.getField(1)).doubleValue();
+            return amount == 2200.0 || amount == 680.5 || amount == 950.25;
+        }), "only AMER order amounts should remain");
+        assertSqlReachedTrino(
+                "SELECT order_id, amount FROM " + ORDERS + " WHERE region = 'AMER'");
+    }
+
+    /**
+     * JavaPlanBuilder API: combine a filter with a global reduction.
+     */
+    @Test
+    @Order(10)
+    void javaPlanBuilderReadTableFilterGlobalReduce() {
+        Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
+
+        Collection<Record> rows = new JavaPlanBuilder(
+                wayangContext(), "Trino JavaPlanBuilder global reduce integration test")
+                .readTable(new TrinoTableSource(
+                        ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .reduce((left, right) -> left)
+                    .withSqlUdf("SUM(amount)")
+                .collect();
+
+        assertEquals(1, rows.size(), "global reduction should return one row");
+        Record sum = rows.iterator().next();
+        assertEquals(76_615_000.0, ((Number) sum.getField(0)).doubleValue(), 0.01);
+        assertSqlReachedTrino(
+                "SELECT SUM(amount) FROM " + ORDERS + " WHERE region = 'AMER'");
+    }
+
+    /**
+     * JavaPlanBuilder API: group by region, aggregate each group, and sort the
+     * grouped result.
+     */
+    @Test
+    @Order(11)
+    void javaPlanBuilderReadTableReduceBySort() {
+        Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
+
+        List<Record> rows = new ArrayList<>(new JavaPlanBuilder(
+                wayangContext(), "Trino JavaPlanBuilder reduce-by and sort integration test")
+                .readTable(new TrinoTableSource(
+                        ORDERS, "order_id", "customer_id", "region", "amount"))
+                .reduceByKey(
+                        record -> new Record(record.getField(2)),
+                        (left, right) -> left)
+                    .withSqlUdfs("region", "SUM(amount)")
+                .sort(record -> new Record(record.getField(0)))
+                    .withSqlUdf("region", "ASC")
+                .collect());
+
+        assertEquals(3, rows.size(), "one row per region expected");
+        assertEquals("AMER", rows.get(0).getField(0));
+        assertEquals("APAC", rows.get(1).getField(0));
+        assertEquals("EMEA", rows.get(2).getField(0));
+        assertSqlReachedTrino(
+                "SELECT region,SUM(amount) FROM " + ORDERS + " GROUP BY region ORDER BY region ASC");
+    }
+
+    /**
+     * JavaPlanBuilder API: compose a filtered projection directly into a table
+     * sink so all processing remains in Trino.
+     */
+    @Test
+    @Order(12)
+    void javaPlanBuilderReadTableFilterProjectionTableSink() throws Exception {
+        Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
+
+        new JavaPlanBuilder(wayangContext(), "Trino JavaPlanBuilder table sink integration test")
+                .readTable(new TrinoTableSource(
+                        ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                .writeTable(
+                        SINK_TABLE,
+                        "overwrite",
+                        new String[]{"order_id", "amount"},
+                        new Properties());
+
+        try (Connection c = jdbc()) {
+            ResultSet rs = c.createStatement().executeQuery("SELECT count(*) FROM " + SINK_TABLE);
+            rs.next();
+            assertEquals(60000, rs.getLong(1), "sink table should contain projected AMER orders");
+        }
+        assertSqlReachedTrino(
+                "CREATE TABLE " + SINK_TABLE
+                        + " AS SELECT order_id, amount FROM " + ORDERS + " WHERE region = 'AMER'");
+    }
+
+    /**
+     * JavaPlanBuilder API: join two tables and normalize the current logical
+     * and JDBC join output representations before collecting the result.
+     */
+    @Test
+    @Order(13)
+    void javaPlanBuilderReadTableJoin() {
+        Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
+
+        JavaPlanBuilder plan = new JavaPlanBuilder(
+                wayangContext(), "Trino JavaPlanBuilder join integration test");
+        DataQuantaBuilder<?, Record> orders = plan.readTable(new TrinoTableSource(
+                ORDERS, "order_id", "customer_id", "region", "amount"));
+        DataQuantaBuilder<?, Record> customers = plan.readTable(new TrinoTableSource(
+                CUSTOMERS, "customer_id", "name", "tier"));
+
+        Collection<Record> rows = orders
+                .join(
+                        record -> new Record(record.getField(1)),
+                        customers,
+                        record -> new Record(record.getField(0)))
+                    .withSqlUdfs(ORDERS, "customer_id", CUSTOMERS, "customer_id")
+                .asRecords()
+                .collect();
+
+        assertEquals(120000, rows.size(), "join should yield one row per order");
+        assertTrue(rows.stream().allMatch(row -> row.getField(1).equals(row.getField(4))),
+                "joined customer IDs should match");
+        assertSqlReachedTrino("JOIN " + CUSTOMERS);
+    }
+
     /** Functional builder: given the result list, wire a plan and return its sink. */
     private interface PlanBuilder {
         LocalCallbackSink<Record> build(List<Record> resultCollector);
@@ -402,6 +550,23 @@ class TrinoOperatorsIT {
         LocalCallbackSink<Record> sink = builder.build(results);
         wayangContext().execute(new WayangPlan(sink));
         return results;
+    }
+
+    private static Record flattenJoinResult(Object joinResult) {
+        if (joinResult instanceof Record) {
+            return (Record) joinResult;
+        }
+        Tuple2<?, ?> pair = (Tuple2<?, ?>) joinResult;
+        Record left = (Record) pair.field0;
+        Record right = (Record) pair.field1;
+        return new Record(
+                left.getField(0),
+                left.getField(1),
+                left.getField(2),
+                left.getField(3),
+                right.getField(0),
+                right.getField(1),
+                right.getField(2));
     }
 
     /** Assert that Trino actually ran a query containing the given fragment. */
