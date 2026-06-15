@@ -79,7 +79,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p><b>Note on the aggregate tests.</b> {@code GlobalReduce}/{@code ReduceBy}
  * carry their aggregation only in the SQL implementation ({@code SUM(amount)});
  * the Java fallback would not reproduce it. They therefore depend on the optimizer
- * electing BigQuery pushdown — which it does here because they reduce cardinality.
+ * electing BigQuery pushdown, which it does here because they reduce cardinality.
  * If a future run on different data shows a Java-side reduce, scale the reference
  * dataset up (as the Trino/Presto suites do at 120k rows). {@code Sort} does not
  * reduce cardinality, so it is verified via the operator's SQL-clause contract
@@ -138,14 +138,14 @@ class BigQueryOperatorsIT {
 
     private static boolean available = false;
 
-    /** System property (preferred) → environment variable → default. */
+    /** Resolution order: system property (preferred), environment variable, default. */
     private static String cfg(String sysProp, String envVar, String dflt) {
         String v = System.getProperty(sysProp);
         if (v == null || v.isEmpty()) v = System.getenv(envVar);
         return (v == null || v.isEmpty()) ? dflt : v;
     }
 
-    // ── Setup ───────────────────────────────────────────────────────────────
+    // Setup
 
     @BeforeAll
     static void checkAvailable() {
@@ -190,9 +190,7 @@ class BigQueryOperatorsIT {
                 new RecordType("order_id", "region", "product", "amount"), fields);
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    //  VERIFICATION TESTS
-    // ════════════════════════════════════════════════════════════════════════
+    // Verification tests
 
     /** BigQueryTableSource must be bound to BigQueryPlatform (drives wayang.bigquery.* config). */
     @Test
@@ -237,9 +235,7 @@ class BigQueryOperatorsIT {
         System.out.println("[VERIFY] Correctly threw when JDBC config was absent.");
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    //  FUNCTIONAL TESTS (TableSource / Filter / Projection)
-    // ════════════════════════════════════════════════════════════════════════
+    // Functional tests: TableSource, Filter, and Projection
 
     /** Full table scan: SELECT * FROM `<table>` */
     @Test
@@ -392,9 +388,7 @@ class BigQueryOperatorsIT {
         System.out.println("[PASS] Cardinality: " + results.size() + " EMEA rows (expected 3)");
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    //  AGGREGATION / ORDERING / SINK TESTS
-    // ════════════════════════════════════════════════════════════════════════
+    // Aggregation, ordering, sink, and JavaPlanBuilder combination tests
 
     /**
      * GlobalReduce: SUM(amount) over the whole table collapses to a single row.
@@ -467,7 +461,7 @@ class BigQueryOperatorsIT {
      *
      * <p>Unlike filter/projection, a sort does not reduce cardinality, so on the
      * tiny reference table the cost optimizer keeps it in Java rather than pushing
-     * it down — and the jdbc-template sort key is a {@code Record}, which the Java
+     * it down, and the jdbc-template sort key is a {@code Record}, which the Java
      * sort cannot order (the Trino/Presto suites avoid this only because their
      * 120k-row fixtures make SQL pushdown the cheaper plan). So we assert the
      * operator's real contract: {@link BigQuerySortOperator#createSqlClause} must
@@ -506,7 +500,7 @@ class BigQueryOperatorsIT {
 
     /**
      * TableSink: filter + sink composed into a single {@code CREATE TABLE ... AS
-     * SELECT} that runs entirely inside BigQuery — no data leaves the warehouse.
+     * SELECT} that runs entirely inside BigQuery; no data leaves the warehouse.
      */
     @Test
     @Order(11)
