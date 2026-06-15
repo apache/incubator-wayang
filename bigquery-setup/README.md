@@ -248,9 +248,22 @@ real BigQuery` path, including reads, SQL pushdown, aggregation, sorting, and
 test, while the reference `sales.orders` table was retained for reruns. No
 service-account key or credential file is stored in this repository.
 
-The suite now contains five additional `JavaPlanBuilder` combination tests.
-They compile successfully, but still require revalidation against real BigQuery.
-The local BigQuery emulator suite remains independently verified at 7/7.
+On June 16, 2026, the expanded 17-test suite was also verified successfully
+against real BigQuery:
+
+```text
+Tests run: 17, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```
+
+This includes all five additional `JavaPlanBuilder` combination tests. The
+local BigQuery emulator suite remains independently verified at 7/7.
+
+If the browser uses a local proxy, pass the same proxy to both CLI tools and
+the Maven test JVM. For example, with a proxy at `127.0.0.1:7890`, set
+`HTTP_PROXY`/`HTTPS_PROXY` and use `JAVA_TOOL_OPTIONS` with
+`-Dhttp.proxyHost`, `-Dhttp.proxyPort`, `-Dhttps.proxyHost`, and
+`-Dhttps.proxyPort`.
 
 If credentials or the project configuration are missing, Maven can still print
 `BUILD SUCCESS` with `Skipped: 16`. Only the platform-binding test ran in that
