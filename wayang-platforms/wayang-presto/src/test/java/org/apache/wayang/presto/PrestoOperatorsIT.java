@@ -72,14 +72,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * in-memory connector.
  *
  * <p>Each operator (except Join) runs through the full Wayang API
- * (WayangContext → optimizer → SQL→Stream) and asserts both correct results
+ * (WayangContext to optimizer to SQL-to-Stream) and asserts both correct results
  * and that the expected SQL was pushed down (via {@code system.runtime.queries}).
  * Join is verified through the operator's SQL-clause contract executed on Presto,
  * because the logical {@code JoinOperator} emits {@code Tuple2<Record,Record>},
  * which cannot connect to a {@code Record} sink in a high-level plan.
  *
  * <p>Prerequisites: a Presto reachable at {@code PRESTO_HOST:PRESTO_PORT}
- * (defaults {@code localhost:8081}) with the {@code memory} connector enabled —
+ * (defaults {@code localhost:8081}) with the {@code memory} connector enabled;
  * e.g. {@code cd presto-setup && docker compose up -d}. If Presto is not
  * reachable the whole class is skipped (not failed).
  *
@@ -105,7 +105,7 @@ class PrestoOperatorsIT {
 
     private static boolean prestoAvailable = false;
 
-    // ── Lifecycle ───────────────────────────────────────────────────────────
+    // Lifecycle
 
     @BeforeAll
     static void setUp() throws Exception {
@@ -130,7 +130,7 @@ class PrestoOperatorsIT {
             // Build 120000 rows from a 6-row VALUES list crossed with sequence(1,10000)
             // and a 2-row doubler. Sourcing from VALUES (not the table itself) avoids
             // reading+writing the same memory table in one statement. Ratios preserved:
-            // 3 of 6 base rows are AMER → 60000 AMER; customer_id ∈ {100,101,102}.
+            // 3 of 6 base rows are AMER, giving 60000 AMER rows; customer_id is in {100,101,102}.
             st.execute("INSERT INTO " + ORDERS + " (order_id, customer_id, region, amount) "
                     + "SELECT CAST(b.order_id AS BIGINT), CAST(b.customer_id AS BIGINT), "
                     + "       b.region, CAST(b.amount AS DOUBLE) "
@@ -170,7 +170,7 @@ class PrestoOperatorsIT {
         }
     }
 
-    // ── Tests (one per operator) ──────────────────────────────────────────────
+    // Tests (one per operator)
 
     /** TableSource: full scan returns every row. */
     @Test
@@ -185,7 +185,7 @@ class PrestoOperatorsIT {
         });
         assertEquals(120000, rows.size(), "TableSource should return all orders");
         // @Order(1) runs this before the filter/join tests, whose pushed queries
-        // contain this same prefix — so the (existential) history match here is the
+        // contain this same prefix, so the (existential) history match here is the
         // bare scan, not one of those. @Order is therefore load-bearing for specificity.
         assertSqlReachedPresto("SELECT * FROM " + ORDERS);
     }
@@ -240,7 +240,7 @@ class PrestoOperatorsIT {
     }
 
     /**
-     * Join: orders ⋈ customers on customer_id.
+     * Join: orders with customers on customer_id.
      *
      * <p>A JDBC join cannot be driven through the high-level {@link WayangContext}
      * API: the logical {@link org.apache.wayang.basic.operators.JoinOperator} emits
@@ -273,7 +273,7 @@ class PrestoOperatorsIT {
             ResultSet rs = c.createStatement().executeQuery(sql);
             int n = 0;
             while (rs.next()) n++;
-            // Every order's customer_id exists in customers → one joined row per order.
+            // Every order's customer_id exists in customers, yielding one joined row per order.
             assertEquals(120000, n, "join should yield one row per order");
         }
     }
@@ -295,7 +295,7 @@ class PrestoOperatorsIT {
             return sink;
         });
         assertEquals(1, rows.size(), "global reduce must collapse to a single row");
-        // 6 base rows sum to 7231.25; scaled x20000 → 144,625,000 (exact in doubles).
+        // 6 base rows sum to 7231.25; scaled x20000 gives 144,625,000 (exact in doubles).
         assertEquals(144_625_000.0, ((Number) rows.get(0).getField(0)).doubleValue(), 0.01);
         assertSqlReachedPresto("SELECT SUM(amount) FROM " + ORDERS);
     }
@@ -361,7 +361,7 @@ class PrestoOperatorsIT {
 
     /**
      * TableSink: filter + sink composed into a single {@code CREATE TABLE ... AS
-     * SELECT} that runs entirely inside Presto — no data leaves the database.
+     * SELECT} that runs entirely inside Presto; no data leaves the database.
      */
     @Test
     @Order(8)
@@ -391,7 +391,7 @@ class PrestoOperatorsIT {
         assertSqlReachedPresto("CREATE TABLE " + SINK_TABLE + " AS");
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // JavaPlanBuilder combination tests
 
     /**
      * JavaPlanBuilder API: read a table, filter it, project two columns, and
