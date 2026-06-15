@@ -39,7 +39,9 @@ import org.junit.jupiter.api.Test;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -116,7 +118,12 @@ class JdbcJoinOperatorTest extends OperatorTestBase {
         joinTask.setOutputChannel(0, new SqlQueryChannel(sqlChannelDescriptor, joinOperator.getOutput(0)));
         joinTask.setStage(sqlStage);
 
-        when(sqlStage.getStartTasks()).thenReturn(Collections.singleton(tableSourceATask));
+        // Deliberately list the right source first: JdbcExecutor must still choose
+        // the join's left source for the FROM clause.
+        when(sqlStage.getStartTasks()).thenReturn(new LinkedHashSet<>(Arrays.asList(
+                tableSourceBTask, tableSourceATask)));
+        when(sqlStage.getAllTasks()).thenReturn(new LinkedHashSet<>(Arrays.asList(
+                tableSourceBTask, tableSourceATask, joinTask)));
         when(sqlStage.getTerminalTasks()).thenReturn(Collections.singleton(joinTask));
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
