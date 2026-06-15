@@ -18,6 +18,8 @@
 
 package org.apache.wayang.bigquery;
 
+import org.apache.wayang.api.DataQuantaBuilder;
+import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.FilterOperator;
@@ -45,6 +47,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,13 +66,15 @@ import static org.junit.jupiter.api.Assertions.*;
  * account is therefore required to actually exercise these operators.
  *
  * <p>Coverage: {@code TableSource}, {@code Filter}, {@code Projection},
- * {@code GlobalReduce}, {@code ReduceBy}, {@code Sort}, {@code TableSink} — the
- * full set the BigQuery platform implements, mirroring the Trino/Presto suites.
+ * {@code GlobalReduce}, {@code ReduceBy}, {@code Sort}, {@code Join}, and
+ * {@code TableSink}, including JavaPlanBuilder combination plans that mirror
+ * the Trino/Presto suites.
  *
- * <p><b>Status: 12/12 green</b> against a live BigQuery project (free-tier
- * sandbox) with the 10-row reference dataset. The tests use only {@code SELECT}
- * and {@code CREATE TABLE AS}/{@code DROP} (DDL), never DML, so they run without
- * billing enabled.
+ * <p><b>Status:</b> the original 12 tests passed against a live BigQuery project
+ * on June 11, 2026. The five JavaPlanBuilder combination tests require the same
+ * real-BigQuery credentials and must be revalidated there. The tests use only
+ * {@code SELECT} and {@code CREATE TABLE AS}/{@code DROP} (DDL), never DML, so
+ * they run without billing enabled.
  *
  * <p><b>Note on the aggregate tests.</b> {@code GlobalReduce}/{@code ReduceBy}
  * carry their aggregation only in the SQL implementation ({@code SUM(amount)});
@@ -123,6 +128,9 @@ class BigQueryOperatorsIT {
     /** Backtick-quoted sink target for the TableSink test; dropped in {@link #cleanup()}. */
     private static final String SINK_TABLE = "`" + PROJECT_ID + ".sales.wayang_emea_orders`";
 
+    /** Temporary lookup table for the JavaPlanBuilder join test. */
+    private static final String JOIN_TABLE = "`" + PROJECT_ID + ".sales.wayang_regions`";
+
     private static final String JDBC_URL = String.format(
             "jdbc:bigquery://https://www.googleapis.com/bigquery/v2;" +
             "ProjectId=%s;OAuthType=0;OAuthServiceAcctEmail=%s;OAuthPvtKeyPath=%s",
@@ -158,6 +166,7 @@ class BigQueryOperatorsIT {
         if (!available) return;
         try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
             conn.createStatement().execute("DROP TABLE IF EXISTS " + SINK_TABLE);
+            conn.createStatement().execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
         } catch (Exception e) {
             System.err.println("[CLEANUP] failed to drop " + SINK_TABLE + ": " + e.getMessage());
         }
@@ -527,5 +536,143 @@ class BigQueryOperatorsIT {
             assertEquals(0, rs.getLong(2), "sink table must hold only EMEA orders");
         }
         System.out.println("[PASS] TableSink wrote 3 EMEA rows into " + SINK_TABLE);
+    }
+
+    /** JavaPlanBuilder API: combine a pushed-down filter and projection. */
+    @Test
+    @Order(12)
+    @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> projection")
+    void javaPlanBuilderReadTableFilterProjection() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        Collection<Record> rows = new JavaPlanBuilder(
+                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder filter projection test")
+                .readTable(new BigQueryTableSource(
+                        TABLE, "order_id", "region", "product", "amount"))
+                .filter(record -> ((Number) record.getField(3)).doubleValue() > 1000.0)
+                    .withSqlUdf("amount > 1000")
+                    .withTargetPlatform(BigQuery.platform())
+                .asRecords()
+                .projectRecords(new String[]{"region", "amount"})
+                    .withTargetPlatform(BigQuery.platform())
+                .collect();
+
+        assertEquals(5, rows.size());
+        assertTrue(rows.stream().allMatch(record ->
+                record.size() == 2 && ((Number) record.getField(1)).doubleValue() > 1000.0));
+    }
+
+    /** JavaPlanBuilder API: combine a filter with a global reduction. */
+    @Test
+    @Order(13)
+    @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> globalReduce")
+    void javaPlanBuilderReadTableFilterGlobalReduce() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        Collection<Record> rows = new JavaPlanBuilder(
+                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder global reduce test")
+                .readTable(new BigQueryTableSource(
+                        TABLE, "order_id", "region", "product", "amount"))
+                .filter(record -> "EMEA".equals(record.getField(1)))
+                    .withSqlUdf("region = 'EMEA'")
+                    .withTargetPlatform(BigQuery.platform())
+                .reduce((left, right) -> left)
+                    .withSqlUdf("SUM(amount)")
+                    .withTargetPlatform(BigQuery.platform())
+                .collect();
+
+        assertEquals(1, rows.size());
+        assertEquals(2320.5, ((Number) rows.iterator().next().getField(0)).doubleValue(), 0.01);
+    }
+
+    /** JavaPlanBuilder API: combine grouped aggregation and sorting. */
+    @Test
+    @Order(14)
+    @DisplayName("BigQuery JavaPlanBuilder: readTable -> reduceByKey -> sort")
+    void javaPlanBuilderReadTableReduceBySort() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        List<Record> rows = new ArrayList<>(new JavaPlanBuilder(
+                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder reduce-by sort test")
+                .readTable(new BigQueryTableSource(
+                        TABLE, "order_id", "region", "product", "amount"))
+                .reduceByKey(
+                        record -> new Record(record.getField(1)),
+                        (left, right) -> left)
+                    .withSqlUdfs("region", "SUM(amount)")
+                    .withTargetPlatform(BigQuery.platform())
+                .sort(record -> new Record(record.getField(0)))
+                    .withSqlUdf("region", "ASC")
+                    .withTargetPlatform(BigQuery.platform())
+                .collect());
+
+        assertEquals(3, rows.size());
+        assertEquals("AMER", rows.get(0).getField(0));
+        assertEquals("APAC", rows.get(1).getField(0));
+        assertEquals("EMEA", rows.get(2).getField(0));
+    }
+
+    /** JavaPlanBuilder API: write a filtered projection into a BigQuery table. */
+    @Test
+    @Order(15)
+    @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> projection -> tableSink")
+    void javaPlanBuilderReadTableFilterProjectionTableSink() throws Exception {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        new JavaPlanBuilder(
+                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder table sink test")
+                .readTable(new BigQueryTableSource(
+                        TABLE, "order_id", "region", "product", "amount"))
+                .filter(record -> "EMEA".equals(record.getField(1)))
+                    .withSqlUdf("region = 'EMEA'")
+                    .withTargetPlatform(BigQuery.platform())
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                    .withTargetPlatform(BigQuery.platform())
+                .writeTable(
+                        SINK_TABLE,
+                        "overwrite",
+                        new String[]{"order_id", "amount"},
+                        new Properties());
+
+        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
+            ResultSet rs = conn.createStatement().executeQuery("SELECT count(*) FROM " + SINK_TABLE);
+            rs.next();
+            assertEquals(3, rs.getLong(1));
+        }
+    }
+
+    /** JavaPlanBuilder API: join orders with a temporary distinct-region table. */
+    @Test
+    @Order(16)
+    @DisplayName("BigQuery JavaPlanBuilder: readTable + readTable -> join")
+    void javaPlanBuilderReadTableJoin() throws Exception {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
+            conn.createStatement().execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
+            conn.createStatement().execute(
+                    "CREATE TABLE " + JOIN_TABLE + " AS SELECT DISTINCT region FROM " + TABLE);
+        }
+
+        JavaPlanBuilder plan = new JavaPlanBuilder(
+                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder join test");
+        DataQuantaBuilder<?, Record> orders = plan.readTable(new BigQueryTableSource(
+                TABLE, "order_id", "region", "product", "amount"));
+        DataQuantaBuilder<?, Record> regions = plan.readTable(new BigQueryTableSource(
+                JOIN_TABLE, "region"));
+
+        Collection<Record> rows = orders
+                .join(
+                        record -> new Record(record.getField(1)),
+                        regions,
+                        record -> new Record(record.getField(0)))
+                    .withSqlUdfs(TABLE, "region", JOIN_TABLE, "region")
+                    .withTargetPlatform(BigQuery.platform())
+                .asRecords()
+                .collect();
+
+        assertEquals(10, rows.size());
+        assertTrue(rows.stream().allMatch(row -> row.getField(1).equals(row.getField(4))));
     }
 }

@@ -223,13 +223,14 @@ System properties take precedence over the equivalent environment variables:
 Successful real-BigQuery validation must show:
 
 ```text
-Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 17, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-### Verified result
+### Previously verified result
 
-On June 11, 2026, the real-BigQuery suite was run successfully against a
-non-billing GCP project using the service-account flow documented above:
+On June 11, 2026, the original 12-test real-BigQuery suite was run successfully
+against a non-billing GCP project using the service-account flow documented
+above:
 
 ```text
 [SETUP] Connected to BigQuery project
@@ -247,8 +248,12 @@ real BigQuery` path, including reads, SQL pushdown, aggregation, sorting, and
 test, while the reference `sales.orders` table was retained for reruns. No
 service-account key or credential file is stored in this repository.
 
+The suite now contains five additional `JavaPlanBuilder` combination tests.
+They compile successfully, but still require revalidation against real BigQuery.
+The local BigQuery emulator suite remains independently verified at 7/7.
+
 If credentials or the project configuration are missing, Maven can still print
-`BUILD SUCCESS` with `Skipped: 11`. Only the platform-binding test ran in that
+`BUILD SUCCESS` with `Skipped: 16`. Only the platform-binding test ran in that
 case, so the BigQuery operators were not validated.
 
 ## Test Coverage
@@ -281,6 +286,15 @@ case, so the BigQuery operators were not validated.
 | `testReduceBy` | `SUM(amount) GROUP BY region` |
 | `testSort` | BigQuery sort operator SQL-clause contract |
 | `testTableSink` | `CREATE TABLE AS SELECT` and cleanup |
+| `javaPlanBuilderReadTableFilterProjection` | `readTable -> filter -> projection -> collect` |
+| `javaPlanBuilderReadTableFilterGlobalReduce` | `readTable -> filter -> globalReduce -> collect` |
+| `javaPlanBuilderReadTableReduceBySort` | `readTable -> reduceByKey -> sort -> collect` |
+| `javaPlanBuilderReadTableFilterProjectionTableSink` | `readTable -> filter -> projection -> writeTable` |
+| `javaPlanBuilderReadTableJoin` | `readTable + readTable -> join -> collect` |
+
+The combination tests use `.withTargetPlatform(BigQuery.platform())` so the
+small 10-row fixture still exercises BigQuery SQL pushdown. The join test creates
+and cleans up a temporary distinct-region lookup table.
 
 ## Emulator Environment Variable
 
