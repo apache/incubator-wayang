@@ -134,7 +134,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         final Collection<?> startTasks = stage.getStartTasks();
 
         // Verify that we can handle this instance.
-        final ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
+        final ExecutionTask startTask = JdbcExecutor.selectStartTask(startTasks, stage);
         assert startTask.getOperator() instanceof TableSource
                 : "Invalid JDBC stage: Start task has to be a TableSource";
 
@@ -189,6 +189,33 @@ public class JdbcExecutor extends ExecutorTemplate {
         final StringBuilder query = createSqlString(jdbcExecutor, tableOp, filterTasks, projectionTask, globalReduceTask, reduceByTask, sortTask, joinTasks);
         
         return new Tuple2<>(query.toString(), tipChannelInstance);
+    }
+
+    /**
+     * Selects the table source that belongs on the left-hand side of a JDBC join.
+     * Stage start tasks are not ordered, but {@link JdbcJoinOperator#createSqlClause}
+     * assumes its first key descriptor's table is used in the {@code FROM} clause.
+     */
+    private static ExecutionTask selectStartTask(final Collection<?> startTasks, final ExecutionStage stage) {
+        if (startTasks.size() == 1) {
+            return (ExecutionTask) startTasks.iterator().next();
+        }
+
+        for (ExecutionTask task : stage.getAllTasks()) {
+            if (task.getOperator() instanceof JdbcJoinOperator) {
+                final JdbcJoinOperator<?> joinOperator = (JdbcJoinOperator<?>) task.getOperator();
+                final String leftTableName = joinOperator.getKeyDescriptor0().getSqlImplementation().field0;
+                for (Object startTaskObject : startTasks) {
+                    final ExecutionTask startTask = (ExecutionTask) startTaskObject;
+                    if (startTask.getOperator() instanceof JdbcTableSource
+                            && ((JdbcTableSource) startTask.getOperator()).getTableName().equals(leftTableName)) {
+                        return startTask;
+                    }
+                }
+            }
+        }
+
+        throw new WayangException("Could not determine the left table source for JDBC stage.");
     }
 
     /**
