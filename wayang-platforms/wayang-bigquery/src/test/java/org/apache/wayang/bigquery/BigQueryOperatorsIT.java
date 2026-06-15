@@ -70,11 +70,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * {@code TableSink}, including JavaPlanBuilder combination plans that mirror
  * the Trino/Presto suites.
  *
- * <p><b>Status:</b> the original 12 tests passed against a live BigQuery project
- * on June 11, 2026. The five JavaPlanBuilder combination tests require the same
- * real-BigQuery credentials and must be revalidated there. The tests use only
- * {@code SELECT} and {@code CREATE TABLE AS}/{@code DROP} (DDL), never DML, so
- * they run without billing enabled.
+ * <p><b>Status: 17/17 green</b> against a live BigQuery project on June 16,
+ * 2026, including the five JavaPlanBuilder combination tests. The tests use
+ * only {@code SELECT} and {@code CREATE TABLE AS}/{@code DROP} (DDL), never
+ * DML, so they run without billing enabled.
  *
  * <p><b>Note on the aggregate tests.</b> {@code GlobalReduce}/{@code ReduceBy}
  * carry their aggregation only in the SQL implementation ({@code SUM(amount)});
