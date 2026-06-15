@@ -18,10 +18,13 @@
 
 package org.apache.wayang.presto;
 
+import org.apache.wayang.api.DataQuantaBuilder;
+import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
+import org.apache.wayang.basic.operators.JoinOperator;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.basic.operators.ReduceByOperator;
@@ -53,6 +56,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -388,6 +392,138 @@ class PrestoOperatorsIT {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * JavaPlanBuilder API: read a table, filter it, project two columns, and
+     * collect the result through a complete high-level Wayang plan.
+     */
+    @Test
+    @Order(9)
+    void javaPlanBuilderReadTableFilterProjection() {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        Collection<Record> rows = new JavaPlanBuilder(
+                wayangContext(), "Presto JavaPlanBuilder readTable integration test")
+                .readTable(new PrestoTableSource(
+                        ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                .collect();
+
+        assertEquals(60000, rows.size(), "60000 projected AMER orders expected");
+        assertTrue(rows.stream().allMatch(record -> record.size() == 2),
+                "projection should retain only order_id and amount");
+        assertSqlReachedPresto(
+                "SELECT order_id, amount FROM " + ORDERS + " WHERE region = 'AMER'");
+    }
+
+    /** JavaPlanBuilder API: combine a filter with a global reduction. */
+    @Test
+    @Order(10)
+    void javaPlanBuilderReadTableFilterGlobalReduce() {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        Collection<Record> rows = new JavaPlanBuilder(
+                wayangContext(), "Presto JavaPlanBuilder global reduce integration test")
+                .readTable(new PrestoTableSource(
+                        ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .reduce((left, right) -> left)
+                    .withSqlUdf("SUM(amount)")
+                .collect();
+
+        assertEquals(1, rows.size(), "global reduction should return one row");
+        assertEquals(76_615_000.0,
+                ((Number) rows.iterator().next().getField(0)).doubleValue(), 0.01);
+        assertSqlReachedPresto(
+                "SELECT SUM(amount) FROM " + ORDERS + " WHERE region = 'AMER'");
+    }
+
+    /** JavaPlanBuilder API: group by region, aggregate each group, and sort it. */
+    @Test
+    @Order(11)
+    void javaPlanBuilderReadTableReduceBySort() {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        List<Record> rows = new ArrayList<>(new JavaPlanBuilder(
+                wayangContext(), "Presto JavaPlanBuilder reduce-by and sort integration test")
+                .readTable(new PrestoTableSource(
+                        ORDERS, "order_id", "customer_id", "region", "amount"))
+                .reduceByKey(
+                        record -> new Record(record.getField(2)),
+                        (left, right) -> left)
+                    .withSqlUdfs("region", "SUM(amount)")
+                .sort(record -> new Record(record.getField(0)))
+                    .withSqlUdf("region", "ASC")
+                .collect());
+
+        assertEquals(3, rows.size(), "one row per region expected");
+        assertEquals("AMER", rows.get(0).getField(0));
+        assertEquals("APAC", rows.get(1).getField(0));
+        assertEquals("EMEA", rows.get(2).getField(0));
+        assertSqlReachedPresto(
+                "SELECT region,SUM(amount) FROM " + ORDERS + " GROUP BY region ORDER BY region ASC");
+    }
+
+    /** JavaPlanBuilder API: compose a filtered projection into a table sink. */
+    @Test
+    @Order(12)
+    void javaPlanBuilderReadTableFilterProjectionTableSink() throws Exception {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        new JavaPlanBuilder(wayangContext(), "Presto JavaPlanBuilder table sink integration test")
+                .readTable(new PrestoTableSource(
+                        ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                .writeTable(
+                        SINK_TABLE,
+                        "overwrite",
+                        new String[]{"order_id", "amount"},
+                        new Properties());
+
+        try (Connection c = jdbc()) {
+            ResultSet rs = c.createStatement().executeQuery("SELECT count(*) FROM " + SINK_TABLE);
+            rs.next();
+            assertEquals(60000, rs.getLong(1), "sink table should contain projected AMER orders");
+        }
+        assertSqlReachedPresto(
+                "CREATE TABLE " + SINK_TABLE
+                        + " AS SELECT order_id, amount FROM " + ORDERS + " WHERE region = 'AMER'");
+    }
+
+    /** JavaPlanBuilder API: join two tables and collect the pushed-down records. */
+    @Test
+    @Order(13)
+    void javaPlanBuilderReadTableJoin() {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        JavaPlanBuilder plan = new JavaPlanBuilder(
+                wayangContext(), "Presto JavaPlanBuilder join integration test");
+        DataQuantaBuilder<?, Record> orders = plan.readTable(new PrestoTableSource(
+                ORDERS, "order_id", "customer_id", "region", "amount"));
+        DataQuantaBuilder<?, Record> customers = plan.readTable(new PrestoTableSource(
+                CUSTOMERS, "customer_id", "name", "tier"));
+
+        Collection<Record> rows = orders
+                .join(
+                        record -> new Record(record.getField(1)),
+                        customers,
+                        record -> new Record(record.getField(0)))
+                    .withSqlUdfs(ORDERS, "customer_id", CUSTOMERS, "customer_id")
+                .asRecords()
+                .collect();
+
+        assertEquals(120000, rows.size(), "join should yield one row per order");
+        assertTrue(rows.stream().allMatch(row -> row.getField(1).equals(row.getField(4))),
+                "joined customer IDs should match");
+        assertSqlReachedPresto("JOIN " + CUSTOMERS);
+    }
 
     private interface PlanBuilder {
         LocalCallbackSink<Record> build(List<Record> resultCollector);
