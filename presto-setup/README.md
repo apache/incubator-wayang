@@ -17,6 +17,12 @@ The Presto platform branch is named `wayang-presto`:
 git checkout wayang-presto
 ```
 
+## Command Conventions
+
+Use the `bash` blocks on macOS/Linux terminals. Use the `powershell` blocks on
+Windows PowerShell from the repository root. Docker Compose commands are the
+same on both platforms.
+
 ## Stack
 
 | Component | Image | Port | Role |
@@ -191,6 +197,16 @@ PRESTO_HOST=my-presto PRESTO_PORT=8080 PRESTO_USER=wayang \
   ./mvnw -Pskip-prerequisite-check -pl wayang-platforms/wayang-presto -am \
   -Dtest=PrestoOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false \
   -DfailIfNoTests=false -Drat.skip=true -Dlicense.skip=true test
+```
+
+On PowerShell:
+
+```powershell
+$env:PRESTO_HOST="my-presto"
+$env:PRESTO_PORT="8080"
+$env:PRESTO_USER="wayang"
+.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-presto -am -Dtest=PrestoOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Drat.skip=true -Dlicense.skip=true test
+Remove-Item Env:PRESTO_HOST, Env:PRESTO_PORT, Env:PRESTO_USER
 ```
 
 ## Troubleshooting
