@@ -21,6 +21,7 @@ package org.apache.wayang.bigquery;
 import org.apache.wayang.api.DataQuantaBuilder;
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
@@ -40,7 +41,6 @@ import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.core.util.Tuple2;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 import org.junit.jupiter.api.*;
@@ -72,11 +72,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * {@code TableSink}, including JavaPlanBuilder combination plans that mirror
  * the Trino/Presto suites.
  *
- * <p><b>Status:</b> the suite now contains 18 tests, including the full-plan
- * join test and five JavaPlanBuilder combination tests. The previous 17-test
- * suite was green against a live BigQuery project on June 16, 2026. The tests
- * use only {@code SELECT} and {@code CREATE TABLE AS}/{@code DROP} (DDL),
- * never DML, so they run without billing enabled.
+ * <p><b>Status:</b> the suite contains 18 tests, including the full-plan join
+ * test and five JavaPlanBuilder combination tests. The full 18-test suite was
+ * green against a live BigQuery project on June 18, 2026. The tests use only
+ * {@code SELECT} and {@code CREATE TABLE AS}/{@code DROP} (DDL), never DML, so
+ * they run without billing enabled.
  *
  * <p><b>Note on the aggregate tests.</b> {@code GlobalReduce}/{@code ReduceBy}
  * carry their aggregation only in the SQL implementation ({@code SUM(amount)});
@@ -101,6 +101,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   bigquery.saEmail   / BIGQUERY_SA_EMAIL    service-account email
  *   bigquery.keyPath   / BIGQUERY_KEY_PATH    path to the SA key JSON
  *   bigquery.table     / BIGQUERY_TABLE       backtick-quoted FQ table name
+ *   bigquery.location  / BIGQUERY_LOCATION    BigQuery dataset/job location
  * </pre>
  * If a connection cannot be established, every test is skipped (not failed).
  *
@@ -127,6 +128,9 @@ class BigQueryOperatorsIT {
     private static final String TABLE = cfg("bigquery.table", "BIGQUERY_TABLE",
             "`" + PROJECT_ID + ".sales.orders`");
 
+    /** BigQuery dataset/job location. The setup README creates a US dataset. */
+    private static final String LOCATION = cfg("bigquery.location", "BIGQUERY_LOCATION", "US");
+
     /** Backtick-quoted sink target for the TableSink test; dropped in {@link #cleanup()}. */
     private static final String SINK_TABLE = "`" + PROJECT_ID + ".sales.wayang_emea_orders`";
 
@@ -135,8 +139,8 @@ class BigQueryOperatorsIT {
 
     private static final String JDBC_URL = String.format(
             "jdbc:bigquery://https://www.googleapis.com/bigquery/v2;" +
-            "ProjectId=%s;OAuthType=0;OAuthServiceAcctEmail=%s;OAuthPvtKeyPath=%s",
-            PROJECT_ID, SA_EMAIL, KEY_PATH);
+            "ProjectId=%s;OAuthType=0;OAuthServiceAcctEmail=%s;OAuthPvtKeyPath=%s;Location=%s",
+            PROJECT_ID, SA_EMAIL, KEY_PATH, LOCATION);
 
     private static boolean available = false;
 
@@ -159,7 +163,7 @@ class BigQueryOperatorsIT {
                 System.out.println("[SETUP] Connected to BigQuery project: " + PROJECT_ID);
             }
         } catch (Exception e) {
-            System.err.println("[SETUP] BigQuery not available — all tests will be skipped: " + e.getMessage());
+            System.err.println("[SETUP] BigQuery not available; all tests will be skipped: " + e.getMessage());
         }
     }
 
