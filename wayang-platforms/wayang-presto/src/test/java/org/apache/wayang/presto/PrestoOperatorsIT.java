@@ -69,12 +69,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * driven through the Wayang API against a <b>live PrestoDB</b> cluster using the
  * in-memory connector.
  *
- * <p>Each operator (except Join) runs through the full Wayang API
- * (WayangContext to optimizer to SQL-to-Stream) and asserts both correct results
- * and that the expected SQL was pushed down (via {@code system.runtime.queries}).
- * Join is verified through the operator's SQL-clause contract executed on Presto,
- * because the logical {@code JoinOperator} emits {@code Tuple2<Record,Record>},
- * which cannot connect to a {@code Record} sink in a high-level plan.
+ * <p>Each operator runs through the full Wayang API (WayangContext to optimizer
+ * to SQL-to-Stream) and asserts both correct results and that the expected SQL
+ * was pushed down (via {@code system.runtime.queries}). Join uses a small
+ * normalization map because the logical {@code JoinOperator} emits
+ * {@code Tuple2<Record,Record>}, while a pushed-down JDBC join can return a flat
+ * {@code Record}.
  *
  * <p>Prerequisites: a Presto reachable at {@code PRESTO_HOST:PRESTO_PORT}
  * (defaults {@code localhost:8081}) with the {@code memory} connector enabled;
