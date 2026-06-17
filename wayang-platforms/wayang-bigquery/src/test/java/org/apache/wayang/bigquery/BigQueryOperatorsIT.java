@@ -24,6 +24,7 @@ import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
+import org.apache.wayang.basic.operators.JoinOperator;
 import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.basic.operators.ReduceByOperator;
@@ -39,6 +40,7 @@ import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.Tuple2;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 import org.junit.jupiter.api.*;
@@ -70,10 +72,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * {@code TableSink}, including JavaPlanBuilder combination plans that mirror
  * the Trino/Presto suites.
  *
- * <p><b>Status: 17/17 green</b> against a live BigQuery project on June 16,
- * 2026, including the five JavaPlanBuilder combination tests. The tests use
- * only {@code SELECT} and {@code CREATE TABLE AS}/{@code DROP} (DDL), never
- * DML, so they run without billing enabled.
+ * <p><b>Status:</b> the suite now contains 18 tests, including the full-plan
+ * join test and five JavaPlanBuilder combination tests. The previous 17-test
+ * suite was green against a live BigQuery project on June 16, 2026. The tests
+ * use only {@code SELECT} and {@code CREATE TABLE AS}/{@code DROP} (DDL),
+ * never DML, so they run without billing enabled.
  *
  * <p><b>Note on the aggregate tests.</b> {@code GlobalReduce}/{@code ReduceBy}
  * carry their aggregation only in the SQL implementation ({@code SUM(amount)});
@@ -183,10 +186,33 @@ class BigQueryOperatorsIT {
                 .withPlugin(BigQuery.plugin());
     }
 
+    private static void createRegionJoinTable() throws Exception {
+        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
+            conn.createStatement().execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
+            conn.createStatement().execute(
+                    "CREATE TABLE " + JOIN_TABLE + " AS SELECT DISTINCT region FROM " + TABLE);
+        }
+    }
+
     /** Record-aware multi-field projection (the POJO descriptor throws on >1 field). */
     private static ProjectionDescriptor<Record, Record> project(String... fields) {
         return ProjectionDescriptor.createForRecords(
                 new RecordType("order_id", "region", "product", "amount"), fields);
+    }
+
+    private static Record flattenJoinResult(Object joinResult) {
+        if (joinResult instanceof Record) {
+            return (Record) joinResult;
+        }
+        Tuple2<?, ?> pair = (Tuple2<?, ?>) joinResult;
+        Record left = (Record) pair.field0;
+        Record right = (Record) pair.field1;
+        return new Record(
+                left.getField(0),
+                left.getField(1),
+                left.getField(2),
+                left.getField(3),
+                right.getField(0));
     }
 
     // Verification tests
@@ -531,9 +557,52 @@ class BigQueryOperatorsIT {
         System.out.println("[PASS] TableSink wrote 3 EMEA rows into " + SINK_TABLE);
     }
 
-    /** JavaPlanBuilder API: combine a pushed-down filter and projection. */
+    /**
+     * Join: orders with a temporary distinct-region lookup table.
+     *
+     * <p>The logical {@link JoinOperator} emits {@code Tuple2<Record,Record>},
+     * while a pushed-down JDBC join already emits a flat {@link Record}. The
+     * following map normalizes both representations before the result reaches
+     * the sink.
+     */
     @Test
     @Order(12)
+    @DisplayName("BigQuery: join orders with distinct regions")
+    void testJoin() throws Exception {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        createRegionJoinTable();
+
+        List<Record> results = new ArrayList<>();
+        BigQueryTableSource orders = new BigQueryTableSource(
+                TABLE, "order_id", "region", "product", "amount");
+        BigQueryTableSource regions = new BigQueryTableSource(
+                JOIN_TABLE, "region");
+        JoinOperator<Record, Record, Record> join = new JoinOperator<>(
+                new TransformationDescriptor<>(
+                        record -> new Record(record.getField(1)), Record.class, Record.class
+                ).withSqlImplementation(TABLE, "region"),
+                new TransformationDescriptor<>(
+                        record -> new Record(record.getField(0)), Record.class, Record.class
+                ).withSqlImplementation(JOIN_TABLE, "region"));
+        join.addTargetPlatform(BigQuery.platform());
+        MapOperator<Object, Record> flatten = new MapOperator<>(
+                BigQueryOperatorsIT::flattenJoinResult, Object.class, Record.class);
+        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
+
+        orders.connectTo(0, join, 0);
+        regions.connectTo(0, join, 1);
+        join.connectTo(0, flatten, 0);
+        flatten.connectTo(0, sink, 0);
+
+        createContext(createBigQueryConfig()).execute("BQ-Join", new WayangPlan(sink));
+
+        assertEquals(10, results.size());
+        assertTrue(results.stream().allMatch(row -> row.getField(1).equals(row.getField(4))));
+    }
+
+    /** JavaPlanBuilder API: combine a pushed-down filter and projection. */
+    @Test
+    @Order(13)
     @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> projection")
     void javaPlanBuilderReadTableFilterProjection() {
         Assumptions.assumeTrue(available, "BigQuery not available");
@@ -557,7 +626,7 @@ class BigQueryOperatorsIT {
 
     /** JavaPlanBuilder API: combine a filter with a global reduction. */
     @Test
-    @Order(13)
+    @Order(14)
     @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> globalReduce")
     void javaPlanBuilderReadTableFilterGlobalReduce() {
         Assumptions.assumeTrue(available, "BigQuery not available");
@@ -580,7 +649,7 @@ class BigQueryOperatorsIT {
 
     /** JavaPlanBuilder API: combine grouped aggregation and sorting. */
     @Test
-    @Order(14)
+    @Order(15)
     @DisplayName("BigQuery JavaPlanBuilder: readTable -> reduceByKey -> sort")
     void javaPlanBuilderReadTableReduceBySort() {
         Assumptions.assumeTrue(available, "BigQuery not available");
@@ -607,7 +676,7 @@ class BigQueryOperatorsIT {
 
     /** JavaPlanBuilder API: write a filtered projection into a BigQuery table. */
     @Test
-    @Order(15)
+    @Order(16)
     @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> projection -> tableSink")
     void javaPlanBuilderReadTableFilterProjectionTableSink() throws Exception {
         Assumptions.assumeTrue(available, "BigQuery not available");
@@ -637,16 +706,12 @@ class BigQueryOperatorsIT {
 
     /** JavaPlanBuilder API: join orders with a temporary distinct-region table. */
     @Test
-    @Order(16)
+    @Order(17)
     @DisplayName("BigQuery JavaPlanBuilder: readTable + readTable -> join")
     void javaPlanBuilderReadTableJoin() throws Exception {
         Assumptions.assumeTrue(available, "BigQuery not available");
 
-        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
-            conn.createStatement().execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
-            conn.createStatement().execute(
-                    "CREATE TABLE " + JOIN_TABLE + " AS SELECT DISTINCT region FROM " + TABLE);
-        }
+        createRegionJoinTable();
 
         JavaPlanBuilder plan = new JavaPlanBuilder(
                 createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder join test");
