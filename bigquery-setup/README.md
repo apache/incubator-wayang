@@ -202,13 +202,14 @@ Expected values are `n = 10` and `total = 12752.0`.
   -Dbigquery.project=YOUR_PROJECT_ID \
   -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com \
   -Dbigquery.keyPath="$HOME/wayang-bq-key.json" \
+  -Dbigquery.location=US \
   -Drat.skip=true -Dlicense.skip=true test
 ```
 
 On PowerShell:
 
 ```powershell
-.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-bigquery -am -Dtest=BigQueryOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Dbigquery.project=YOUR_PROJECT_ID -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com -Dbigquery.keyPath=C:\path\to\wayang-bq-key.json -Drat.skip=true -Dlicense.skip=true test
+.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-bigquery -am -Dtest=BigQueryOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Dbigquery.project=YOUR_PROJECT_ID -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com -Dbigquery.keyPath=C:\path\to\wayang-bq-key.json -Dbigquery.location=US -Drat.skip=true -Dlicense.skip=true test
 ```
 
 System properties take precedence over the equivalent environment variables:
@@ -219,11 +220,12 @@ System properties take precedence over the equivalent environment variables:
 | `bigquery.saEmail` | `BIGQUERY_SA_EMAIL` | `wayang-bq@<project>.iam.gserviceaccount.com` |
 | `bigquery.keyPath` | `BIGQUERY_KEY_PATH` | `$HOME/wayang-bq-key.json` |
 | `bigquery.table` | `BIGQUERY_TABLE` | `` `<project>.sales.orders` `` |
+| `bigquery.location` | `BIGQUERY_LOCATION` | `US` |
 
 Successful real-BigQuery validation must show:
 
 ```text
-Tests run: 17, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 ### Previously verified result
@@ -248,16 +250,18 @@ real BigQuery` path, including reads, SQL pushdown, aggregation, sorting, and
 test, while the reference `sales.orders` table was retained for reruns. No
 service-account key or credential file is stored in this repository.
 
-On June 16, 2026, the expanded 17-test suite was also verified successfully
-against real BigQuery:
+On June 18, 2026, the expanded 18-test suite was also verified successfully
+against real BigQuery, using `Location=US` and the local proxy settings when
+needed:
 
 ```text
-Tests run: 17, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
-This includes all five additional `JavaPlanBuilder` combination tests. The
-local BigQuery emulator suite remains independently verified at 7/7.
+This includes the full Wayang join plan with join-result normalization and all
+five `JavaPlanBuilder` combination tests. On the same date, the local BigQuery
+emulator suite was re-run with Docker and passed 7/7 with zero skipped tests.
 
 If the browser uses a local proxy, pass the same proxy to both CLI tools and
 the Maven test JVM. For example, with a proxy at `127.0.0.1:7890`, set
@@ -266,7 +270,7 @@ the Maven test JVM. For example, with a proxy at `127.0.0.1:7890`, set
 `-Dhttps.proxyPort`.
 
 If credentials or the project configuration are missing, Maven can still print
-`BUILD SUCCESS` with `Skipped: 16`. Only the platform-binding test ran in that
+`BUILD SUCCESS` with `Skipped: 17`. Only the platform-binding test ran in that
 case, so the BigQuery operators were not validated.
 
 ## Test Coverage
@@ -299,6 +303,7 @@ case, so the BigQuery operators were not validated.
 | `testReduceBy` | `SUM(amount) GROUP BY region` |
 | `testSort` | BigQuery sort operator SQL-clause contract |
 | `testTableSink` | `CREATE TABLE AS SELECT` and cleanup |
+| `testJoin` | Full Wayang join plan with normalization before the collecting sink |
 | `javaPlanBuilderReadTableFilterProjection` | `readTable -> filter -> projection -> collect` |
 | `javaPlanBuilderReadTableFilterGlobalReduce` | `readTable -> filter -> globalReduce -> collect` |
 | `javaPlanBuilderReadTableReduceBySort` | `readTable -> reduceByKey -> sort -> collect` |
