@@ -38,11 +38,9 @@ import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.core.util.Tuple2;
 import org.apache.wayang.java.Java;
-import org.apache.wayang.jdbc.compiler.FunctionCompiler;
-import org.apache.wayang.presto.operators.PrestoJoinOperator;
 import org.apache.wayang.presto.operators.PrestoTableSource;
-import org.apache.wayang.presto.platform.PrestoPlatform;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -242,40 +240,41 @@ class PrestoOperatorsIT {
     /**
      * Join: orders with customers on customer_id.
      *
-     * <p>A JDBC join cannot be driven through the high-level {@link WayangContext}
-     * API: the logical {@link org.apache.wayang.basic.operators.JoinOperator} emits
-     * {@code Tuple2<Record,Record>}, which has no valid connection to a
-     * {@code Record} sink (the SQL pushdown that flattens it happens only after
-     * optimization). So we verify the operator's real contract: its
-     * {@code createSqlClause} must produce a Presto-valid JOIN that, executed on
-     * live Presto, returns the correct rows.
+     * <p>The logical {@link JoinOperator} emits {@code Tuple2<Record,Record>},
+     * while a pushed-down JDBC join already emits a flat {@link Record}. The
+     * following map normalizes both representations before the result reaches
+     * the sink.
      */
     @Test
     @Order(4)
-    void join() throws Exception {
+    void join() {
         Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
-        PrestoJoinOperator<Record> join = new PrestoJoinOperator<>(
-                new TransformationDescriptor<>(
-                        (Record r) -> new Record(r.getField(1)), Record.class, Record.class
-                ).withSqlImplementation(ORDERS, "customer_id"),
-                new TransformationDescriptor<>(
-                        (Record r) -> new Record(r.getField(0)), Record.class, Record.class
-                ).withSqlImplementation(CUSTOMERS, "customer_id"));
+        List<Record> rows = execute(results -> {
+            PrestoTableSource orders = new PrestoTableSource(
+                    ORDERS, "order_id", "customer_id", "region", "amount");
+            PrestoTableSource customers = new PrestoTableSource(
+                    CUSTOMERS, "customer_id", "name", "tier");
+            JoinOperator<Record, Record, Record> join = new JoinOperator<>(
+                    new TransformationDescriptor<>(
+                            (Record r) -> new Record(r.getField(1)), Record.class, Record.class
+                    ).withSqlImplementation(ORDERS, "customer_id"),
+                    new TransformationDescriptor<>(
+                            (Record r) -> new Record(r.getField(0)), Record.class, Record.class
+                    ).withSqlImplementation(CUSTOMERS, "customer_id"));
+            MapOperator<Object, Record> flatten = new MapOperator<>(
+                    PrestoOperatorsIT::flattenJoinResult, Object.class, Record.class);
+            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
+            orders.connectTo(0, join, 0);
+            customers.connectTo(0, join, 1);
+            join.connectTo(0, flatten, 0);
+            flatten.connectTo(0, sink, 0);
+            return sink;
+        });
 
-        assertEquals(PrestoPlatform.getInstance(), join.getPlatform());
-
-        try (Connection c = jdbc()) {
-            String joinClause = join.createSqlClause(c, new FunctionCompiler());
-            assertTrue(joinClause.startsWith("JOIN " + CUSTOMERS + " ON"),
-                    "unexpected join clause: " + joinClause);
-
-            String sql = "SELECT * FROM " + ORDERS + " " + joinClause;
-            ResultSet rs = c.createStatement().executeQuery(sql);
-            int n = 0;
-            while (rs.next()) n++;
-            // Every order's customer_id exists in customers, yielding one joined row per order.
-            assertEquals(120000, n, "join should yield one row per order");
-        }
+        assertEquals(120000, rows.size(), "join should yield one row per order");
+        assertTrue(rows.stream().allMatch(row -> row.getField(1).equals(row.getField(4))),
+                "joined customer IDs should match");
+        assertSqlReachedPresto("JOIN " + CUSTOMERS);
     }
 
     /** GlobalReduce: SUM(amount) over the whole table collapses to a single row. */
@@ -545,6 +544,23 @@ class PrestoOperatorsIT {
         LocalCallbackSink<Record> sink = builder.build(results);
         wayangContext().execute(new WayangPlan(sink));
         return results;
+    }
+
+    private static Record flattenJoinResult(Object joinResult) {
+        if (joinResult instanceof Record) {
+            return (Record) joinResult;
+        }
+        Tuple2<?, ?> pair = (Tuple2<?, ?>) joinResult;
+        Record left = (Record) pair.field0;
+        Record right = (Record) pair.field1;
+        return new Record(
+                left.getField(0),
+                left.getField(1),
+                left.getField(2),
+                left.getField(3),
+                right.getField(0),
+                right.getField(1),
+                right.getField(2));
     }
 
     /** Assert that Presto actually ran a query containing the given fragment. */
