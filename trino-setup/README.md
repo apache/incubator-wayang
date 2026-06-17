@@ -17,6 +17,12 @@ The pure Trino platform branch is named `wayang-trino`:
 git checkout wayang-trino
 ```
 
+## Command Conventions
+
+Use the `bash` blocks on macOS/Linux terminals. Use the `powershell` blocks on
+Windows PowerShell from the repository root. Docker Compose commands are the
+same on both platforms.
+
 ## Stack
 
 | Component | Image | Port | Role |
@@ -249,4 +255,13 @@ Override defaults if running Trino on a different host/port:
 
 ```bash
 TRINO_HOST=my-trino-host TRINO_PORT=8080 ./mvnw -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
+```
+
+On PowerShell:
+
+```powershell
+$env:TRINO_HOST="my-trino-host"
+$env:TRINO_PORT="8080"
+.\mvnw.cmd --% -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
+Remove-Item Env:TRINO_HOST, Env:TRINO_PORT
 ```
