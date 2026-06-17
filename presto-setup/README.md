@@ -100,10 +100,12 @@ container. It checks `TableSource`, `Filter`, `Projection`, `Join`,
 `GlobalReduce`, `ReduceBy`, `Sort`, and `TableSink`, and confirms that the
 expected SQL reached Presto through `system.runtime.queries`.
 
-The suite also includes five `JavaPlanBuilder.readTable` combination plans.
-Together, they cover every supported Presto operator through the public API.
-The JavaPlanBuilder join uses `asRecords()` because a pushed-down JDBC join
-returns a flat `Record` instead of the logical `Tuple2<Record, Record>`.
+The standalone join test now runs as a full Wayang plan:
+`PrestoTableSource + PrestoTableSource -> JoinOperator -> MapOperator -> sink`.
+The normalization map accepts both logical `Tuple2<Record, Record>` output and
+pushed-down JDBC flat `Record` output. The suite also includes five
+`JavaPlanBuilder.readTable` combination plans. Together, they cover every
+supported Presto operator through the public API.
 
 The suite is self-contained. It creates `memory.wayang_it`, generates 120,000
 rows so the optimizer selects SQL pushdown, runs the tests, and drops its tables
@@ -134,8 +136,8 @@ creating the test schema or tables are treated as real failures.
 
 ### Verified Result
 
-On June 11, 2026, the suite completed successfully against the local PrestoDB
-0.289 container:
+On June 18, 2026, the suite completed successfully against the local PrestoDB
+0.289 container, including the full-plan join validation:
 
 ```text
 [PrestoOperatorsIT] Connected to Presto at jdbc:presto://localhost:8081/memory
@@ -145,8 +147,8 @@ BUILD SUCCESS
 ```
 
 This verified the complete `Wayang -> Presto JDBC -> live PrestoDB` path,
-including reads, SQL pushdown, aggregation, sorting, and `CREATE TABLE AS
-SELECT`.
+including reads, SQL pushdown, join normalization, aggregation, sorting, and
+`CREATE TABLE AS SELECT`.
 
 ### 3. Tear down
 
@@ -161,7 +163,7 @@ docker compose -f presto-setup/docker-compose.yml down
 | `tableSource` | Full table scan through `PrestoTableSource` |
 | `filter` | Wayang `FilterOperator` and SQL `WHERE` pushdown |
 | `projection` | Column projection pushed into the Presto query |
-| `join` | Presto join operator generates and executes a valid join clause |
+| `join` | Full Wayang join plan with normalization before the collecting sink |
 | `globalReduce` | Global aggregation such as `SUM` |
 | `reduceBy` | Grouped aggregation and SQL `GROUP BY` |
 | `sort` | Wayang sort and SQL `ORDER BY` |
