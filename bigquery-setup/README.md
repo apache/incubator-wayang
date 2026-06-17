@@ -18,6 +18,14 @@ tests. Maven is provided by the repository wrapper.
 git checkout wayang-bigquery
 ```
 
+## Command Conventions
+
+Use the `bash` blocks on macOS/Linux terminals. Use the `powershell` blocks on
+Windows PowerShell from the repository root. Docker Compose commands are the
+same on both platforms. The `gcloud` commands also work on Windows; either run
+each command on one line or replace Bash line-continuation backslashes with
+PowerShell backticks.
+
 ## Stack
 
 | Component | Image | Port | Role |
@@ -156,6 +164,18 @@ gcloud iam service-accounts keys create "$HOME/wayang-bq-key.json" \
   --iam-account="wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com"
 ```
 
+On Windows PowerShell, the same setup can be run as:
+
+```powershell
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+gcloud services enable bigquery.googleapis.com
+gcloud iam service-accounts create wayang-bq --display-name="Wayang BigQuery IT"
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com" --role="roles/bigquery.jobUser"
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com" --role="roles/bigquery.dataEditor"
+gcloud iam service-accounts keys create "$HOME\wayang-bq-key.json" --iam-account="wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+```
+
 The service account needs `jobUser` to run queries and `dataEditor` to read the
 reference table and create/drop the sink table.
 
@@ -269,6 +289,16 @@ the Maven test JVM. For example, with a proxy at `127.0.0.1:7890`, set
 `-Dhttp.proxyHost`, `-Dhttp.proxyPort`, `-Dhttps.proxyHost`, and
 `-Dhttps.proxyPort`.
 
+On PowerShell:
+
+```powershell
+$env:HTTP_PROXY="http://127.0.0.1:7890"
+$env:HTTPS_PROXY="http://127.0.0.1:7890"
+$env:JAVA_TOOL_OPTIONS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7890"
+.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-bigquery -am -Dtest=BigQueryOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Dbigquery.project=YOUR_PROJECT_ID -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com -Dbigquery.keyPath=C:\path\to\wayang-bq-key.json -Dbigquery.location=US -Drat.skip=true -Dlicense.skip=true test
+Remove-Item Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:JAVA_TOOL_OPTIONS
+```
+
 If credentials or the project configuration are missing, Maven can still print
 `BUILD SUCCESS` with `Skipped: 17`. Only the platform-binding test ran in that
 case, so the BigQuery operators were not validated.
@@ -318,6 +348,14 @@ and cleans up a temporary distinct-region lookup table.
 
 ```bash
 BIGQUERY_HOST=http://localhost:9050 ./mvnw -f bigquery-setup/pom.xml -Dtest=BigQueryEmulatorIT test
+```
+
+On PowerShell:
+
+```powershell
+$env:BIGQUERY_HOST="http://localhost:9050"
+.\mvnw.cmd --% -f bigquery-setup/pom.xml -Dtest=BigQueryEmulatorIT test
+Remove-Item Env:BIGQUERY_HOST
 ```
 
 ## Notes
