@@ -26,7 +26,6 @@ import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
 import org.apache.wayang.basic.operators.JoinOperator;
-import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.basic.operators.ReduceByOperator;
 import org.apache.wayang.basic.operators.SortOperator;
@@ -34,13 +33,21 @@ import org.apache.wayang.basic.operators.TableSink;
 import org.apache.wayang.basic.types.RecordType;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.java.Java;
+import org.apache.wayang.trino.operators.TrinoProjectionOperator;
 import org.apache.wayang.trino.operators.TrinoTableSource;
+import org.apache.wayang.trino.platform.TrinoPlatform;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -53,14 +60,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -69,10 +76,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>Coverage: {@code TableSource}, {@code Filter}, {@code Projection},
  * {@code Join}, {@code GlobalReduce}, {@code ReduceBy}, {@code Sort},
- * {@code TableSink}, plus the SQL-to-Stream channel conversion that materialises
- * every result. Each test also asserts, via Trino's {@code system.runtime.queries},
- * that the expected SQL actually reached Trino (i.e. the operator was pushed
- * down, not silently executed elsewhere).
+ * and {@code TableSink}. Every Wayang plan ends in a Trino table sink so the
+ * execution itself does not require the Java plugin. Result assertions use
+ * plain JDBC only after the Wayang execution has completed.
  *
  * <p>Prerequisites: a Trino reachable at {@code TRINO_HOST:TRINO_PORT}
  * (defaults {@code localhost:8080}); e.g. {@code cd trino-setup && docker compose up -d}.
@@ -97,7 +103,12 @@ class TrinoOperatorsIT {
     private static final String SCHEMA     = "iceberg.wayang_it";
     private static final String ORDERS     = SCHEMA + ".orders";
     private static final String CUSTOMERS  = SCHEMA + ".customers";
-    private static final String SINK_TABLE = SCHEMA + ".amer_orders";
+    private static final String SINK_TABLE_NAME = "operator_result";
+    private static final String SINK_TABLE = SCHEMA + "." + SINK_TABLE_NAME;
+    private static final String[] JOIN_COLUMNS = {
+            "order_id", "customer_id", "region", "amount", "cust_id", "name", "tier"
+    };
+    private static final String JOIN_FLATTEN_NAME = "Trino test-only join flatten";
 
     private static boolean trinoAvailable = false;
 
@@ -134,7 +145,7 @@ class TrinoOperatorsIT {
 
             st.execute("DROP TABLE IF EXISTS " + CUSTOMERS);
             st.execute("CREATE TABLE " + CUSTOMERS + " ("
-                    + "customer_id BIGINT, name VARCHAR, tier VARCHAR)"
+                    + "cust_id BIGINT, name VARCHAR, tier VARCHAR)"
                     + " WITH (format = 'PARQUET')");
             st.execute("INSERT INTO " + CUSTOMERS + " VALUES "
                     + "(100, 'Acme',   'GOLD'),"
@@ -168,13 +179,14 @@ class TrinoOperatorsIT {
     @Order(1)
     void tableSource() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
-        List<Record> rows = execute(results -> {
-            TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-            src.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(120000, rows.size(), "TableSource should return all orders");
+        TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        TableSink<Record> sink = tableSink("order_id", "customer_id", "region", "amount");
+        src.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(120000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "TableSource should return all orders");
         assertSqlReachedTrino("SELECT * FROM " + ORDERS);
     }
 
@@ -183,19 +195,20 @@ class TrinoOperatorsIT {
     @Order(2)
     void filter() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
-        List<Record> rows = execute(results -> {
-            TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            FilterOperator<Record> filter = new FilterOperator<>(
-                    new PredicateDescriptor<>(
-                            (Record r) -> "AMER".equals(r.getField(2)), Record.class
-                    ).withSqlImplementation("region = 'AMER'"));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-            src.connectTo(0, filter, 0);
-            filter.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(60000, rows.size(), "60000 AMER orders expected");
-        assertTrue(rows.stream().allMatch(r -> "AMER".equals(r.getField(2))), "all rows AMER");
+        TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (Record r) -> "AMER".equals(r.getField(2)), Record.class
+                ).withSqlImplementation("region = 'AMER'"));
+        TableSink<Record> sink = tableSink("order_id", "customer_id", "region", "amount");
+        src.connectTo(0, filter, 0);
+        filter.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(60000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "60000 AMER orders expected");
+        assertEquals(0, queryLong("SELECT count_if(region <> 'AMER') FROM " + SINK_TABLE), "all rows AMER");
         assertSqlReachedTrino("WHERE region = 'AMER'");
     }
 
@@ -204,66 +217,67 @@ class TrinoOperatorsIT {
     @Order(3)
     void projection() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
-        List<Record> rows = execute(results -> {
-            TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            FilterOperator<Record> filter = new FilterOperator<>(
-                    new PredicateDescriptor<>(
-                            (Record r) -> "AMER".equals(r.getField(2)), Record.class
-                    ).withSqlImplementation("region = 'AMER'"));
-            MapOperator<Record, Record> projection = new MapOperator<>(
-                    ProjectionDescriptor.createForRecords(
-                            new RecordType("order_id", "customer_id", "region", "amount"),
-                            "region", "amount"),
-                    DataSetType.createDefault(Record.class),
-                    DataSetType.createDefault(Record.class));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-            src.connectTo(0, filter, 0);
-            filter.connectTo(0, projection, 0);
-            projection.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(60000, rows.size(), "60000 AMER rows expected");
-        assertEquals(2, rows.get(0).size(), "projection keeps only 2 columns");
+        TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (Record r) -> "AMER".equals(r.getField(2)), Record.class
+                ).withSqlImplementation("region = 'AMER'"));
+        MapOperator<Record, Record> projection = new MapOperator<>(
+                ProjectionDescriptor.createForRecords(
+                        new RecordType("order_id", "customer_id", "region", "amount"),
+                        "region", "amount"),
+                DataSetType.createDefault(Record.class),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("region", "amount");
+        src.connectTo(0, filter, 0);
+        filter.connectTo(0, projection, 0);
+        projection.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(60000, queryLong("SELECT count(*) FROM " + SINK_TABLE), "60000 AMER rows expected");
+        assertEquals(2, queryLong(
+                "SELECT count(*) FROM iceberg.information_schema.columns "
+                        + "WHERE table_schema = 'wayang_it' AND table_name = '" + SINK_TABLE_NAME + "'"),
+                "projection keeps only 2 columns");
         assertSqlReachedTrino("SELECT region, amount FROM " + ORDERS);
     }
 
     /**
      * Join: orders and customers on customer_id.
      *
-     * <p>The logical {@link JoinOperator} emits {@code Tuple2<Record,Record>},
-     * while a pushed-down JDBC join already emits a flat {@link Record}. The
-     * following map normalizes both representations before the result reaches
-     * the sink.
+     * <p>The logical join emits {@code Tuple2<Record,Record>}. A test-only
+     * mapping turns the following flatten map into a Trino SQL projection, so
+     * this plan still executes entirely in Trino without deciding the general
+     * Tuple-to-Record semantics for JDBC platforms.
      */
     @Test
     @Order(4)
     void join() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
-        List<Record> rows = execute(results -> {
-            TrinoTableSource orders = new TrinoTableSource(
-                    ORDERS, "order_id", "customer_id", "region", "amount");
-            TrinoTableSource customers = new TrinoTableSource(
-                    CUSTOMERS, "customer_id", "name", "tier");
-            JoinOperator<Record, Record, Record> join = new JoinOperator<>(
-                    new TransformationDescriptor<>(
-                            (Record r) -> new Record(r.getField(1)), Record.class, Record.class
-                    ).withSqlImplementation(ORDERS, "customer_id"),
-                    new TransformationDescriptor<>(
-                            (Record r) -> new Record(r.getField(0)), Record.class, Record.class
-                    ).withSqlImplementation(CUSTOMERS, "customer_id"));
-            MapOperator<Object, Record> flatten = new MapOperator<>(
-                    TrinoOperatorsIT::flattenJoinResult, Object.class, Record.class);
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-            orders.connectTo(0, join, 0);
-            customers.connectTo(0, join, 1);
-            join.connectTo(0, flatten, 0);
-            flatten.connectTo(0, sink, 0);
-            return sink;
-        });
+        TrinoTableSource orders = new TrinoTableSource(
+                ORDERS, "order_id", "customer_id", "region", "amount");
+        TrinoTableSource customers = new TrinoTableSource(
+                CUSTOMERS, "cust_id", "name", "tier");
+        JoinOperator<Record, Record, Record> join = new JoinOperator<>(
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(1)), Record.class, Record.class
+                ).withSqlImplementation(ORDERS, "customer_id"),
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(0)), Record.class, Record.class
+                ).withSqlImplementation(CUSTOMERS, "cust_id"));
+        MapOperator<Tuple2<Record, Record>, Record> flatten = joinFlattenOperator();
+        TableSink<Record> sink = tableSink(JOIN_COLUMNS);
+        orders.connectTo(0, join, 0);
+        customers.connectTo(0, join, 1);
+        join.connectTo(0, flatten, 0);
+        flatten.connectTo(0, sink, 0);
 
-        assertEquals(120000, rows.size(), "join should yield one row per order");
-        // Every order's customer_id exists in customers, so there is one joined row per order.
-        assertTrue(rows.stream().allMatch(r -> r.getField(1).equals(r.getField(4))),
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(120000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "join should yield one row per order");
+        assertEquals(0, queryLong("SELECT count_if(customer_id <> cust_id) FROM " + SINK_TABLE),
                 "joined customer IDs should match");
         assertSqlReachedTrino("JOIN " + CUSTOMERS);
     }
@@ -273,21 +287,20 @@ class TrinoOperatorsIT {
     @Order(5)
     void globalReduce() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
-        List<Record> rows = execute(results -> {
-            TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            GlobalReduceOperator<Record> reduce = new GlobalReduceOperator<>(
-                    new ReduceDescriptor<>((a, b) -> a, Record.class)
-                            .withSqlImplementation("SUM(amount)"),
-                    DataSetType.createDefault(Record.class));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-            src.connectTo(0, reduce, 0);
-            reduce.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(1, rows.size(), "global reduce must collapse to a single row");
+        TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        GlobalReduceOperator<Record> reduce = new GlobalReduceOperator<>(
+                new ReduceDescriptor<>((a, b) -> a, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("total_amount");
+        src.connectTo(0, reduce, 0);
+        reduce.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
         // 6 base rows sum to 7231.25; scaled x20000 gives 144,625,000 (exact in doubles).
-        assertEquals(144_625_000.0, ((Number) rows.get(0).getField(0)).doubleValue(), 0.01);
-        assertSqlReachedTrino("SELECT SUM(amount) FROM " + ORDERS);
+        assertSingleDoubleResult(144_625_000.0, "global reduce must collapse to a single row");
+        assertSqlReachedTrino("SELECT SUM(amount) AS total_amount FROM " + ORDERS);
     }
 
     /** ReduceBy: SUM(amount) GROUP BY region yields one row per region. */
@@ -295,25 +308,22 @@ class TrinoOperatorsIT {
     @Order(6)
     void reduceBy() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
-        List<Record> rows = execute(results -> {
-            TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            ReduceByOperator<Record, Record> reduceBy = new ReduceByOperator<>(
-                    new TransformationDescriptor<>(
-                            (Record r) -> new Record(r.getField(2)), Record.class, Record.class
-                    ).withSqlImplementation("region", "region"),
-                    new ReduceDescriptor<>((a, b) -> a, Record.class)
-                            .withSqlImplementation("SUM(amount)"),
-                    DataSetType.createDefault(Record.class));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-            src.connectTo(0, reduceBy, 0);
-            reduceBy.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(3, rows.size(), "one row per region expected");
-        Map<String, Double> sums = new HashMap<>();
-        for (Record r : rows) {
-            sums.put((String) r.getField(0), ((Number) r.getField(1)).doubleValue());
-        }
+        TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        ReduceByOperator<Record, Record> reduceBy = new ReduceByOperator<>(
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(2)), Record.class, Record.class
+                ).withSqlImplementation("region", "region"),
+                new ReduceDescriptor<>((a, b) -> a, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("region", "total_amount");
+        src.connectTo(0, reduceBy, 0);
+        reduceBy.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        Map<String, Double> sums = readRegionSums();
+        assertEquals(3, sums.size(), "one row per region expected");
         // Base sums (AMER 3830.75, EMEA 1900.5, APAC 1500.0) scaled x20000.
         assertEquals(76_615_000.0, sums.get("AMER"), 0.01);
         assertEquals(38_010_000.0, sums.get("EMEA"), 0.01);
@@ -326,26 +336,22 @@ class TrinoOperatorsIT {
     @Order(7)
     void sort() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
-        List<Record> rows = execute(results -> {
-            TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            SortOperator<Record, Record> sort = new SortOperator<>(
-                    new TransformationDescriptor<>(
-                            (Record r) -> new Record(r.getField(3)), Record.class, Record.class
-                    ).withSqlImplementation("amount", "ASC"),
-                    DataSetType.createDefault(Record.class));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-            src.connectTo(0, sort, 0);
-            sort.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(120000, rows.size(), "sort must not change the cardinality");
-        assertEquals(680.5, ((Number) rows.get(0).getField(3)).doubleValue(), 0.001, "smallest amount first");
-        assertEquals(2200.0, ((Number) rows.get(rows.size() - 1).getField(3)).doubleValue(), 0.001, "largest amount last");
-        for (int i = 1; i < rows.size(); i++) {
-            double prev = ((Number) rows.get(i - 1).getField(3)).doubleValue();
-            double curr = ((Number) rows.get(i).getField(3)).doubleValue();
-            assertTrue(prev <= curr, "rows must be non-decreasing by amount at index " + i);
-        }
+        TrinoTableSource src = new TrinoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        SortOperator<Record, Record> sort = new SortOperator<>(
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(3)), Record.class, Record.class
+                ).withSqlImplementation("amount", "ASC"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("order_id", "customer_id", "region", "amount");
+        src.connectTo(0, sort, 0);
+        sort.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(120000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "sort must not change the cardinality");
+        assertEquals(680.5, queryDouble("SELECT min(amount) FROM " + SINK_TABLE), 0.001);
+        assertEquals(2200.0, queryDouble("SELECT max(amount) FROM " + SINK_TABLE), 0.001);
         assertSqlReachedTrino("ORDER BY amount ASC");
     }
 
@@ -385,14 +391,14 @@ class TrinoOperatorsIT {
 
     /**
      * JavaPlanBuilder API: read a table, filter it, project two columns, and
-     * collect the result through a complete high-level Wayang plan.
+     * write the result through a complete high-level Wayang plan.
      */
     @Test
     @Order(9)
     void javaPlanBuilderReadTableFilterProjection() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
 
-        Collection<Record> rows = new JavaPlanBuilder(
+        new JavaPlanBuilder(
                 wayangContext(), "Trino JavaPlanBuilder readTable integration test")
                 .readTable(new TrinoTableSource(
                         ORDERS, "order_id", "customer_id", "region", "amount"))
@@ -400,15 +406,13 @@ class TrinoOperatorsIT {
                     .withSqlUdf("region = 'AMER'")
                 .asRecords()
                 .projectRecords(new String[]{"order_id", "amount"})
-                .collect();
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"order_id", "amount"}, new Properties());
 
-        assertEquals(60000, rows.size(), "60000 projected AMER orders expected");
-        assertTrue(rows.stream().allMatch(record -> record.size() == 2),
-                "projection should retain only order_id and amount");
-        assertTrue(rows.stream().allMatch(record -> {
-            double amount = ((Number) record.getField(1)).doubleValue();
-            return amount == 2200.0 || amount == 680.5 || amount == 950.25;
-        }), "only AMER order amounts should remain");
+        assertEquals(60000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "60000 projected AMER orders expected");
+        assertEquals(0, queryLong(
+                "SELECT count_if(amount NOT IN (2200.0, 680.5, 950.25)) FROM " + SINK_TABLE),
+                "only AMER order amounts should remain");
         assertSqlReachedTrino(
                 "SELECT order_id, amount FROM " + ORDERS + " WHERE region = 'AMER'");
     }
@@ -421,21 +425,19 @@ class TrinoOperatorsIT {
     void javaPlanBuilderReadTableFilterGlobalReduce() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
 
-        Collection<Record> rows = new JavaPlanBuilder(
+        new JavaPlanBuilder(
                 wayangContext(), "Trino JavaPlanBuilder global reduce integration test")
                 .readTable(new TrinoTableSource(
                         ORDERS, "order_id", "customer_id", "region", "amount"))
                 .filter(record -> "AMER".equals(record.getField(2)))
                     .withSqlUdf("region = 'AMER'")
                 .reduce((left, right) -> left)
-                    .withSqlUdf("SUM(amount)")
-                .collect();
+                    .withSqlUdf("SUM(amount) AS total_amount")
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"total_amount"}, new Properties());
 
-        assertEquals(1, rows.size(), "global reduction should return one row");
-        Record sum = rows.iterator().next();
-        assertEquals(76_615_000.0, ((Number) sum.getField(0)).doubleValue(), 0.01);
+        assertSingleDoubleResult(76_615_000.0, "global reduction should return one row");
         assertSqlReachedTrino(
-                "SELECT SUM(amount) FROM " + ORDERS + " WHERE region = 'AMER'");
+                "SELECT SUM(amount) AS total_amount FROM " + ORDERS + " WHERE region = 'AMER'");
     }
 
     /**
@@ -447,24 +449,24 @@ class TrinoOperatorsIT {
     void javaPlanBuilderReadTableReduceBySort() {
         Assumptions.assumeTrue(trinoAvailable, "Trino not reachable");
 
-        List<Record> rows = new ArrayList<>(new JavaPlanBuilder(
+        new JavaPlanBuilder(
                 wayangContext(), "Trino JavaPlanBuilder reduce-by and sort integration test")
                 .readTable(new TrinoTableSource(
                         ORDERS, "order_id", "customer_id", "region", "amount"))
                 .reduceByKey(
                         record -> new Record(record.getField(2)),
                         (left, right) -> left)
-                    .withSqlUdfs("region", "SUM(amount)")
+                    .withSqlUdfs("region", "SUM(amount) AS total_amount")
                 .sort(record -> new Record(record.getField(0)))
                     .withSqlUdf("region", "ASC")
-                .collect());
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"region", "total_amount"}, new Properties());
 
-        assertEquals(3, rows.size(), "one row per region expected");
-        assertEquals("AMER", rows.get(0).getField(0));
-        assertEquals("APAC", rows.get(1).getField(0));
-        assertEquals("EMEA", rows.get(2).getField(0));
+        assertEquals("AMER,APAC,EMEA", queryString(
+                "SELECT array_join(array_agg(region ORDER BY region), ',') FROM " + SINK_TABLE),
+                "one row per region expected");
         assertSqlReachedTrino(
-                "SELECT region,SUM(amount) FROM " + ORDERS + " GROUP BY region ORDER BY region ASC");
+                "SELECT region,SUM(amount) AS total_amount FROM " + ORDERS
+                        + " GROUP BY region ORDER BY region ASC");
     }
 
     /**
@@ -500,8 +502,8 @@ class TrinoOperatorsIT {
     }
 
     /**
-     * JavaPlanBuilder API: join two tables and normalize the current logical
-     * and JDBC join output representations before collecting the result.
+     * JavaPlanBuilder API: join two tables, flatten through the test-only Trino
+     * mapping, and write the result in Trino.
      */
     @Test
     @Order(13)
@@ -513,26 +515,23 @@ class TrinoOperatorsIT {
         DataQuantaBuilder<?, Record> orders = plan.readTable(new TrinoTableSource(
                 ORDERS, "order_id", "customer_id", "region", "amount"));
         DataQuantaBuilder<?, Record> customers = plan.readTable(new TrinoTableSource(
-                CUSTOMERS, "customer_id", "name", "tier"));
+                CUSTOMERS, "cust_id", "name", "tier"));
 
-        Collection<Record> rows = orders
+        orders
                 .join(
                         record -> new Record(record.getField(1)),
                         customers,
                         record -> new Record(record.getField(0)))
-                    .withSqlUdfs(ORDERS, "customer_id", CUSTOMERS, "customer_id")
-                .asRecords()
-                .collect();
+                    .withSqlUdfs(ORDERS, "customer_id", CUSTOMERS, "cust_id")
+                .map(new JoinFlattenFunction())
+                    .withName(JOIN_FLATTEN_NAME)
+                .writeTable(SINK_TABLE, "overwrite", JOIN_COLUMNS, new Properties());
 
-        assertEquals(120000, rows.size(), "join should yield one row per order");
-        assertTrue(rows.stream().allMatch(row -> row.getField(1).equals(row.getField(4))),
+        assertEquals(120000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "join should yield one row per order");
+        assertEquals(0, queryLong("SELECT count_if(customer_id <> cust_id) FROM " + SINK_TABLE),
                 "joined customer IDs should match");
         assertSqlReachedTrino("JOIN " + CUSTOMERS);
-    }
-
-    /** Functional builder: given the result list, wire a plan and return its sink. */
-    private interface PlanBuilder {
-        LocalCallbackSink<Record> build(List<Record> resultCollector);
     }
 
     private WayangContext wayangContext() {
@@ -540,16 +539,26 @@ class TrinoOperatorsIT {
         config.setProperty("wayang.trino.jdbc.url", JDBC_URL);
         config.setProperty("wayang.trino.jdbc.user", USER);
         config.setProperty("wayang.trino.jdbc.password", "");
+        config.getMappingProvider().addAllToWhitelist(
+                Collections.singleton(new JoinFlattenMapping()));
         return new WayangContext(config)
-                .withPlugin(Java.basicPlugin())
                 .withPlugin(Trino.plugin());
     }
 
-    private List<Record> execute(PlanBuilder builder) {
-        List<Record> results = new ArrayList<>();
-        LocalCallbackSink<Record> sink = builder.build(results);
-        wayangContext().execute(new WayangPlan(sink));
-        return results;
+    private TableSink<Record> tableSink(String... columnNames) {
+        return new TableSink<>(new Properties(), "overwrite", SINK_TABLE, columnNames);
+    }
+
+    private static MapOperator<Tuple2<Record, Record>, Record> joinFlattenOperator() {
+        MapOperator<Tuple2<Record, Record>, Record> operator = new MapOperator<>(
+                new TransformationDescriptor<>(
+                        new JoinFlattenFunction(),
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
+                        DataUnitType.createBasic(Record.class)),
+                DataSetType.createDefaultUnchecked(Tuple2.class),
+                DataSetType.createDefault(Record.class));
+        operator.setName(JOIN_FLATTEN_NAME);
+        return operator;
     }
 
     private static Record flattenJoinResult(Object joinResult) {
@@ -567,6 +576,102 @@ class TrinoOperatorsIT {
                 right.getField(0),
                 right.getField(1),
                 right.getField(2));
+    }
+
+    private long queryLong(String sql) {
+        try (Connection c = jdbc(); Statement statement = c.createStatement(); ResultSet rs = statement.executeQuery(sql)) {
+            rs.next();
+            return rs.getLong(1);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: " + sql, e);
+        }
+    }
+
+    private double queryDouble(String sql) {
+        try (Connection c = jdbc(); Statement statement = c.createStatement(); ResultSet rs = statement.executeQuery(sql)) {
+            rs.next();
+            return rs.getDouble(1);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: " + sql, e);
+        }
+    }
+
+    private String queryString(String sql) {
+        try (Connection c = jdbc(); Statement statement = c.createStatement(); ResultSet rs = statement.executeQuery(sql)) {
+            rs.next();
+            return rs.getString(1);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: " + sql, e);
+        }
+    }
+
+    private void assertSingleDoubleResult(double expected, String message) {
+        try (Connection c = jdbc(); Statement statement = c.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT * FROM " + SINK_TABLE)) {
+            assertTrue(rs.next(), message);
+            assertEquals(expected, rs.getDouble(1), 0.01, message);
+            assertFalse(rs.next(), message);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: SELECT * FROM " + SINK_TABLE, e);
+        }
+    }
+
+    private Map<String, Double> readRegionSums() {
+        Map<String, Double> sums = new HashMap<>();
+        try (Connection c = jdbc(); Statement statement = c.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT * FROM " + SINK_TABLE)) {
+            while (rs.next()) {
+                sums.put(rs.getString(1), rs.getDouble(2));
+            }
+            return sums;
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: SELECT * FROM " + SINK_TABLE, e);
+        }
+    }
+
+    private static final class JoinFlattenFunction implements
+            FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
+
+        @Override
+        public Record apply(Tuple2<Record, Record> tuple) {
+            return flattenJoinResult(tuple);
+        }
+    }
+
+    /** Test-only mapping for the unresolved logical join Tuple-to-Record mismatch. */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static final class JoinFlattenMapping implements Mapping {
+
+        @Override
+        public java.util.Collection<PlanTransformation> getTransformations() {
+            OperatorPattern<MapOperator> pattern = new OperatorPattern(
+                    "joinFlatten",
+                    new MapOperator(null, DataSetType.none(), DataSetType.createDefault(Record.class)),
+                    false)
+                    .withAdditionalTest(operator -> JOIN_FLATTEN_NAME.equals(((MapOperator) operator).getName()));
+
+            ReplacementSubplanFactory factory = new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
+                    (matchedOperator, epoch) -> createTrinoProjection().at(epoch));
+
+            return Collections.singleton(new PlanTransformation(
+                    SubplanPattern.createSingleton(pattern),
+                    factory,
+                    TrinoPlatform.getInstance()));
+        }
+
+        private static TrinoProjectionOperator createTrinoProjection() {
+            ProjectionDescriptor<Tuple2<Record, Record>, Record> descriptor = new ProjectionDescriptor<>(
+                    new JoinFlattenFunction(),
+                    Arrays.asList(JOIN_COLUMNS),
+                    DataUnitType.createBasicUnchecked(Tuple2.class),
+                    DataUnitType.createBasic(Record.class));
+            MapOperator<Tuple2<Record, Record>, Record> projection = new MapOperator<>(
+                    descriptor,
+                    DataSetType.createDefaultUnchecked(Tuple2.class),
+                    DataSetType.createDefault(Record.class));
+            projection.setName(JOIN_FLATTEN_NAME);
+            return new TrinoProjectionOperator((MapOperator<Record, Record>) (MapOperator) projection);
+        }
     }
 
     /** Assert that Trino actually ran a query containing the given fragment. */
