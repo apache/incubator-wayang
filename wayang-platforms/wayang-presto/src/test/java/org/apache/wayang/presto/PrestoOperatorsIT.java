@@ -18,11 +18,14 @@
 
 package org.apache.wayang.presto;
 
+import org.apache.wayang.api.DataQuantaBuilder;
+import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Record;
+import org.apache.wayang.basic.data.Tuple2;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
-import org.apache.wayang.basic.operators.LocalCallbackSink;
+import org.apache.wayang.basic.operators.JoinOperator;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.basic.operators.ReduceByOperator;
 import org.apache.wayang.basic.operators.SortOperator;
@@ -30,14 +33,19 @@ import org.apache.wayang.basic.operators.TableSink;
 import org.apache.wayang.basic.types.RecordType;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.wayang.core.types.DataUnitType;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.java.Java;
-import org.apache.wayang.jdbc.compiler.FunctionCompiler;
-import org.apache.wayang.presto.operators.PrestoJoinOperator;
+import org.apache.wayang.presto.operators.PrestoProjectionOperator;
 import org.apache.wayang.presto.operators.PrestoTableSource;
 import org.apache.wayang.presto.platform.PrestoPlatform;
 import org.junit.jupiter.api.AfterAll;
@@ -52,32 +60,34 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * End-to-end integration tests for every operator the Presto platform implements
- * (TableSource, Filter, Projection, Join, GlobalReduce, ReduceBy, Sort, TableSink)
- * driven through the Wayang API against a <b>live PrestoDB</b> cluster using the
- * in-memory connector.
+ * End-to-end integration tests for every operator the Presto platform implements,
+ * driven through the Wayang API against a <b>live PrestoDB</b> cluster (in-memory
+ * connector).
  *
- * <p>Each operator (except Join) runs through the full Wayang API
- * (WayangContext → optimizer → SQL→Stream) and asserts both correct results
- * and that the expected SQL was pushed down (via {@code system.runtime.queries}).
- * Join is verified through the operator's SQL-clause contract executed on Presto,
- * because the logical {@code JoinOperator} emits {@code Tuple2<Record,Record>},
- * which cannot connect to a {@code Record} sink in a high-level plan.
+ * <p>Coverage: {@code TableSource}, {@code Filter}, {@code Projection},
+ * {@code Join}, {@code GlobalReduce}, {@code ReduceBy}, {@code Sort},
+ * and {@code TableSink}, plus the same operators driven through the high-level
+ * {@link JavaPlanBuilder} API. Every Wayang plan ends in a Presto table sink so
+ * the execution itself does not require the Java plugin — only {@code Presto.plugin()}
+ * is registered. Result assertions use plain JDBC only after the Wayang execution
+ * has completed; the sink table's existence and contents prove that the composed
+ * {@code CREATE TABLE ... AS SELECT} ran entirely inside Presto.
  *
  * <p>Prerequisites: a Presto reachable at {@code PRESTO_HOST:PRESTO_PORT}
  * (defaults {@code localhost:8081}) with the {@code memory} connector enabled —
- * e.g. {@code cd presto-setup && docker compose up -d}. If Presto is not
- * reachable the whole class is skipped (not failed).
+ * e.g. {@code cd presto-setup && docker compose up -d}. If Presto is not reachable
+ * the whole class is skipped (not failed).
  *
  * <pre>
  *   JAVA_HOME=&lt;jdk17&gt; mvn -o test -pl wayang-platforms/wayang-presto \
@@ -91,23 +101,24 @@ class PrestoOperatorsIT {
     private static final String HOST = System.getenv().getOrDefault("PRESTO_HOST", "localhost");
     private static final int    PORT = Integer.parseInt(System.getenv().getOrDefault("PRESTO_PORT", "8081"));
     private static final String USER = System.getenv().getOrDefault("PRESTO_USER", "test");
-    // Default catalog `memory`; tables are still referenced fully-qualified.
     private static final String JDBC_URL = String.format("jdbc:presto://%s:%d/memory", HOST, PORT);
 
-    private static final String SCHEMA     = "memory.wayang_it";
-    private static final String ORDERS     = SCHEMA + ".orders";
-    private static final String CUSTOMERS  = SCHEMA + ".customers";
-    private static final String SINK_TABLE = SCHEMA + ".amer_orders";
+    private static final String SCHEMA          = "memory.wayang_it";
+    private static final String ORDERS          = SCHEMA + ".orders";
+    private static final String CUSTOMERS       = SCHEMA + ".customers";
+    private static final String SINK_TABLE_NAME = "operator_result";
+    private static final String SINK_TABLE      = SCHEMA + "." + SINK_TABLE_NAME;
+    private static final String[] JOIN_COLUMNS = {
+            "order_id", "customer_id", "region", "amount", "cust_id", "name", "tier"
+    };
+    private static final String JOIN_FLATTEN_NAME = "Presto test-only join flatten";
 
     private static boolean prestoAvailable = false;
 
-    // ── Lifecycle ───────────────────────────────────────────────────────────
+    // Lifecycle
 
     @BeforeAll
     static void setUp() throws Exception {
-        // Reachability probe: ONLY a genuine connection failure skips the class.
-        // (A failure while building fixtures below is a real regression and must
-        // surface as a test failure, not a silent skip.)
         try (Connection probe = jdbc()) {
             probe.createStatement().execute("SELECT 1");
             prestoAvailable = true;
@@ -115,7 +126,6 @@ class PrestoOperatorsIT {
             System.err.println("[PrestoOperatorsIT] Presto not reachable (" + e.getMessage() + ") — skipping.");
             return;
         }
-        // Connected: build the fixtures. Exceptions here propagate and fail @BeforeAll.
         try (Connection c = jdbc()) {
             Statement st = c.createStatement();
             st.execute("CREATE SCHEMA IF NOT EXISTS " + SCHEMA);
@@ -123,10 +133,9 @@ class PrestoOperatorsIT {
             st.execute("DROP TABLE IF EXISTS " + ORDERS);
             st.execute("CREATE TABLE " + ORDERS
                     + " (order_id BIGINT, customer_id BIGINT, region VARCHAR, amount DOUBLE)");
-            // Build 120000 rows from a 6-row VALUES list crossed with sequence(1,10000)
-            // and a 2-row doubler. Sourcing from VALUES (not the table itself) avoids
-            // reading+writing the same memory table in one statement. Ratios preserved:
-            // 3 of 6 base rows are AMER → 60000 AMER; customer_id ∈ {100,101,102}.
+            // 120000 rows from a 6-row VALUES list crossed with sequence(1,10000) and a
+            // 2-row doubler. Sourcing from VALUES (not the table itself) avoids reading +
+            // writing the same memory table in one statement. AMER = 60000.
             st.execute("INSERT INTO " + ORDERS + " (order_id, customer_id, region, amount) "
                     + "SELECT CAST(b.order_id AS BIGINT), CAST(b.customer_id AS BIGINT), "
                     + "       b.region, CAST(b.amount AS DOUBLE) "
@@ -141,14 +150,15 @@ class PrestoOperatorsIT {
                     + "  (6, 100, 'AMER',  950.25)"
                     + ") AS b(order_id, customer_id, region, amount)");
 
+            // customers' key column is `cust_id` (not customer_id) so the flattened
+            // join projection has no duplicate column name in CREATE TABLE AS SELECT.
             st.execute("DROP TABLE IF EXISTS " + CUSTOMERS);
             st.execute("CREATE TABLE " + CUSTOMERS
-                    + " (customer_id BIGINT, name VARCHAR, tier VARCHAR)");
+                    + " (cust_id BIGINT, name VARCHAR, tier VARCHAR)");
             st.execute("INSERT INTO " + CUSTOMERS + " VALUES "
                     + "(CAST(100 AS BIGINT), 'Acme',    'GOLD'),"
                     + "(101, 'Globex',  'SILVER'),"
                     + "(102, 'Initech', 'BRONZE')");
-
         }
         System.out.println("[PrestoOperatorsIT] Connected to Presto at " + JDBC_URL + " — fixtures created.");
     }
@@ -166,23 +176,21 @@ class PrestoOperatorsIT {
         }
     }
 
-    // ── Tests (one per operator) ──────────────────────────────────────────────
+    // Tests (one per operator)
 
     /** TableSource: full scan returns every row. */
     @Test
     @Order(1)
     void tableSource() {
         Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
-        List<Record> rows = execute(plan -> {
-            PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(plan, Record.class);
-            src.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(120000, rows.size(), "TableSource should return all orders");
-        // @Order(1) runs this before the filter/join tests, whose pushed queries
-        // contain this same prefix — so the (existential) history match here is the
-        // bare scan, not one of those. @Order is therefore load-bearing for specificity.
+        PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        TableSink<Record> sink = tableSink("order_id", "customer_id", "region", "amount");
+        src.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(120000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "TableSource should return all orders");
         assertSqlReachedPresto("SELECT * FROM " + ORDERS);
     }
 
@@ -191,19 +199,19 @@ class PrestoOperatorsIT {
     @Order(2)
     void filter() {
         Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
-        List<Record> rows = execute(plan -> {
-            PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            FilterOperator<Record> filter = new FilterOperator<>(
-                    new PredicateDescriptor<>(
-                            (Record r) -> "AMER".equals(r.getField(2)), Record.class
-                    ).withSqlImplementation("region = 'AMER'"));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(plan, Record.class);
-            src.connectTo(0, filter, 0);
-            filter.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(60000, rows.size(), "60000 AMER orders expected");
-        assertTrue(rows.stream().allMatch(r -> "AMER".equals(r.getField(2))), "all rows AMER");
+        PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (Record r) -> "AMER".equals(r.getField(2)), Record.class
+                ).withSqlImplementation("region = 'AMER'"));
+        TableSink<Record> sink = tableSink("order_id", "customer_id", "region", "amount");
+        src.connectTo(0, filter, 0);
+        filter.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(60000, queryLong("SELECT count(*) FROM " + SINK_TABLE), "60000 AMER orders expected");
+        assertEquals(0, queryLong("SELECT count_if(region <> 'AMER') FROM " + SINK_TABLE), "all rows AMER");
         assertSqlReachedPresto("WHERE region = 'AMER'");
     }
 
@@ -212,66 +220,62 @@ class PrestoOperatorsIT {
     @Order(3)
     void projection() {
         Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
-        List<Record> rows = execute(plan -> {
-            PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            FilterOperator<Record> filter = new FilterOperator<>(
-                    new PredicateDescriptor<>(
-                            (Record r) -> "AMER".equals(r.getField(2)), Record.class
-                    ).withSqlImplementation("region = 'AMER'"));
-            MapOperator<Record, Record> projection = new MapOperator<>(
-                    ProjectionDescriptor.createForRecords(
-                            new RecordType("order_id", "customer_id", "region", "amount"),
-                            "region", "amount"),
-                    DataSetType.createDefault(Record.class),
-                    DataSetType.createDefault(Record.class));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(plan, Record.class);
-            src.connectTo(0, filter, 0);
-            filter.connectTo(0, projection, 0);
-            projection.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(60000, rows.size(), "60000 AMER rows expected");
-        assertEquals(2, rows.get(0).size(), "projection keeps only 2 columns");
+        PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (Record r) -> "AMER".equals(r.getField(2)), Record.class
+                ).withSqlImplementation("region = 'AMER'"));
+        MapOperator<Record, Record> projection = new MapOperator<>(
+                ProjectionDescriptor.createForRecords(
+                        new RecordType("order_id", "customer_id", "region", "amount"),
+                        "region", "amount"),
+                DataSetType.createDefault(Record.class),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("region", "amount");
+        src.connectTo(0, filter, 0);
+        filter.connectTo(0, projection, 0);
+        projection.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(60000, queryLong("SELECT count(*) FROM " + SINK_TABLE), "60000 AMER rows expected");
+        assertEquals(2, columnCount(SINK_TABLE), "projection keeps only 2 columns");
         assertSqlReachedPresto("SELECT region, amount FROM " + ORDERS);
     }
 
     /**
-     * Join: orders ⋈ customers on customer_id.
-     *
-     * <p>A JDBC join cannot be driven through the high-level {@link WayangContext}
-     * API: the logical {@link org.apache.wayang.basic.operators.JoinOperator} emits
-     * {@code Tuple2<Record,Record>}, which has no valid connection to a
-     * {@code Record} sink (the SQL pushdown that flattens it happens only after
-     * optimization). So we verify the operator's real contract: its
-     * {@code createSqlClause} must produce a Presto-valid JOIN that, executed on
-     * live Presto, returns the correct rows.
+     * Join: orders and customers on customer_id, flattened into Presto SQL via a
+     * test-only mapping so the whole plan stays in Presto.
      */
     @Test
     @Order(4)
-    void join() throws Exception {
+    void join() {
         Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
-        PrestoJoinOperator<Record> join = new PrestoJoinOperator<>(
+        PrestoTableSource orders = new PrestoTableSource(
+                ORDERS, "order_id", "customer_id", "region", "amount");
+        PrestoTableSource customers = new PrestoTableSource(
+                CUSTOMERS, "cust_id", "name", "tier");
+        JoinOperator<Record, Record, Record> join = new JoinOperator<>(
                 new TransformationDescriptor<>(
                         (Record r) -> new Record(r.getField(1)), Record.class, Record.class
                 ).withSqlImplementation(ORDERS, "customer_id"),
                 new TransformationDescriptor<>(
                         (Record r) -> new Record(r.getField(0)), Record.class, Record.class
-                ).withSqlImplementation(CUSTOMERS, "customer_id"));
+                ).withSqlImplementation(CUSTOMERS, "cust_id"));
+        MapOperator<Tuple2<Record, Record>, Record> flatten = joinFlattenOperator();
+        TableSink<Record> sink = tableSink(JOIN_COLUMNS);
+        orders.connectTo(0, join, 0);
+        customers.connectTo(0, join, 1);
+        join.connectTo(0, flatten, 0);
+        flatten.connectTo(0, sink, 0);
 
-        assertEquals(PrestoPlatform.getInstance(), join.getPlatform());
+        wayangContext().execute(new WayangPlan(sink));
 
-        try (Connection c = jdbc()) {
-            String joinClause = join.createSqlClause(c, new FunctionCompiler());
-            assertTrue(joinClause.startsWith("JOIN " + CUSTOMERS + " ON"),
-                    "unexpected join clause: " + joinClause);
-
-            String sql = "SELECT * FROM " + ORDERS + " " + joinClause;
-            ResultSet rs = c.createStatement().executeQuery(sql);
-            int n = 0;
-            while (rs.next()) n++;
-            // Every order's customer_id exists in customers → one joined row per order.
-            assertEquals(120000, n, "join should yield one row per order");
-        }
+        assertEquals(120000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "join should yield one row per order");
+        assertEquals(0, queryLong("SELECT count_if(customer_id <> cust_id) FROM " + SINK_TABLE),
+                "joined customer IDs should match");
+        assertSqlReachedPresto("JOIN " + CUSTOMERS);
     }
 
     /** GlobalReduce: SUM(amount) over the whole table collapses to a single row. */
@@ -279,21 +283,19 @@ class PrestoOperatorsIT {
     @Order(5)
     void globalReduce() {
         Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
-        List<Record> rows = execute(plan -> {
-            PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            GlobalReduceOperator<Record> reduce = new GlobalReduceOperator<>(
-                    new ReduceDescriptor<>((a, b) -> a, Record.class)
-                            .withSqlImplementation("SUM(amount)"),
-                    DataSetType.createDefault(Record.class));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(plan, Record.class);
-            src.connectTo(0, reduce, 0);
-            reduce.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(1, rows.size(), "global reduce must collapse to a single row");
-        // 6 base rows sum to 7231.25; scaled x20000 → 144,625,000 (exact in doubles).
-        assertEquals(144_625_000.0, ((Number) rows.get(0).getField(0)).doubleValue(), 0.01);
-        assertSqlReachedPresto("SELECT SUM(amount) FROM " + ORDERS);
+        PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        GlobalReduceOperator<Record> reduce = new GlobalReduceOperator<>(
+                new ReduceDescriptor<>((a, b) -> a, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("total_amount");
+        src.connectTo(0, reduce, 0);
+        reduce.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertSingleDoubleResult(144_625_000.0, "global reduce must collapse to a single row");
+        assertSqlReachedPresto("SELECT SUM(amount) AS total_amount FROM " + ORDERS);
     }
 
     /** ReduceBy: SUM(amount) GROUP BY region yields one row per region. */
@@ -301,64 +303,53 @@ class PrestoOperatorsIT {
     @Order(6)
     void reduceBy() {
         Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
-        List<Record> rows = execute(plan -> {
-            PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            ReduceByOperator<Record, Record> reduceBy = new ReduceByOperator<>(
-                    new TransformationDescriptor<>(
-                            (Record r) -> new Record(r.getField(2)), Record.class, Record.class
-                    ).withSqlImplementation("region", "region"),
-                    new ReduceDescriptor<>((a, b) -> a, Record.class)
-                            .withSqlImplementation("SUM(amount)"),
-                    DataSetType.createDefault(Record.class));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(plan, Record.class);
-            src.connectTo(0, reduceBy, 0);
-            reduceBy.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(3, rows.size(), "one row per region expected");
-        Map<String, Double> sums = new HashMap<>();
-        for (Record r : rows) {
-            sums.put((String) r.getField(0), ((Number) r.getField(1)).doubleValue());
-        }
-        // Base sums (AMER 3830.75, EMEA 1900.5, APAC 1500.0) scaled x20000.
+        PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        ReduceByOperator<Record, Record> reduceBy = new ReduceByOperator<>(
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(2)), Record.class, Record.class
+                ).withSqlImplementation("region", "region"),
+                new ReduceDescriptor<>((a, b) -> a, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("region", "total_amount");
+        src.connectTo(0, reduceBy, 0);
+        reduceBy.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        Map<String, Double> sums = readRegionSums();
+        assertEquals(3, sums.size(), "one row per region expected");
         assertEquals(76_615_000.0, sums.get("AMER"), 0.01);
         assertEquals(38_010_000.0, sums.get("EMEA"), 0.01);
         assertEquals(30_000_000.0, sums.get("APAC"), 0.01);
         assertSqlReachedPresto("GROUP BY region");
     }
 
-    /** Sort: ORDER BY amount ASC pushed to Presto, order preserved to the sink. */
+    /** Sort: ORDER BY amount ASC pushed to Presto. */
     @Test
     @Order(7)
     void sort() {
         Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
-        List<Record> rows = execute(plan -> {
-            PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
-            SortOperator<Record, Record> sort = new SortOperator<>(
-                    new TransformationDescriptor<>(
-                            (Record r) -> new Record(r.getField(3)), Record.class, Record.class
-                    ).withSqlImplementation("amount", "ASC"),
-                    DataSetType.createDefault(Record.class));
-            LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(plan, Record.class);
-            src.connectTo(0, sort, 0);
-            sort.connectTo(0, sink, 0);
-            return sink;
-        });
-        assertEquals(120000, rows.size(), "sort must not change the cardinality");
-        assertEquals(680.5, ((Number) rows.get(0).getField(3)).doubleValue(), 0.001, "smallest amount first");
-        assertEquals(2200.0, ((Number) rows.get(rows.size() - 1).getField(3)).doubleValue(), 0.001, "largest amount last");
-        for (int i = 1; i < rows.size(); i++) {
-            double prev = ((Number) rows.get(i - 1).getField(3)).doubleValue();
-            double curr = ((Number) rows.get(i).getField(3)).doubleValue();
-            assertTrue(prev <= curr, "rows must be non-decreasing by amount at index " + i);
-        }
+        PrestoTableSource src = new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount");
+        SortOperator<Record, Record> sort = new SortOperator<>(
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(3)), Record.class, Record.class
+                ).withSqlImplementation("amount", "ASC"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("order_id", "customer_id", "region", "amount");
+        src.connectTo(0, sort, 0);
+        sort.connectTo(0, sink, 0);
+
+        wayangContext().execute(new WayangPlan(sink));
+
+        assertEquals(120000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "sort must not change the cardinality");
+        assertEquals(680.5, queryDouble("SELECT min(amount) FROM " + SINK_TABLE), 0.001);
+        assertEquals(2200.0, queryDouble("SELECT max(amount) FROM " + SINK_TABLE), 0.001);
         assertSqlReachedPresto("ORDER BY amount ASC");
     }
 
-    /**
-     * TableSink: filter + sink composed into a single {@code CREATE TABLE ... AS
-     * SELECT} that runs entirely inside Presto — no data leaves the database.
-     */
+    /** TableSink: filter + sink composed into a single CREATE TABLE AS SELECT in Presto. */
     @Test
     @Order(8)
     void tableSink() throws Exception {
@@ -387,28 +378,257 @@ class PrestoOperatorsIT {
         assertSqlReachedPresto("CREATE TABLE " + SINK_TABLE + " AS");
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // JavaPlanBuilder combination tests
 
-    private interface PlanBuilder {
-        LocalCallbackSink<Record> build(List<Record> resultCollector);
+    /** JavaPlanBuilder: read, filter, project, write — all in Presto. */
+    @Test
+    @Order(9)
+    void javaPlanBuilderReadTableFilterProjection() {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        new JavaPlanBuilder(wayangContext(), "Presto JavaPlanBuilder readTable integration test")
+                .readTable(new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"order_id", "amount"}, new Properties());
+
+        assertEquals(60000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "60000 projected AMER orders expected");
+        assertEquals(0, queryLong(
+                "SELECT count_if(amount NOT IN (2200.0, 680.5, 950.25)) FROM " + SINK_TABLE),
+                "only AMER order amounts should remain");
+        assertSqlReachedPresto("SELECT order_id, amount FROM " + ORDERS + " WHERE region = 'AMER'");
     }
+
+    /** JavaPlanBuilder: filter + global reduce, written in Presto. */
+    @Test
+    @Order(10)
+    void javaPlanBuilderReadTableFilterGlobalReduce() {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        new JavaPlanBuilder(wayangContext(), "Presto JavaPlanBuilder global reduce integration test")
+                .readTable(new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .reduce((left, right) -> left)
+                    .withSqlUdf("SUM(amount) AS total_amount")
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"total_amount"}, new Properties());
+
+        assertSingleDoubleResult(76_615_000.0, "global reduction should return one row");
+        assertSqlReachedPresto("SELECT SUM(amount) AS total_amount FROM " + ORDERS + " WHERE region = 'AMER'");
+    }
+
+    /** JavaPlanBuilder: reduce-by + sort, written in Presto. */
+    @Test
+    @Order(11)
+    void javaPlanBuilderReadTableReduceBySort() {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        new JavaPlanBuilder(wayangContext(), "Presto JavaPlanBuilder reduce-by and sort integration test")
+                .readTable(new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount"))
+                .reduceByKey(
+                        record -> new Record(record.getField(2)),
+                        (left, right) -> left)
+                    .withSqlUdfs("region", "SUM(amount) AS total_amount")
+                .sort(record -> new Record(record.getField(0)))
+                    .withSqlUdf("region", "ASC")
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"region", "total_amount"}, new Properties());
+
+        Map<String, Double> sums = readRegionSums();
+        assertEquals(3, sums.size(), "one row per region expected");
+        assertTrue(sums.containsKey("AMER") && sums.containsKey("APAC") && sums.containsKey("EMEA"));
+        assertSqlReachedPresto(
+                "SELECT region,SUM(amount) AS total_amount FROM " + ORDERS
+                        + " GROUP BY region ORDER BY region ASC");
+    }
+
+    /** JavaPlanBuilder: filtered projection straight into a Presto table sink. */
+    @Test
+    @Order(12)
+    void javaPlanBuilderReadTableFilterProjectionTableSink() throws Exception {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        new JavaPlanBuilder(wayangContext(), "Presto JavaPlanBuilder table sink integration test")
+                .readTable(new PrestoTableSource(ORDERS, "order_id", "customer_id", "region", "amount"))
+                .filter(record -> "AMER".equals(record.getField(2)))
+                    .withSqlUdf("region = 'AMER'")
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"order_id", "amount"}, new Properties());
+
+        assertEquals(60000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "sink table should contain projected AMER orders");
+        assertSqlReachedPresto(
+                "CREATE TABLE " + SINK_TABLE + " AS SELECT order_id, amount FROM " + ORDERS
+                        + " WHERE region = 'AMER'");
+    }
+
+    /** JavaPlanBuilder: join two tables, flatten, write — all in Presto. */
+    @Test
+    @Order(13)
+    void javaPlanBuilderReadTableJoin() {
+        Assumptions.assumeTrue(prestoAvailable, "Presto not reachable");
+
+        JavaPlanBuilder plan = new JavaPlanBuilder(
+                wayangContext(), "Presto JavaPlanBuilder join integration test");
+        DataQuantaBuilder<?, Record> orders = plan.readTable(new PrestoTableSource(
+                ORDERS, "order_id", "customer_id", "region", "amount"));
+        DataQuantaBuilder<?, Record> customers = plan.readTable(new PrestoTableSource(
+                CUSTOMERS, "cust_id", "name", "tier"));
+
+        orders
+                .join(
+                        record -> new Record(record.getField(1)),
+                        customers,
+                        record -> new Record(record.getField(0)))
+                    .withSqlUdfs(ORDERS, "customer_id", CUSTOMERS, "cust_id")
+                .map(new JoinFlattenFunction())
+                    .withName(JOIN_FLATTEN_NAME)
+                .writeTable(SINK_TABLE, "overwrite", JOIN_COLUMNS, new Properties());
+
+        assertEquals(120000, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "join should yield one row per order");
+        assertEquals(0, queryLong("SELECT count_if(customer_id <> cust_id) FROM " + SINK_TABLE),
+                "joined customer IDs should match");
+        assertSqlReachedPresto("JOIN " + CUSTOMERS);
+    }
+
+    // Helpers
 
     private WayangContext wayangContext() {
         Configuration config = new Configuration();
         config.setProperty("wayang.presto.jdbc.url", JDBC_URL);
         config.setProperty("wayang.presto.jdbc.user", USER);
-        // No password: the Presto JDBC driver rejects an (even empty) password on
-        // a non-SSL connection.
+        // No password: the Presto JDBC driver rejects an (even empty) password on a
+        // non-SSL connection.
+        config.getMappingProvider().addAllToWhitelist(
+                Collections.singleton(new JoinFlattenMapping()));
         return new WayangContext(config)
-                .withPlugin(Java.basicPlugin())
                 .withPlugin(Presto.plugin());
     }
 
-    private List<Record> execute(PlanBuilder builder) {
-        List<Record> results = new ArrayList<>();
-        LocalCallbackSink<Record> sink = builder.build(results);
-        wayangContext().execute(new WayangPlan(sink));
-        return results;
+    private TableSink<Record> tableSink(String... columnNames) {
+        return new TableSink<>(new Properties(), "overwrite", SINK_TABLE, columnNames);
+    }
+
+    private static MapOperator<Tuple2<Record, Record>, Record> joinFlattenOperator() {
+        MapOperator<Tuple2<Record, Record>, Record> operator = new MapOperator<>(
+                new TransformationDescriptor<>(
+                        new JoinFlattenFunction(),
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
+                        DataUnitType.createBasic(Record.class)),
+                DataSetType.createDefaultUnchecked(Tuple2.class),
+                DataSetType.createDefault(Record.class));
+        operator.setName(JOIN_FLATTEN_NAME);
+        return operator;
+    }
+
+    private static Record flattenJoinResult(Object joinResult) {
+        if (joinResult instanceof Record) {
+            return (Record) joinResult;
+        }
+        Tuple2<?, ?> pair = (Tuple2<?, ?>) joinResult;
+        Record left = (Record) pair.field0;
+        Record right = (Record) pair.field1;
+        return new Record(
+                left.getField(0), left.getField(1), left.getField(2), left.getField(3),
+                right.getField(0), right.getField(1), right.getField(2));
+    }
+
+    private long queryLong(String sql) {
+        try (Connection c = jdbc(); Statement statement = c.createStatement(); ResultSet rs = statement.executeQuery(sql)) {
+            rs.next();
+            return rs.getLong(1);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: " + sql, e);
+        }
+    }
+
+    private double queryDouble(String sql) {
+        try (Connection c = jdbc(); Statement statement = c.createStatement(); ResultSet rs = statement.executeQuery(sql)) {
+            rs.next();
+            return rs.getDouble(1);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: " + sql, e);
+        }
+    }
+
+    private int columnCount(String table) {
+        try (Connection c = jdbc(); Statement statement = c.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT * FROM " + table + " LIMIT 1")) {
+            return rs.getMetaData().getColumnCount();
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: column count of " + table, e);
+        }
+    }
+
+    private void assertSingleDoubleResult(double expected, String message) {
+        try (Connection c = jdbc(); Statement statement = c.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT * FROM " + SINK_TABLE)) {
+            assertTrue(rs.next(), message);
+            assertEquals(expected, rs.getDouble(1), 0.01, message);
+            assertFalse(rs.next(), message);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: SELECT * FROM " + SINK_TABLE, e);
+        }
+    }
+
+    private Map<String, Double> readRegionSums() {
+        Map<String, Double> sums = new HashMap<>();
+        try (Connection c = jdbc(); Statement statement = c.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT * FROM " + SINK_TABLE)) {
+            while (rs.next()) {
+                sums.put(rs.getString(1), rs.getDouble(2));
+            }
+            return sums;
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: SELECT * FROM " + SINK_TABLE, e);
+        }
+    }
+
+    private static final class JoinFlattenFunction implements
+            FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
+        @Override
+        public Record apply(Tuple2<Record, Record> tuple) {
+            return flattenJoinResult(tuple);
+        }
+    }
+
+    /** Test-only mapping for the unresolved logical join Tuple-to-Record mismatch. */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static final class JoinFlattenMapping implements Mapping {
+        @Override
+        public java.util.Collection<PlanTransformation> getTransformations() {
+            OperatorPattern<MapOperator> pattern = new OperatorPattern(
+                    "joinFlatten",
+                    new MapOperator(null, DataSetType.none(), DataSetType.createDefault(Record.class)),
+                    false)
+                    .withAdditionalTest(operator -> JOIN_FLATTEN_NAME.equals(((MapOperator) operator).getName()));
+
+            ReplacementSubplanFactory factory = new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
+                    (matchedOperator, epoch) -> createPrestoProjection().at(epoch));
+
+            return Collections.singleton(new PlanTransformation(
+                    SubplanPattern.createSingleton(pattern),
+                    factory,
+                    PrestoPlatform.getInstance()));
+        }
+
+        private static PrestoProjectionOperator createPrestoProjection() {
+            ProjectionDescriptor<Tuple2<Record, Record>, Record> descriptor = new ProjectionDescriptor<>(
+                    new JoinFlattenFunction(),
+                    Arrays.asList(JOIN_COLUMNS),
+                    DataUnitType.createBasicUnchecked(Tuple2.class),
+                    DataUnitType.createBasic(Record.class));
+            MapOperator<Tuple2<Record, Record>, Record> projection = new MapOperator<>(
+                    descriptor,
+                    DataSetType.createDefaultUnchecked(Tuple2.class),
+                    DataSetType.createDefault(Record.class));
+            projection.setName(JOIN_FLATTEN_NAME);
+            return new PrestoProjectionOperator((MapOperator<Record, Record>) (MapOperator) projection);
+        }
     }
 
     /** Assert that Presto actually ran a query containing the given fragment. */

@@ -169,7 +169,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         final Collection<?> startTasks = stage.getStartTasks();
 
         // Verify that we can handle this instance.
-        final ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
+        final ExecutionTask startTask = JdbcExecutor.selectStartTask(startTasks, stage);
         assert startTask.getOperator() instanceof TableSource
                 : "Invalid JDBC stage: Start task has to be a TableSource";
 
@@ -194,13 +194,16 @@ public class JdbcExecutor extends ExecutorTemplate {
             } else if (operator instanceof JdbcProjectionOperator) {
                 assert projectionTask == null; // Allow one projection operator per stage for now.
                 projectionTask = (JdbcProjectionOperator) operator;
-            } else if (operator instanceof final JdbcGlobalReduceOperator globalReduce) {
+            } else if (operator instanceof JdbcGlobalReduceOperator) {
+                final JdbcGlobalReduceOperator globalReduce = (JdbcGlobalReduceOperator) operator;
                 assert globalReduceTask == null; // Allow one projection operator per stage for now.
                 globalReduceTask = globalReduce;
-            } else if (operator instanceof final JdbcReduceByOperator reduceBy) {
+            } else if (operator instanceof JdbcReduceByOperator) {
+                final JdbcReduceByOperator reduceBy = (JdbcReduceByOperator) operator;
                 assert reduceByTask == null; // Allow one projection operator per stage for now.
                 reduceByTask = reduceBy;
-            } else if (operator instanceof final JdbcSortOperator sort) {
+            } else if (operator instanceof JdbcSortOperator) {
+                final JdbcSortOperator sort = (JdbcSortOperator) operator;
                 assert sortTask == null; // Allow one projection operator per stage for now.
                 sortTask = sort;
             } else if (operator instanceof JoinOperator || (operator instanceof SpatialJoinOperator)) {
@@ -224,6 +227,33 @@ public class JdbcExecutor extends ExecutorTemplate {
     }
 
     /**
+     * Selects the table source that belongs on the left-hand side of a JDBC join.
+     * Stage start tasks are not ordered, but {@link JdbcJoinOperator#createSqlClause}
+     * assumes its first key descriptor's table is used in the {@code FROM} clause.
+     */
+    private static ExecutionTask selectStartTask(final Collection<?> startTasks, final ExecutionStage stage) {
+        if (startTasks.size() == 1) {
+            return (ExecutionTask) startTasks.iterator().next();
+        }
+
+        for (ExecutionTask task : stage.getAllTasks()) {
+            if (task.getOperator() instanceof JdbcJoinOperator) {
+                final JdbcJoinOperator<?> joinOperator = (JdbcJoinOperator<?>) task.getOperator();
+                final String leftTableName = joinOperator.getKeyDescriptor0().getSqlImplementation().field0;
+                for (Object startTaskObject : startTasks) {
+                    final ExecutionTask startTask = (ExecutionTask) startTaskObject;
+                    if (startTask.getOperator() instanceof JdbcTableSource
+                            && ((JdbcTableSource) startTask.getOperator()).getTableName().equals(leftTableName)) {
+                        return startTask;
+                    }
+                }
+            }
+        }
+
+        throw new WayangException("Could not determine the left table source for JDBC stage.");
+    }
+
+    /**
      * Handles execution stages that end with a {@link JdbcTableSinkOperator}.
      * Composes a SQL query from the stage's operators and executes it directly on
      * the database connection, keeping all data within the database.
@@ -237,8 +267,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         final Collection<?> startTasks = stage.getStartTasks();
         final Collection<?> termTasks = stage.getTerminalTasks();
 
-        assert startTasks.size() == 1 : "Invalid JDBC stage: multiple sources are not currently supported";
-        final ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
+        final ExecutionTask startTask = JdbcExecutor.selectStartTask(startTasks, stage);
         assert termTasks.size() == 1 : "Invalid JDBC stage: multiple terminal tasks are not currently supported.";
         final ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
         assert startTask.getOperator() instanceof TableSource
@@ -251,17 +280,35 @@ public class JdbcExecutor extends ExecutorTemplate {
         final JdbcTableSinkOperator sinkOp = (JdbcTableSinkOperator) termTask.getOperator();
         final Collection<JdbcExecutionOperator> filterTasks = new ArrayList<>(4);
         JdbcProjectionOperator projectionTask = null;
+        JdbcGlobalReduceOperator globalReduceTask = null;
+        JdbcReduceByOperator reduceByTask = null;
+        JdbcSortOperator sortTask = null;
         final Collection<JdbcExecutionOperator> joinTasks = new ArrayList<>();
 
         // Walk through intermediate operators, stopping at the sink
         ExecutionTask nextTask = JdbcExecutor.findJdbcExecutionOperatorTaskInStage(startTask, stage);
         while (nextTask != null && !(nextTask.getOperator() instanceof JdbcTableSinkOperator)) {
-            if (nextTask.getOperator() instanceof final JdbcFilterOperator filterOperator) {
+            if (nextTask.getOperator() instanceof JdbcFilterOperator) {
+                final JdbcFilterOperator filterOperator = (JdbcFilterOperator) nextTask.getOperator();
                 filterTasks.add(filterOperator);
-            } else if (nextTask.getOperator() instanceof final JdbcProjectionOperator projectionOperator) {
+            } else if (nextTask.getOperator() instanceof JdbcProjectionOperator) {
+                final JdbcProjectionOperator projectionOperator = (JdbcProjectionOperator) nextTask.getOperator();
                 assert projectionTask == null;
                 projectionTask = projectionOperator;
-            } else if (nextTask.getOperator() instanceof final JdbcJoinOperator joinOperator) {
+            } else if (nextTask.getOperator() instanceof JdbcGlobalReduceOperator) {
+                final JdbcGlobalReduceOperator globalReduceOperator = (JdbcGlobalReduceOperator) nextTask.getOperator();
+                assert globalReduceTask == null;
+                globalReduceTask = globalReduceOperator;
+            } else if (nextTask.getOperator() instanceof JdbcReduceByOperator) {
+                final JdbcReduceByOperator reduceByOperator = (JdbcReduceByOperator) nextTask.getOperator();
+                assert reduceByTask == null;
+                reduceByTask = reduceByOperator;
+            } else if (nextTask.getOperator() instanceof JdbcSortOperator) {
+                final JdbcSortOperator sortOperator = (JdbcSortOperator) nextTask.getOperator();
+                assert sortTask == null;
+                sortTask = sortOperator;
+            } else if (nextTask.getOperator() instanceof JdbcJoinOperator) {
+                final JdbcJoinOperator joinOperator = (JdbcJoinOperator) nextTask.getOperator();
                 joinTasks.add(joinOperator);
             } else {
                 throw new WayangException(String.format("Unsupported JDBC execution task %s", nextTask.toString()));
@@ -270,8 +317,8 @@ public class JdbcExecutor extends ExecutorTemplate {
         }
 
         // Compose the SELECT query
-        final StringBuilder selectQuery = createSqlString(jdbcExecutor, tableOp, filterTasks, projectionTask, null, null, null,
-                joinTasks);
+        final StringBuilder selectQuery = createSqlString(jdbcExecutor, tableOp, filterTasks, projectionTask,
+                globalReduceTask, reduceByTask, sortTask, joinTasks);
 
         // Remove trailing semicolon from SELECT
         String selectSql = selectQuery.toString();
