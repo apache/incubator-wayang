@@ -60,6 +60,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -78,15 +79,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * {@code Join}, {@code GlobalReduce}, {@code ReduceBy}, {@code Sort},
  * {@code TableSink}. Every Wayang plan ends in a BigQuery {@code TableSink} that
  * compiles to {@code CREATE TABLE `proj.ds.t` AS SELECT ...} executed inside
- * BigQuery. Only {@code BigQuery.plugin()} is registered — there is no
+ * BigQuery. Only {@code BigQuery.plugin()} is registered; there is no
  * {@code Java.basicPlugin()}, so the optimizer has no Java operators to fall back
  * to and the whole plan necessarily runs in BigQuery. Assertions re-query the
  * sink table via plain JDBC only after {@code execute(...)} returns; the sink
  * table's existence + contents prove the CTAS ran in BigQuery.
  *
- * <p>DDL only ({@code CREATE TABLE AS} / {@code DROP}), never DML, so it runs on a
- * free-tier (no-billing) project. Requires a live GCP project + service account
- * (the JDBC driver mandates OAuth2; the local emulator cannot serve it).
+ * <p>The source tables are created from inline literals in {@link #setUp()}, so
+ * no external BigQuery dataset or table is required. Requires a live GCP project
+ * + service account (the JDBC driver mandates OAuth2; the local emulator cannot
+ * serve it).
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BigQueryOperatorsIT {
@@ -96,12 +98,12 @@ class BigQueryOperatorsIT {
             "wayang-bq@" + PROJECT_ID + ".iam.gserviceaccount.com");
     private static final String KEY_PATH   = cfg("bigquery.keyPath", "BIGQUERY_KEY_PATH",
             System.getProperty("user.home") + "/wayang-bq-key.json");
-    private static final String TABLE = cfg("bigquery.table", "BIGQUERY_TABLE",
-            "`" + PROJECT_ID + ".sales.orders`");
     private static final String LOCATION = cfg("bigquery.location", "BIGQUERY_LOCATION", "US");
+    private static final String DATASET = cfg("bigquery.dataset", "BIGQUERY_DATASET", "wayang_it");
 
-    private static final String SINK_TABLE = "`" + PROJECT_ID + ".sales.wayang_operator_result`";
-    private static final String JOIN_TABLE = "`" + PROJECT_ID + ".sales.wayang_regions`";
+    private static final String TABLE = tableName("orders");
+    private static final String SINK_TABLE = tableName("operator_result");
+    private static final String JOIN_TABLE = tableName("regions");
     private static final String[] JOIN_COLUMNS = {"order_id", "region", "product", "amount", "region_name"};
     private static final String JOIN_FLATTEN_NAME = "BigQuery test-only join flatten";
 
@@ -118,6 +120,37 @@ class BigQueryOperatorsIT {
         return (v == null || v.isEmpty()) ? dflt : v;
     }
 
+    private static String tableName(String table) {
+        return "`" + PROJECT_ID + "." + DATASET + "." + table + "`";
+    }
+
+    private static void createFixtureTables(Connection conn) throws Exception {
+        try (Statement st = conn.createStatement()) {
+            st.execute("CREATE SCHEMA IF NOT EXISTS `" + PROJECT_ID + "." + DATASET + "` "
+                    + "OPTIONS(location='" + LOCATION + "')");
+            st.execute("DROP TABLE IF EXISTS " + SINK_TABLE);
+            st.execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
+            st.execute("DROP TABLE IF EXISTS " + TABLE);
+            st.execute("CREATE TABLE " + TABLE + " AS "
+                    + "SELECT * FROM UNNEST(["
+                    + "STRUCT(1 AS order_id, 'APAC' AS region, 'Widget A' AS product, 1500.0 AS amount),"
+                    + "STRUCT(2 AS order_id, 'EMEA' AS region, 'Widget B' AS product, 800.5 AS amount),"
+                    + "STRUCT(3 AS order_id, 'AMER' AS region, 'Widget A' AS product, 2200.0 AS amount),"
+                    + "STRUCT(4 AS order_id, 'APAC' AS region, 'Widget C' AS product, 350.75 AS amount),"
+                    + "STRUCT(5 AS order_id, 'EMEA' AS region, 'Widget A' AS product, 1100.0 AS amount),"
+                    + "STRUCT(6 AS order_id, 'AMER' AS region, 'Widget B' AS product, 950.25 AS amount),"
+                    + "STRUCT(7 AS order_id, 'APAC' AS region, 'Widget B' AS product, 1750.0 AS amount),"
+                    + "STRUCT(8 AS order_id, 'EMEA' AS region, 'Widget C' AS product, 420.0 AS amount),"
+                    + "STRUCT(9 AS order_id, 'AMER' AS region, 'Widget C' AS product, 680.5 AS amount),"
+                    + "STRUCT(10 AS order_id, 'APAC' AS region, 'Widget A' AS product, 3000.0 AS amount)"
+                    + "])");
+            // Lookup table for the join tests; region_name avoids duplicate
+            // region columns in the flattened CREATE TABLE AS SELECT.
+            st.execute("CREATE TABLE " + JOIN_TABLE
+                    + " AS SELECT DISTINCT region AS region_name FROM " + TABLE);
+        }
+    }
+
     // Lifecycle
 
     @BeforeAll
@@ -127,11 +160,7 @@ class BigQueryOperatorsIT {
             try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
                 ResultSet rs = conn.createStatement().executeQuery("SELECT 1");
                 available = rs.next();
-                // Lookup table for the join test; renamed key column avoids a duplicate
-                // `region` column in the flattened CREATE TABLE AS SELECT.
-                conn.createStatement().execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
-                conn.createStatement().execute(
-                        "CREATE TABLE " + JOIN_TABLE + " AS SELECT DISTINCT region AS region_name FROM " + TABLE);
+                createFixtureTables(conn);
                 System.out.println("[SETUP] Connected to BigQuery project: " + PROJECT_ID);
             }
         } catch (Exception e) {
@@ -145,6 +174,7 @@ class BigQueryOperatorsIT {
         try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
             conn.createStatement().execute("DROP TABLE IF EXISTS " + SINK_TABLE);
             conn.createStatement().execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
+            conn.createStatement().execute("DROP TABLE IF EXISTS " + TABLE);
         } catch (Exception e) {
             System.err.println("[CLEANUP] failed: " + e.getMessage());
         }
