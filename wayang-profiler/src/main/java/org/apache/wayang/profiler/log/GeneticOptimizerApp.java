@@ -109,6 +109,7 @@ public class GeneticOptimizerApp {
         Spark.platform();
         Sqlite3.platform();
         Postgres.platform();
+        initializeOptionalPlatform("org.apache.wayang.trino.Trino");
 
         // Load the ExecutionLog.
         double samplingFactor = this.configuration.getDoubleProperty("wayang.profiler.ga.sampling", 1d);
@@ -199,6 +200,20 @@ public class GeneticOptimizerApp {
                 "Loaded %d execution records with %d template-based estimators types and %d platform overheads.\n",
                 this.partialExecutions.size(), estimators.keySet().size(), this.platformOverheads.size()
         );
+    }
+
+    /**
+     * Initializes a platform integration when it is available on the runtime
+     * classpath without making it a mandatory profiler dependency.
+     */
+    private static void initializeOptionalPlatform(String platformFacadeClassName) {
+        try {
+            Class.forName(platformFacadeClassName).getMethod("platform").invoke(null);
+        } catch (ClassNotFoundException e) {
+            logger.debug("Optional platform {} is not on the classpath.", platformFacadeClassName);
+        } catch (ReflectiveOperationException e) {
+            throw new WayangException("Could not initialize optional platform " + platformFacadeClassName, e);
+        }
     }
 
     /**
