@@ -19,7 +19,6 @@
 package org.apache.wayang.jdbc.operators;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -96,11 +95,15 @@ class JdbcGlobalReduceOperatorTest extends OperatorTestBase {
 
         try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
             final Statement statement = jdbcConnection.createStatement();
+            statement.execute("DROP TABLE IF EXISTS testA");
+            statement.execute("CREATE TABLE testA (col0 INT)");
+            statement.execute("INSERT INTO testA VALUES (1)");
+            statement.execute("INSERT INTO testA VALUES (2)");
             final java.sql.ResultSet resultSet = statement.executeQuery(sqlQueryChannelInstance.getSqlQuery());
             resultSet.next();
             final int count = resultSet.getInt(1);
 
-            assertTrue(count > 0);
+            assertEquals(2, count);
         }
 
         assertEquals("SELECT COUNT(*) FROM testA", sqlQueryChannelInstance.getSqlQuery());
