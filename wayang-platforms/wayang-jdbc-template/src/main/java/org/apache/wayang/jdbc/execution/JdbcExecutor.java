@@ -414,12 +414,14 @@ public class JdbcExecutor extends ExecutorTemplate {
 
         if (termTask.getOperator() instanceof JdbcTableSinkOperator) {
             final long executionDuration = JdbcExecutor.executeSinkStage(stage, optimizationContext, this);
-            final PartialExecution partialExecution = this.createPartialExecution(
-                    this.createExecutionLineageNodes(stage, optimizationContext),
-                    executionDuration
-            );
-            if (partialExecution != null) {
-                executionState.add(partialExecution);
+            if (this.isProfilingEnabled()) {
+                final PartialExecution partialExecution = this.createPartialExecution(
+                        this.createExecutionLineageNodes(stage, optimizationContext),
+                        executionDuration
+                );
+                if (partialExecution != null) {
+                    executionState.add(partialExecution);
+                }
             }
         } else {
             // If it is normal stage: compose SQL and store in channel for downstream
@@ -431,6 +433,10 @@ public class JdbcExecutor extends ExecutorTemplate {
             queryChannel.setSqlQuery(query);
             executionState.register(queryChannel);
         }
+    }
+
+    private boolean isProfilingEnabled() {
+        return this.getConfiguration().getBooleanProperty("wayang.core.log.enabled", false);
     }
 
     @Override
