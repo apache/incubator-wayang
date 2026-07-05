@@ -57,6 +57,7 @@ class JdbcTableSinkExecutorTest {
     @Test
     void testOverwriteModeCreatesNewTable() throws SQLException {
         Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.core.log.enabled", "true");
         configuration.setProperty("wayang.hsqldb.cpu.mhz", "2700");
         configuration.setProperty("wayang.hsqldb.cores", "1");
         configuration.setProperty(
@@ -194,6 +195,7 @@ class JdbcTableSinkExecutorTest {
 
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
         executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
+        assertEquals(0, job.getCrossPlatformExecutor().getPartialExecutions().size());
 
         // Verify target was replaced. Old data should be gone, new schema and data present
         try (Connection conn = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
@@ -212,6 +214,7 @@ class JdbcTableSinkExecutorTest {
     @Test
     void testAppendModeInsertsIntoExistingTable() throws SQLException {
         Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.core.log.enabled", "false");
         HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
 
         //Create source and target table. Target has existing data.
@@ -253,6 +256,7 @@ class JdbcTableSinkExecutorTest {
 
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
         executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
+        assertEquals(0, job.getCrossPlatformExecutor().getPartialExecutions().size());
 
         // Verify existing data remains and new data is appended
         try (Connection conn = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
