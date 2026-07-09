@@ -91,6 +91,6 @@ public class JdbcReduceByOperatorTest extends OperatorTestBase {
         final SqlQueryChannel.Instance sqlQueryChannelInstance = (SqlQueryChannel.Instance) job.getCrossPlatformExecutor()
                 .getChannelInstance(sqlToStreamTask.getInputChannel(0));
 
-        assertEquals("SELECT col0,COUNT(*) FROM testA GROUP BY col0", sqlQueryChannelInstance.getSqlQuery());
+        assertEquals("SELECT col0,COUNT(*) FROM testA GROUP BY col0;", sqlQueryChannelInstance.getSqlQuery());
     }
 }

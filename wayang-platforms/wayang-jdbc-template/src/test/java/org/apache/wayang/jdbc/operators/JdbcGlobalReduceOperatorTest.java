@@ -106,6 +106,6 @@ class JdbcGlobalReduceOperatorTest extends OperatorTestBase {
             assertEquals(2, count);
         }
 
-        assertEquals("SELECT COUNT(*) FROM testA", sqlQueryChannelInstance.getSqlQuery());
+        assertEquals("SELECT COUNT(*) FROM testA;", sqlQueryChannelInstance.getSqlQuery());
     }
 }

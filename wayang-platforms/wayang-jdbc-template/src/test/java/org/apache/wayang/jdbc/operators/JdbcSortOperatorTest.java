@@ -86,6 +86,6 @@ public class JdbcSortOperatorTest extends OperatorTestBase {
         final SqlQueryChannel.Instance sqlQueryChannelInstance = (SqlQueryChannel.Instance) job.getCrossPlatformExecutor()
                 .getChannelInstance(sqlToStreamTask.getInputChannel(0));
 
-        assertEquals("SELECT * FROM testA ORDER BY col0 DESC", sqlQueryChannelInstance.getSqlQuery());
+        assertEquals("SELECT * FROM testA ORDER BY col0 DESC;", sqlQueryChannelInstance.getSqlQuery());
     }
 }
