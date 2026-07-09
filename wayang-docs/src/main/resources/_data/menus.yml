@@ -80,6 +80,11 @@ header:
 #    title: API SQL
 #    identifier: api_sql
 #    weight: 3
+#
+#  - url: /using_wayang/api_jdbc/
+#    title: API JDBC
+#    identifier: api_jdbc
+#    weight: 4
 
 #extending:
 #  - url: /extending_wayang/adding_platform/
@@ -99,5 +104,6 @@ code_changes:
     title: Preparing to Contribute Code Changes
     identifier: preparing_code_changes
     weight: 5
+
 
 
