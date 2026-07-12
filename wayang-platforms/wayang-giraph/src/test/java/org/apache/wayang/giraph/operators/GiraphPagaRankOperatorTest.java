@@ -22,7 +22,7 @@ import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.wayang.basic.channels.FileChannel;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
-import org.apache.wayang.core.api.configuration.KeyValueProvider;
+import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
