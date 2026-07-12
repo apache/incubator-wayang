@@ -87,7 +87,7 @@ class GiraphPagaRankOperatorTest {
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(giraphPageRankOperator);
 
         assertThrows(
-                KeyValueProvider.NoSuchKeyException.class,
+                WayangException.class,
                 () -> giraphPageRankOperator.execute(
                         new ChannelInstance[]{inputChannelInstance},
                         new ChannelInstance[]{outputFileChannelInstance},
