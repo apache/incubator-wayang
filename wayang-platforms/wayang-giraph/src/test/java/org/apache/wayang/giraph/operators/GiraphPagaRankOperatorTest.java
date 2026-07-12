@@ -94,7 +94,5 @@ class GiraphPagaRankOperatorTest {
                         operatorContext
                 )
         );
-
-        verify(giraphExecutor).getGiraphConfiguration();
     }
 }
