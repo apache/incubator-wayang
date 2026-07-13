@@ -71,15 +71,22 @@ class TensorflowModelTest {
         try (TensorflowModel tfModel = new TensorflowModel(model, criterion, optimizer, acc)) {
             System.out.println(tfModel.getOut().getName());
             tfModel.train(x, y, 100, 6);
-            TFloat32 predicted = tfModel.predict(x);
-            Ops tf = Ops.create();
-            org.tensorflow.op.math.ArgMax<TInt32> argMax = tf.math.argMax(tf.constantOf(predicted), tf.constant(1), TInt32.class);
-            final TInt32 tensor = argMax.asTensor();
-            System.out.print("[ ");
-            for (int i = 0; i < tensor.shape().size(0); i++) {
-                System.out.print(tensor.getInt(i) + " ");
+            try (TFloat32 predicted = tfModel.predict(x)) {
+                System.out.print("[ ");
+                for (int i = 0; i < predicted.shape().size(0); i++) {
+                    float max = -Float.MAX_VALUE;
+                    int maxIdx = -1;
+                    for (int j = 0; j < predicted.shape().size(1); j++) {
+                        float val = predicted.getFloat(i, j);
+                        if (val > max) {
+                            max = val;
+                            maxIdx = j;
+                        }
+                    }
+                    System.out.print(maxIdx + " ");
+                }
+                System.out.println("]");
             }
-            System.out.println("]");
         }
         System.out.println();
     }
