@@ -37,19 +37,21 @@ HMS is the battle-tested Iceberg catalog for Trino. Parquet data files are writt
 ## Directory Layout
 
 ```
-trino-setup/
-|-- docker-compose.yml          # Full stack definition
-|-- trino/
-|   |-- config.properties       # Trino node config
-|   `-- catalog/
-|       |-- iceberg.properties  # Iceberg via HMS + MinIO
-|       `-- tpch.properties     # Built-in TPC-H (no storage needed)
-|-- scripts/
-|   |-- init.sql                # Creates iceberg.sales.orders + sample rows
-|   `-- run-init.sh             # Helper: waits for Trino then runs init.sql
-|-- pom.xml                     # Standalone Maven project (Java 17)
-`-- src/test/java/.../
-    `-- TrinoIntegrationTest.java   # JUnit 5 integration tests
+platforms-setup-guides/
+`-- trino-setup/
+    |-- docker-compose.yml          # Full stack definition
+    |-- demo.sh                     # End-to-end Trino + Wayang walkthrough
+    |-- trino/
+    |   |-- config.properties       # Trino node config
+    |   `-- catalog/
+    |       |-- iceberg.properties  # Iceberg via HMS + MinIO
+    |       `-- tpch.properties     # Built-in TPC-H (no storage needed)
+    |-- scripts/
+    |   |-- init.sql                # Creates iceberg.sales.orders + sample rows
+    |   `-- run-init.sh             # Helper: waits for Trino then runs init.sql
+    |-- pom.xml                     # Standalone Maven project (Java 17)
+    `-- src/test/java/.../
+        `-- TrinoIntegrationTest.java   # JUnit 5 integration tests
 ```
 
 ## 1. Test the Wayang Trino Platform
@@ -90,13 +92,13 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ### 1. Start the stack
 
 ```bash
-docker compose -f trino-setup/docker-compose.yml up -d
+docker compose -f platforms-setup-guides/trino-setup/docker-compose.yml up -d
 ```
 
 Wait ~30 seconds for all services to become healthy. Check with:
 
 ```bash
-docker compose -f trino-setup/docker-compose.yml ps
+docker compose -f platforms-setup-guides/trino-setup/docker-compose.yml ps
 # or watch the Trino UI at http://localhost:8080
 ```
 
@@ -144,28 +146,41 @@ with skipped tests does not confirm that the operators work.
 ### 3. Load sample Iceberg data
 
 ```bash
-bash trino-setup/scripts/run-init.sh
+bash platforms-setup-guides/trino-setup/scripts/run-init.sh
 ```
 
 On PowerShell:
 
 ```powershell
-Get-Content -Raw trino-setup/scripts/init.sql | docker exec -i trino trino --server http://localhost:8080 --user admin
+Get-Content -Raw platforms-setup-guides/trino-setup/scripts/init.sql | docker exec -i trino trino --server http://localhost:8080 --user admin
 ```
 
 This creates the schema `iceberg.sales` and inserts 20 sample orders into
 `iceberg.sales.orders` (Parquet files on MinIO).
 
-### 4. Run the standalone stack integration tests
+### 4. Run the walkthrough demo
+
+The optional demo script starts the local Trino/Iceberg stack, seeds
+`iceberg.sales.orders`, shows direct Trino CLI queries, and then runs
+`org.apache.wayang.trino.TrinoDemo` to demonstrate Wayang filter and projection
+pushdown through the Trino platform.
 
 ```bash
-./mvnw -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
+bash platforms-setup-guides/trino-setup/demo.sh
+```
+
+Set `WAYANG_DEMO_AUTO=true` to skip the interactive pauses.
+
+### 5. Run the standalone stack integration tests
+
+```bash
+./mvnw -f platforms-setup-guides/trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
 ```
 
 On PowerShell:
 
 ```powershell
-.\mvnw.cmd --% -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
+.\mvnw.cmd --% -f platforms-setup-guides/trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
 ```
 
 Tests are skipped by default (no `-Pintegration`) to avoid requiring Docker in CI.
@@ -179,7 +194,7 @@ Tests run: 10, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
-### 5. Manual exploration
+### 6. Manual exploration
 
 Open the **Trino UI**: http://localhost:8080
 
@@ -206,10 +221,10 @@ SELECT * FROM iceberg.sales."orders$history";
 **MinIO console**: http://localhost:9001 (login: `minioadmin` / `minioadmin`)
 Look for Parquet files under `warehouse/sales/orders/`.
 
-### 6. Tear down
+### 7. Tear down
 
 ```bash
-docker compose -f trino-setup/docker-compose.yml down -v
+docker compose -f platforms-setup-guides/trino-setup/docker-compose.yml down -v
 ```
 
 The `-v` option removes volumes and clears the local MinIO and PostgreSQL data.
@@ -254,7 +269,7 @@ The `-v` option removes volumes and clears the local MinIO and PostgreSQL data.
 Override defaults if running Trino on a different host/port:
 
 ```bash
-TRINO_HOST=my-trino-host TRINO_PORT=8080 ./mvnw -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
+TRINO_HOST=my-trino-host TRINO_PORT=8080 ./mvnw -f platforms-setup-guides/trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
 ```
 
 On PowerShell:
@@ -262,6 +277,6 @@ On PowerShell:
 ```powershell
 $env:TRINO_HOST="my-trino-host"
 $env:TRINO_PORT="8080"
-.\mvnw.cmd --% -f trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
+.\mvnw.cmd --% -f platforms-setup-guides/trino-setup/pom.xml -Pintegration -Dtest=TrinoIntegrationTest test
 Remove-Item Env:TRINO_HOST, Env:TRINO_PORT
 ```

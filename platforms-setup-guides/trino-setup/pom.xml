@@ -40,6 +40,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <trino.version>435</trino.version>
         <junit.version>5.10.2</junit.version>
+        <skipIntegrationTests>true</skipIntegrationTests>
     </properties>
 
     <dependencies>

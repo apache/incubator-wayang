@@ -19,7 +19,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WAYANG_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+WAYANG_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TRINO_SETUP="$SCRIPT_DIR"
 TRINO_CONTAINER="trino"
 MAVEN_FLAGS="-Pskip-prerequisite-check -Drat.skip=true -Dmaven.javadoc.skip=true"
@@ -124,4 +124,4 @@ echo "Trino UI: http://localhost:8080"
 echo "MinIO UI: http://localhost:9001 (minioadmin / minioadmin)"
 echo
 echo "To stop the stack:"
-echo "  cd trino-setup && docker compose down"
+echo "  cd platforms-setup-guides/trino-setup && docker compose down"
