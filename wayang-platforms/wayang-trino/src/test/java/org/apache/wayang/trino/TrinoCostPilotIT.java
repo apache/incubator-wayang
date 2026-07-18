@@ -78,12 +78,19 @@ class TrinoCostPilotIT {
 
     private static final String SCHEMA = "iceberg.wayang_profile";
     private static final String CUSTOMERS_1K = SCHEMA + ".customers_1k";
-    private static final int[] ROW_COUNTS = {1000, 10000, 100000};
+    private static final int[] ROW_COUNTS = parseIntList(System.getProperty(
+            "trino.profile.rowCounts",
+            "10000,50000,100000,250000"
+    ));
     private static final String[] COLUMNS = {"order_id", "customer_id", "region", "amount", "bucket"};
     private static final String[] JOIN_COLUMNS = {
             "order_id", "customer_id", "region", "amount", "bucket", "cust_id", "tier"
     };
+    private static final String[] JOIN_ORDER_TIER_AMOUNT_COLUMNS = {"order_id", "tier", "amount"};
+    private static final String[] JOIN_TIER_AMOUNT_COLUMNS = {"tier", "amount"};
     private static final String JOIN_FLATTEN_NAME = "Trino profile join flatten";
+    private static final String JOIN_ORDER_TIER_AMOUNT_FLATTEN_NAME = "Trino profile join order tier amount flatten";
+    private static final String JOIN_TIER_AMOUNT_FLATTEN_NAME = "Trino profile join tier amount flatten";
     private static final Path OUTPUT_DIR = Paths.get(System.getProperty(
             "trino.profile.outputDir",
             "C:/Users/jizhi/Desktop/2026GSoC/Trino Profiling/week6"
@@ -92,7 +99,13 @@ class TrinoCostPilotIT {
     private static final Path CARDINALITIES_PATH = OUTPUT_DIR.resolve("cardinalities.json");
     private static final Path MANIFEST_PATH = OUTPUT_DIR.resolve("manifest.csv");
     private static final List<String> PLAN_IDS = Arrays.asList(
-            System.getProperty("trino.profile.plans", "S01,S02").split(",")
+            System.getProperty(
+                    "trino.profile.plans",
+                    "S01,S02,S03,S04,S05,S06,S07,S08,S09,S10,S11,S12,S13,S14,S15,S16"
+            ).split(",")
+    );
+    private static final int REPETITIONS = Integer.parseInt(
+            System.getProperty("trino.profile.repetitions", "6")
     );
     private static final boolean RESET_OUTPUT = Boolean.parseBoolean(
             System.getProperty("trino.profile.reset", "true")
@@ -120,7 +133,7 @@ class TrinoCostPilotIT {
     }
 
     private void runPlan(String planId, String operatorChain, int rowCount, long expectedRows) throws Exception {
-        for (int repetition = 0; repetition < 4; repetition++) {
+        for (int repetition = 0; repetition < REPETITIONS; repetition++) {
             boolean isWarmup = repetition == 0;
             String runId = String.format("%s_%s_r%02d", planId, formatRows(rowCount), repetition);
             String sourceTable = SCHEMA + ".orders_" + formatRows(rowCount);
@@ -205,13 +218,7 @@ class TrinoCostPilotIT {
 
         if ("S07".equals(planId)) {
             TableSink<Record> sink = new TableSink<>(new Properties(), "overwrite", sinkTable, COLUMNS);
-            SortOperator<Record, Record> sort = new SortOperator<>(
-                    new TransformationDescriptor<>(
-                            record -> new Record(record.getField(3)),
-                            Record.class,
-                            Record.class
-                    ).withSqlImplementation("amount", "ASC"),
-                    DataSetType.createDefault(Record.class));
+            SortOperator<Record, Record> sort = createAmountSortOperator(3);
             source.connectTo(0, sort, 0);
             sort.connectTo(0, sink, 0);
             return new WayangPlan(sink);
@@ -240,7 +247,163 @@ class TrinoCostPilotIT {
             return new WayangPlan(sink);
         }
 
+        if ("S09".equals(planId)) {
+            TableSink<Record> sink = new TableSink<>(
+                    new Properties(), "overwrite", sinkTable, "total_amount");
+            FilterOperator<Record> filter = createAmerFilter();
+            GlobalReduceOperator<Record> reduce = createGlobalAmountReduceOperator();
+            source.connectTo(0, filter, 0);
+            filter.connectTo(0, reduce, 0);
+            reduce.connectTo(0, sink, 0);
+            return new WayangPlan(sink);
+        }
+
+        if ("S10".equals(planId)) {
+            TableSink<Record> sink = new TableSink<>(
+                    new Properties(), "overwrite", sinkTable, "bucket", "total_amount");
+            FilterOperator<Record> filter = createAmerFilter();
+            ReduceByOperator<Record, Record> reduceBy = createBucketReduceByOperator();
+            source.connectTo(0, filter, 0);
+            filter.connectTo(0, reduceBy, 0);
+            reduceBy.connectTo(0, sink, 0);
+            return new WayangPlan(sink);
+        }
+
+        if ("S11".equals(planId)) {
+            TableSink<Record> sink = new TableSink<>(new Properties(), "overwrite", sinkTable, COLUMNS);
+            FilterOperator<Record> filter = createAmerFilter();
+            SortOperator<Record, Record> sort = createAmountSortOperator(3);
+            source.connectTo(0, filter, 0);
+            filter.connectTo(0, sort, 0);
+            sort.connectTo(0, sink, 0);
+            return new WayangPlan(sink);
+        }
+
+        if ("S12".equals(planId)) {
+            TableSink<Record> sink = new TableSink<>(
+                    new Properties(), "overwrite", sinkTable, "order_id", "amount");
+            MapOperator<Record, Record> projection = createOrderAmountProjection();
+            SortOperator<Record, Record> sort = createAmountSortOperator(1);
+            source.connectTo(0, projection, 0);
+            projection.connectTo(0, sort, 0);
+            sort.connectTo(0, sink, 0);
+            return new WayangPlan(sink);
+        }
+
+        if ("S13".equals(planId)) {
+            TableSink<Record> sink = new TableSink<>(
+                    new Properties(), "overwrite", sinkTable, "order_id", "amount");
+            FilterOperator<Record> filter = createAmerFilter();
+            MapOperator<Record, Record> projection = createOrderAmountProjection();
+            SortOperator<Record, Record> sort = createAmountSortOperator(1);
+            source.connectTo(0, filter, 0);
+            filter.connectTo(0, projection, 0);
+            projection.connectTo(0, sort, 0);
+            sort.connectTo(0, sink, 0);
+            return new WayangPlan(sink);
+        }
+
+        if ("S14".equals(planId)) {
+            TrinoTableSource customers = new TrinoTableSource(CUSTOMERS_1K, "cust_id", "tier");
+            FilterOperator<Record> filter = createAmerFilter();
+            JoinOperator<Record, Record, Record> join = createCustomerJoinOperator(sourceTable);
+            MapOperator<Tuple2<Record, Record>, Record> flatten = createJoinFlattenOperator();
+            TableSink<Record> sink = new TableSink<>(
+                    new Properties(), "overwrite", sinkTable, JOIN_COLUMNS);
+            source.connectTo(0, filter, 0);
+            filter.connectTo(0, join, 0);
+            customers.connectTo(0, join, 1);
+            join.connectTo(0, flatten, 0);
+            flatten.connectTo(0, sink, 0);
+            return new WayangPlan(sink);
+        }
+
+        if ("S15".equals(planId)) {
+            TrinoTableSource customers = new TrinoTableSource(CUSTOMERS_1K, "cust_id", "tier");
+            JoinOperator<Record, Record, Record> join = createCustomerJoinOperator(sourceTable);
+            MapOperator<Tuple2<Record, Record>, Record> flatten = createJoinOrderTierAmountFlattenOperator();
+            SortOperator<Record, Record> sort = createAmountSortOperator(2);
+            TableSink<Record> sink = new TableSink<>(
+                    new Properties(), "overwrite", sinkTable, JOIN_ORDER_TIER_AMOUNT_COLUMNS);
+            source.connectTo(0, join, 0);
+            customers.connectTo(0, join, 1);
+            join.connectTo(0, flatten, 0);
+            flatten.connectTo(0, sort, 0);
+            sort.connectTo(0, sink, 0);
+            return new WayangPlan(sink);
+        }
+
+        if ("S16".equals(planId)) {
+            TrinoTableSource customers = new TrinoTableSource(CUSTOMERS_1K, "cust_id", "tier");
+            JoinOperator<Record, Record, Record> join = createCustomerJoinOperator(sourceTable);
+            MapOperator<Tuple2<Record, Record>, Record> flatten = createJoinTierAmountFlattenOperator();
+            ReduceByOperator<Record, Record> reduceBy = createTierReduceByOperator();
+            TableSink<Record> sink = new TableSink<>(
+                    new Properties(), "overwrite", sinkTable, "tier", "total_amount");
+            source.connectTo(0, join, 0);
+            customers.connectTo(0, join, 1);
+            join.connectTo(0, flatten, 0);
+            flatten.connectTo(0, reduceBy, 0);
+            reduceBy.connectTo(0, sink, 0);
+            return new WayangPlan(sink);
+        }
+
         throw new IllegalArgumentException("Unsupported pilot plan: " + planId);
+    }
+
+    private static GlobalReduceOperator<Record> createGlobalAmountReduceOperator() {
+        return new GlobalReduceOperator<>(
+                new ReduceDescriptor<>((left, right) -> left, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+    }
+
+    private static ReduceByOperator<Record, Record> createBucketReduceByOperator() {
+        return new ReduceByOperator<>(
+                new TransformationDescriptor<>(
+                        record -> new Record(record.getField(4)),
+                        Record.class,
+                        Record.class
+                ).withSqlImplementation("bucket", "bucket"),
+                new ReduceDescriptor<>((left, right) -> left, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+    }
+
+    private static ReduceByOperator<Record, Record> createTierReduceByOperator() {
+        return new ReduceByOperator<>(
+                new TransformationDescriptor<>(
+                        record -> new Record(record.getField(0)),
+                        Record.class,
+                        Record.class
+                ).withSqlImplementation("tier", "tier"),
+                new ReduceDescriptor<>((left, right) -> left, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+    }
+
+    private static SortOperator<Record, Record> createAmountSortOperator(int amountFieldIndex) {
+        return new SortOperator<>(
+                new TransformationDescriptor<>(
+                        record -> new Record(record.getField(amountFieldIndex)),
+                        Record.class,
+                        Record.class
+                ).withSqlImplementation("amount", "ASC"),
+                DataSetType.createDefault(Record.class));
+    }
+
+    private static JoinOperator<Record, Record, Record> createCustomerJoinOperator(String sourceTable) {
+        return new JoinOperator<>(
+                new TransformationDescriptor<>(
+                        record -> new Record(record.getField(1)),
+                        Record.class,
+                        Record.class
+                ).withSqlImplementation(sourceTable, "customer_id"),
+                new TransformationDescriptor<>(
+                        record -> new Record(record.getField(0)),
+                        Record.class,
+                        Record.class
+                ).withSqlImplementation(CUSTOMERS_1K, "cust_id"));
     }
 
     private static FilterOperator<Record> createAmerFilter() {
@@ -261,15 +424,47 @@ class TrinoCostPilotIT {
                 DataSetType.createDefault(Record.class));
     }
 
+    private static MapOperator<Record, Record> createOrderTierAmountProjection() {
+        return new MapOperator<>(
+                ProjectionDescriptor.createForRecords(
+                        new RecordType(JOIN_COLUMNS),
+                        "order_id", "tier", "amount"),
+                DataSetType.createDefault(Record.class),
+                DataSetType.createDefault(Record.class));
+    }
+
+    private static MapOperator<Record, Record> createTierAmountProjection() {
+        return new MapOperator<>(
+                ProjectionDescriptor.createForRecords(
+                        new RecordType(JOIN_COLUMNS),
+                        "tier", "amount"),
+                DataSetType.createDefault(Record.class),
+                DataSetType.createDefault(Record.class));
+    }
+
     private static MapOperator<Tuple2<Record, Record>, Record> createJoinFlattenOperator() {
+        return createJoinFlattenOperator(new JoinFlattenFunction(), JOIN_FLATTEN_NAME);
+    }
+
+    private static MapOperator<Tuple2<Record, Record>, Record> createJoinOrderTierAmountFlattenOperator() {
+        return createJoinFlattenOperator(new JoinOrderTierAmountFlattenFunction(), JOIN_ORDER_TIER_AMOUNT_FLATTEN_NAME);
+    }
+
+    private static MapOperator<Tuple2<Record, Record>, Record> createJoinTierAmountFlattenOperator() {
+        return createJoinFlattenOperator(new JoinTierAmountFlattenFunction(), JOIN_TIER_AMOUNT_FLATTEN_NAME);
+    }
+
+    private static MapOperator<Tuple2<Record, Record>, Record> createJoinFlattenOperator(
+            FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> function,
+            String name) {
         MapOperator<Tuple2<Record, Record>, Record> operator = new MapOperator<>(
                 new TransformationDescriptor<>(
-                        new JoinFlattenFunction(),
+                        function,
                         DataUnitType.createBasicUnchecked(Tuple2.class),
                         DataUnitType.createBasic(Record.class)),
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 DataSetType.createDefault(Record.class));
-        operator.setName(JOIN_FLATTEN_NAME);
+        operator.setName(name);
         return operator;
     }
 
@@ -374,7 +569,7 @@ class TrinoCostPilotIT {
                     planId,
                     operatorChain,
                     String.valueOf(inputRows),
-                    "",
+                    hasJoin(planId) ? "1000" : "",
                     String.valueOf(expectedOutputRows),
                     hasFilter(planId) ? "0.5" : "1.0",
                     String.valueOf(repetition),
@@ -404,23 +599,66 @@ class TrinoCostPilotIT {
                 return "TableSource->Sort(amount)->TableSink";
             case "S08":
                 return "Orders->Join(Customers 1k)->Projection->TableSink";
+            case "S09":
+                return "TableSource->Filter(50%)->GlobalReduce->TableSink";
+            case "S10":
+                return "TableSource->Filter(50%)->ReduceBy(bucket)->TableSink";
+            case "S11":
+                return "TableSource->Filter(50%)->Sort(amount)->TableSink";
+            case "S12":
+                return "TableSource->Projection(order_id,amount)->Sort(amount)->TableSink";
+            case "S13":
+                return "TableSource->Filter(50%)->Projection(order_id,amount)->Sort(amount)->TableSink";
+            case "S14":
+                return "Orders->Filter(50%)->Join(Customers 1k)->Projection->TableSink";
+            case "S15":
+                return "Orders->Join(Customers 1k)->Projection(order_id,tier,amount)->Sort(amount)->TableSink";
+            case "S16":
+                return "Orders->Join(Customers 1k)->Projection(tier,amount)->ReduceBy(tier)->TableSink";
             default:
                 throw new IllegalArgumentException("Unsupported pilot plan: " + planId);
         }
     }
 
     private static long getExpectedRows(String planId, int rowCount) {
-        if ("S05".equals(planId)) {
+        if ("S05".equals(planId) || "S09".equals(planId)) {
             return 1;
         }
         if ("S06".equals(planId)) {
             return 100;
         }
+        if ("S10".equals(planId)) {
+            return 50;
+        }
+        if ("S16".equals(planId)) {
+            return 2;
+        }
         return hasFilter(planId) ? rowCount / 2 : rowCount;
     }
 
     private static boolean hasFilter(String planId) {
-        return "S02".equals(planId) || "S04".equals(planId);
+        return "S02".equals(planId)
+                || "S04".equals(planId)
+                || "S09".equals(planId)
+                || "S10".equals(planId)
+                || "S11".equals(planId)
+                || "S13".equals(planId)
+                || "S14".equals(planId);
+    }
+
+    private static boolean hasJoin(String planId) {
+        return "S08".equals(planId)
+                || "S14".equals(planId)
+                || "S15".equals(planId)
+                || "S16".equals(planId);
+    }
+
+    private static int[] parseIntList(String value) {
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(token -> !token.isEmpty())
+                .mapToInt(Integer::parseInt)
+                .toArray();
     }
 
     private long queryLong(String sql) throws Exception {
@@ -469,12 +707,52 @@ class TrinoCostPilotIT {
                 right.getField(1));
     }
 
+    private static Record flattenJoinOrderTierAmountResult(Object joinResult) {
+        if (joinResult instanceof Record) {
+            Record record = (Record) joinResult;
+            return new Record(record.getField(0), record.getField(6), record.getField(3));
+        }
+        Tuple2<?, ?> pair = (Tuple2<?, ?>) joinResult;
+        Record left = (Record) pair.field0;
+        Record right = (Record) pair.field1;
+        return new Record(left.getField(0), right.getField(1), left.getField(3));
+    }
+
+    private static Record flattenJoinTierAmountResult(Object joinResult) {
+        if (joinResult instanceof Record) {
+            Record record = (Record) joinResult;
+            return new Record(record.getField(6), record.getField(3));
+        }
+        Tuple2<?, ?> pair = (Tuple2<?, ?>) joinResult;
+        Record left = (Record) pair.field0;
+        Record right = (Record) pair.field1;
+        return new Record(right.getField(1), left.getField(3));
+    }
+
     private static final class JoinFlattenFunction implements
             FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
 
         @Override
         public Record apply(Tuple2<Record, Record> tuple) {
             return flattenJoinResult(tuple);
+        }
+    }
+
+    private static final class JoinOrderTierAmountFlattenFunction implements
+            FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
+
+        @Override
+        public Record apply(Tuple2<Record, Record> tuple) {
+            return flattenJoinOrderTierAmountResult(tuple);
+        }
+    }
+
+    private static final class JoinTierAmountFlattenFunction implements
+            FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
+
+        @Override
+        public Record apply(Tuple2<Record, Record> tuple) {
+            return flattenJoinTierAmountResult(tuple);
         }
     }
 
@@ -487,10 +765,10 @@ class TrinoCostPilotIT {
                     "joinFlatten",
                     new MapOperator(null, DataSetType.none(), DataSetType.createDefault(Record.class)),
                     false)
-                    .withAdditionalTest(operator -> JOIN_FLATTEN_NAME.equals(((MapOperator) operator).getName()));
+                    .withAdditionalTest(operator -> isJoinFlattenName(((MapOperator) operator).getName()));
 
             ReplacementSubplanFactory factory = new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
-                    (matchedOperator, epoch) -> createTrinoProjection().at(epoch));
+                    (matchedOperator, epoch) -> createTrinoProjection(matchedOperator.getName()).at(epoch));
 
             return Collections.singleton(new PlanTransformation(
                     SubplanPattern.createSingleton(pattern),
@@ -498,18 +776,45 @@ class TrinoCostPilotIT {
                     TrinoPlatform.getInstance()));
         }
 
-        private static TrinoProjectionOperator createTrinoProjection() {
+        private static TrinoProjectionOperator createTrinoProjection(String operatorName) {
             ProjectionDescriptor<Tuple2<Record, Record>, Record> descriptor = new ProjectionDescriptor<>(
-                    new JoinFlattenFunction(),
-                    Arrays.asList(JOIN_COLUMNS),
+                    getJoinFlattenFunction(operatorName),
+                    Arrays.asList(getJoinFlattenColumns(operatorName)),
                     DataUnitType.createBasicUnchecked(Tuple2.class),
                     DataUnitType.createBasic(Record.class));
             MapOperator<Tuple2<Record, Record>, Record> projection = new MapOperator<>(
                     descriptor,
                     DataSetType.createDefaultUnchecked(Tuple2.class),
                     DataSetType.createDefault(Record.class));
-            projection.setName(JOIN_FLATTEN_NAME);
+            projection.setName(operatorName);
             return new TrinoProjectionOperator((MapOperator<Record, Record>) (MapOperator) projection);
+        }
+
+        private static boolean isJoinFlattenName(String operatorName) {
+            return JOIN_FLATTEN_NAME.equals(operatorName)
+                    || JOIN_ORDER_TIER_AMOUNT_FLATTEN_NAME.equals(operatorName)
+                    || JOIN_TIER_AMOUNT_FLATTEN_NAME.equals(operatorName);
+        }
+
+        private static String[] getJoinFlattenColumns(String operatorName) {
+            if (JOIN_ORDER_TIER_AMOUNT_FLATTEN_NAME.equals(operatorName)) {
+                return JOIN_ORDER_TIER_AMOUNT_COLUMNS;
+            }
+            if (JOIN_TIER_AMOUNT_FLATTEN_NAME.equals(operatorName)) {
+                return JOIN_TIER_AMOUNT_COLUMNS;
+            }
+            return JOIN_COLUMNS;
+        }
+
+        private static FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> getJoinFlattenFunction(
+                String operatorName) {
+            if (JOIN_ORDER_TIER_AMOUNT_FLATTEN_NAME.equals(operatorName)) {
+                return new JoinOrderTierAmountFlattenFunction();
+            }
+            if (JOIN_TIER_AMOUNT_FLATTEN_NAME.equals(operatorName)) {
+                return new JoinTierAmountFlattenFunction();
+            }
+            return new JoinFlattenFunction();
         }
     }
 }
