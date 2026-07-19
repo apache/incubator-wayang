@@ -26,11 +26,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.rules.SubQueryRemoveRule;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 
@@ -182,6 +185,10 @@ public class SqlContext extends WayangContext {
     }
 
     public Collection<Record> executeSql(final String sql) throws SqlParseException {
+        return this.executeSqlWithMetadata(sql).getRows();
+    }
+
+    public SqlQueryResult executeSqlWithMetadata(final String sql) throws SqlParseException {
         final Properties configProperties = Optimizer.ConfigProperties.getDefaults();
         final RelDataTypeFactory relDataTypeFactory = new JavaTypeFactoryImpl();
 
@@ -194,7 +201,23 @@ public class SqlContext extends WayangContext {
 
         PrintUtils.print("After parsing sql query", relNode);
 
-        final RuleSet rules = RuleSets.ofList(
+        final RelNode wayangRel = optimizer.optimize(
+                relNode,
+                relNode.getTraitSet().plus(WayangConvention.INSTANCE),
+                createDefaultRuleSet());
+
+        PrintUtils.print("After translating logical intermediate plan", wayangRel);
+
+        final Collection<Record> collector = new ArrayList<>();
+        final WayangPlan wayangPlan = Optimizer.convertWithConfig(wayangRel, this.getConfiguration(), collector);
+
+        this.execute(getJobName(), wayangPlan);
+
+        return new SqlQueryResult(createColumns(wayangRel.getRowType()), collector);
+    }
+
+    private static RuleSet createDefaultRuleSet() {
+        return RuleSets.ofList(
                 SubQueryRemoveRule.Config.FILTER.toRule(),
                 SubQueryRemoveRule.Config.JOIN.toRule(),
                 SubQueryRemoveRule.Config.PROJECT.toRule(),
@@ -206,20 +229,24 @@ public class SqlContext extends WayangContext {
                 WayangRules.WAYANG_JOIN_RULE,
                 WayangRules.WAYANG_AGGREGATE_RULE,
                 WayangRules.WAYANG_SORT_RULE);
+    }
 
-        final RelNode wayangRel = optimizer.optimize(
-                relNode,
-                relNode.getTraitSet().plus(WayangConvention.INSTANCE),
-                rules);
-
-        PrintUtils.print("After translating logical intermediate plan", wayangRel);
-
-        final Collection<Record> collector = new ArrayList<>();
-        final WayangPlan wayangPlan = Optimizer.convert(wayangRel, collector);
-
-        this.execute(getJobName(), wayangPlan);
-
-        return collector;
+    private static List<SqlColumn> createColumns(final RelDataType rowType) {
+        final List<SqlColumn> columns = new ArrayList<>(rowType.getFieldCount());
+        for (final RelDataTypeField field : rowType.getFieldList()) {
+            final RelDataType fieldType = field.getType();
+            final SqlTypeName sqlTypeName = fieldType.getSqlTypeName();
+            columns.add(new SqlColumn(
+                    field.getName(),
+                    field.getName(),
+                    sqlTypeName.getName(),
+                    sqlTypeName.getJdbcOrdinal(),
+                    fieldType.getPrecision(),
+                    fieldType.getScale(),
+                    fieldType.isNullable()
+            ));
+        }
+        return columns;
     }
 
     private static String getJobName() {
