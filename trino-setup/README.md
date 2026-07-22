@@ -11,10 +11,10 @@ The current validation has three parts:
 Run the commands below from the repository root. Java 17 and Docker with
 Docker Compose are required; Maven is provided by the repository wrapper.
 
-The pure Trino platform branch is named `wayang-trino`:
+The Trino cost-profiling branch is named `feature/trino-cost-profiling`:
 
 ```bash
-git checkout wayang-trino
+git checkout feature/trino-cost-profiling
 ```
 
 ## Command Conventions
@@ -248,6 +248,22 @@ The `-v` option removes volumes and clears the local MinIO and PostgreSQL data.
 | `testIcebergFilterByAmount` | WHERE pushdown on double column |
 | `testIcebergProjection` | SELECT subset of columns |
 | `testIcebergFilesMetadata` | `$files` system table, confirms Parquet on MinIO |
+
+## Cost Profiling
+
+Follow the shared cost-profiling guide in
+[`guides/cost-profiling.md`](../guides/cost-profiling.md). This setup guide
+only covers the Trino stack itself.
+
+Trino-specific profiling values:
+
+| Item | Value |
+|------|-------|
+| Maven module | `wayang-platforms/wayang-trino` |
+| Profiling test | `TrinoCostPilotIT` |
+| Property prefix | `trino.profile.*` |
+| Default output directory | `target/cost-profiling/trino` |
+| Learned parameters file | `wayang-platforms/wayang-trino/src/main/resources/wayang-trino-defaults.properties` |
 
 ## Environment Variables
 

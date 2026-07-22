@@ -93,7 +93,7 @@ class TrinoCostPilotIT {
     private static final String JOIN_TIER_AMOUNT_FLATTEN_NAME = "Trino profile join tier amount flatten";
     private static final Path OUTPUT_DIR = Paths.get(System.getProperty(
             "trino.profile.outputDir",
-            "C:/Users/jizhi/Desktop/2026GSoC/Trino Profiling/week6"
+            "target/cost-profiling/trino"
     ));
     private static final Path EXECUTIONS_PATH = OUTPUT_DIR.resolve("executions.json");
     private static final Path CARDINALITIES_PATH = OUTPUT_DIR.resolve("cardinalities.json");
