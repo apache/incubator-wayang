@@ -100,7 +100,7 @@ class BigQueryCostPilotIT {
     private static final String JOIN_TIER_AMOUNT_FLATTEN_NAME = "BigQuery profile join tier amount flatten";
     private static final Path OUTPUT_DIR = Paths.get(System.getProperty(
             "bigquery.profile.outputDir",
-            "C:/Users/jizhi/Desktop/2026GSoC/BigQuery Profiling/week7"
+            "target/cost-profiling/bigquery"
     ));
     private static final Path EXECUTIONS_PATH = OUTPUT_DIR.resolve("executions.json");
     private static final Path CARDINALITIES_PATH = OUTPUT_DIR.resolve("cardinalities.json");

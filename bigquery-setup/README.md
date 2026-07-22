@@ -15,7 +15,7 @@ key, plus the `gcloud` SDK, are required only for the real BigQuery operator
 tests. Maven is provided by the repository wrapper.
 
 ```bash
-git checkout wayang-bigquery
+git checkout feature/bigquery-cost-profiling
 ```
 
 ## Command Conventions
@@ -302,6 +302,22 @@ Remove-Item Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:JAVA_TOOL_OPTIONS
 If credentials or the project configuration are missing, Maven can still print
 `BUILD SUCCESS` with `Skipped: 17`. Only the platform-binding test ran in that
 case, so the BigQuery operators were not validated.
+
+## 4. Re-run Cost Profiling
+
+Follow the shared cost-profiling guide in
+[`guides/cost-profiling.md`](../guides/cost-profiling.md). This setup guide
+only covers the BigQuery emulator and real BigQuery validation setup.
+
+BigQuery-specific profiling values:
+
+| Item | Value |
+|------|-------|
+| Maven module | `wayang-platforms/wayang-bigquery` |
+| Profiling test | `BigQueryCostPilotIT` |
+| Property prefix | `bigquery.profile.*` |
+| Default output directory | `target/cost-profiling/bigquery` |
+| Learned parameters file | `wayang-platforms/wayang-bigquery/src/main/resources/wayang-bigquery-defaults.properties` |
 
 ## Test Coverage
 
