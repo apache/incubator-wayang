@@ -11,10 +11,10 @@ The current validation has two parts:
 Run the commands below from the repository root. Java 17 and Docker with Docker
 Compose are required; Maven is provided by the repository wrapper.
 
-The Presto platform branch is named `wayang-presto`:
+The Presto cost-profiling branch is named `feature/presto-cost-profiling`:
 
 ```bash
-git checkout wayang-presto
+git checkout feature/presto-cost-profiling
 ```
 
 ## Command Conventions
@@ -208,6 +208,22 @@ $env:PRESTO_USER="wayang"
 .\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-presto -am -Dtest=PrestoOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Drat.skip=true -Dlicense.skip=true test
 Remove-Item Env:PRESTO_HOST, Env:PRESTO_PORT, Env:PRESTO_USER
 ```
+
+## Cost Profiling
+
+Follow the shared cost-profiling guide in
+[`guides/cost-profiling.md`](../guides/cost-profiling.md). This setup guide
+only covers the Presto stack itself.
+
+Presto-specific profiling values:
+
+| Item | Value |
+|------|-------|
+| Maven module | `wayang-platforms/wayang-presto` |
+| Profiling test | `PrestoCostPilotIT` |
+| Property prefix | `presto.profile.*` |
+| Default output directory | `target/cost-profiling/presto` |
+| Learned parameters file | `wayang-platforms/wayang-presto/src/main/resources/wayang-presto-defaults.properties` |
 
 ## Troubleshooting
 

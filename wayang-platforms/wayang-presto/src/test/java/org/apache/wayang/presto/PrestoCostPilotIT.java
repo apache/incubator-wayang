@@ -92,7 +92,7 @@ class PrestoCostPilotIT {
     private static final String JOIN_TIER_AMOUNT_FLATTEN_NAME = "Presto profile join tier amount flatten";
     private static final Path OUTPUT_DIR = Paths.get(System.getProperty(
             "presto.profile.outputDir",
-            "C:/Users/jizhi/Desktop/2026GSoC/Presto Profiling/week6"
+            "target/cost-profiling/presto"
     ));
     private static final Path EXECUTIONS_PATH = OUTPUT_DIR.resolve("executions.json");
     private static final Path CARDINALITIES_PATH = OUTPUT_DIR.resolve("cardinalities.json");
