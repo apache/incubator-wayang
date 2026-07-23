@@ -35,7 +35,7 @@
 
     <properties>
         <java-module-name>org.apache.wayang.platform.postgres</java-module-name>
-        <postgres.version>42.7.11</postgres.version>
+        <postgres.version>42.7.12</postgres.version>
     </properties>
 
     <dependencies>
