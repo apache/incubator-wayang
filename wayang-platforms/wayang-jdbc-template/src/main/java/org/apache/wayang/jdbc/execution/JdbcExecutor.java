@@ -371,14 +371,29 @@ public class JdbcExecutor extends ExecutorTemplate {
 
         final Channel outputChannel = task.getOutputChannel(0);
 
-        if (outputChannel.getConsumers().size() != 1) {
+        final Collection<ExecutionTask> consumers = outputChannel.getConsumers();
+
+        // No consumer → end of pipeline
+        if (consumers.isEmpty()) {
             return null;
         }
 
-        final ExecutionTask consumer = outputChannel.getConsumers().iterator().next();
+        // Multiple consumers are currently unsupported
+        if (consumers.size() != 1) {
+            throw new WayangException(
+                String.format("Expected a single consumer for task %s but found %d.",
+                task,
+                consumers.size()
+                )
+            );
+    }
 
-        return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator ? consumer
-                        : null;
+    final ExecutionTask consumer = consumers.iterator().next();
+
+    return consumer.getStage() == stage
+         && consumer.getOperator() instanceof JdbcExecutionOperator
+         ? consumer
+         : null;
     }
 
     private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
