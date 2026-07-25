@@ -44,6 +44,7 @@ You write your pipeline against a single API, then decide how it runs. Point it 
 - [Quickstart](#quickstart)
 - [Install](#install)
 - [Documentation](#documentation)
+- [Research](#research)
 - [Contributing](#contributing)
 - [Community](#community)
 - [Authors](#authors)
@@ -269,6 +270,34 @@ bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/READM
 - **[Adding operators](https://wayang.apache.org/docs/guide/adding-operators)** — extend Wayang with new operators or platforms.
 - **[Example applications](guides/wayang-examples.md)** — runnable apps in this repo.
 - **[Developing with Wayang](guides/develop-with-Wayang.md)** — using Wayang in your own Java/Scala project.
+
+## Research
+
+Wayang (formerly called Rheem) is the product of many years of top quality research. Below you can find the main publications:
+
+- Apache Wayang: A Unified Data Analytics Framework. SIGMOD Rec. 52(3): 30-35 (2023) [pdf](https://sigmodrecord.org/publications/sigmodRecord/2309/pdfs/05_Systems_Beedkar.pdf)
+- Apache Wayang in Action: Enabling Data Systems Integration via a Unified Data Analytics Framework. SIGMOD Conference Companion 2025: 35-38 [pdf](https://dl.acm.org/doi/pdf/10.1145/3722212.3725081)
+- ML-based Cross-Platform Query Optimization. ICDE 2020: 1489-1500 [pdf](https://itu.dk/~joqu/assets/publications/icde20.pdf)
+- RHEEMix in the data jungle: a cost-based optimizer for cross-platform systems. VLDB J. 29(6): 1287-1310 (2020) [pdf](https://link.springer.com/article/10.1007/s00778-020-00612-x)
+- RHEEM: Enabling Cross-Platform Data Processing - May The Big Data Be With You! -. Proc. VLDB Endow. 11(11): 1414-1427 (2018) [pdf](http://www.vldb.org/pvldb/vol11/p1414-agrawal.pdf)
+
+### Citing Wayang
+
+If you use Apache Wayang in your research, please cite the SIGMOD Record paper:
+
+```bibtex
+@article{beedkar2023wayang,
+  author  = {Kaustubh Beedkar and Bertty Contreras-Rojas and Haralampos Gavriilidis and Zoi Kaoudi and Volker Markl and Rodrigo Pardo-Meza and Jorge-Arnulfo Quian{\'{e}}-Ruiz},
+  title   = "{Apache Wayang: A Unified Data Analytics Framework}",
+  journal = {{SIGMOD} Rec.},
+  volume  = {52},
+  number  = {3},
+  pages   = {30--35},
+  year    = {2023},
+  doi     = {10.1145/3631504.3631510}
+}
+```
+
 
 ## Contributing
 
