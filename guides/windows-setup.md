@@ -9,7 +9,7 @@
 
    http://www.apache.org/licenses/LICENSE-2.0
 
- Unless required by applicable law or agreed to in writing,
+nano windows-setup.mdnano windows-setup.md Unless required by applicable law or agreed to in writing,
  software distributed under the License is distributed on an
  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  KIND, either express or implied.  See the License for the
@@ -132,3 +132,25 @@ Run terminal as Administrator.
 
 You are now ready to run Apache Wayang on Windows.
 
+### Hadoop prerequisite issue on Windows
+
+While building Wayang on Windows, Maven may fail due to a missing Hadoop dependency.
+
+Error example:
+Execution prerequisite-check failed: could not access constructor...
+
+This happens because Wayang expects the file:
+
+C:\hadoop\bin\winutils.exe
+
+Fix:
+
+1. Create folder C:\hadoop
+2. Inside create folder bin
+3. Inside bin create an empty file called winutils.exe
+
+After this run:
+
+mvn clean install -DskipTests
+
+The build should work correctly.

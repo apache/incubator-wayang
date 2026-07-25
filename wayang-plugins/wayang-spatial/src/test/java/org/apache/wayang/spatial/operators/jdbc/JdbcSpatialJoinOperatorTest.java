@@ -78,7 +78,7 @@ class JdbcSpatialJoinOperatorTest {
         String sql = buildSpatialJoinSql(SpatialPredicate.INTERSECTS);
 
         assertEquals(
-                "SELECT * FROM testA JOIN testB ON ST_Intersects(testA.geom, testB.geom);",
+                "SELECT * FROM testA JOIN testB ON ST_Intersects(testA.geom, testB.geom)",
                 sql
         );
     }
@@ -88,7 +88,7 @@ class JdbcSpatialJoinOperatorTest {
         String sql = buildSpatialJoinSql(SpatialPredicate.CONTAINS);
 
         assertEquals(
-                "SELECT * FROM testA JOIN testB ON ST_Contains(testA.geom, testB.geom);",
+                "SELECT * FROM testA JOIN testB ON ST_Contains(testA.geom, testB.geom)",
                 sql
         );
     }
@@ -98,7 +98,7 @@ class JdbcSpatialJoinOperatorTest {
         String sql = buildSpatialJoinSql(SpatialPredicate.WITHIN);
 
         assertEquals(
-                "SELECT * FROM testA JOIN testB ON ST_Within(testA.geom, testB.geom);",
+                "SELECT * FROM testA JOIN testB ON ST_Within(testA.geom, testB.geom)",
                 sql
         );
     }
