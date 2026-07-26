@@ -1,0 +1,76 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: Docker
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: docker-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+
+      - name: Build Wayang distribution
+        run: |
+          ./mvnw clean install -B -Dmaven.test.skip=true
+          ./mvnw package -B -pl :wayang-assembly -Pdistribution -Dmaven.test.skip=true
+
+      - name: Build Docker image
+        run: docker buildx build --load -t apache-wayang:ci .
+
+      - name: Smoke test WordCount on Java platform
+        run: |
+          docker run --rm apache-wayang:ci \
+            org.apache.wayang.apps.wordcount.Main \
+            java \
+            file:///opt/wayang/smoke/wordcount.txt
+
+      - name: Build Python API Docker image
+        run: docker buildx build --load -f python/Dockerfile -t apache-wayang-python:ci .
+
+      - name: Smoke test Python API against REST host
+        run: |
+          set -e
+          docker network create wayang-python-smoke
+          cleanup() {
+            docker rm -f wayang-rest >/dev/null 2>&1 || true
+            docker network rm wayang-python-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker run -d --name wayang-rest --network wayang-python-smoke apache-wayang-python:ci
+          docker run --rm --network wayang-python-smoke \
+            --entrypoint /usr/local/bin/wayang-python-entrypoint \
+            -e WAYANG_API_HOST=wayang-rest \
+            apache-wayang-python:ci \
+            python python/examples/wordcount.py

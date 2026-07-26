@@ -21,14 +21,20 @@ import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.platform.ChannelInstance;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.spark.channels.RddChannel;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -237,6 +243,109 @@ class SparkTableSinkTest extends SparkOperatorTestBase {
             assertEquals(5000.50, rs.getDouble("salary"), 0.001);
             assertEquals(95.5f, rs.getFloat("score"), 0.001f);
         }
+    }
+
+    @Test
+    void testWritingAllSupportedTypesToDatabase() throws Exception {
+        Properties dbProps = new Properties();
+        dbProps.setProperty("url", JDBC_URL);
+        dbProps.setProperty("user", "sa");
+        dbProps.setProperty("password", "");
+        dbProps.setProperty("driver", DRIVER);
+
+        String[] columns = { "int_col", "long_col", "short_col", "double_col", "float_col",
+                "decimal_col", "bool_col", "string_col" };
+
+        SparkTableSink<Record> sink = new SparkTableSink<>(dbProps, "overwrite", TABLE_NAME, columns,
+                DataSetType.createDefault(Record.class));
+
+        BigDecimal decimalValue = new BigDecimal("12.345");
+
+        Record record = new Record(
+                42,                 // int_col
+                9_000_000_000L,     // long_col
+                (short) 7,          // short_col
+                3.14d,              // double_col
+                1.5f,               // float_col
+                decimalValue,       // decimal_col
+                true,               // bool_col
+                "hello");           // string_col
+
+        RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(record));
+        evaluate(sink, new ChannelInstance[] { input }, new ChannelInstance[0]);
+
+        try (Statement stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT * FROM \"" + TABLE_NAME + "\"")) {
+            rs.next();
+
+            // values written through Spark are read back from the database unchanged
+            assertEquals(42, rs.getInt("int_col"));
+            assertEquals(9_000_000_000L, rs.getLong("long_col"));
+            assertEquals((short) 7, rs.getShort("short_col"));
+            assertEquals(3.14d, rs.getDouble("double_col"), 1e-9);
+            assertEquals(1.5f, rs.getFloat("float_col"), 1e-6f);
+            assertEquals(0, decimalValue.compareTo(rs.getBigDecimal("decimal_col")));
+            assertTrue(rs.getBoolean("bool_col"));
+            assertEquals("hello", rs.getString("string_col"));
+
+            // the two new types were created with the right SQL column types in H2
+            ResultSetMetaData md = rs.getMetaData();
+
+            int shortIdx = rs.findColumn("short_col");
+            assertEquals(Types.SMALLINT, md.getColumnType(shortIdx), "Short -> SMALLINT");
+
+            int decimalIdx = rs.findColumn("decimal_col");
+            assertEquals(Types.NUMERIC, md.getColumnType(decimalIdx), "BigDecimal -> NUMERIC");
+            assertEquals(38, md.getPrecision(decimalIdx), "BigDecimal precision must be 38");
+            assertEquals(18, md.getScale(decimalIdx), "BigDecimal scale must be 18");
+        }
+    }
+
+    // Type-mapping checks (no database).
+    // Unlike the database tests above, these tests call getSparkDataType(...) directly to pin the Java-class -> Spark DataType
+    // contract used to build the write schema. 
+
+    // Throwaway sink instance, getSparkDataType uses no instance state.
+    private SparkTableSink<Record> mappingProbe() {
+        return new SparkTableSink<>(new Properties(), "overwrite", "probe",
+                new String[] { "c" }, DataSetType.createDefault(Record.class));
+    }
+
+    @Test
+    void getSparkDataType_mapsBigDecimalToDecimal38_18() {
+        DataType type = mappingProbe().getSparkDataType(BigDecimal.class);
+        assertTrue(type instanceof DecimalType, "BigDecimal must map to a DecimalType");
+        DecimalType decimal = (DecimalType) type;
+        assertEquals(38, decimal.precision(), "BigDecimal precision must be 38");
+        assertEquals(18, decimal.scale(), "BigDecimal scale must be 18");
+    }
+
+    @Test
+    void getSparkDataType_mapsAllSupportedTypes() {
+        SparkTableSink<Record> s = mappingProbe();
+        assertEquals(DataTypes.IntegerType, s.getSparkDataType(Integer.class));
+        assertEquals(DataTypes.IntegerType, s.getSparkDataType(int.class));
+        assertEquals(DataTypes.LongType, s.getSparkDataType(Long.class));
+        assertEquals(DataTypes.LongType, s.getSparkDataType(long.class));
+        assertEquals(DataTypes.ShortType, s.getSparkDataType(Short.class));
+        assertEquals(DataTypes.ShortType, s.getSparkDataType(short.class));
+        assertEquals(DataTypes.DoubleType, s.getSparkDataType(Double.class));
+        assertEquals(DataTypes.DoubleType, s.getSparkDataType(double.class));
+        assertEquals(DataTypes.FloatType, s.getSparkDataType(Float.class));
+        assertEquals(DataTypes.FloatType, s.getSparkDataType(float.class));
+        assertEquals(DataTypes.BooleanType, s.getSparkDataType(Boolean.class));
+        assertEquals(DataTypes.BooleanType, s.getSparkDataType(boolean.class));
+        assertEquals(DataTypes.DateType, s.getSparkDataType(java.sql.Date.class));
+        assertEquals(DataTypes.DateType, s.getSparkDataType(java.time.LocalDate.class));
+        assertEquals(DataTypes.TimestampType, s.getSparkDataType(java.sql.Timestamp.class));
+        assertEquals(DataTypes.TimestampType, s.getSparkDataType(java.time.LocalDateTime.class));
+    }
+
+    @Test
+    void getSparkDataType_fallsBackToStringForUnsupportedTypes() {
+        SparkTableSink<Record> s = mappingProbe();
+        assertEquals(DataTypes.StringType, s.getSparkDataType(Object.class));
+        assertEquals(DataTypes.StringType, s.getSparkDataType(java.util.UUID.class));
     }
 
     public static class TestPojo implements java.io.Serializable {

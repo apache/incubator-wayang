@@ -96,10 +96,12 @@ public class ExecutionPlan {
     }
 
     /**
-     * TODO: ExecutionPlan.toJsonList add documentation
-     * labels:documentation,todo
+     * Converts this execution plan into a list of maps, where each map represents an {@link ExecutionStage}.
+     * The stages are included in an order that, where possible, respects their dependencies (i.e., is
+     * dependency-respecting/topological), but loop-head stages may be scheduled early to break cycles,
+     * which can cause them to appear before all of their predecessors.
      *
-     * @return
+     * @return a list of maps representing the execution stages
      */
     public List<Map> toJsonList() {
         Counter<ExecutionStage> stageActivationCounter = new Counter<>();

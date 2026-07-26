@@ -1,13 +1,12 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,27 +48,16 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * This {@link Operator} converts {@link SqlQueryChannel}s to {@link StreamChannel}s.
+ * Converts {@link SqlQueryChannel}s into {@link StreamChannel}s.
  */
 public class GenericSqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator, JsonSerializable {
 
     private final GenericJdbcPlatform jdbcPlatform;
 
-    /**
-     * Creates a new instance.
-     *
-     * @param jdbcPlatform from which the SQL data comes
-     */
     public GenericSqlToStreamOperator(GenericJdbcPlatform jdbcPlatform) {
         this(jdbcPlatform, DataSetType.createDefault(Record.class));
     }
 
-    /**
-     * Creates a new instance.
-     *
-     * @param jdbcPlatform from which the SQL data comes
-     * @param dataSetType  type of the {@link Record}s being transformed; see {@link RecordType}
-     */
     public GenericSqlToStreamOperator(GenericJdbcPlatform jdbcPlatform, DataSetType<Record> dataSetType) {
         super(dataSetType, dataSetType, false);
         this.jdbcPlatform = jdbcPlatform;
@@ -86,32 +74,45 @@ public class GenericSqlToStreamOperator extends UnaryToUnaryOperator<Record, Rec
             ChannelInstance[] outputs,
             JavaExecutor executor,
             OptimizationContext.OperatorContext operatorContext) {
-        // Cast the inputs and outputs.
+
         final SqlQueryChannel.Instance input = (SqlQueryChannel.Instance) inputs[0];
         final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
-        GenericJdbcPlatform producerPlatform = (GenericJdbcPlatform) input.getChannel().getProducer().getPlatform();
+        GenericJdbcPlatform producerPlatform =
+                (GenericJdbcPlatform) input.getChannel().getProducer().getPlatform();
+
+        String jdbcName = input.getJdbcName();
+        if (jdbcName == null || jdbcName.trim().isEmpty()) {
+            jdbcName = producerPlatform.getPlatformId();
+        }
+
         final Connection connection = producerPlatform
-                .createDatabaseDescriptor(executor.getConfiguration(),input.getJdbcName())
+                .createDatabaseDescriptor(executor.getConfiguration(), jdbcName)
                 .createJdbcConnection();
 
         Iterator<Record> resultSetIterator = new ResultSetIterator(connection, input.getSqlQuery());
-        Spliterator<Record> resultSetSpliterator = Spliterators.spliteratorUnknownSize(resultSetIterator, 0);
-        Stream<Record> resultSetStream = StreamSupport.stream(resultSetSpliterator, false);
+        Spliterator<Record> resultSetSpliterator =
+                Spliterators.spliteratorUnknownSize(resultSetIterator, 0);
+        Stream<Record> resultSetStream =
+                StreamSupport.stream(resultSetSpliterator, false);
 
         output.accept(resultSetStream);
 
         ExecutionLineageNode queryLineageNode = new ExecutionLineageNode(operatorContext);
-        queryLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                String.format("wayang.%s.sqltostream.load.query", this.jdbcPlatform.getPlatformId()),
+        queryLineageNode.add(
+                LoadProfileEstimators.createFromSpecification(
+                        String.format("wayang.%s.sqltostream.load.query",
+                                this.jdbcPlatform.getPlatformId()),
                         executor.getConfiguration()
-                ));
+                )
+        );
         queryLineageNode.addPredecessor(input.getLineage());
+
         ExecutionLineageNode outputLineageNode = new ExecutionLineageNode(operatorContext);
         outputLineageNode.add(LoadProfileEstimators.createFromSpecification(
                 String.format("wayang.%s.sqltostream.load.output", this.jdbcPlatform.getPlatformId()),
-                executor.getConfiguration()
-        ));
+                        executor.getConfiguration()
+                ));
         output.getLineage().addPredecessor(outputLineageNode);
 
         return queryLineageNode.collectAndMark();
@@ -140,27 +141,12 @@ public class GenericSqlToStreamOperator extends UnaryToUnaryOperator<Record, Rec
      */
     private static class ResultSetIterator implements Iterator<Record>, AutoCloseable {
 
-        /**
-         * Keeps around the {@link ResultSet} of the SQL query.
-         */
         private ResultSet resultSet;
-
-        /**
-         * The next {@link Record} to be delivered via {@link #next()}.
-         */
         private Record next;
 
-        /**
-         * Creates a new instance.
-         *
-         * @param connection the JDBC connection on which to execute a SQL query
-         * @param sqlQuery   the SQL query
-         */
         ResultSetIterator(Connection connection, String sqlQuery) {
             try {
-                //connection.setAutoCommit(false);
                 Statement st = connection.createStatement();
-                //st.setFetchSize(100000000);
                 this.resultSet = st.executeQuery(sqlQuery);
             } catch (SQLException e) {
                 this.close();
@@ -169,9 +155,6 @@ public class GenericSqlToStreamOperator extends UnaryToUnaryOperator<Record, Rec
             this.moveToNext();
         }
 
-        /**
-         * Moves this instance to the next {@link Record}.
-         */
         private void moveToNext() {
             try {
                 if (this.resultSet == null || !this.resultSet.next()) {
@@ -179,10 +162,13 @@ public class GenericSqlToStreamOperator extends UnaryToUnaryOperator<Record, Rec
                     this.close();
                 } else {
                     final int recordWidth = this.resultSet.getMetaData().getColumnCount();
+
                     Object[] values = new Object[recordWidth];
+
                     for (int i = 0; i < recordWidth; i++) {
                         values[i] = this.resultSet.getObject(i + 1);
                     }
+
                     this.next = new Record(values);
                 }
             } catch (SQLException e) {

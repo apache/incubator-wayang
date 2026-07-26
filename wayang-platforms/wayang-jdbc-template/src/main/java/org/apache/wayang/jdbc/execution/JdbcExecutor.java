@@ -1,3 +1,4 @@
+package org.apache.wayang.jdbc.execution;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -16,8 +17,41 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.jdbc.execution;
+import org.apache.wayang.basic.channels.FileChannel;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.basic.operators.SpatialFilterOperator;
+import org.apache.wayang.basic.operators.SpatialJoinOperator;
+import org.apache.wayang.basic.operators.FilterOperator;
+import org.apache.wayang.basic.operators.JoinOperator;
+import org.apache.wayang.basic.operators.TableSource;
+import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.optimizer.OptimizationContext;
+import org.apache.wayang.core.plan.executionplan.Channel;
+import org.apache.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.platform.ExecutionState;
+import org.apache.wayang.core.platform.ExecutorTemplate;
+import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.util.fs.FileSystem;
+import org.apache.wayang.core.util.fs.FileSystems;
+import org.apache.wayang.jdbc.channels.SqlQueryChannel;
+import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 
+import org.apache.wayang.jdbc.operators.JdbcExecutionOperator;
+import org.apache.wayang.jdbc.operators.JdbcFilterOperator;
+import org.apache.wayang.jdbc.operators.JdbcJoinOperator;
+import org.apache.wayang.jdbc.operators.JdbcProjectionOperator;
+import org.apache.wayang.jdbc.operators.JdbcTableSinkOperator;
+import org.apache.wayang.jdbc.operators.JdbcTableSource;
+
+import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -64,6 +98,7 @@ import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 /**
  * {@link Executor} implementation for the {@link JdbcPlatformTemplate}.
  */
+
 public class JdbcExecutor extends ExecutorTemplate {
     public static StringBuilder createSqlString(final JdbcExecutor jdbcExecutor, final JdbcTableSource tableOp,
             final Collection<JdbcExecutionOperator> filterTasks, final JdbcProjectionOperator projectionTask, final JdbcGlobalReduceOperator globalReduceTask, final JdbcReduceByOperator reduceByTask, final JdbcSortOperator sortTask, 
@@ -314,6 +349,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         } catch (final SQLException e) {
             throw new WayangException("Failed to execute SQL sink on table: " + sinkOp.getTableName(), e);
         }
+
     }
 
     /**
@@ -355,52 +391,40 @@ public class JdbcExecutor extends ExecutorTemplate {
     private static ExecutionTask findJdbcExecutionOperatorTaskInStage(final ExecutionTask task,
             final ExecutionStage stage) {
         assert task.getNumOuputChannels() == 1;
+
         final Channel outputChannel = task.getOutputChannel(0);
-        final ExecutionTask consumer = WayangCollections.getSingle(outputChannel.getConsumers());
-        return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator 
-                ? consumer
-                : null;
+
+        if (outputChannel.getConsumers().size() != 1) {
+            return null;
+        }
+
+        final ExecutionTask consumer = outputChannel.getConsumers().iterator().next();
+
+        return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator ? consumer
+                        : null;
     }
 
-    /**
-     * Instantiates the outbound {@link SqlQueryChannel} of an
-     * {@link ExecutionTask}.
-     *
-     * @param task                whose outbound {@link SqlQueryChannel} should be
-     *                            instantiated
-     * @param optimizationContext provides information about the
-     *                            {@link ExecutionTask}
-     * @return the {@link SqlQueryChannel.Instance}
-     */
     private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
             final OptimizationContext optimizationContext, final JdbcExecutor jdbcExecutor) {
-        assert task.getNumOuputChannels() == 1 : String.format("Illegal task: %s.", task);
-        assert task.getOutputChannel(0) instanceof SqlQueryChannel : String.format("Illegal task: %s.", task);
+        assert task.getNumOuputChannels() == 1;
+        assert task.getOutputChannel(0) instanceof SqlQueryChannel;
 
         final SqlQueryChannel outputChannel = (SqlQueryChannel) task.getOutputChannel(0);
+
         final OptimizationContext.OperatorContext operatorContext = optimizationContext
                 .getOperatorContext(task.getOperator());
+
         return outputChannel.createInstance(jdbcExecutor, operatorContext, 0);
     }
 
-    /**
-     * Instantiates the outbound {@link SqlQueryChannel} of an
-     * {@link ExecutionTask}.
-     *
-     * @param task                       whose outbound {@link SqlQueryChannel}
-     *                                   should be instantiated
-     * @param optimizationContext        provides information about the
-     *                                   {@link ExecutionTask}
-     * @param predecessorChannelInstance preceeding {@link SqlQueryChannel.Instance}
-     *                                   to keep track of lineage
-     * @return the {@link SqlQueryChannel.Instance}
-     */
     private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
             final OptimizationContext optimizationContext, final SqlQueryChannel.Instance predecessorChannelInstance,
             final JdbcExecutor jdbcExecutor) {
         final SqlQueryChannel.Instance newInstance = JdbcExecutor.instantiateOutboundChannel(task, optimizationContext,
                 jdbcExecutor);
+
         newInstance.getLineage().addPredecessor(predecessorChannelInstance.getLineage());
+
         return newInstance;
     }
 
@@ -458,7 +482,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         try {
             this.connection.close();
         } catch (final SQLException e) {
-            this.logger.error("Could not close JDBC connection to PostgreSQL correctly.", e);
+            this.logger.error("Could not close JDBC connection correctly.", e);
         }
     }
 

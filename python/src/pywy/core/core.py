@@ -16,6 +16,7 @@
 
 from typing import Set, Iterable, Dict
 import json
+import os
 import requests
 
 from pywy.configuration import Configuration
@@ -126,10 +127,21 @@ class PywyPlan:
                 json_data["operators"].append(serializer.serialize(operator))
                 pipeline = []
 
-        port = self.configuration.get_property("wayang.api.python.port") or 8080
+        api_url = self.configuration.get_property("wayang.api.python.url") or os.environ.get("WAYANG_API_URL")
+        if api_url is None:
+            host = (
+                self.configuration.get_property("wayang.api.python.host")
+                or os.environ.get("WAYANG_API_HOST")
+                or "localhost"
+            )
+            port = (
+                self.configuration.get_property("wayang.api.python.port")
+                or os.environ.get("WAYANG_API_PORT")
+                or 8080
+            )
+            api_url = f"http://{host}:{port}/wayang-api-json/submit-plan/json"
 
-        url = f'http://localhost:{port}/wayang-api-json/submit-plan/json'
         headers = {'Content-type': 'application/json'}
         json_body = json.dumps(json_data)
         print(json_body)
-        response = requests.post(url, headers=headers, json=json_data)
+        response = requests.post(api_url, headers=headers, json=json_data)

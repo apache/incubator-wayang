@@ -32,10 +32,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Properties;
 import java.util.stream.Stream;
 
@@ -302,6 +305,60 @@ class JavaTableSinkTest extends JavaExecutionOperatorTestBase {
             assertTrue(rs.getBoolean("is_active"));
             assertEquals(5000.50, rs.getDouble("salary"), 0.001);
             assertEquals(95.5f, rs.getFloat("score"), 0.001f);
+        }
+    }
+
+    @Test
+    void testWritingAllSupportedTypesToDatabase() throws Exception {
+        Configuration configuration = new Configuration();
+        Properties dbProps = new Properties();
+        dbProps.setProperty("url", JDBC_URL);
+        dbProps.setProperty("user", "sa");
+        dbProps.setProperty("password", "");
+        dbProps.setProperty("driver", DRIVER);
+
+        JavaTableSink<Record> sink = new JavaTableSink<>(dbProps, "overwrite", TABLE_NAME,
+                new String[] { "int_col", "long_col", "short_col", "double_col", "float_col",
+                        "decimal_col", "bool_col", "string_col" },
+                DataSetType.createDefault(Record.class));
+
+        Job job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        final JavaExecutor javaExecutor = (JavaExecutor) JavaPlatform.getInstance().createExecutor(job);
+
+        StreamChannel.Instance input = (StreamChannel.Instance) StreamChannel.DESCRIPTOR
+                .createChannel(mock(OutputSlot.class), configuration)
+                .createInstance(javaExecutor, mock(OptimizationContext.OperatorContext.class), 0);
+
+        BigDecimal decimalValue = new BigDecimal("12.345");
+        input.accept(Stream.of(new Record(
+                42, 9_000_000_000L, (short) 7, 3.14d, 1.5f, decimalValue, true, "hello")));
+        evaluate(sink, new ChannelInstance[] { input }, new ChannelInstance[0]);
+
+        try (Statement stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT * FROM \"" + TABLE_NAME + "\"")) {
+            rs.next();
+
+            // values written through the Java sink are read back from the database unchanged
+            assertEquals(42, rs.getInt("int_col"));
+            assertEquals(9_000_000_000L, rs.getLong("long_col"));
+            assertEquals((short) 7, rs.getShort("short_col"));
+            assertEquals(3.14d, rs.getDouble("double_col"), 1e-9);
+            assertEquals(1.5f, rs.getFloat("float_col"), 1e-6f);
+            assertEquals(0, decimalValue.compareTo(rs.getBigDecimal("decimal_col")));
+            assertTrue(rs.getBoolean("bool_col"));
+            assertEquals("hello", rs.getString("string_col"));
+
+            // the two new types were created with the right SQL column types
+            ResultSetMetaData md = rs.getMetaData();
+
+            int shortIdx = rs.findColumn("short_col");
+            assertEquals(Types.SMALLINT, md.getColumnType(shortIdx), "Short -> SMALLINT");
+
+            int decimalIdx = rs.findColumn("decimal_col");
+            assertEquals(Types.NUMERIC, md.getColumnType(decimalIdx), "BigDecimal -> NUMERIC");
+            assertEquals(38, md.getPrecision(decimalIdx), "BigDecimal precision must be 38");
+            assertEquals(18, md.getScale(decimalIdx), "BigDecimal scale must be 18");
         }
     }
 

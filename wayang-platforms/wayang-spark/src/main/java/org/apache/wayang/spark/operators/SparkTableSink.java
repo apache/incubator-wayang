@@ -141,15 +141,21 @@ public class SparkTableSink<T> extends TableSink<T> implements SparkExecutionOpe
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
-    private org.apache.spark.sql.types.DataType getSparkDataType(Class<?> cls) {
+    // Package-private (not private) so SparkTableSinkTest can unit-test this
+    // Java-class -> Spark DataType mapping directly; it uses no instance state.
+    org.apache.spark.sql.types.DataType getSparkDataType(Class<?> cls) {
         if (cls == Integer.class || cls == int.class)
             return DataTypes.IntegerType;
         if (cls == Long.class || cls == long.class)
             return DataTypes.LongType;
+        if (cls == Short.class || cls == short.class)
+            return DataTypes.ShortType;
         if (cls == Double.class || cls == double.class)
             return DataTypes.DoubleType;
         if (cls == Float.class || cls == float.class)
             return DataTypes.FloatType;
+        if (cls == java.math.BigDecimal.class)
+            return DataTypes.createDecimalType(38, 18);
         if (cls == Boolean.class || cls == boolean.class)
             return DataTypes.BooleanType;
         if (cls == java.sql.Date.class || cls == java.time.LocalDate.class)

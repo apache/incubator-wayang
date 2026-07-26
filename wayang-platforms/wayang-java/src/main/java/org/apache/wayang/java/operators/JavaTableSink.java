@@ -59,6 +59,10 @@ public class JavaTableSink<T> extends TableSink<T> implements JavaExecutionOpera
             ps.setDouble(index, (Double) value);
         } else if (value instanceof Float) {
             ps.setFloat(index, (Float) value);
+        } else if (value instanceof Short) {
+            ps.setShort(index, (Short) value);
+        } else if (value instanceof java.math.BigDecimal) {
+            ps.setBigDecimal(index, (java.math.BigDecimal) value);
         } else if (value instanceof Boolean) {
             ps.setBoolean(index, (Boolean) value);
         } else if (value instanceof java.sql.Date) {
