@@ -33,6 +33,7 @@ import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.jdbc.execution.JdbcExecutor;
 import org.apache.wayang.core.profiling.NoInstrumentationStrategy;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -50,6 +51,21 @@ import static org.mockito.Mockito.when;
  * Test suite for {@link SqlToStreamOperator}.
  */
 class JdbcJoinOperatorTest extends OperatorTestBase {
+    @BeforeEach
+    void initDB() throws SQLException {
+        HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
+        try (
+            Connection jdbcConnection = hsqldbPlatform
+                .createDatabaseDescriptor(configuration)
+                .createJdbcConnection()
+        ) {
+            final Statement statement = jdbcConnection.createStatement();
+            statement.execute("DROP TABLE IF EXISTS testA");
+            statement.execute("DROP TABLE IF EXISTS testB");
+            statement.execute("DROP TABLE IF EXISTS orders");
+            statement.execute("DROP TABLE IF EXISTS shipments");
+        }
+    }
     @Test
     void testWithHsqldb() throws SQLException {
         Configuration configuration = new Configuration();

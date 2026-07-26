@@ -35,11 +35,13 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**
- * Provides implicits for the basic Wayang API.
- */
-/**
- * TODO: add the documentation in the implicit of org.apache.wayang.api
- * labels: documentation,todo
+ * Provides implicit conversions and utility methods for the Apache Wayang API.
+ *
+ * This package object contains implicit definitions that enable seamless
+ * interoperability between Scala and Java types within the Wayang API.
+ * These implicits support type inference for DataQuanta pipelines,
+ * including the upcoming DataFrame API where type information is
+ * propagated automatically through the operator chain.
  */
 package object api {
 

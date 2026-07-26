@@ -62,7 +62,7 @@ class JdbcGlobalReduceOperatorTest extends OperatorTestBase {
         final ExecutionStage sqlStage = mock(ExecutionStage.class);
 
         final JdbcTableSource tableSourceA = new HsqldbTableSource("testA");
-
+        
         final ExecutionTask tableSourceATask = new ExecutionTask(tableSourceA);
         tableSourceATask.setOutputChannel(0, new SqlQueryChannel(sqlChannelDescriptor, tableSourceA.getOutput(0)));
         tableSourceATask.setStage(sqlStage);
@@ -86,13 +86,22 @@ class JdbcGlobalReduceOperatorTest extends OperatorTestBase {
         globalReduceTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);
 
+        
+        final HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
+
+        try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
+            final Statement statement = jdbcConnection.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS testA (a INT, b VARCHAR(6));");
+            statement.execute("INSERT INTO testA VALUES (0, 'zero');");
+            statement.execute("CREATE TABLE IF NOT EXISTS testB (a INT, b INT);");
+            statement.execute("INSERT INTO testB VALUES (0, 100);");
+        }
+
         final JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
         executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
 
         final SqlQueryChannel.Instance sqlQueryChannelInstance = (SqlQueryChannel.Instance) job.getCrossPlatformExecutor()
                 .getChannelInstance(sqlToStreamTask.getInputChannel(0));
-
-        final HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
 
         try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
             final Statement statement = jdbcConnection.createStatement();
