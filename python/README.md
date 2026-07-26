@@ -96,5 +96,55 @@ if __name__ == "__main__":
     word_count
 ```
 
+By default, `pywy` submits plans to
+`http://localhost:8080/wayang-api-json/submit-plan/json`. For a remote REST API
+or another container, configure either the full URL:
+
+```python
+from pywy.configuration import Configuration
+from pywy.dataquanta import WayangContext
+
+configuration = Configuration()
+configuration.set_property("wayang.api.python.url", "http://wayang-rest:8080/wayang-api-json/submit-plan/json")
+ctx = WayangContext(configuration)
+```
+
+or configure host and port separately:
+
+```python
+configuration.set_property("wayang.api.python.host", "wayang-rest")
+configuration.set_property("wayang.api.python.port", "8080")
+```
+
+The same values can be supplied through environment variables:
+`WAYANG_API_URL`, or `WAYANG_API_HOST` and `WAYANG_API_PORT`.
+
+## Docker
+
+The Python API can be run with the Wayang REST API as a separate container.
+Build the assembly first, then build the base Wayang image and the optional
+Python-enabled image from the repository root:
+
+```shell
+./mvnw clean install -Dmaven.test.skip=true
+./mvnw package -pl :wayang-assembly -Pdistribution -Dmaven.test.skip=true
+docker buildx build --load -t apache-wayang:ci .
+docker buildx build --load -f python/Dockerfile -t apache-wayang-python:ci .
+```
+
+Start the REST API and run the Python example on the same Docker network:
+
+```shell
+docker network create wayang-python
+docker run -d --name wayang-rest --network wayang-python apache-wayang-python:ci
+docker run --rm --network wayang-python \
+  --entrypoint /usr/local/bin/wayang-python-entrypoint \
+  -e WAYANG_API_HOST=wayang-rest \
+  apache-wayang-python:ci \
+  python python/examples/wordcount.py
+docker rm -f wayang-rest
+docker network rm wayang-python
+```
+
 ### Testing python code 
 You can run the python tests by using pytest, the requirements for the tests are listed in `python/src/pywy/requirements.txt`. To run the tests navigate to the base wayang folder, e.g. `/var/www/html` and run `pytest -s python/src/pywy` if you need to pass a specific configuration for your use case you can also add a config flag `pytest -s --config=pathToYourConfig python/src/pywy/`

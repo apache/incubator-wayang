@@ -19,14 +19,17 @@
 package org.apache.wayang.api.python.executor;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Map;
 
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
+import org.apache.wayang.core.util.ReflectionUtils;
 
 public class PythonProcessCaller {
 
@@ -41,7 +44,7 @@ public class PythonProcessCaller {
     public PythonProcessCaller() {
 
         // TODO create documentation to how to the configuration in the code
-        this.configuration = new Configuration();
+        this.configuration = createConfiguration();
         this.ready = false;
         final byte[] addr = new byte[4];
         addr[0] = 127;
@@ -72,9 +75,9 @@ public class PythonProcessCaller {
         } catch (final Exception e) {
             final String msg = String.format(
                     "Python worker failed with config %s, using python path %s, using worker %s, using env %s", configuration,
-                    this.configuration.getStringProperty("wayang.api.python.path"),
-                    this.configuration.getStringProperty("wayang.api.python.worker"),
-                    this.configuration.getStringProperty("wayang.api.python.env.path"));
+                    this.configuration.getStringProperty("wayang.api.python.path", "<unset>"),
+                    this.configuration.getStringProperty("wayang.api.python.worker", "<unset>"),
+                    this.configuration.getStringProperty("wayang.api.python.env.path", "<unset>"));
             throw new WayangException(msg, e);
         }
 
@@ -88,11 +91,28 @@ public class PythonProcessCaller {
             final String msg = String.format(
                     "Python worker failed to connect back, with config %s, using python path %s, using worker %s, using env %s",
                     configuration,
-                    this.configuration.getStringProperty("wayang.api.python.path"),
-                    this.configuration.getStringProperty("wayang.api.python.worker"),
-                    this.configuration.getStringProperty("wayang.api.python.env.path"));
+                    this.configuration.getStringProperty("wayang.api.python.path", "<unset>"),
+                    this.configuration.getStringProperty("wayang.api.python.worker", "<unset>"),
+                    this.configuration.getStringProperty("wayang.api.python.env.path", "<unset>"));
             throw new WayangException(msg, e);
         }
+    }
+
+    private static Configuration createConfiguration() {
+        final Configuration configuration = new Configuration((String) null);
+        final URL pythonDefaults = ReflectionUtils.getResourceURL("wayang-api-python-defaults.properties");
+        if (pythonDefaults != null) {
+            try (InputStream inputStream = pythonDefaults.openStream()) {
+                configuration.load(inputStream);
+            } catch (IOException e) {
+                throw new WayangException("Could not load Python API defaults.", e);
+            }
+        }
+        final String configurationFileUrl = System.getProperty("wayang.configuration");
+        if (configurationFileUrl != null) {
+            configuration.load(configurationFileUrl);
+        }
+        return configuration;
     }
 
     public Process getProcess() {

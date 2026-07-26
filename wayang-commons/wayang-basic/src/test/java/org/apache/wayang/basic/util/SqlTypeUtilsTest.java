@@ -51,10 +51,21 @@ public class SqlTypeUtilsTest {
         assertEquals("INT", SqlTypeUtils.getSqlType(Integer.class, DatabaseProduct.UNKNOWN));
         assertEquals("INT", SqlTypeUtils.getSqlType(int.class, DatabaseProduct.UNKNOWN));
         assertEquals("BIGINT", SqlTypeUtils.getSqlType(Long.class, DatabaseProduct.UNKNOWN));
+        assertEquals("BIGINT", SqlTypeUtils.getSqlType(long.class, DatabaseProduct.UNKNOWN));
+        assertEquals("SMALLINT", SqlTypeUtils.getSqlType(Short.class, DatabaseProduct.UNKNOWN));
+        assertEquals("SMALLINT", SqlTypeUtils.getSqlType(short.class, DatabaseProduct.UNKNOWN));
         assertEquals("DOUBLE", SqlTypeUtils.getSqlType(Double.class, DatabaseProduct.UNKNOWN));
+        assertEquals("DOUBLE", SqlTypeUtils.getSqlType(double.class, DatabaseProduct.UNKNOWN));
+        assertEquals("FLOAT", SqlTypeUtils.getSqlType(Float.class, DatabaseProduct.UNKNOWN));
+        assertEquals("FLOAT", SqlTypeUtils.getSqlType(float.class, DatabaseProduct.UNKNOWN));
+        assertEquals("NUMERIC(38,18)", SqlTypeUtils.getSqlType(java.math.BigDecimal.class, DatabaseProduct.UNKNOWN));
+        assertEquals("BOOLEAN", SqlTypeUtils.getSqlType(Boolean.class, DatabaseProduct.UNKNOWN));
+        assertEquals("BOOLEAN", SqlTypeUtils.getSqlType(boolean.class, DatabaseProduct.UNKNOWN));
         assertEquals("VARCHAR(255)", SqlTypeUtils.getSqlType(String.class, DatabaseProduct.UNKNOWN));
         assertEquals("DATE", SqlTypeUtils.getSqlType(java.sql.Date.class, DatabaseProduct.UNKNOWN));
+        assertEquals("DATE", SqlTypeUtils.getSqlType(java.time.LocalDate.class, DatabaseProduct.UNKNOWN));
         assertEquals("TIMESTAMP", SqlTypeUtils.getSqlType(java.sql.Timestamp.class, DatabaseProduct.UNKNOWN));
+        assertEquals("TIMESTAMP", SqlTypeUtils.getSqlType(java.time.LocalDateTime.class, DatabaseProduct.UNKNOWN));
     }
 
     @Test
@@ -63,6 +74,10 @@ public class SqlTypeUtilsTest {
         assertEquals("DOUBLE PRECISION", SqlTypeUtils.getSqlType(Double.class, DatabaseProduct.POSTGRESQL));
         assertEquals("DOUBLE PRECISION", SqlTypeUtils.getSqlType(double.class, DatabaseProduct.POSTGRESQL));
         assertEquals("VARCHAR(255)", SqlTypeUtils.getSqlType(String.class, DatabaseProduct.POSTGRESQL));
+        // Short and BigDecimal are not overridden for PostgreSQL, they inherit from the default map.
+        assertEquals("SMALLINT", SqlTypeUtils.getSqlType(Short.class, DatabaseProduct.POSTGRESQL));
+        assertEquals("SMALLINT", SqlTypeUtils.getSqlType(short.class, DatabaseProduct.POSTGRESQL));
+        assertEquals("NUMERIC(38,18)", SqlTypeUtils.getSqlType(java.math.BigDecimal.class, DatabaseProduct.POSTGRESQL));
     }
 
     @Test

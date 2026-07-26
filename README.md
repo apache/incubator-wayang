@@ -21,158 +21,173 @@
 
 ## The first open-source cross-platform data processing system
 
-[![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg)
-[![License](https://img.shields.io/github/license/apache/incubator-wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Last commit](https://img.shields.io/github/last-commit/apache/incubator-wayang.svg?style=for-the-badge)]()
-![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/m/apache/incubator-wayang?style=for-the-badge)
-![GitHub forks](https://img.shields.io/github/forks/apache/incubator-wayang?style=for-the-badge)
-![GitHub Repo stars](https://img.shields.io/github/stars/apache/incubator-wayang?style=for-the-badge)
+**Write your data pipeline once. Run it anywhere.**
 
-[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Apache%20Wayang%20enables%20cross%20platform%20data%20processing,%20star%20it%20via:%20&url=https://github.com/apache/incubator-wayang&via=apachewayang&hashtags=dataprocessing,bigdata,analytics,hybridcloud,developers) [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/ApacheWayang?style=social)](https://www.reddit.com/r/ApacheWayang/)
+[![Maven central](https://img.shields.io/maven-central/v/org.apache.wayang/wayang-core.svg?style=for-the-badge)](https://central.sonatype.com/artifact/org.apache.wayang/wayang-core)
+[![License](https://img.shields.io/github/license/apache/wayang.svg?style=for-the-badge)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Last commit](https://img.shields.io/github/last-commit/apache/wayang.svg?style=for-the-badge)]()
+![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/m/apache/wayang?style=for-the-badge)
+![GitHub forks](https://img.shields.io/github/forks/apache/wayang?style=for-the-badge)
+![GitHub Repo stars](https://img.shields.io/github/stars/apache/wayang?style=for-the-badge)
+
+[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Apache%20Wayang%20enables%20cross%20platform%20data%20processing,%20star%20it%20via:%20&url=https://github.com/apache/wayang&via=apachewayang&hashtags=dataprocessing,bigdata,analytics,hybridcloud,developers) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Follow-0A66C2?style=social&logo=linkedin)](https://www.linkedin.com/company/apachewayang)
+
+You write your pipeline against a single API, then decide how it runs. Point it at one engine and it runs there. Or hand Wayang's cost-based optimizer the choice and let it pick the best platform for each step across your laptop, Apache Spark, Apache Flink, or a database, even splitting a single job across several. Either way, when your data outgrows one machine you don't rewrite anything, you just make another engine available.
+
+<p align="center">
+  <img src="guides/img/wayang-architecture.svg" alt="A single pipeline, written once, feeds the Wayang optimizer, which routes each step to the best available engine — Local, Spark, Flink, Postgres, and others." width="720" />
+</p>
+
 ## Table of contents
-  * [Description](#description)
-  * [Quick Guide for Running Wayang](#quick-guide-for-running-wayang)
-  * [Quick Guide for Developing with Wayang](#quick-guide-for-developing-with-wayang)
-  * [Installing Wayang](#installing-wayang)
-    + [Requirements at Runtime](#requirements-at-runtime)
-    + [Validating the installation](#validating-the-installation)
-  * [Getting Started](#getting-started)
-    + [Prerequisites](#prerequisites)
-    + [Building](#building)
-  * [Running the tests](#running-the-tests)
-  * [Example Applications](#example-applications)
-  * [Built With](#built-with)
-  * [Contributing](#contributing)
-  * [Authors](#authors)
-  * [License](#license)
 
-## Description
+- [How it works](#how-it-works)
+- [Quickstart](#quickstart)
+- [Install](#install)
+- [Documentation](#documentation)
+- [Research](#research)
+- [Contributing](#contributing)
+- [Community](#community)
+- [Authors](#authors)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
 
-In contrast to traditional data processing systems that provide one dedicated execution engine, Apache Wayang can transparently and seamlessly integrate multiple execution engines and use them to perform a single task. We call this *cross-platform data processing*. In Wayang, users can specify any data processing application using one of Wayang's APIs and then Wayang can choose the data processing platform(s), e.g., Postgres or Apache Spark, that best fits the application. Finally, Wayang will orchestrate the execution, thereby hiding the different platform-specific APIs and coordinating inter-platform communication.
+## How it works
 
-Apache Wayang aims at freeing data engineers and software developers from the burden of learning all different data processing systems, their APIs, strengths and weaknesses; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when trying a fixed set of processing platforms. As of now, Wayang has built-in support for the following processing platforms:
+Most data processing systems are designed around a single execution engine. That keeps things simple, but your pipeline ends up tied to that engine's API. So combining engines, or moving to another, typically means rewriting and gluing together which is costly and time-consuming.
+
+Wayang sits one level up. You write a pipeline against Wayang's API and register the engines you *have*. Then it's your call. Want control? Register one engine and it runs there. Want it handled? Register several and let the cost-based optimizer pick the best one for each step, even splitting a single job across engines.
+
+**Supported platforms today**
+
 - [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
 - [Apache Spark](https://spark.apache.org/)
 - [Apache Flink](https://flink.apache.org/)
 - [Apache Giraph](https://giraph.apache.org/)
-- [Postgres](http://www.postgresql.org)
+- [PostgreSQL](http://www.postgresql.org)
 - [SQLite](https://www.sqlite.org/)
 - [Apache Kafka](https://kafka.apache.org)
-- [Tensorflow](https://www.tensorflow.org/)
+- [TensorFlow](https://www.tensorflow.org/)
 
-Apache Wayang can be used via the following APIs:
-- Java scala-like
+**Wayang's APIs**
+
+- Java (Scala-like fluent builder)
 - Scala
 - SQL
-- Java native (recommended only for low level development)
+- Java native (low-level, we recommend the fluent scala-like)
 
-Apache Wayang provides a flexible architecture which enables easy addition of new operators and data processing platforms without requiring any change of the internals of the system. For details on how to add new operators, see [here](https://wayang.apache.org/docs/guide/adding-operators).
+The plugin architecture makes adding new operators and platforms straightforward without touching internals — see [Adding operators](https://wayang.apache.org/docs/guide/adding-operators).
 
-## Quick Guide for Running Wayang
+## Quickstart
 
-For a quick guide on how to run WordCount see [here](guides/tutorial.md).
+We'll run a word count locally first — no cluster, nothing to install on a server — then make Spark available with a one-line change. The pipeline itself never changes; only the set of engines you register does.
 
-### Spark Dataset / DataFrame pipelines
+### 1. Run locally
 
-Wayang’s Spark platform can now execute end-to-end pipelines on Spark `Dataset[Row]` (aka DataFrames). This is particularly useful when working with lakehouse-style storage (Parquet/Delta) or when you want to plug Spark ML stages into a Wayang plan without repeatedly falling back to RDDs.
+```java
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.api.JavaPlanBuilder;
+import org.apache.wayang.basic.data.Tuple2;
+import org.apache.wayang.java.Java;
+import java.util.Arrays;
 
-To build a Dataset-backed pipeline:
+public class WordCount {
+    public static void main(String[] args) {
+        // Register ONLY the local Java engine → runs on your machine, no cluster needed.
+        WayangContext wayang = new WayangContext(new Configuration())
+                .withPlugin(Java.basicPlugin());
 
-1. **Use the Dataset-aware plan builder APIs.**
-   - `PlanBuilder.readParquet(..., preferDataset = true)` (or `JavaPlanBuilder.readParquet(..., ..., true)`) reads Parquet files directly into a Dataset channel.
-   - `DataQuanta.writeParquet(..., preferDataset = true)` writes a Dataset channel without converting it back to an RDD.
-2. **Keep operators dataset-compatible.** Most operators continue to work unchanged; if an operator explicitly prefers RDDs, Wayang will insert the necessary conversions automatically (at an additional cost). Custom operators can expose `DatasetChannel` descriptors to stay in the dataframe world.
-3. **Let the optimizer do the rest.** The optimizer now assigns a higher cost to Dataset↔RDD conversions, so once you opt into Dataset sources/sinks the plan will stay in Dataset form by default.
-
-No extra flags are required—just opt into the Dataset-based APIs where you want dataframe semantics. If you see unexpected conversions in your execution plan, check that the upstream/downstream operators you use can consume `DatasetChannel`s; otherwise Wayang will insert a conversion operator for you.
-
-## Quick Guide for Developing with Wayang
-
-For a quick guide on how to use Wayang in your Java/Scala project see [here](guides/develop-with-Wayang.md).
-
-## Installing Wayang
-
-You first have to build the binaries as shown [here](guides/tutorial.md).
-Once you have the binaries built, follow these steps to install Wayang:
-
-```shell
-tar -xvf wayang-1.0.1-SNAPSHOT.tar.gz
-cd wayang-1.0.1-SNAPSHOT
+        new JavaPlanBuilder(wayang)
+                .withJobName("WordCount")
+                .withUdfJarOf(WordCount.class)
+                .readTextFile("file:///path/to/input.txt")
+                .flatMap(line -> Arrays.asList(line.split("\\W+")))
+                .filter(word -> !word.isEmpty())
+                .map(word -> new Tuple2<>(word.toLowerCase(), 1))
+                .reduceByKey(Tuple2::getField0,
+                             (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1()))
+                .writeTextFile("file:///path/to/output.txt", t -> t.getField0() + ": " + t.getField1());
+    }
+}
 ```
 
-In Linux
-```shell
-echo "export WAYANG_HOME=$(pwd)" >> ~/.bashrc
-echo "export PATH=${PATH}:${WAYANG_HOME}/bin" >> ~/.bashrc
-source ~/.bashrc
-```
-In macOS
-```shell
-echo "export WAYANG_HOME=$(pwd)" >> ~/.zshrc
-echo "export PATH=${PATH}:${WAYANG_HOME}/bin" >> ~/.zshrc
-source ~/.zshrc
-```
+It executes locally. Good for development, tests, and small data.
 
-### Requirements at Runtime
+### 2. Run it on Spark
 
-Apache Wayang relies on external execution engines and Java to function correctly. Below are the updated runtime requirements:
+Now run the *exact same pipeline* on Spark instead of locally. You don't touch the pipeline — you change which platform you register: comment out Java and register Spark.
 
-- **Java 17**: Make sure `JAVA_HOME` is correctly set to your Java 17 installation.
-- **Apache Spark 3.4.4**: Compatible with Scala 2.12. Set the `SPARK_HOME` environment variable.
-- **Apache Hadoop 3+**: Set the `HADOOP_HOME` environment variable.
+```java
+import org.apache.wayang.spark.Spark;               // swap the import
 
-> 🛠️ **Note:** When using Java 17, you _must_ add JVM flags to allow Wayang and Spark to access internal Java APIs, or you will encounter `IllegalAccessError`. See below.
-
-### Validating the installation
-
-To execute your first application with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
-
-```shell
-bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
+// Same pipeline as before — only the registered platform changed.
+WayangContext wayang = new WayangContext(new Configuration())
+        // .withPlugin(Java.basicPlugin())           // comment out the local engine
+        .withPlugin(Spark.basicPlugin());            // register Spark instead
 ```
 
-### ⚙️ Java 17 Compatibility
+Run it again. The same pipeline now executes on Spark. You changed *where* it runs without changing *what* it does. Switch to Flink or any other supported platform the same way: swap the import and the registered plugin.
 
-When running Wayang applications using Java 17 (especially with Spark), you must add JVM flags to open specific internal Java modules. These flags resolve access issues with `sun.nio.ch.DirectBuffer` and others.
+> **Why register only Spark here?** Wayang's real power is registering several platforms and letting the optimizer pick. But on small test data the optimizer will almost always pick the local engine (Spark's startup overhead isn't worth it for a tiny file) so you'd never actually see Spark run. Registering Spark alone forces the issue so you can confirm it works. Step 3 shows the production pattern.
 
-Update your `wayang-submit` (wayang-assembly/target/wayang-1.0.1-SNAPSHOT/bin/wayang-submit) script (or command) with:
+### 3. Register both and let the optimizer choose
 
-```bash
-eval "$RUNNER \
-  --add-exports=java.base/sun.nio.ch=ALL-UNNAMED \
-  --add-opens=java.base/java.nio=ALL-UNNAMED \
-  --add-opens=java.base/java.lang=ALL-UNNAMED \
-  --add-opens=java.base/java.util=ALL-UNNAMED \
-  --add-opens=java.base/java.io=ALL-UNNAMED \
-  --add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
-  --add-opens=java.base/java.util.concurrent=ALL-UNNAMED \
-  --add-opens=java.base/java.net=ALL-UNNAMED \
-  --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
-  $FLAGS -cp \"${WAYANG_CLASSPATH}\" $CLASS ${ARGS}"
+This is the point of Wayang. In practice you don't pick a platform at all: you register every engine you have and let the optimizer choose the best one for each step.
+
+```java
+// Register BOTH platforms — Wayang's optimizer decides which to use per step.
+WayangContext wayang = new WayangContext(new Configuration())
+        .withPlugin(Java.basicPlugin())
+        .withPlugin(Spark.basicPlugin());
 ```
 
-## Getting Started
+Now Wayang owns the placement decision. For each operator it estimates the cost on every registered platform and picks the cheapest, keeping a small job entirely local, pushing a large one onto Spark, or mixing both within the same job as the data and query demands. On a tiny input you'll see it keep everything local (that's the optimizer working correctly, not ignoring Spark); cross-platform splits show up once the data is big enough to justify them.
 
-Wayang is available via Maven Central. To use it with Maven, include the following code snippet into your POM file:
+## Install
+
+Replace `WAYANG_VERSION` with the [latest Maven Central release](https://central.sonatype.com/artifact/org.apache.wayang/wayang-core).
+
+### From Maven Central
+
 ```xml
 <dependency>
   <groupId>org.apache.wayang</groupId>
-  <artifactId>wayang-***</artifactId>
-  <version>1.0.0</version>
+  <artifactId>wayang-core</artifactId>
+  <version>WAYANG_VERSION</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.wayang</groupId>
+  <artifactId>wayang-basic</artifactId>
+  <version>WAYANG_VERSION</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.wayang</groupId>
+  <artifactId>wayang-api-scala-java</artifactId>
+  <version>WAYANG_VERSION</version>
+</dependency>
+<!-- add one artifact per engine you want available -->
+<dependency>
+  <groupId>org.apache.wayang</groupId>
+  <artifactId>wayang-java</artifactId>
+  <version>WAYANG_VERSION</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.wayang</groupId>
+  <artifactId>wayang-spark</artifactId>
+  <version>WAYANG_VERSION</version>
 </dependency>
 ```
-Note the `***`: Wayang ships with multiple modules that can be included in your app, depending on how you want to use it:
-* `wayang-core`: provides core data structures and the optimizer (required)
-* `wayang-basic`: provides common operators and data types for your apps (recommended)
-* `wayang-api-scala-java`: provides an easy-to-use Scala and Java API to assemble Wayang plans (recommended)
-* `wayang-java`, `wayang-spark`, `wayang-graphchi`, `wayang-sqlite3`, `wayang-postgres`: adapters for the various supported processing platforms
-* `wayang-profiler`: provides functionality to learn operator and UDF cost functions from historical execution data
 
-> **NOTE:** The module `wayang-api-scala-java` is intended to be used with Java 11 and Scala 2.12.
+The available modules:
 
-For the sake of version flexibility, you still have to include in the POM file your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
+- `wayang-core` — core data structures and the optimizer (**required**)
+- `wayang-basic` — common operators and data types (recommended)
+- `wayang-api-scala-java` — fluent Scala/Java API for building plans (recommended)
+- `wayang-java`, `wayang-spark`, `wayang-flink`, `wayang-postgres`, `wayang-sqlite3`, `wayang-graphchi`, `wayang-tensorflow`, `wayang-kafka` — per-platform adapters; include one per engine you want available
+- `wayang-profiler` — learns operator and UDF cost functions from historical executions
 
-In addition, you can obtain the most recent snapshot version of Wayang via Sonatype's snapshot repository. Just include:
+For snapshot builds, add Apache's snapshot repository:
+
 ```xml
 <repositories>
   <repository>
@@ -183,83 +198,125 @@ In addition, you can obtain the most recent snapshot version of Wayang via Sonat
 </repositories>
 ```
 
-### Prerequisites
-Apache Wayang is built with Java 17 and Scala 2.12. However, to run Apache Wayang it is sufficient to have just Java 17 installed. Please also consider that processing platforms employed by Wayang might have further requirements.
+### Build from source
+
+```bash
+git clone https://github.com/apache/wayang.git
+cd wayang
+./mvnw clean install -DskipTests
 ```
-Java 17
-Scala 2.12.17
-Spark 3.4.4, Compatible with Scala 2.12.
-Maven
-```
 
->**NOTE:** In Windows, you need to define the variable `HADOOP_HOME` with the winutils.exe. An unofficial option to obtain it is from [this repository](https://github.com/steveloughran/winutils), or you can generate your winutils.exe following the instructions in the repository. Also, you may need to install [msvcr100.dll](https://www.microsoft.com/en-us/download/details.aspx?id=26999)
+The current snapshot version lives in [`pom.xml`](https://github.com/apache/wayang/blob/main/pom.xml).
 
-> **NOTE:** Make sure that the JAVA_HOME environment variable is set correctly to Java 17 as the prerequisite checker script currently supports up to Java 17 and checks the latest version of Java if you have higher version installed. In Linux, it is preferably to use the export JAVA_HOME method inside the project folder. It is also recommended running './mvnw clean install' before opening the project using IntelliJ.
+### Runtime requirements
 
+- **Java 17** — set `JAVA_HOME` to your Java 17 installation.
+- **Apache Spark 3.4.4** with Scala 2.12 — set `SPARK_HOME`.
+- **Apache Hadoop 3+** — set `HADOOP_HOME`.
+- **Maven** for building from source.
 
-### Building
-
-If you need to rebuild Wayang, e.g., to use a different Scala version, you can simply do so via Maven:
-
-1. Adapt the version variables (e.g., `spark.version`) in the main `pom.xml` file.
-2. Build Wayang with the adapted versions.
-    ```shell
-   git clone https://github.com/apache/incubator-wayang.git
-   cd incubator-wayang
-   ./mvnw clean install -DskipTests
-    ```
-> **NOTE:** If you receive an error about not finding `MathExBaseVisitor`, then the problem might be that you are trying to build from IntelliJ, without Maven. MathExBaseVisitor is generated code, and a Maven build should generate it automatically.
-
-> **NOTE:**: In the current Maven setup, Wayang supports Java 17. The default Scala version is 2.12.17, which is compatible with Java 17. Ensure that your Spark distribution is also built with Scala 2.12 (e.g., `spark-3.4.4-bin-hadoop3-scala2.12`).
-
-> **NOTE:** For compiling and testing the code it is required to have Hadoop installed on your machine.
-
-> **NOTE:**  the `standalone` profile to fix Hadoop and Spark versions, so that Wayang apps do not explicitly need to declare the corresponding dependencies.
-
-> **NOTE**: When running applications (e.g., WordCount) with Java 17, you must pass additional flags to allow internal module access:
-
->--add-exports=java.base/sun.nio.ch=ALL-UNNAMED \
---add-opens=java.base/java.nio=ALL-UNNAMED \
---add-opens=java.base/java.lang=ALL-UNNAMED \
---add-opens=java.base/java.util=ALL-UNNAMED \
---add-opens=java.base/java.io=ALL-UNNAMED \
---add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
---add-opens=java.base/java.util.concurrent=ALL-UNNAMED \
---add-opens=java.base/java.net=ALL-UNNAMED \
---add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
-
+> [!IMPORTANT]
+> **Java 17 needs extra JVM flags.** Running Wayang on Java 17 (especially with Spark) requires opening some internal Java modules, or you'll hit `IllegalAccessError`. Edit your `wayang-submit` script (under `wayang-assembly/target/wayang-WAYANG_VERSION/bin/wayang-submit`) so the runner invocation passes:
 >
-> Also, note the `distro` profile, which assembles a binary Wayang distribution.
-To activate these profiles, you need to specify them when running maven, i.e.,
+> ```
+> --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+> --add-opens=java.base/java.nio=ALL-UNNAMED
+> --add-opens=java.base/java.lang=ALL-UNNAMED
+> --add-opens=java.base/java.util=ALL-UNNAMED
+> --add-opens=java.base/java.io=ALL-UNNAMED
+> --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+> --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+> --add-opens=java.base/java.net=ALL-UNNAMED
+> --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+> ```
+>
+> On Windows, also set `HADOOP_HOME` to a directory containing `winutils.exe` ([unofficial source](https://github.com/steveloughran/winutils)).
 
-```shell
-./mvnw clean install -DskipTests -P<profile name>
+### Validate the install
+
+After building, unpack the assembly and put Wayang on your `PATH`:
+
+```bash
+tar -xvf wayang-WAYANG_VERSION.tar.gz
+cd wayang-WAYANG_VERSION
+
+# Linux
+echo "export WAYANG_HOME=$(pwd)" >> ~/.bashrc
+echo "export PATH=${PATH}:${WAYANG_HOME}/bin" >> ~/.bashrc
+source ~/.bashrc
+
+# macOS
+echo "export WAYANG_HOME=$(pwd)" >> ~/.zshrc
+echo "export PATH=${PATH}:${WAYANG_HOME}/bin" >> ~/.zshrc
+source ~/.zshrc
 ```
 
-## Running the tests
-In the incubator-wayang root folder run:
-```shell
+Then run the bundled WordCount on your local Java engine:
+
+```bash
+bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
+```
+
+### Running the tests
+
+```bash
 ./mvnw test
 ```
 
-## Example Applications
-You can see examples on how to start using Wayang [here](guides/wayang-examples.md)
+## Documentation
 
-## Built With
+- **[Getting started](https://wayang.apache.org/docs/guide/getting-started)** — the full tabbed walkthrough in Java, Scala, and Python.
+- **[How Wayang chooses a platform](https://wayang.apache.org/docs/introduction/about)** — what drives the optimizer's decisions.
+- **[Adding operators](https://wayang.apache.org/docs/guide/adding-operators)** — extend Wayang with new operators or platforms.
+- **[Example applications](guides/wayang-examples.md)** — runnable apps in this repo.
+- **[Developing with Wayang](guides/develop-with-Wayang.md)** — using Wayang in your own Java/Scala project.
 
-* [Java 17](https://www.oracle.com/java/technologies/javase/17-0-14-relnotes.html)
-* [Scala 2.12.17](https://www.scala-lang.org/download/2.12.17.html)
-* [Maven](https://maven.apache.org/)
+## Research
+
+Wayang (formerly called Rheem) is the product of many years of top quality research. Below you can find the main publications:
+
+- Apache Wayang: A Unified Data Analytics Framework. SIGMOD Rec. 52(3): 30-35 (2023) [pdf](https://sigmodrecord.org/publications/sigmodRecord/2309/pdfs/05_Systems_Beedkar.pdf)
+- Apache Wayang in Action: Enabling Data Systems Integration via a Unified Data Analytics Framework. SIGMOD Conference Companion 2025: 35-38 [pdf](https://dl.acm.org/doi/pdf/10.1145/3722212.3725081)
+- ML-based Cross-Platform Query Optimization. ICDE 2020: 1489-1500 [pdf](https://itu.dk/~joqu/assets/publications/icde20.pdf)
+- RHEEMix in the data jungle: a cost-based optimizer for cross-platform systems. VLDB J. 29(6): 1287-1310 (2020) [pdf](https://link.springer.com/article/10.1007/s00778-020-00612-x)
+- RHEEM: Enabling Cross-Platform Data Processing - May The Big Data Be With You! -. Proc. VLDB Endow. 11(11): 1414-1427 (2018) [pdf](http://www.vldb.org/pvldb/vol11/p1414-agrawal.pdf)
+
+### Citing Wayang
+
+If you use Apache Wayang in your research, please cite the SIGMOD Record paper:
+
+```bibtex
+@article{beedkar2023wayang,
+  author  = {Kaustubh Beedkar and Bertty Contreras-Rojas and Haralampos Gavriilidis and Zoi Kaoudi and Volker Markl and Rodrigo Pardo-Meza and Jorge-Arnulfo Quian{\'{e}}-Ruiz},
+  title   = "{Apache Wayang: A Unified Data Analytics Framework}",
+  journal = {{SIGMOD} Rec.},
+  volume  = {52},
+  number  = {3},
+  pages   = {30--35},
+  year    = {2023},
+  doi     = {10.1145/3631504.3631510}
+}
+```
+
 
 ## Contributing
-Before submitting a PR, please take a look on how to contribute with Apache Wayang contributing guidelines [here](CONTRIBUTING.md).
 
-There is also a guide on how to compile your code [here](guides/develop-in-Wayang.md).
+Contributions are welcome — bug reports, doc fixes, new platform adapters, new operators, optimizer improvements, anything. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [building guide](guides/develop-in-Wayang.md), open an issue if you're not sure where to start, and introduce yourself on the [dev mailing list](https://wayang.apache.org/docs/community/mailinglist) — that's where active work gets discussed.
+
+If you're looking for somewhere to begin, doc improvements, new operators, and additional examples are areas where a focused PR can land quickly.
+
+## Community
+
+- **Mailing lists** — [https://wayang.apache.org/docs/community/mailinglist](https://wayang.apache.org/docs/community/mailinglist) (user and dev)
+- **LinkedIn** — [Apache Wayang](https://www.linkedin.com/company/apachewayang)
+
 ## Authors
-The list of [contributors](https://github.com/apache/incubator-wayang/graphs/contributors).
+
+See the full list of [contributors](https://github.com/apache/wayang/graphs/contributors).
 
 ## License
-All files in this repository are licensed under the Apache Software License 2.0
+
+All files in this repository are licensed under the Apache License 2.0.
 
 Copyright 2020 - 2026 The Apache Software Foundation.
 
@@ -276,4 +333,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ## Acknowledgements
-The [Logo](https://wayang.apache.org/img/wayang.png) was donated by Brian Vera.
+
+The [logo](https://wayang.apache.org/img/wayang.png) was donated by Brian Vera.

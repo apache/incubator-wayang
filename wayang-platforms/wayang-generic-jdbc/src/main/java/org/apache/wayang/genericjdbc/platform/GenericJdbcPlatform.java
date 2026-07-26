@@ -61,7 +61,7 @@ public class GenericJdbcPlatform extends JdbcPlatformTemplate {
 
     @Override
     public String getJdbcDriverClassName() {
-        return "None";
+        return "org.hsqldb.jdbcDriver";
     }
 
 

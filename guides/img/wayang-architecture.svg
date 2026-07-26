@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" role="img"
+     aria-label="A single pipeline, written once, feeds the Wayang optimizer, which routes work to the best available engine: Local, Spark, Flink, Postgres, and others.">
+  <style>
+    svg { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    :root {
+      --box-fill: #ffffff;
+      --box-stroke: #cbd5e1;
+      --engine-fill: #f8fafc;
+      --accent: #2563eb;
+      --accent-fill: #eff6ff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --line: #94a3b8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --box-fill: #1e293b;
+        --box-stroke: #334155;
+        --engine-fill: #0f172a;
+        --accent: #60a5fa;
+        --accent-fill: #15294a;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --line: #475569;
+      }
+    }
+    .box     { fill: var(--box-fill);    stroke: var(--box-stroke); stroke-width: 1.5; }
+    .opt     { fill: var(--accent-fill); stroke: var(--accent);     stroke-width: 2; }
+    .engine  { fill: var(--engine-fill); stroke: var(--box-stroke); stroke-width: 1.5; }
+    .line    { stroke: var(--line); stroke-width: 2; fill: none; }
+    .title   { fill: var(--text);  font-size: 16px; font-weight: 600; }
+    .optttl  { fill: var(--accent);font-size: 16px; font-weight: 700; }
+    .sub     { fill: var(--muted); font-size: 12px; }
+    .eng     { fill: var(--text);  font-size: 15px; font-weight: 600; }
+    .cap     { fill: var(--muted); font-size: 12px; font-style: italic; }
+  </style>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--line)"/>
+    </marker>
+  </defs>
+
+  <!-- Pipeline (written once) -->
+  <rect class="box" x="280" y="20" width="200" height="54" rx="10"/>
+  <text class="title" x="380" y="45" text-anchor="middle">Your pipeline</text>
+  <text class="sub"   x="380" y="63" text-anchor="middle">written once</text>
+
+  <!-- arrow: pipeline -> optimizer -->
+  <line class="line" x1="380" y1="74" x2="380" y2="112" marker-end="url(#arrow)"/>
+
+  <!-- Optimizer -->
+  <rect class="opt" x="250" y="118" width="260" height="58" rx="10"/>
+  <text class="optttl" x="380" y="144" text-anchor="middle">Wayang optimizer</text>
+  <text class="sub"    x="380" y="163" text-anchor="middle">chooses where each step runs</text>
+
+  <!-- tree connector from optimizer down to the engine row -->
+  <path class="line" d="M 380 176 L 380 210 M 80 210 L 680 210"/>
+  <line class="line" x1="80"  y1="210" x2="80"  y2="266" marker-end="url(#arrow)"/>
+  <line class="line" x1="280" y1="210" x2="280" y2="266" marker-end="url(#arrow)"/>
+  <line class="line" x1="480" y1="210" x2="480" y2="266" marker-end="url(#arrow)"/>
+  <line class="line" x1="680" y1="210" x2="680" y2="266" marker-end="url(#arrow)"/>
+
+  <!-- Engines -->
+  <rect class="engine" x="20"  y="270" width="120" height="50" rx="8"/>
+  <text class="eng" x="80"  y="300" text-anchor="middle">Local</text>
+
+  <rect class="engine" x="220" y="270" width="120" height="50" rx="8"/>
+  <text class="eng" x="280" y="300" text-anchor="middle">Spark</text>
+
+  <rect class="engine" x="420" y="270" width="120" height="50" rx="8"/>
+  <text class="eng" x="480" y="300" text-anchor="middle">Flink</text>
+
+  <rect class="engine" x="620" y="270" width="120" height="50" rx="8"/>
+  <text class="eng" x="680" y="300" text-anchor="middle">Postgres</text>
+
+  <text class="cap" x="380" y="346" text-anchor="middle">…and any other supported platform</text>
+</svg>

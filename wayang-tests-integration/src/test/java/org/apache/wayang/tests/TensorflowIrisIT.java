@@ -39,7 +39,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Test the Tensorflow integration with Wayang.
@@ -55,6 +54,8 @@ public class TensorflowIrisIT {
             "Iris-versicolor", 1,
             "Iris-virginica", 2
     );
+
+    private static final int TRAINING_SHUFFLE_SEED = 0x5eed;
 
     @Test
     public void test() {
@@ -182,8 +183,11 @@ public class TensorflowIrisIT {
         MapOperator<Tuple, Integer> mapY = new MapOperator<>(tuple -> (Integer) tuple.field1, Tuple.class, Integer.class);
 
         if (random) {
-            Random r = new Random();
-            SortOperator<String, Integer> randomOperator = new SortOperator<>(e -> r.nextInt(), String.class, Integer.class);
+            SortOperator<String, Integer> randomOperator = new SortOperator<>(
+                    e -> e.hashCode() ^ TRAINING_SHUFFLE_SEED,
+                    String.class,
+                    Integer.class
+            );
 
             textFileSource.connectTo(0, randomOperator, 0);
             randomOperator.connectTo(0, mapOperator, 0);
