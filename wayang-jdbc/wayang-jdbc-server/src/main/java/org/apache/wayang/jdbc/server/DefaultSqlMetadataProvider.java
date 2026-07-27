@@ -17,6 +17,11 @@
 
 package org.apache.wayang.jdbc.server;
 
+import org.apache.wayang.api.sql.context.SqlCatalogMetadata;
+import org.apache.wayang.api.sql.context.SqlColumn;
+import org.apache.wayang.api.sql.context.SqlContext;
+import org.apache.wayang.api.sql.context.SqlSchemaMetadata;
+import org.apache.wayang.api.sql.context.SqlTableMetadata;
 import org.apache.wayang.jdbc.protocol.message.ColumnInfo;
 import org.apache.wayang.jdbc.protocol.message.GetColumnsRequest;
 import org.apache.wayang.jdbc.protocol.message.GetSchemasRequest;
@@ -24,32 +29,62 @@ import org.apache.wayang.jdbc.protocol.message.GetTablesRequest;
 import org.apache.wayang.jdbc.protocol.message.MetadataResultResponse;
 import org.apache.wayang.jdbc.protocol.message.MetadataType;
 
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Default metadata provider for the read-only Wayang JDBC gateway.
+ * Metadata provider for the read-only Wayang JDBC gateway.
+ *
+ * <p>When constructed with a {@link SqlContext}, metadata is read from the
+ * same Calcite catalog used for query execution. The no-argument constructor
+ * retains the original session-only fallback for custom query executors that
+ * do not expose a catalog.</p>
  */
-class DefaultSqlMetadataProvider implements SqlMetadataProvider {
+public class DefaultSqlMetadataProvider implements SqlMetadataProvider {
+
+    private static final char SEARCH_ESCAPE = '\\';
+
+    private static final Comparator<String> NULL_SAFE_STRING_COMPARATOR =
+            Comparator.nullsFirst(Comparator.naturalOrder());
+
+    private final SqlContext sqlContext;
+
+    public DefaultSqlMetadataProvider() {
+        this.sqlContext = null;
+    }
+
+    public DefaultSqlMetadataProvider(final SqlContext sqlContext) {
+        if (sqlContext == null) {
+            throw new IllegalArgumentException("SQL context must not be null.");
+        }
+        this.sqlContext = sqlContext;
+    }
 
     @Override
     public MetadataResultResponse getSchemas(
             final JdbcServerSession session,
             final GetSchemasRequest request
-    ) {
-        final List<List<Object>> rows = new ArrayList<>();
-        final String schema = session.getDatabase();
+    ) throws SQLException {
         final String catalog = session.getDatabase();
-        if (schema != null
-                && this.matchesCatalog(catalog, request.getCatalog())
-                && this.matchesPattern(schema, request.getSchemaPattern())) {
-            rows.add(Arrays.asList(schema, catalog));
+        final List<List<Object>> rows = new ArrayList<>();
+        if (this.matchesCatalog(catalog, request.getCatalog())) {
+            for (final SqlSchemaMetadata schema : this.getSchemas(session)) {
+                if (this.matchesPattern(schema.getName(), request.getSchemaPattern())) {
+                    rows.add(Arrays.asList(schema.getName(), catalog));
+                }
+            }
         }
+        rows.sort(Comparator
+                .comparing((List<Object> row) -> (String) row.get(1), NULL_SAFE_STRING_COMPARATOR)
+                .thenComparing(row -> (String) row.get(0), NULL_SAFE_STRING_COMPARATOR));
 
         return new MetadataResultResponse(
                 session.getConnectionId(),
@@ -63,12 +98,44 @@ class DefaultSqlMetadataProvider implements SqlMetadataProvider {
     public MetadataResultResponse getTables(
             final JdbcServerSession session,
             final GetTablesRequest request
-    ) {
+    ) throws SQLException {
+        final String catalog = session.getDatabase();
+        final List<List<Object>> rows = new ArrayList<>();
+        if (this.matchesCatalog(catalog, request.getCatalogPattern())) {
+            for (final SqlSchemaMetadata schema : this.getSchemas(session)) {
+                if (!this.matchesPattern(schema.getName(), request.getSchemaPattern())) {
+                    continue;
+                }
+                for (final SqlTableMetadata table : schema.getTables()) {
+                    if (this.matchesPattern(table.getName(), request.getTableNamePattern())
+                            && this.matchesTableType(table.getType(), request.getTableTypes())) {
+                        rows.add(Arrays.asList(
+                                catalog,
+                                schema.getName(),
+                                table.getName(),
+                                table.getType(),
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null
+                        ));
+                    }
+                }
+            }
+        }
+        rows.sort(Comparator
+                .comparing((List<Object> row) -> (String) row.get(3), NULL_SAFE_STRING_COMPARATOR)
+                .thenComparing(row -> (String) row.get(0), NULL_SAFE_STRING_COMPARATOR)
+                .thenComparing(row -> (String) row.get(1), NULL_SAFE_STRING_COMPARATOR)
+                .thenComparing(row -> (String) row.get(2), NULL_SAFE_STRING_COMPARATOR));
+
         return new MetadataResultResponse(
                 session.getConnectionId(),
                 MetadataType.TABLES,
                 this.tablesColumns(),
-                Collections.emptyList()
+                rows
         );
     }
 
@@ -76,13 +143,135 @@ class DefaultSqlMetadataProvider implements SqlMetadataProvider {
     public MetadataResultResponse getColumns(
             final JdbcServerSession session,
             final GetColumnsRequest request
-    ) {
+    ) throws SQLException {
+        final String catalog = session.getDatabase();
+        final List<List<Object>> rows = new ArrayList<>();
+        if (this.matchesCatalog(catalog, request.getCatalogPattern())) {
+            for (final SqlSchemaMetadata schema : this.getSchemas(session)) {
+                if (!this.matchesPattern(schema.getName(), request.getSchemaPattern())) {
+                    continue;
+                }
+                for (final SqlTableMetadata table : schema.getTables()) {
+                    if (!this.matchesPattern(table.getName(), request.getTableNamePattern())) {
+                        continue;
+                    }
+                    final List<SqlColumn> columns = table.getColumns();
+                    for (int index = 0; index < columns.size(); index++) {
+                        final SqlColumn column = columns.get(index);
+                        if (this.matchesPattern(column.getName(), request.getColumnNamePattern())) {
+                            rows.add(this.columnRow(
+                                    catalog,
+                                    schema.getName(),
+                                    table.getName(),
+                                    column,
+                                    index + 1
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        rows.sort(Comparator
+                .comparing((List<Object> row) -> (String) row.get(0), NULL_SAFE_STRING_COMPARATOR)
+                .thenComparing(row -> (String) row.get(1), NULL_SAFE_STRING_COMPARATOR)
+                .thenComparing(row -> (String) row.get(2), NULL_SAFE_STRING_COMPARATOR)
+                .thenComparingInt(row -> (Integer) row.get(16)));
+
         return new MetadataResultResponse(
                 session.getConnectionId(),
                 MetadataType.COLUMNS,
                 this.columnsColumns(),
-                Collections.emptyList()
+                rows
         );
+    }
+
+    private List<SqlSchemaMetadata> getSchemas(final JdbcServerSession session) throws SQLException {
+        if (this.sqlContext != null) {
+            final SqlCatalogMetadata catalog = this.sqlContext.getCatalogMetadata();
+            return catalog.getSchemas();
+        }
+        final String schema = session.getDatabase();
+        if (schema == null) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(new SqlSchemaMetadata(schema, Collections.emptyList()));
+    }
+
+    private List<Object> columnRow(
+            final String catalog,
+            final String schema,
+            final String table,
+            final SqlColumn column,
+            final int ordinal
+    ) {
+        final int nullable = column.isNullable()
+                ? DatabaseMetaData.columnNullable
+                : DatabaseMetaData.columnNoNulls;
+        return Arrays.asList(
+                catalog,
+                schema,
+                table,
+                column.getName(),
+                column.getJdbcType(),
+                column.getTypeName(),
+                this.nonNegative(column.getPrecision()),
+                null,
+                this.nonNegative(column.getScale()),
+                this.numericRadix(column.getJdbcType()),
+                nullable,
+                null,
+                null,
+                null,
+                null,
+                this.characterOctetLength(column),
+                ordinal,
+                column.isNullable() ? "YES" : "NO",
+                null,
+                null,
+                null,
+                null,
+                "NO",
+                "NO"
+        );
+    }
+
+    private Integer nonNegative(final int value) {
+        return Math.max(0, value);
+    }
+
+    private Integer numericRadix(final int jdbcType) {
+        switch (jdbcType) {
+            case Types.TINYINT:
+            case Types.SMALLINT:
+            case Types.INTEGER:
+            case Types.BIGINT:
+            case Types.NUMERIC:
+            case Types.DECIMAL:
+                return 10;
+            case Types.FLOAT:
+            case Types.REAL:
+            case Types.DOUBLE:
+                return 2;
+            default:
+                return null;
+        }
+    }
+
+    private Integer characterOctetLength(final SqlColumn column) {
+        switch (column.getJdbcType()) {
+            case Types.CHAR:
+            case Types.VARCHAR:
+            case Types.LONGVARCHAR:
+            case Types.NCHAR:
+            case Types.NVARCHAR:
+            case Types.LONGNVARCHAR:
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY:
+                return this.nonNegative(column.getPrecision());
+            default:
+                return null;
+        }
     }
 
     private List<ColumnInfo> schemasColumns() {
@@ -136,9 +325,32 @@ class DefaultSqlMetadataProvider implements SqlMetadataProvider {
         );
     }
 
+    private boolean matchesTableType(final String value, final List<String> requestedTypes) {
+        if (requestedTypes == null) {
+            return true;
+        }
+        if (requestedTypes.isEmpty()) {
+            return false;
+        }
+        for (final String requestedType : requestedTypes) {
+            if (requestedType != null && value.equals(requestedType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Catalog arguments in the JDBC metadata API are identifiers, not search
+     * patterns. A {@code null} argument accepts any catalog and the empty
+     * string selects objects that have no catalog.
+     */
     private boolean matchesCatalog(final String value, final String catalog) {
         if (catalog == null) {
             return true;
+        }
+        if (catalog.isEmpty()) {
+            return value == null || value.isEmpty();
         }
         return catalog.equals(value);
     }
@@ -148,16 +360,25 @@ class DefaultSqlMetadataProvider implements SqlMetadataProvider {
             return true;
         }
         if (value == null) {
-            return false;
+            return pattern.isEmpty();
         }
-        return Pattern.compile(this.toRegex(pattern), Pattern.CASE_INSENSITIVE).matcher(value).matches();
+        return Pattern.compile(
+                this.toRegex(pattern),
+                Pattern.DOTALL
+        ).matcher(value).matches();
     }
 
     private String toRegex(final String pattern) {
         final StringBuilder regex = new StringBuilder();
         for (int index = 0; index < pattern.length(); index++) {
             final char current = pattern.charAt(index);
-            if (current == '%') {
+            if (current == SEARCH_ESCAPE) {
+                if (index + 1 < pattern.length()) {
+                    regex.append(Pattern.quote(String.valueOf(pattern.charAt(++index))));
+                } else {
+                    regex.append(Pattern.quote(String.valueOf(SEARCH_ESCAPE)));
+                }
+            } else if (current == '%') {
                 regex.append(".*");
             } else if (current == '_') {
                 regex.append('.');

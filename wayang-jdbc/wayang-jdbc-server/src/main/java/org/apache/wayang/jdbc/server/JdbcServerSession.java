@@ -27,6 +27,8 @@ public final class JdbcServerSession {
 
     private final String connectionId;
 
+    private final String clientId;
+
     private final String username;
 
     private final String database;
@@ -35,11 +37,13 @@ public final class JdbcServerSession {
 
     JdbcServerSession(
             final String connectionId,
+            final String clientId,
             final String username,
             final String database,
             final Map<String, String> properties
     ) {
         this.connectionId = connectionId;
+        this.clientId = clientId;
         this.username = username;
         this.database = database;
         this.properties = properties == null
@@ -49,6 +53,10 @@ public final class JdbcServerSession {
 
     public String getConnectionId() {
         return this.connectionId;
+    }
+
+    String getClientId() {
+        return this.clientId;
     }
 
     public String getUsername() {

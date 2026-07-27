@@ -15,29 +15,35 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.jdbc.protocol;
+package org.apache.wayang.api.sql.context;
+
+import java.util.List;
 
 /**
- * Message types exchanged between the Wayang JDBC driver and server.
+ * Metadata for one schema in the configured SQL catalog.
  */
-public enum MessageType {
-    OPEN_CONNECTION,
-    OPEN_CONNECTION_OK,
-    PING,
-    PING_OK,
-    EXECUTE_QUERY,
-    QUERY_RESULT,
-    FETCH,
-    FETCH_RESULT,
-    GET_SCHEMAS,
-    GET_TABLES,
-    GET_COLUMNS,
-    METADATA_RESULT,
-    CLOSE_CURSOR,
-    CLOSE_CURSOR_OK,
-    CANCEL_QUERY,
-    CANCEL_QUERY_OK,
-    CLOSE_CONNECTION,
-    CLOSE_CONNECTION_OK,
-    ERROR
+public final class SqlSchemaMetadata {
+
+    private final String name;
+
+    private final List<SqlTableMetadata> tables;
+
+    public SqlSchemaMetadata(final String name, final List<SqlTableMetadata> tables) {
+        if (name == null) {
+            throw new IllegalArgumentException("Schema name must not be null.");
+        }
+        if (tables == null) {
+            throw new IllegalArgumentException("Tables must not be null.");
+        }
+        this.name = name;
+        this.tables = List.copyOf(tables);
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public List<SqlTableMetadata> getTables() {
+        return this.tables;
+    }
 }

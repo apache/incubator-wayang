@@ -15,29 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.jdbc.protocol;
+package org.apache.wayang.jdbc.protocol.message;
 
 /**
- * Message types exchanged between the Wayang JDBC driver and server.
+ * Checks that a logical JDBC connection is still active on the server.
  */
-public enum MessageType {
-    OPEN_CONNECTION,
-    OPEN_CONNECTION_OK,
-    PING,
-    PING_OK,
-    EXECUTE_QUERY,
-    QUERY_RESULT,
-    FETCH,
-    FETCH_RESULT,
-    GET_SCHEMAS,
-    GET_TABLES,
-    GET_COLUMNS,
-    METADATA_RESULT,
-    CLOSE_CURSOR,
-    CLOSE_CURSOR_OK,
-    CANCEL_QUERY,
-    CANCEL_QUERY_OK,
-    CLOSE_CONNECTION,
-    CLOSE_CONNECTION_OK,
-    ERROR
+public class PingRequest {
+
+    private String connectionId;
+
+    public PingRequest() {
+    }
+
+    public PingRequest(final String connectionId) {
+        this.connectionId = connectionId;
+    }
+
+    public String getConnectionId() {
+        return this.connectionId;
+    }
+
+    public void setConnectionId(final String connectionId) {
+        this.connectionId = connectionId;
+    }
 }

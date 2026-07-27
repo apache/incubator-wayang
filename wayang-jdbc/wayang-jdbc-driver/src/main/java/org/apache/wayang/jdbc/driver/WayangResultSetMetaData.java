@@ -45,8 +45,19 @@ class WayangResultSetMetaData implements ResultSetMetaData {
 
     @Override
     public boolean isCaseSensitive(final int column) throws SQLException {
-        this.column(column);
-        return true;
+        switch (this.column(column).getJdbcType()) {
+            case Types.CHAR:
+            case Types.CLOB:
+            case Types.LONGNVARCHAR:
+            case Types.LONGVARCHAR:
+            case Types.NCHAR:
+            case Types.NCLOB:
+            case Types.NVARCHAR:
+            case Types.VARCHAR:
+                return true;
+            default:
+                return false;
+        }
     }
 
     @Override
@@ -109,12 +120,12 @@ class WayangResultSetMetaData implements ResultSetMetaData {
 
     @Override
     public int getPrecision(final int column) throws SQLException {
-        return this.column(column).getPrecision();
+        return Math.max(0, this.column(column).getPrecision());
     }
 
     @Override
     public int getScale(final int column) throws SQLException {
-        return this.column(column).getScale();
+        return Math.max(0, this.column(column).getScale());
     }
 
     @Override
@@ -166,6 +177,21 @@ class WayangResultSetMetaData implements ResultSetMetaData {
             case Types.BIT:
             case Types.BOOLEAN:
                 return Boolean.class.getName();
+            case Types.BINARY:
+            case Types.LONGVARBINARY:
+            case Types.VARBINARY:
+                return byte[].class.getName();
+            case Types.BLOB:
+                return java.sql.Blob.class.getName();
+            case Types.CHAR:
+            case Types.CLOB:
+            case Types.LONGNVARCHAR:
+            case Types.LONGVARCHAR:
+            case Types.NCHAR:
+            case Types.NCLOB:
+            case Types.NVARCHAR:
+            case Types.VARCHAR:
+                return String.class.getName();
             case Types.DATE:
                 return java.sql.Date.class.getName();
             case Types.DECIMAL:
@@ -182,10 +208,30 @@ class WayangResultSetMetaData implements ResultSetMetaData {
                 return Short.class.getName();
             case Types.TIME:
                 return java.sql.Time.class.getName();
+            case Types.TIME_WITH_TIMEZONE:
+                return java.time.OffsetTime.class.getName();
             case Types.TIMESTAMP:
                 return java.sql.Timestamp.class.getName();
+            case Types.TIMESTAMP_WITH_TIMEZONE:
+                return java.time.OffsetDateTime.class.getName();
             case Types.TINYINT:
                 return Byte.class.getName();
+            case Types.ARRAY:
+                return java.sql.Array.class.getName();
+            case Types.DATALINK:
+                return java.net.URL.class.getName();
+            case Types.REF:
+                return java.sql.Ref.class.getName();
+            case Types.ROWID:
+                return java.sql.RowId.class.getName();
+            case Types.SQLXML:
+                return java.sql.SQLXML.class.getName();
+            case Types.STRUCT:
+                return java.sql.Struct.class.getName();
+            case Types.JAVA_OBJECT:
+            case Types.NULL:
+            case Types.OTHER:
+                return Object.class.getName();
             default:
                 return String.class.getName();
         }
@@ -193,6 +239,9 @@ class WayangResultSetMetaData implements ResultSetMetaData {
 
     @Override
     public <T> T unwrap(final Class<T> iface) throws SQLException {
+        if (iface == null) {
+            throw new SQLException("Interface must not be null.", "HY009");
+        }
         if (iface.isInstance(this)) {
             return iface.cast(this);
         }
@@ -200,7 +249,10 @@ class WayangResultSetMetaData implements ResultSetMetaData {
     }
 
     @Override
-    public boolean isWrapperFor(final Class<?> iface) {
+    public boolean isWrapperFor(final Class<?> iface) throws SQLException {
+        if (iface == null) {
+            throw new SQLException("Interface must not be null.", "HY009");
+        }
         return iface.isInstance(this);
     }
 

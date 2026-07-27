@@ -42,6 +42,14 @@ public class WayangSqlQueryExecutor implements SqlQueryExecutor {
         this.sqlContext = sqlContext;
     }
 
+    /**
+     * Returns the SQL context used by this executor so that server components
+     * can use the same configured Calcite catalog for metadata discovery.
+     */
+    public SqlContext getSqlContext() {
+        return this.sqlContext;
+    }
+
     @Override
     public SqlQueryResult execute(final String sql) throws SqlParseException {
         return this.sqlContext.executeSqlWithMetadata(sql);

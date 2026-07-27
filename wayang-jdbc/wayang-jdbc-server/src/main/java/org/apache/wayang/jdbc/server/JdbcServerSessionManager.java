@@ -17,7 +17,10 @@
 
 package org.apache.wayang.jdbc.server;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,10 +29,35 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class JdbcServerSessionManager {
 
+    private static final int DEFAULT_MAX_SESSIONS = 1024;
+
+    private static final int DEFAULT_MAX_SESSIONS_PER_CLIENT = 16;
+
     private final Map<String, JdbcServerSession> sessions = new ConcurrentHashMap<>();
 
+    private final int maxSessions;
+
+    private final int maxSessionsPerClient;
+
+    JdbcServerSessionManager() {
+        this(DEFAULT_MAX_SESSIONS, DEFAULT_MAX_SESSIONS_PER_CLIENT);
+    }
+
+    JdbcServerSessionManager(final int maxSessions, final int maxSessionsPerClient) {
+        if (maxSessions <= 0) {
+            throw new IllegalArgumentException("Maximum session count must be positive.");
+        }
+        if (maxSessionsPerClient <= 0 || maxSessionsPerClient > maxSessions) {
+            throw new IllegalArgumentException(
+                    "Maximum sessions per client must be positive and no greater than the total maximum."
+            );
+        }
+        this.maxSessions = maxSessions;
+        this.maxSessionsPerClient = maxSessionsPerClient;
+    }
+
     String openConnection() {
-        return this.openConnection(null, null, null);
+        return this.openConnection(null, null, null, null);
     }
 
     String openConnection(
@@ -37,10 +65,30 @@ class JdbcServerSessionManager {
             final String database,
             final Map<String, String> properties
     ) {
+        return this.openConnection(null, username, database, properties);
+    }
+
+    synchronized String openConnection(
+            final String clientId,
+            final String username,
+            final String database,
+            final Map<String, String> properties
+    ) {
+        if (this.sessions.size() >= this.maxSessions) {
+            throw new CapacityException("The JDBC server has reached its logical connection limit.");
+        }
+
+        final long clientSessionCount = this.sessions.values().stream()
+                .filter(session -> Objects.equals(clientId, session.getClientId()))
+                .count();
+        if (clientSessionCount >= this.maxSessionsPerClient) {
+            throw new CapacityException("This JDBC client has reached its logical connection limit.");
+        }
+
         final String connectionId = UUID.randomUUID().toString();
         this.sessions.put(
                 connectionId,
-                new JdbcServerSession(connectionId, username, database, properties)
+                new JdbcServerSession(connectionId, clientId, username, database, properties)
         );
         return connectionId;
     }
@@ -53,9 +101,40 @@ class JdbcServerSessionManager {
         return connectionId == null ? null : this.sessions.get(connectionId);
     }
 
-    void closeConnection(final String connectionId) {
+    JdbcServerSession getSession(final String connectionId, final String clientId) {
+        final JdbcServerSession session = this.getSession(connectionId);
+        if (session == null || !Objects.equals(clientId, session.getClientId())) {
+            return null;
+        }
+        return session;
+    }
+
+    synchronized void closeConnection(final String connectionId) {
         if (connectionId != null) {
             this.sessions.remove(connectionId);
+        }
+    }
+
+    synchronized List<String> closeClient(final String clientId) {
+        final List<String> connectionIds = new ArrayList<>();
+        this.sessions.entrySet().removeIf(entry -> {
+            if (Objects.equals(clientId, entry.getValue().getClientId())) {
+                connectionIds.add(entry.getKey());
+                return true;
+            }
+            return false;
+        });
+        return connectionIds;
+    }
+
+    synchronized void clear() {
+        this.sessions.clear();
+    }
+
+    static class CapacityException extends IllegalStateException {
+
+        CapacityException(final String message) {
+            super(message);
         }
     }
 }

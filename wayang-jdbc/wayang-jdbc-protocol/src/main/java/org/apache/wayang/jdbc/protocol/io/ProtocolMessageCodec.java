@@ -23,6 +23,7 @@ import org.apache.wayang.jdbc.protocol.ProtocolConstants;
 import org.apache.wayang.jdbc.protocol.ProtocolException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -43,11 +44,11 @@ public class ProtocolMessageCodec {
     private final int maxFrameLength;
 
     public ProtocolMessageCodec() {
-        this(new ObjectMapper(), ProtocolConstants.DEFAULT_MAX_FRAME_LENGTH);
+        this(createDefaultObjectMapper(), ProtocolConstants.DEFAULT_MAX_FRAME_LENGTH);
     }
 
     public ProtocolMessageCodec(final int maxFrameLength) {
-        this(new ObjectMapper(), maxFrameLength);
+        this(createDefaultObjectMapper(), maxFrameLength);
     }
 
     public ProtocolMessageCodec(final ObjectMapper objectMapper, final int maxFrameLength) {
@@ -59,6 +60,11 @@ public class ProtocolMessageCodec {
         }
         this.objectMapper = objectMapper;
         this.maxFrameLength = maxFrameLength;
+    }
+
+    private static ObjectMapper createDefaultObjectMapper() {
+        return new ObjectMapper()
+                .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
     }
 
     public MessageEnvelope toEnvelope(

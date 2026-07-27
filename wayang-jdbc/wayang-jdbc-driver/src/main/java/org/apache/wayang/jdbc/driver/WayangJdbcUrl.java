@@ -19,8 +19,13 @@ package org.apache.wayang.jdbc.driver;
 
 import org.apache.wayang.jdbc.protocol.ProtocolConstants;
 
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -72,24 +77,48 @@ public final class WayangJdbcUrl {
         if (host == null || host.isBlank()) {
             throw new SQLException("Wayang JDBC URL must contain a host.");
         }
+        if (uri.getRawUserInfo() != null) {
+            throw new SQLException("Wayang JDBC URLs do not support user information.");
+        }
+        if (uri.getRawFragment() != null) {
+            throw new SQLException("Wayang JDBC URLs do not support fragments.");
+        }
 
         final int port = uri.getPort() == -1 ? ProtocolConstants.DEFAULT_PORT : uri.getPort();
-        final String database = parseDatabase(uri.getPath());
+        if (port < 1 || port > 65_535) {
+            throw new SQLException("Wayang JDBC URL port must be between 1 and 65535.");
+        }
+        final String database = parseDatabase(uri.getRawPath());
 
         final Properties properties = new Properties();
         if (inputProperties != null) {
             properties.putAll(inputProperties);
         }
+        // JDBC URL query properties deliberately take precedence over the
+        // Properties supplied to Driver.connect.
         parseQueryProperties(uri.getRawQuery()).forEach(properties::setProperty);
 
         return new WayangJdbcUrl(host, port, database, properties);
     }
 
-    private static String parseDatabase(final String path) {
-        if (path == null || path.isBlank() || "/".equals(path)) {
+    private static String parseDatabase(final String rawPath) throws SQLException {
+        if (rawPath == null || rawPath.isEmpty() || "/".equals(rawPath)) {
             return null;
         }
-        return path.startsWith("/") ? path.substring(1) : path;
+        if (!rawPath.startsWith("/")) {
+            throw new SQLException("Wayang JDBC URL database path must start with '/'.");
+        }
+
+        final String rawDatabase = rawPath.substring(1);
+        if (rawDatabase.isEmpty() || rawDatabase.indexOf('/') >= 0) {
+            throw new SQLException("Wayang JDBC URL supports at most one database path segment.");
+        }
+
+        final String database = percentDecode(rawDatabase, "database");
+        if (database.isBlank() || database.indexOf('/') >= 0) {
+            throw new SQLException("Wayang JDBC URL database must be a non-blank path segment.");
+        }
+        return database;
     }
 
     private static Map<String, String> parseQueryProperties(final String query) throws SQLException {
@@ -98,16 +127,69 @@ public final class WayangJdbcUrl {
             return properties;
         }
 
-        final String[] pairs = query.split("&");
+        final String[] pairs = query.split("&", -1);
         for (String pair : pairs) {
             final int separator = pair.indexOf('=');
             if (separator <= 0) {
                 throw new SQLException("Invalid Wayang JDBC URL query property: " + pair);
             }
-            properties.put(pair.substring(0, separator), pair.substring(separator + 1));
+            final String name = percentDecode(pair.substring(0, separator), "query property name");
+            final String value = percentDecode(pair.substring(separator + 1), "query property value");
+            if (name.isBlank()) {
+                throw new SQLException("Wayang JDBC URL query property names must not be blank.");
+            }
+            properties.put(name, value);
         }
 
         return properties;
+    }
+
+    private static String percentDecode(
+            final String value,
+            final String fieldName
+    ) throws SQLException {
+        final StringBuilder decoded = new StringBuilder(value.length());
+        int index = 0;
+        while (index < value.length()) {
+            if (value.charAt(index) != '%') {
+                decoded.append(value.charAt(index));
+                index++;
+                continue;
+            }
+
+            final ByteArrayOutputStream escapedBytes = new ByteArrayOutputStream();
+            while (index < value.length() && value.charAt(index) == '%') {
+                if (index + 2 >= value.length()) {
+                    throw invalidPercentEncoding(fieldName);
+                }
+                final int high = Character.digit(value.charAt(index + 1), 16);
+                final int low = Character.digit(value.charAt(index + 2), 16);
+                if (high < 0 || low < 0) {
+                    throw invalidPercentEncoding(fieldName);
+                }
+                escapedBytes.write((high << 4) + low);
+                index += 3;
+            }
+
+            try {
+                decoded.append(StandardCharsets.UTF_8.newDecoder()
+                        .onMalformedInput(CodingErrorAction.REPORT)
+                        .onUnmappableCharacter(CodingErrorAction.REPORT)
+                        .decode(ByteBuffer.wrap(escapedBytes.toByteArray())));
+            } catch (CharacterCodingException e) {
+                throw new SQLException(
+                        "Wayang JDBC URL " + fieldName + " is not valid UTF-8.",
+                        e
+                );
+            }
+        }
+        return decoded.toString();
+    }
+
+    private static SQLException invalidPercentEncoding(final String fieldName) {
+        return new SQLException(
+                "Wayang JDBC URL " + fieldName + " contains invalid percent encoding."
+        );
     }
 
     public String getHost() {

@@ -53,8 +53,36 @@ public class WayangDriver implements Driver {
     }
 
     @Override
-    public DriverPropertyInfo[] getPropertyInfo(final String url, final Properties info) {
-        return new DriverPropertyInfo[0];
+    public DriverPropertyInfo[] getPropertyInfo(
+            final String url,
+            final Properties info
+    ) throws SQLException {
+        final Properties properties = new Properties();
+        if (info != null) {
+            properties.putAll(info);
+        }
+        if (url != null && this.acceptsURL(url)) {
+            properties.putAll(WayangJdbcUrl.parse(url, info).getProperties());
+        }
+
+        return new DriverPropertyInfo[]{
+                this.property(
+                        "user",
+                        properties.getProperty("user"),
+                        "Optional user name reported to the Wayang JDBC server."
+                ),
+                this.property(
+                        "password",
+                        properties.getProperty("password"),
+                        "Optional password passed to the Wayang JDBC server."
+                ),
+                this.property(
+                        "connectTimeout",
+                        properties.getProperty("connectTimeout"),
+                        "TCP connect and initial server handshake timeout in milliseconds; "
+                                + "zero uses DriverManager.getLoginTimeout or the driver default."
+                )
+        };
     }
 
     @Override
@@ -75,5 +103,16 @@ public class WayangDriver implements Driver {
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         throw new SQLFeatureNotSupportedException("Wayang JDBC does not use java.util.logging.");
+    }
+
+    private DriverPropertyInfo property(
+            final String name,
+            final String value,
+            final String description
+    ) {
+        final DriverPropertyInfo property = new DriverPropertyInfo(name, value);
+        property.description = description;
+        property.required = false;
+        return property;
     }
 }

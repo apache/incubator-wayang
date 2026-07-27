@@ -34,6 +34,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetMetaDataImpl;
@@ -95,17 +96,27 @@ final class WayangDatabaseMetaData implements InvocationHandler {
             case "getDatabaseProductName":
                 return PRODUCT_NAME;
             case "getDatabaseProductVersion":
-                return this.version();
+                return this.databaseVersion();
             case "getDatabaseMajorVersion":
-                return 1;
+                return this.databaseVersionPart(0, 1);
             case "getDatabaseMinorVersion":
-                return 1;
+                return this.databaseVersionPart(1, 1);
             case "getJDBCMajorVersion":
                 return 4;
             case "getJDBCMinorVersion":
                 return 2;
             case "isReadOnly":
                 return true;
+            case "supportsMixedCaseIdentifiers":
+            case "storesMixedCaseIdentifiers":
+            case "supportsMixedCaseQuotedIdentifiers":
+            case "storesMixedCaseQuotedIdentifiers":
+                return true;
+            case "storesUpperCaseIdentifiers":
+            case "storesLowerCaseIdentifiers":
+            case "storesUpperCaseQuotedIdentifiers":
+            case "storesLowerCaseQuotedIdentifiers":
+                return false;
             case "allProceduresAreCallable":
                 return false;
             case "allTablesAreSelectable":
@@ -114,6 +125,18 @@ final class WayangDatabaseMetaData implements InvocationHandler {
                 return DatabaseMetaData.sqlStateSQL;
             case "getResultSetHoldability":
                 return ResultSet.CLOSE_CURSORS_AT_COMMIT;
+            case "supportsSchemasInDataManipulation":
+                return true;
+            case "supportsSchemasInProcedureCalls":
+            case "supportsSchemasInTableDefinitions":
+            case "supportsSchemasInIndexDefinitions":
+            case "supportsSchemasInPrivilegeDefinitions":
+            case "supportsCatalogsInDataManipulation":
+            case "supportsCatalogsInProcedureCalls":
+            case "supportsCatalogsInTableDefinitions":
+            case "supportsCatalogsInIndexDefinitions":
+            case "supportsCatalogsInPrivilegeDefinitions":
+                return false;
             case "supportsResultSetType":
                 return (Integer) args[0] == ResultSet.TYPE_FORWARD_ONLY;
             case "supportsResultSetConcurrency":
@@ -168,8 +191,12 @@ final class WayangDatabaseMetaData implements InvocationHandler {
                 return ".";
             case "isCatalogAtStart":
                 return true;
-            case "nullsAreSortedAtEnd":
+            case "nullsAreSortedHigh":
                 return true;
+            case "nullsAreSortedLow":
+            case "nullsAreSortedAtStart":
+            case "nullsAreSortedAtEnd":
+                return false;
             case "getCatalogs":
                 return this.catalogs();
             case "getSchemas":
@@ -338,28 +365,111 @@ final class WayangDatabaseMetaData implements InvocationHandler {
     }
 
     private ResultSet typeInfo() throws SQLException {
-        return this.resultSet(
-                Arrays.asList(
-                        column("TYPE_NAME", Types.VARCHAR),
-                        column("DATA_TYPE", Types.INTEGER),
-                        column("PRECISION", Types.INTEGER),
-                        column("LITERAL_PREFIX", Types.VARCHAR),
-                        column("LITERAL_SUFFIX", Types.VARCHAR),
-                        column("CREATE_PARAMS", Types.VARCHAR),
-                        column("NULLABLE", Types.SMALLINT),
-                        column("CASE_SENSITIVE", Types.BOOLEAN),
-                        column("SEARCHABLE", Types.SMALLINT),
-                        column("UNSIGNED_ATTRIBUTE", Types.BOOLEAN),
-                        column("FIXED_PREC_SCALE", Types.BOOLEAN),
-                        column("AUTO_INCREMENT", Types.BOOLEAN),
-                        column("LOCAL_TYPE_NAME", Types.VARCHAR),
-                        column("MINIMUM_SCALE", Types.SMALLINT),
-                        column("MAXIMUM_SCALE", Types.SMALLINT),
-                        column("SQL_DATA_TYPE", Types.INTEGER),
-                        column("SQL_DATETIME_SUB", Types.INTEGER),
-                        column("NUM_PREC_RADIX", Types.INTEGER)
-                ),
-                Collections.emptyList()
+        final List<MetadataColumn> columns = Arrays.asList(
+                column("TYPE_NAME", Types.VARCHAR),
+                column("DATA_TYPE", Types.INTEGER),
+                column("PRECISION", Types.INTEGER),
+                column("LITERAL_PREFIX", Types.VARCHAR),
+                column("LITERAL_SUFFIX", Types.VARCHAR),
+                column("CREATE_PARAMS", Types.VARCHAR),
+                column("NULLABLE", Types.SMALLINT),
+                column("CASE_SENSITIVE", Types.BOOLEAN),
+                column("SEARCHABLE", Types.SMALLINT),
+                column("UNSIGNED_ATTRIBUTE", Types.BOOLEAN),
+                column("FIXED_PREC_SCALE", Types.BOOLEAN),
+                column("AUTO_INCREMENT", Types.BOOLEAN),
+                column("LOCAL_TYPE_NAME", Types.VARCHAR),
+                column("MINIMUM_SCALE", Types.SMALLINT),
+                column("MAXIMUM_SCALE", Types.SMALLINT),
+                column("SQL_DATA_TYPE", Types.INTEGER),
+                column("SQL_DATETIME_SUB", Types.INTEGER),
+                column("NUM_PREC_RADIX", Types.INTEGER)
+        );
+        final List<List<Object>> rows = new ArrayList<>();
+        rows.add(this.typeInfoRow("BOOLEAN", Types.BOOLEAN, 1, null, null, null, false, 0, 0, null));
+        rows.add(this.typeInfoRow("TINYINT", Types.TINYINT, 3, null, null, null, false, 0, 0, 10));
+        rows.add(this.typeInfoRow("SMALLINT", Types.SMALLINT, 5, null, null, null, false, 0, 0, 10));
+        rows.add(this.typeInfoRow("INTEGER", Types.INTEGER, 10, null, null, null, false, 0, 0, 10));
+        rows.add(this.typeInfoRow("BIGINT", Types.BIGINT, 19, null, null, null, false, 0, 0, 10));
+        rows.add(this.typeInfoRow(
+                "NUMERIC", Types.NUMERIC, 38, null, null, "precision,scale", false, 0, 38, 10
+        ));
+        rows.add(this.typeInfoRow(
+                "DECIMAL", Types.DECIMAL, 38, null, null, "precision,scale", false, 0, 38, 10
+        ));
+        rows.add(this.typeInfoRow("REAL", Types.REAL, 7, null, null, null, false, 0, 0, 2));
+        rows.add(this.typeInfoRow("FLOAT", Types.FLOAT, 15, null, null, null, false, 0, 0, 2));
+        rows.add(this.typeInfoRow("DOUBLE", Types.DOUBLE, 15, null, null, null, false, 0, 0, 2));
+        rows.add(this.typeInfoRow("CHAR", Types.CHAR, 65536, "'", "'", "length", true, 0, 0, null));
+        rows.add(this.typeInfoRow("VARCHAR", Types.VARCHAR, 65536, "'", "'", "length", true, 0, 0, null));
+        rows.add(this.typeInfoRow("BINARY", Types.BINARY, 65536, "X'", "'", "length", false, 0, 0, null));
+        rows.add(this.typeInfoRow(
+                "VARBINARY", Types.VARBINARY, 65536, "X'", "'", "length", false, 0, 0, null
+        ));
+        rows.add(this.typeInfoRow("DATE", Types.DATE, 10, "DATE '", "'", null, false, 0, 0, null));
+        rows.add(this.typeInfoRow("TIME", Types.TIME, 18, "TIME '", "'", "precision", false, 0, 9, null));
+        rows.add(this.typeInfoRow(
+                "TIME WITH TIME ZONE",
+                Types.TIME_WITH_TIMEZONE,
+                24,
+                "TIME '",
+                "'",
+                "precision",
+                false,
+                0,
+                9,
+                null
+        ));
+        rows.add(this.typeInfoRow(
+                "TIMESTAMP", Types.TIMESTAMP, 29, "TIMESTAMP '", "'", "precision", false, 0, 9, null
+        ));
+        rows.add(this.typeInfoRow(
+                "TIMESTAMP WITH TIME ZONE",
+                Types.TIMESTAMP_WITH_TIMEZONE,
+                35,
+                "TIMESTAMP '",
+                "'",
+                "precision",
+                false,
+                0,
+                9,
+                null
+        ));
+        rows.sort(Comparator.comparingInt(row -> (Integer) row.get(1)));
+        return this.resultSet(columns, rows);
+    }
+
+    private List<Object> typeInfoRow(
+            final String name,
+            final int jdbcType,
+            final int precision,
+            final String literalPrefix,
+            final String literalSuffix,
+            final String createParameters,
+            final boolean caseSensitive,
+            final int minimumScale,
+            final int maximumScale,
+            final Integer numericRadix
+    ) {
+        return Arrays.asList(
+                name,
+                jdbcType,
+                precision,
+                literalPrefix,
+                literalSuffix,
+                createParameters,
+                (short) DatabaseMetaData.typeNullable,
+                caseSensitive,
+                (short) DatabaseMetaData.typeSearchable,
+                null,
+                false,
+                false,
+                null,
+                (short) minimumScale,
+                (short) maximumScale,
+                null,
+                null,
+                numericRadix
         );
     }
 
@@ -644,7 +754,10 @@ final class WayangDatabaseMetaData implements InvocationHandler {
         }
 
         rowSet.setMetaData(metaData);
-        for (List<Object> row : rows) {
+        // CachedRowSet.insertRow() inserts before its current cursor position.
+        // Insert in reverse so clients observe the JDBC-required source order.
+        for (int rowIndex = rows.size() - 1; rowIndex >= 0; rowIndex--) {
+            final List<Object> row = rows.get(rowIndex);
             if (row.size() != columns.size()) {
                 throw new SQLException("Metadata row has " + row.size()
                         + " values but " + columns.size() + " columns were declared.");
@@ -657,6 +770,9 @@ final class WayangDatabaseMetaData implements InvocationHandler {
             rowSet.moveToCurrentRow();
         }
         rowSet.beforeFirst();
+        rowSet.setType(ResultSet.TYPE_FORWARD_ONLY);
+        rowSet.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rowSet.setReadOnly(true);
         return rowSet;
     }
 
@@ -727,6 +843,9 @@ final class WayangDatabaseMetaData implements InvocationHandler {
     }
 
     private Object unwrap(final Object proxy, final Class<?> iface) throws SQLException {
+        if (iface == null) {
+            throw new SQLException("Interface must not be null.", "HY009");
+        }
         if (iface.isInstance(proxy)) {
             return iface.cast(proxy);
         }
@@ -736,7 +855,13 @@ final class WayangDatabaseMetaData implements InvocationHandler {
         throw new SQLException("DatabaseMetaData does not wrap " + iface.getName());
     }
 
-    private boolean isWrapperFor(final Object proxy, final Class<?> iface) {
+    private boolean isWrapperFor(
+            final Object proxy,
+            final Class<?> iface
+    ) throws SQLException {
+        if (iface == null) {
+            throw new SQLException("Interface must not be null.", "HY009");
+        }
         return iface.isInstance(proxy) || iface.isInstance(this);
     }
 
@@ -750,6 +875,23 @@ final class WayangDatabaseMetaData implements InvocationHandler {
         final Package driverPackage = WayangDriver.class.getPackage();
         final String version = driverPackage == null ? null : driverPackage.getImplementationVersion();
         return version == null || version.isBlank() ? FALLBACK_VERSION : version;
+    }
+
+    private String databaseVersion() {
+        final String serverVersion = this.connection.getClient().getServerVersion();
+        return serverVersion == null || serverVersion.isBlank() ? this.version() : serverVersion;
+    }
+
+    private int databaseVersionPart(final int index, final int fallback) {
+        final String[] parts = this.databaseVersion().split("[.-]");
+        if (index >= parts.length) {
+            return fallback;
+        }
+        try {
+            return Integer.parseInt(parts[index]);
+        } catch (NumberFormatException ignored) {
+            return fallback;
+        }
     }
 
     private String emptyIfNull(final String value) {

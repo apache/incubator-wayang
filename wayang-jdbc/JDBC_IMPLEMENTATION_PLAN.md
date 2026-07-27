@@ -44,7 +44,7 @@ Supported first:
 * Execute read-only SQL queries.
 * Read result rows through `ResultSet`.
 * Read result column metadata through `ResultSetMetaData`.
-* Browse basic metadata later through `DatabaseMetaData`.
+* Browse basic metadata through `DatabaseMetaData`.
 
 Unsupported first:
 
@@ -197,7 +197,7 @@ Unsupported first:
    * `WayangDriver`
    * `WayangJdbcUrl`
    * `META-INF/services/java.sql.Driver`
-   * URL parsing tests.
+   * URL validation and connection-property parsing.
 
 5. Added SQL API query metadata support.
    * `SqlColumn`
@@ -283,17 +283,71 @@ Unsupported first:
    * Schemas, catalogs, tables, columns, table types, type info, keys, indexes,
      procedures, functions, and other common metadata methods return JDBC
      `ResultSet` objects.
-   * Table and column browsing returns empty result sets until server-side
-     metadata discovery is connected.
+   * Unsupported advanced metadata returns correctly shaped empty results or
+     explicit unsupported exceptions as required by JDBC.
 
 14. Connected metadata requests through the JDBC protocol.
    * Driver sends `GET_SCHEMAS`, `GET_TABLES`, and `GET_COLUMNS`.
    * Server dispatches metadata requests and returns `METADATA_RESULT`.
    * Server tracks connection database information in logical sessions.
    * Added a server-side `SqlMetadataProvider` boundary.
-   * Default provider returns schema metadata from the connection database.
-   * Default table and column metadata still return correctly shaped empty
-     result sets until Calcite/catalog-backed discovery is added.
+   * Default provider reads schemas, tables, and columns from the same Calcite
+     catalog used by `SqlContext`.
+   * Metadata filters implement exact catalog selection, JDBC wildcard
+     matching, table-type filtering, and JDBC-required ordering.
+
+15. Completed the Phase 1 read-only production boundary.
+   * Server accepts only Calcite query nodes and rejects DDL, DML,
+     transactions, calls, and other state-changing SQL with SQLState `0A000`.
+   * Logical sessions are owned by their client socket and are cleaned up on
+     disconnect.
+   * Server client, cursor, per-connection cursor, and fetch resources are
+     bounded.
+   * Cursor close and cancel requests validate statement ownership.
+   * Server startup, bind rollback, disconnect, and shutdown paths release
+     sockets, sessions, cursors, and worker threads deterministically.
+   * Driver and server use the same default port, `9999`.
+
+16. Hardened JDBC behavior and wire type fidelity.
+   * `Connection` owns and closes child statements safely.
+   * `Statement` lifecycle, fetch sizing, maximum rows, and result replacement
+     are deterministic.
+   * `ResultSet` implements correct empty/before/on/after cursor states.
+   * Protocol responses are checked for identifiers, column definitions, row
+     widths, cursor invariants, and metadata shape.
+   * JDBC values are coerced by declared type so numeric width, decimal
+     precision, binary values, and temporal values agree with metadata.
+   * Terminal protocol and transport failures invalidate the JDBC connection.
+   * A protocol ping supports `Connection.isValid`.
+   * Unsupported timeout, cancellation, write, transaction, and writable
+     result operations remain explicit.
+
+17. Added first-scope Java JDBC client tests.
+   * Added protocol codec coverage for ping messages, decimal row payloads, and
+     frame-size rejection.
+   * Added driver URL parsing coverage for default ports, database paths,
+     property precedence, and invalid URLs.
+   * Added a plain Java `DriverManager` loopback test that starts
+     `WayangJdbcServer` on an ephemeral port and uses standard JDBC
+     `Connection`, `Statement`, `ResultSet`, `ResultSetMetaData`, and
+     `DatabaseMetaData` calls.
+   * Covered cursor paging, typed getters, `wasNull`, metadata browsing,
+     read-only write rejection, and `Connection.isValid` ping behavior.
+   * Added a package-private server constructor for test metadata-provider
+     injection without changing the public server API.
+
+18. Added focused robustness tests for the completed Java client scope.
+   * Added driver socket-protocol tests for mismatched request IDs, server EOF,
+     and unsupported-operation errors.
+   * Added server cursor tests for paging consistency, failed response
+     factories, cursor replacement, connection cleanup, and capacity limits.
+   * Added server session-manager tests for client ownership and connection
+     limits.
+   * Added dispatcher tests for read-only enforcement, cursor paging and
+     cleanup, client ownership, and connection-close behavior.
+   * Added metadata-provider tests for JDBC catalog selection, wildcard
+     matching, escaped patterns, table-type filtering, column attributes, and
+     ordering.
 
 ## Current State
 
@@ -311,37 +365,54 @@ Working:
 * Forward-only read-only result sets.
 * Basic `ResultSetMetaData`.
 * Basic `DatabaseMetaData`.
-* Metadata protocol path for schemas, tables, and columns.
+* Calcite-backed metadata protocol path for schemas, tables, and columns.
 * Plain Java JDBC query flow for connection, statement, result set iteration,
   getters, metadata, and close behavior.
+* Server-enforced read-only SQL classification.
+* Defensive protocol validation and JDBC value coercion.
+* Bounded server resources and disconnect cleanup.
+* First-scope plain Java JDBC client tests.
+* Focused negative protocol, cursor lifecycle, session ownership, dispatcher,
+  and metadata-provider tests.
 
 Not complete yet:
 
-* Result set support still needs final compatibility testing.
-* JDBC `DatabaseMetaData` table and column discovery still needs Calcite or
-  catalog-backed metadata rows.
+* DBeaver and DataGrip compatibility validation is still required.
+* A live Calcite-model metadata fixture beyond the existing SQL API regression
+  and provider tests can be added if needed for tool compatibility hardening.
+* Streaming execution, authentication, TLS, prepared statements, and running
+  Wayang-job cancellation remain future phases.
+* A shaded all-in-one JDBC-tool artifact is not currently produced; Maven and
+  Gradle consumers use the normal transitive runtime dependencies.
 
 ## Next Immediate Work
 
-1. Review and harden result set method coverage.
-2. Back `SqlMetadataProvider` with Calcite or configured catalog metadata.
-3. Add end-to-end `DriverManager` query tests in the final test pass.
-4. Add focused tests for cursor paging, metadata, getters, and close behavior.
+1. Run DBeaver and DataGrip compatibility passes and add only the read-only
+   methods those tools require.
+2. Decide whether release packaging should include a shaded JDBC-tool bundle.
+3. Add a live Calcite-model metadata fixture if external JDBC tools expose a
+   metadata gap not covered by the current SQL API and provider tests.
+4. Design streaming execution and real Wayang job cancellation as later
+   protocol revisions.
 
 ## Verification Commands Used
 
 ```bash
-env JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH ./mvnw -pl :wayang-jdbc-protocol,:wayang-jdbc-driver,:wayang-jdbc-server -am test
+env JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH ./mvnw -pl :wayang-jdbc-protocol,:wayang-jdbc-driver,:wayang-jdbc-server -am -DskipTests -Dmaven.javadoc.skip=true package
 ```
 
 ```bash
-env JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH ./mvnw -pl :wayang-api-sql -am test
+env JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH ./mvnw -pl :wayang-api-sql -am -DskipTests -Dmaven.javadoc.skip=true compile
 ```
 
 ```bash
-env JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH ./mvnw -pl :wayang-jdbc-server -am test
+env JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH ./mvnw -pl :wayang-jdbc-protocol,:wayang-jdbc-driver,:wayang-jdbc-server -am -Dtest=ProtocolMessageCodecTest,WayangJdbcUrlTest,WayangJdbcServerJavaClientTest -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.javadoc.skip=true test
 ```
 
 ```bash
-env JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH ./mvnw -pl :wayang-jdbc-driver -am test
+env -u npm_config_prefix JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:/usr/bin:/bin ./mvnw -pl :wayang-jdbc-protocol,:wayang-jdbc-driver,:wayang-jdbc-server -am -Dtest=ProtocolMessageCodecTest,WayangJdbcUrlTest,WayangJdbcClientProtocolTest,CursorStoreTest,JdbcServerSessionManagerTest,JdbcRequestDispatcherTest,DefaultSqlMetadataProviderTest,WayangJdbcServerJavaClientTest -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.javadoc.skip=true test
+```
+
+```bash
+env -u npm_config_prefix JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:/usr/bin:/bin ./mvnw -pl :wayang-jdbc-protocol,:wayang-jdbc-driver,:wayang-jdbc-server -am -Dmaven.javadoc.skip=true test
 ```
