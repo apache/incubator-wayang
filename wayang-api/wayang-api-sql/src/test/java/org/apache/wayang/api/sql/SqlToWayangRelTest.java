@@ -311,7 +311,7 @@ class SqlToWayangRelTest {
         final StringBuilder query = JdbcExecutor.createSqlString(jdbcExecutor, table, Arrays.asList(), projection, null,
                 null, null, Arrays.asList());
 
-        assertEquals("SELECT ID, NAME FROM T1;", query.toString());
+        assertEquals("SELECT ID, NAME FROM T1", query.toString());
     }
 
     @Test
