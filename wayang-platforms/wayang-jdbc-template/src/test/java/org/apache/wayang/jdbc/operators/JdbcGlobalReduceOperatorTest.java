@@ -58,8 +58,17 @@ class JdbcGlobalReduceOperatorTest extends OperatorTestBase {
         when(job.getCrossPlatformExecutor())
                 .thenReturn(new CrossPlatformExecutor(job, new NoInstrumentationStrategy()));
         final SqlQueryChannel.Descriptor sqlChannelDescriptor = HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor();
+        final HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
 
         final ExecutionStage sqlStage = mock(ExecutionStage.class);
+
+        try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
+            final Statement statement = jdbcConnection.createStatement();
+            statement.execute("DROP TABLE IF EXISTS testA");
+            statement.execute("CREATE TABLE testA (a INT, b VARCHAR(6))");
+            statement.execute("INSERT INTO testA VALUES (0, 'zero')");
+            statement.execute("INSERT INTO testA VALUES (1, 'one')");
+        }
 
         final JdbcTableSource tableSourceA = new HsqldbTableSource("testA");
 
@@ -91,8 +100,6 @@ class JdbcGlobalReduceOperatorTest extends OperatorTestBase {
 
         final SqlQueryChannel.Instance sqlQueryChannelInstance = (SqlQueryChannel.Instance) job.getCrossPlatformExecutor()
                 .getChannelInstance(sqlToStreamTask.getInputChannel(0));
-
-        final HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
 
         try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
             final Statement statement = jdbcConnection.createStatement();

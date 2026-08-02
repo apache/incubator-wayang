@@ -1,11 +1,27 @@
+-- Licensed to the Apache Software Foundation (ASF) under one
+-- or more contributor license agreements.  See the NOTICE file
+-- distributed with this work for additional information
+-- regarding copyright ownership.  The ASF licenses this file
+-- to you under the Apache License, Version 2.0 (the
+-- "License"); you may not use this file except in compliance
+-- with the License.  You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 -- Run this after the stack is up to create sample Iceberg tables.
 -- Usage: ./scripts/run-init.sh
 -- Or manually: docker exec -it trino trino < /scripts/init.sql
 
--- ── Schema ────────────────────────────────────────────────────────────────
+-- Schema
 CREATE SCHEMA IF NOT EXISTS iceberg.sales;
 
--- ── Orders table (Iceberg / Parquet on MinIO) ─────────────────────────────
+-- Orders table (Iceberg / Parquet on MinIO)
 CREATE TABLE IF NOT EXISTS iceberg.sales.orders (
     order_id    BIGINT,
     region      VARCHAR,
@@ -15,11 +31,11 @@ CREATE TABLE IF NOT EXISTS iceberg.sales.orders (
 )
 WITH (format = 'PARQUET');
 
--- ── Idempotent seed: clear before inserting so re-runs don't duplicate rows ─
+-- Idempotent seed: clear before inserting so re-runs do not duplicate rows.
 DELETE FROM iceberg.sales.orders;
 
--- ── Sample data: 20 rows, 4 regions (AMER/APAC/EMEA/LATAM), 5 products ────
---   AMER rows: 3, 6, 9, 12, 16  →  5 rows for filter demo
+-- Sample data: 20 rows, 4 regions (AMER/APAC/EMEA/LATAM), 5 products.
+--   AMER rows: 3, 6, 9, 12, 16 -> 5 rows for filter demo
 --   Projection demo selects only: region, product, amount
 INSERT INTO iceberg.sales.orders VALUES
     (1,  'APAC',   'Widget A', 1500.00, DATE '2024-01-15'),
@@ -43,7 +59,7 @@ INSERT INTO iceberg.sales.orders VALUES
     (19, 'APAC',   'Widget D', 1680.00, DATE '2024-02-02'),
     (20, 'LATAM',  'Widget B',  440.50, DATE '2024-02-03');
 
--- ── Verify ────────────────────────────────────────────────────────────────
+-- Verify
 SELECT region, COUNT(*) AS order_count, SUM(amount) AS total_amount
 FROM iceberg.sales.orders
 GROUP BY region
