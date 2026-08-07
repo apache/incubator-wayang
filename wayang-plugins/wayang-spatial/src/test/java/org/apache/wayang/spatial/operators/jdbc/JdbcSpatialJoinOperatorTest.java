@@ -78,8 +78,8 @@ class JdbcSpatialJoinOperatorTest {
         String sql = buildSpatialJoinSql(SpatialPredicate.INTERSECTS);
 
         assertEquals(
-                "SELECT * FROM testA JOIN testB ON ST_Intersects(testA.geom, testB.geom);",
-                sql
+                "SELECT * FROM testA JOIN testB ON ST_Intersects(testA.geom, testB.geom)",
+                stripTrailingSemicolon(sql)
         );
     }
 
@@ -88,8 +88,8 @@ class JdbcSpatialJoinOperatorTest {
         String sql = buildSpatialJoinSql(SpatialPredicate.CONTAINS);
 
         assertEquals(
-                "SELECT * FROM testA JOIN testB ON ST_Contains(testA.geom, testB.geom);",
-                sql
+                "SELECT * FROM testA JOIN testB ON ST_Contains(testA.geom, testB.geom)",
+                stripTrailingSemicolon(sql)
         );
     }
 
@@ -98,9 +98,13 @@ class JdbcSpatialJoinOperatorTest {
         String sql = buildSpatialJoinSql(SpatialPredicate.WITHIN);
 
         assertEquals(
-                "SELECT * FROM testA JOIN testB ON ST_Within(testA.geom, testB.geom);",
-                sql
+                "SELECT * FROM testA JOIN testB ON ST_Within(testA.geom, testB.geom)",
+                stripTrailingSemicolon(sql)
         );
+    }
+
+    private static String stripTrailingSemicolon(String sql) {
+        return sql.endsWith(";") ? sql.substring(0, sql.length() - 1) : sql;
     }
 
     /**

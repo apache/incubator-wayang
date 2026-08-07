@@ -81,7 +81,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * plain JDBC only after the Wayang execution has completed.
  *
  * <p>Prerequisites: a Trino reachable at {@code TRINO_HOST:TRINO_PORT}
- * (defaults {@code localhost:8080}); e.g. {@code cd trino-setup && docker compose up -d}.
+ * (defaults {@code localhost:8080}); e.g. {@code cd platforms-setup-guides/trino-setup && docker compose up -d}.
  * If Trino is not reachable the whole class is skipped (not failed).
  *
  * <p>Run:
