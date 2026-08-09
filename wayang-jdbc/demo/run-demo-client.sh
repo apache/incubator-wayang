@@ -20,23 +20,14 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
 demo_classes_dir="${repo_root}/target/wayang-jdbc-demo/classes"
-driver_classpath_file="${repo_root}/wayang-jdbc/wayang-jdbc-driver/target/runtime-classpath.txt"
-driver_jar="${repo_root}/wayang-jdbc/wayang-jdbc-driver/target/apache-wayang-jdbc-driver-1.1.2-SNAPSHOT.jar"
+data_dir="${script_dir}/data"
 
 cd "${repo_root}"
-
-echo "Building Wayang JDBC driver artifacts..."
-./mvnw -pl :wayang-jdbc-driver -am -DskipTests -Dmaven.javadoc.skip=true install
-
-echo "Creating driver runtime classpath..."
-./mvnw -pl :wayang-jdbc-driver -DincludeScope=runtime -Dmdep.outputFile=target/runtime-classpath.txt dependency:build-classpath
 
 mkdir -p "${demo_classes_dir}"
 
 echo "Compiling demo client..."
-javac -cp "${driver_jar}:$(cat "${driver_classpath_file}")" \
-    -d "${demo_classes_dir}" \
-    "${script_dir}/WayangJdbcDemoClient.java"
+javac -d "${demo_classes_dir}" "${script_dir}/CsvSelectionOperationsDemo.java"
 
 echo "Running demo client..."
-java -cp "${demo_classes_dir}:${driver_jar}:$(cat "${driver_classpath_file}")" WayangJdbcDemoClient
+java -cp "${demo_classes_dir}" CsvSelectionOperationsDemo "${data_dir}" fs

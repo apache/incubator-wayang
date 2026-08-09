@@ -19,18 +19,19 @@
 
 # Wayang JDBC Demo
 
-This demo is the easiest way to verify the external Wayang JDBC interface with
-a plain Java client.
+This demo is the easiest way to understand how the configured CSV files map to
+SQL-style table names in the Wayang JDBC demo.
 
 Run from the repository root.
 
-Terminal 1:
+To start the Wayang JDBC server with the demo CSV directory exposed as schema
+`fs`, run:
 
 ```bash
 bash wayang-jdbc/demo/start-demo-server.sh
 ```
 
-Terminal 2:
+To inspect the available CSV files and run simple local analysis, run:
 
 ```bash
 bash wayang-jdbc/demo/run-demo-client.sh
@@ -43,16 +44,18 @@ The server script:
 * points the Calcite file schema at `wayang-jdbc/demo/data`
 * starts `org.apache.wayang.jdbc.server.WayangJdbcServer` on `127.0.0.1:9999`
 
-The client script:
+The analysis script:
 
-* builds the JDBC driver and dependencies
-* compiles `WayangJdbcDemoClient.java`
-* connects to `jdbc:wayang://127.0.0.1:9999/demo`
-* runs:
+* compiles `CsvSelectionOperationsDemo.java`
+* lists CSV files from `wayang-jdbc/demo/data`
+* shows each file's SQL-style table name, such as `fs.people`
+* lets you select a CSV file by number or name
+* prints columns, sample rows, numeric summaries, and dataset-specific analysis
+  for `heart_disease_risk_2026.csv`
 
-```sql
-SELECT ID, NAME, CITY FROM fs.people ORDER BY ID
-```
+For example, selecting `heart_disease_risk` analyzes
+`data/heart_disease_risk_2026.csv` as the logical table
+`fs.heart_disease_risk_2026`.
 
-The demo is intentionally read-only. It reads `data/people.csv`; it does not
-create, insert, update, or delete tables.
+The demo is intentionally read-only. It reads CSV files from `data/`; it does
+not create, insert, update, or delete tables.
