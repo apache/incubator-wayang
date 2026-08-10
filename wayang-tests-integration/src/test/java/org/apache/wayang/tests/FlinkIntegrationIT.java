@@ -314,12 +314,13 @@ class FlinkIntegrationIT {
         // Build a Wayang plan.
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Wayang and activate the Spark backend.
+        // Instantiate Wayang and activate the Java/Flink backends.
         WayangContext wayangContext = makeContext(FLINK);
 
         // Have Wayang execute the plan.
         final Job job = wayangContext.createJob(null, wayangPlan);
-        // ILLEGAL: We blacklist the Spark platform, although we need it.
+        // ILLEGAL: We blacklist all platforms that can execute the plan.
+        job.getConfiguration().getPlatformProvider().addToBlacklist(Java.platform());
         job.getConfiguration().getPlatformProvider().addToBlacklist(Flink.platform());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
         assertThrows(WayangException.class, job::execute);
