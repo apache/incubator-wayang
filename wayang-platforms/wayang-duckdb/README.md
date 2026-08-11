@@ -70,8 +70,8 @@ credentials, as documented in `wayang-duckdb-defaults.properties`.
 ## Tests
 
 The embedded operator suite mirrors `TrinoOperatorsIT` / `PrestoOperatorsIT`,
-but runs against a temporary DuckDB database file. The Parquet and cost pilots
-mirror the separate Trino/Presto feature branches for those pieces.
+but runs against a temporary DuckDB database file. Separate Parquet and cost
+profiling suites cover DuckDB-specific file access and calibration workflows.
 
 Run the DuckDB operator suite while compiling the required reactor modules:
 
