@@ -45,6 +45,7 @@
         <module>wayang-generic-jdbc</module>
         <module>wayang-presto</module>
         <module>wayang-trino</module>
+        <module>wayang-duckdb</module>
         <module>wayang-tensorflow</module>
     </modules>
 
