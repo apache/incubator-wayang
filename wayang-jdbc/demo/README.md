@@ -19,8 +19,8 @@
 
 # Wayang JDBC Demo
 
-This demo is the easiest way to understand how the configured CSV files map to
-SQL-style table names in the Wayang JDBC demo.
+This demo is the easiest way to verify that CSV files exposed through the demo
+Calcite model can be queried through the Wayang JDBC driver implementation.
 
 Run from the repository root.
 
@@ -31,7 +31,8 @@ To start the Wayang JDBC server with the demo CSV directory exposed as schema
 bash wayang-jdbc/demo/start-demo-server.sh
 ```
 
-To inspect the available CSV files and run simple local analysis, run:
+To inspect the available CSV files, select one, and execute SQL through the
+client-side JDBC layer and JDBC server, run:
 
 ```bash
 bash wayang-jdbc/demo/run-demo-client.sh
@@ -44,18 +45,26 @@ The server script:
 * points the Calcite file schema at `wayang-jdbc/demo/data`
 * starts `org.apache.wayang.jdbc.server.WayangJdbcServer` on `127.0.0.1:9999`
 
-The analysis script:
+The client script:
 
 * compiles `CsvSelectionOperationsDemo.java`
 * lists CSV files from `wayang-jdbc/demo/data`
 * shows each file's SQL-style table name, such as `fs.people`
 * lets you select a CSV file by number or name
-* prints columns, sample rows, numeric summaries, and dataset-specific analysis
-  for `heart_disease_risk_2026.csv`
+* connects to `jdbc:wayang://127.0.0.1:9999/demo`
+* executes SQL through the client-side JDBC layer and JDBC server
 
 For example, selecting `heart_disease_risk` analyzes
 `data/heart_disease_risk_2026.csv` as the logical table
 `fs.heart_disease_risk_2026`.
 
-The demo is intentionally read-only. It reads CSV files from `data/`; it does
-not create, insert, update, or delete tables.
+The demo runs:
+
+```sql
+SELECT COUNT(*) AS total_rows FROM fs.heart_disease_risk_2026
+SELECT * FROM fs.heart_disease_risk_2026 LIMIT 5
+```
+
+The demo is intentionally read-only. The CSV files remain in `data/`; Wayang
+does not store them as database tables. The JDBC server exposes them through
+the configured SQL model and executes read-only queries over them.

@@ -15,21 +15,19 @@
  * limitations under the License.
  */
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,16 +38,14 @@ public class CsvSelectionOperationsDemo {
 
     private static final String DEFAULT_SCHEMA = "fs";
 
+    private static final String DEFAULT_JDBC_URL = "jdbc:wayang://127.0.0.1:9999/demo";
+
     private static final int SAMPLE_ROW_LIMIT = 5;
 
-    private static final int NUMERIC_SUMMARY_LIMIT = 10;
-
-    private static final DecimalFormat DECIMAL_FORMAT =
-            new DecimalFormat("0.##", DecimalFormatSymbols.getInstance(Locale.ROOT));
-
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String[] args) throws Exception {
         final Path dataDirectory = args.length > 0 ? Paths.get(args[0]) : DEFAULT_DATA_DIRECTORY;
         final String schema = args.length > 1 ? args[1] : DEFAULT_SCHEMA;
+        final String jdbcUrl = args.length > 2 ? args[2] : DEFAULT_JDBC_URL;
 
         final List<Path> csvFiles = listCsvFiles(dataDirectory);
         if (csvFiles.isEmpty()) {
@@ -60,25 +56,31 @@ public class CsvSelectionOperationsDemo {
         printAvailableCsvFiles(csvFiles, schema);
 
         final Path selectedFile = selectCsvFile(csvFiles);
-        final CsvTable table = readCsv(selectedFile);
+        final String tableName = tableName(selectedFile);
+        final String qualifiedTableName = schema + "." + tableName;
 
         System.out.println();
         System.out.println("Selected file: " + selectedFile.getFileName());
-        System.out.println("SQL table name: " + schema + "." + tableName(selectedFile));
-        System.out.println("Total rows: " + table.rows().size());
+        System.out.println("SQL table name: " + qualifiedTableName);
+        System.out.println("JDBC URL: " + jdbcUrl);
 
-        printColumns(table);
-        printSampleRows(table);
-        printNumericSummaries(table);
+        Class.forName("org.apache.wayang.jdbc.driver.WayangDriver");
 
-        if (hasColumn(table, "has_heart_disease")) {
-            printHeartDiseaseAnalysis(table);
-        } else {
-            printGenericCategoricalSummary(table);
+        final Properties properties = new Properties();
+        properties.setProperty("user", "demo");
+        properties.setProperty("connectTimeout", "5000");
+
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, properties);
+             Statement statement = connection.createStatement()) {
+            System.out.println();
+            System.out.println("Connected to " + jdbcUrl);
+
+            runCountQuery(statement, qualifiedTableName);
+            runPreviewQuery(statement, qualifiedTableName);
         }
     }
 
-    private static List<Path> listCsvFiles(final Path dataDirectory) throws IOException {
+    private static List<Path> listCsvFiles(final Path dataDirectory) throws Exception {
         if (!Files.isDirectory(dataDirectory)) {
             throw new IllegalArgumentException(
                     "Data directory does not exist: " + dataDirectory.toAbsolutePath().normalize()
@@ -155,242 +157,43 @@ public class CsvSelectionOperationsDemo {
                 .findFirst();
     }
 
-    private static CsvTable readCsv(final Path csvFile) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(csvFile, StandardCharsets.UTF_8)) {
-            final String headerLine = reader.readLine();
-            if (headerLine == null) {
-                throw new IllegalArgumentException("CSV file is empty: " + csvFile);
-            }
-
-            final List<String> columns = parseCsvLine(headerLine);
-            final List<List<String>> rows = new ArrayList<>();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.isBlank()) {
-                    rows.add(normalizeRow(parseCsvLine(line), columns.size()));
-                }
-            }
-            return new CsvTable(columns, rows);
-        }
-    }
-
-    private static List<String> normalizeRow(final List<String> row, final int columnCount) {
-        final List<String> normalized = new ArrayList<>(row);
-        while (normalized.size() < columnCount) {
-            normalized.add("");
-        }
-        if (normalized.size() > columnCount) {
-            return normalized.subList(0, columnCount);
-        }
-        return normalized;
-    }
-
-    private static List<String> parseCsvLine(final String line) {
-        final List<String> values = new ArrayList<>();
-        final StringBuilder current = new StringBuilder();
-        boolean inQuotes = false;
-
-        for (int index = 0; index < line.length(); index++) {
-            final char currentChar = line.charAt(index);
-            if (currentChar == '"') {
-                if (inQuotes && index + 1 < line.length() && line.charAt(index + 1) == '"') {
-                    current.append('"');
-                    index++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (currentChar == ',' && !inQuotes) {
-                values.add(current.toString());
-                current.setLength(0);
-            } else {
-                current.append(currentChar);
-            }
-        }
-        values.add(current.toString());
-        return values;
-    }
-
-    private static void printColumns(final CsvTable table) {
+    private static void runCountQuery(final Statement statement, final String qualifiedTableName) throws Exception {
+        final String countSql = "SELECT COUNT(*) AS total_rows FROM " + qualifiedTableName;
         System.out.println();
-        System.out.println("Columns:");
-        for (int index = 0; index < table.columns().size(); index++) {
-            System.out.println((index + 1) + ". " + table.columns().get(index));
-        }
-    }
+        System.out.println("Query: " + countSql);
 
-    private static void printSampleRows(final CsvTable table) {
-        System.out.println();
-        System.out.println("First " + Math.min(SAMPLE_ROW_LIMIT, table.rows().size()) + " rows:");
-
-        for (int rowIndex = 0; rowIndex < Math.min(SAMPLE_ROW_LIMIT, table.rows().size()); rowIndex++) {
-            final List<String> row = table.rows().get(rowIndex);
-            System.out.println("Row " + (rowIndex + 1) + ":");
-            for (int columnIndex = 0; columnIndex < table.columns().size(); columnIndex++) {
-                System.out.println("  " + table.columns().get(columnIndex) + " = " + row.get(columnIndex));
+        try (ResultSet resultSet = statement.executeQuery(countSql)) {
+            if (resultSet.next()) {
+                System.out.println("Total rows: " + resultSet.getObject(1));
             }
         }
     }
 
-    private static void printNumericSummaries(final CsvTable table) {
+    private static void runPreviewQuery(final Statement statement, final String qualifiedTableName) throws Exception {
+        final String previewSql = "SELECT * FROM " + qualifiedTableName + " LIMIT " + SAMPLE_ROW_LIMIT;
         System.out.println();
-        System.out.println("Numeric column summaries:");
+        System.out.println("Query: " + previewSql);
 
-        int printed = 0;
-        for (int columnIndex = 0; columnIndex < table.columns().size(); columnIndex++) {
-            final Stats stats = numericStats(table, columnIndex);
-            if (stats.count() == 0) {
-                continue;
-            }
+        try (ResultSet resultSet = statement.executeQuery(previewSql)) {
+            printResultSet(resultSet);
+        }
+    }
 
-            System.out.printf(
-                    Locale.ROOT,
-                    "  %-30s count=%d min=%s max=%s avg=%s%n",
-                    table.columns().get(columnIndex),
-                    stats.count(),
-                    format(stats.min()),
-                    format(stats.max()),
-                    format(stats.average())
-            );
+    private static void printResultSet(final ResultSet resultSet) throws Exception {
+        final ResultSetMetaData metaData = resultSet.getMetaData();
+        final int columnCount = metaData.getColumnCount();
+        int rowCount = 0;
 
-            printed++;
-            if (printed >= NUMERIC_SUMMARY_LIMIT) {
-                break;
+        while (resultSet.next()) {
+            rowCount++;
+            System.out.println("Row " + rowCount + ":");
+            for (int column = 1; column <= columnCount; column++) {
+                System.out.println("  " + metaData.getColumnLabel(column) + " = " + resultSet.getObject(column));
             }
         }
 
-        if (printed == 0) {
-            System.out.println("  No numeric columns detected.");
-        }
-    }
-
-    private static void printHeartDiseaseAnalysis(final CsvTable table) {
-        System.out.println();
-        System.out.println("Heart disease analysis:");
-        System.out.println("This is dataset analysis only, not medical advice.");
-
-        printCountByColumn(table, "has_heart_disease", "Patients by heart disease flag");
-        printAverageByHeartDiseaseFlag(table, "age");
-        printAverageByHeartDiseaseFlag(table, "bmi");
-        printAverageByHeartDiseaseFlag(table, "cholesterol_total");
-        printAverageByHeartDiseaseFlag(table, "daily_steps");
-        printNestedCount(table, "smoker_status", "has_heart_disease", "Heart disease flag by smoker status");
-        printNestedCount(table, "sex", "has_heart_disease", "Heart disease flag by sex");
-    }
-
-    private static void printGenericCategoricalSummary(final CsvTable table) {
-        final Optional<String> firstCategoricalColumn = table.columns().stream()
-                .filter(column -> numericStats(table, columnIndex(table, column)).count() == 0)
-                .findFirst();
-
-        firstCategoricalColumn.ifPresent(column ->
-                printCountByColumn(table, column, "Counts by " + column)
-        );
-    }
-
-    private static void printCountByColumn(
-            final CsvTable table,
-            final String columnName,
-            final String title
-    ) {
-        final int columnIndex = columnIndex(table, columnName);
-        final Map<String, Integer> counts = new LinkedHashMap<>();
-        for (final List<String> row : table.rows()) {
-            final String value = row.get(columnIndex);
-            counts.merge(value.isBlank() ? "<blank>" : value, 1, Integer::sum);
-        }
-
-        System.out.println();
-        System.out.println(title + ":");
-        counts.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(10)
-                .forEach(entry ->
-                        System.out.println("  " + entry.getKey() + " = " + entry.getValue())
-                );
-    }
-
-    private static void printAverageByHeartDiseaseFlag(final CsvTable table, final String numericColumnName) {
-        if (!hasColumn(table, numericColumnName)) {
-            return;
-        }
-
-        final int groupIndex = columnIndex(table, "has_heart_disease");
-        final int valueIndex = columnIndex(table, numericColumnName);
-        final Map<String, Stats> statsByFlag = new LinkedHashMap<>();
-
-        for (final List<String> row : table.rows()) {
-            final Optional<Double> value = parseDouble(row.get(valueIndex));
-            if (value.isPresent()) {
-                statsByFlag
-                        .computeIfAbsent(row.get(groupIndex), ignored -> new Stats())
-                        .accept(value.get());
-            }
-        }
-
-        System.out.println();
-        System.out.println("Average " + numericColumnName + " by heart disease flag:");
-        statsByFlag.forEach((flag, stats) ->
-                System.out.println("  " + flag + " = " + format(stats.average()))
-        );
-    }
-
-    private static void printNestedCount(
-            final CsvTable table,
-            final String groupColumnName,
-            final String valueColumnName,
-            final String title
-    ) {
-        if (!hasColumn(table, groupColumnName) || !hasColumn(table, valueColumnName)) {
-            return;
-        }
-
-        final int groupIndex = columnIndex(table, groupColumnName);
-        final int valueIndex = columnIndex(table, valueColumnName);
-        final Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
-
-        for (final List<String> row : table.rows()) {
-            final String group = row.get(groupIndex);
-            final String value = row.get(valueIndex);
-            counts.computeIfAbsent(group, ignored -> new LinkedHashMap<>())
-                    .merge(value, 1, Integer::sum);
-        }
-
-        System.out.println();
-        System.out.println(title + ":");
-        counts.forEach((group, values) ->
-                System.out.println("  " + group + " -> " + values)
-        );
-    }
-
-    private static Stats numericStats(final CsvTable table, final int columnIndex) {
-        final Stats stats = new Stats();
-        for (final List<String> row : table.rows()) {
-            parseDouble(row.get(columnIndex)).ifPresent(stats::accept);
-        }
-        return stats;
-    }
-
-    private static int columnIndex(final CsvTable table, final String columnName) {
-        for (int index = 0; index < table.columns().size(); index++) {
-            if (table.columns().get(index).equalsIgnoreCase(columnName)) {
-                return index;
-            }
-        }
-        throw new IllegalArgumentException("Column does not exist: " + columnName);
-    }
-
-    private static boolean hasColumn(final CsvTable table, final String columnName) {
-        return table.columns().stream().anyMatch(column -> column.equalsIgnoreCase(columnName));
-    }
-
-    private static Optional<Double> parseDouble(final String value) {
-        if (value == null || value.isBlank()) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(Double.parseDouble(value));
-        } catch (NumberFormatException ignored) {
-            return Optional.empty();
+        if (rowCount == 0) {
+            System.out.println("No rows returned.");
         }
     }
 
@@ -405,49 +208,5 @@ public class CsvSelectionOperationsDemo {
 
     private static String normalize(final String value) {
         return value.toLowerCase(Locale.ROOT).replace(".csv", "").trim();
-    }
-
-    private static String format(final double value) {
-        return DECIMAL_FORMAT.format(value);
-    }
-
-    private record CsvTable(List<String> columns, List<List<String>> rows) {
-    }
-
-    private static final class Stats {
-
-        private int count;
-
-        private double sum;
-
-        private double min = Double.POSITIVE_INFINITY;
-
-        private double max = Double.NEGATIVE_INFINITY;
-
-        void accept(final double value) {
-            this.count++;
-            this.sum += value;
-            this.min = Math.min(this.min, value);
-            this.max = Math.max(this.max, value);
-        }
-
-        int count() {
-            return this.count;
-        }
-
-        double min() {
-            return this.min;
-        }
-
-        double max() {
-            return this.max;
-        }
-
-        double average() {
-            if (this.count == 0) {
-                return 0.0;
-            }
-            return this.sum / this.count;
-        }
     }
 }

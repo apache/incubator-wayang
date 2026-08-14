@@ -131,14 +131,21 @@ Terminal 2, from the repository root:
 bash wayang-jdbc/demo/run-demo-client.sh
 ```
 
-The demo starts the server on `127.0.0.1:9999`, connects through
-`DriverManager`, and runs:
+The demo starts the server on `127.0.0.1:9999`, lists the CSV files configured
+under schema `fs`, lets you select one, connects through `DriverManager`, and
+executes SQL against the selected logical table.
+
+For example, selecting `people.csv` runs queries such as:
 
 ```sql
-SELECT ID, NAME, CITY FROM fs.people ORDER BY ID
+SELECT COUNT(*) AS total_rows FROM fs.people
+SELECT * FROM fs.people LIMIT 5
 ```
 
-The sample data is in `wayang-jdbc/demo/data/people.csv`.
+The sample data is in `wayang-jdbc/demo/data/`. The CSV files remain in that
+directory; the demo exposes them as logical SQL-style tables such as
+`fs.people` and queries them through the client-side JDBC layer and JDBC
+server.
 
 The external JDBC interface has two running pieces:
 
