@@ -851,6 +851,22 @@ class SqlToWayangRelTest {
     }
 
     @Test
+    void exampleCommaDelimitedUntypedHeader() throws Exception {
+        final SqlContext sqlContext = createSqlContext("/data/exampleCommaUntyped.csv");
+
+        final Tuple2<Collection<Record>, WayangPlan> t = this.buildCollectorAndWayangPlan(sqlContext,
+                "SELECT count(*) FROM fs.exampleCommaUntyped" //
+        );
+
+        final Collection<Record> result = t.field0;
+        final WayangPlan wayangPlan = t.field1;
+        sqlContext.execute(wayangPlan);
+
+        assertEquals(result.size(), 1);
+        assertEquals(result.stream().findFirst().get().getInt(0), 3);
+    }
+
+    @Test
     void sqlApiMultiConditionJoinGeneratesJdbcSql() throws Exception {
         final JavaTypeFactoryImpl typeFactory = new JavaTypeFactoryImpl();
         final RexBuilder rexBuilder = new RexBuilder(typeFactory);
