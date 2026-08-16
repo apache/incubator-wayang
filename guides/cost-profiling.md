@@ -84,7 +84,7 @@ wayang.trino.tablesource.load = {
 This can be read as:
 
 ```text
-CPU load = alpha * number_of_rows + beta
+CPU load = 10 * number_of_rows + 800000
 ```
 
 where:
