@@ -151,18 +151,10 @@ public class JdbcExecutor extends ExecutorTemplate {
             ));
         }
 
-        appendStatementTerminator(sb);
+        // Intentionally no trailing ';'. A trailing semicolon is unnecessary for a
+        // single-statement JDBC executeQuery and is rejected by strict SQL parsers
+        // such as Trino and BigQuery. Postgres/SQLite/HSQLDB accept its absence.
         return sb;
-    }
-
-    private static void appendStatementTerminator(final StringBuilder query) {
-        int i = query.length() - 1;
-        while (i >= 0 && Character.isWhitespace(query.charAt(i))) {
-            i--;
-        }
-        if (i < 0 || query.charAt(i) != ';') {
-            query.append(';');
-        }
     }
 
     /**
