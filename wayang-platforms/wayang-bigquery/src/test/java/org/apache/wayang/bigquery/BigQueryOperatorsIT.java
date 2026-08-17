@@ -26,94 +26,69 @@ import org.apache.wayang.basic.function.ProjectionDescriptor;
 import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.GlobalReduceOperator;
 import org.apache.wayang.basic.operators.JoinOperator;
-import org.apache.wayang.basic.operators.LocalCallbackSink;
 import org.apache.wayang.basic.operators.MapOperator;
 import org.apache.wayang.basic.operators.ReduceByOperator;
+import org.apache.wayang.basic.operators.SortOperator;
 import org.apache.wayang.basic.operators.TableSink;
 import org.apache.wayang.basic.types.RecordType;
-import org.apache.wayang.bigquery.operators.BigQuerySortOperator;
-import org.apache.wayang.bigquery.operators.BigQueryTableSource;
-import org.apache.wayang.bigquery.platform.BigQueryPlatform;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
+import org.apache.wayang.core.function.FunctionDescriptor;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.function.ReduceDescriptor;
 import org.apache.wayang.core.function.TransformationDescriptor;
+import org.apache.wayang.core.mapping.Mapping;
+import org.apache.wayang.core.mapping.OperatorPattern;
+import org.apache.wayang.core.mapping.PlanTransformation;
+import org.apache.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.wayang.core.mapping.SubplanPattern;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
-import org.apache.wayang.java.Java;
-import org.apache.wayang.jdbc.compiler.FunctionCompiler;
-import org.junit.jupiter.api.*;
+import org.apache.wayang.core.types.DataUnitType;
+import org.apache.wayang.bigquery.operators.BigQueryProjectionOperator;
+import org.apache.wayang.bigquery.operators.BigQueryTableSource;
+import org.apache.wayang.bigquery.platform.BigQueryPlatform;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Integration tests for the BigQuery platform operators, driven through the
- * Wayang API ({@link BigQuery#plugin()}) against <b>real BigQuery</b>.
- *
- * <p><b>Why real BigQuery and not the emulator?</b> The Wayang module connects
- * through the BigQuery JDBC driver, which mandates Google OAuth2. The local
- * {@code goccy/bigquery-emulator} is no-auth and only speaks to the Google
- * client libraries, so it cannot serve the module's JDBC path. A real service
- * account is therefore required to actually exercise these operators.
+ * Engine-only end-to-end integration tests for every operator the BigQuery
+ * platform implements, driven through the Wayang API against <b>real BigQuery</b>.
  *
  * <p>Coverage: {@code TableSource}, {@code Filter}, {@code Projection},
- * {@code GlobalReduce}, {@code ReduceBy}, {@code Sort}, {@code Join}, and
- * {@code TableSink}, including JavaPlanBuilder combination plans that mirror
- * the Trino/Presto suites.
+ * {@code Join}, {@code GlobalReduce}, {@code ReduceBy}, {@code Sort},
+ * {@code TableSink}. Every Wayang plan ends in a BigQuery {@code TableSink} that
+ * compiles to {@code CREATE TABLE `proj.ds.t` AS SELECT ...} executed inside
+ * BigQuery. Only {@code BigQuery.plugin()} is registered; there is no
+ * {@code Java.basicPlugin()}, so the optimizer has no Java operators to fall back
+ * to and the whole plan necessarily runs in BigQuery. Assertions re-query the
+ * sink table via plain JDBC only after {@code execute(...)} returns; the sink
+ * table's existence + contents prove the CTAS ran in BigQuery.
  *
- * <p><b>Status:</b> the suite contains 18 tests, including the full-plan join
- * test and five JavaPlanBuilder combination tests. The full 18-test suite was
- * green against a live BigQuery project on June 18, 2026. The tests use only
- * {@code SELECT} and {@code CREATE TABLE AS}/{@code DROP} (DDL), never DML, so
- * they run without billing enabled.
- *
- * <p><b>Note on the aggregate tests.</b> {@code GlobalReduce}/{@code ReduceBy}
- * carry their aggregation only in the SQL implementation ({@code SUM(amount)});
- * the Java fallback would not reproduce it. They therefore depend on the optimizer
- * electing BigQuery pushdown, which it does here because they reduce cardinality.
- * If a future run on different data shows a Java-side reduce, scale the reference
- * dataset up (as the Trino/Presto suites do at 120k rows). {@code Sort} does not
- * reduce cardinality, so it is verified via the operator's SQL-clause contract
- * instead (see {@link #testSort()}).
- *
- * <h3>Prerequisites</h3>
- * <ol>
- *   <li>A GCP service account with BigQuery access; key JSON on disk.</li>
- *   <li>A reference table (default {@code <project>.sales.orders}) with columns
- *       {@code order_id, region, product, amount} and the 10-row dataset the
- *       assertions below expect (3 EMEA rows; >1000 amount rows non-empty).</li>
- * </ol>
- *
- * <h3>Configuration (system property or environment variable; sysprop wins)</h3>
- * <pre>
- *   bigquery.project   / BIGQUERY_PROJECT     GCP project id (required to run)
- *   bigquery.saEmail   / BIGQUERY_SA_EMAIL    service-account email
- *   bigquery.keyPath   / BIGQUERY_KEY_PATH    path to the SA key JSON
- *   bigquery.table     / BIGQUERY_TABLE       backtick-quoted FQ table name
- *   bigquery.location  / BIGQUERY_LOCATION    BigQuery dataset/job location
- * </pre>
- * If a connection cannot be established, every test is skipped (not failed).
- *
- * <h3>Run</h3>
- * <pre>
- *   JAVA_HOME=&lt;jdk17&gt; mvn -o test -pl wayang-platforms/wayang-bigquery \
- *     -Dtest=BigQueryOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false \
- *     -Dbigquery.project=my-project \
- *     -Dbigquery.saEmail=wayang-bq@my-project.iam.gserviceaccount.com \
- *     -Dbigquery.keyPath=$HOME/wayang-bq-key.json \
- *     -Drat.skip=true -Dlicense.skip=true -Pskip-prerequisite-check
- * </pre>
+ * <p>The source tables are created from inline literals in {@link #setUp()}, so
+ * no external BigQuery dataset or table is required. Requires a live GCP project
+ * + service account (the JDBC driver mandates OAuth2; the local emulator cannot
+ * serve it).
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BigQueryOperatorsIT {
@@ -123,19 +98,14 @@ class BigQueryOperatorsIT {
             "wayang-bq@" + PROJECT_ID + ".iam.gserviceaccount.com");
     private static final String KEY_PATH   = cfg("bigquery.keyPath", "BIGQUERY_KEY_PATH",
             System.getProperty("user.home") + "/wayang-bq-key.json");
-
-    /** Backtick-quoted fully-qualified BigQuery table name. */
-    private static final String TABLE = cfg("bigquery.table", "BIGQUERY_TABLE",
-            "`" + PROJECT_ID + ".sales.orders`");
-
-    /** BigQuery dataset/job location. The setup README creates a US dataset. */
     private static final String LOCATION = cfg("bigquery.location", "BIGQUERY_LOCATION", "US");
+    private static final String DATASET = cfg("bigquery.dataset", "BIGQUERY_DATASET", "wayang_it");
 
-    /** Backtick-quoted sink target for the TableSink test; dropped in {@link #cleanup()}. */
-    private static final String SINK_TABLE = "`" + PROJECT_ID + ".sales.wayang_emea_orders`";
-
-    /** Temporary lookup table for the JavaPlanBuilder join test. */
-    private static final String JOIN_TABLE = "`" + PROJECT_ID + ".sales.wayang_regions`";
+    private static final String TABLE = tableName("orders");
+    private static final String SINK_TABLE = tableName("operator_result");
+    private static final String JOIN_TABLE = tableName("regions");
+    private static final String[] JOIN_COLUMNS = {"order_id", "region", "product", "amount", "region_name"};
+    private static final String JOIN_FLATTEN_NAME = "BigQuery test-only join flatten";
 
     private static final String JDBC_URL = String.format(
             "jdbc:bigquery://https://www.googleapis.com/bigquery/v2;" +
@@ -144,22 +114,53 @@ class BigQueryOperatorsIT {
 
     private static boolean available = false;
 
-    /** Resolution order: system property (preferred), environment variable, default. */
     private static String cfg(String sysProp, String envVar, String dflt) {
         String v = System.getProperty(sysProp);
         if (v == null || v.isEmpty()) v = System.getenv(envVar);
         return (v == null || v.isEmpty()) ? dflt : v;
     }
 
-    // Setup
+    private static String tableName(String table) {
+        return "`" + PROJECT_ID + "." + DATASET + "." + table + "`";
+    }
+
+    private static void createFixtureTables(Connection conn) throws Exception {
+        try (Statement st = conn.createStatement()) {
+            st.execute("CREATE SCHEMA IF NOT EXISTS `" + PROJECT_ID + "." + DATASET + "` "
+                    + "OPTIONS(location='" + LOCATION + "')");
+            st.execute("DROP TABLE IF EXISTS " + SINK_TABLE);
+            st.execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
+            st.execute("DROP TABLE IF EXISTS " + TABLE);
+            st.execute("CREATE TABLE " + TABLE + " AS "
+                    + "SELECT * FROM UNNEST(["
+                    + "STRUCT(1 AS order_id, 'APAC' AS region, 'Widget A' AS product, 1500.0 AS amount),"
+                    + "STRUCT(2 AS order_id, 'EMEA' AS region, 'Widget B' AS product, 800.5 AS amount),"
+                    + "STRUCT(3 AS order_id, 'AMER' AS region, 'Widget A' AS product, 2200.0 AS amount),"
+                    + "STRUCT(4 AS order_id, 'APAC' AS region, 'Widget C' AS product, 350.75 AS amount),"
+                    + "STRUCT(5 AS order_id, 'EMEA' AS region, 'Widget A' AS product, 1100.0 AS amount),"
+                    + "STRUCT(6 AS order_id, 'AMER' AS region, 'Widget B' AS product, 950.25 AS amount),"
+                    + "STRUCT(7 AS order_id, 'APAC' AS region, 'Widget B' AS product, 1750.0 AS amount),"
+                    + "STRUCT(8 AS order_id, 'EMEA' AS region, 'Widget C' AS product, 420.0 AS amount),"
+                    + "STRUCT(9 AS order_id, 'AMER' AS region, 'Widget C' AS product, 680.5 AS amount),"
+                    + "STRUCT(10 AS order_id, 'APAC' AS region, 'Widget A' AS product, 3000.0 AS amount)"
+                    + "])");
+            // Lookup table for the join tests; region_name avoids duplicate
+            // region columns in the flattened CREATE TABLE AS SELECT.
+            st.execute("CREATE TABLE " + JOIN_TABLE
+                    + " AS SELECT DISTINCT region AS region_name FROM " + TABLE);
+        }
+    }
+
+    // Lifecycle
 
     @BeforeAll
-    static void checkAvailable() {
+    static void setUp() {
         try {
             Class.forName("com.google.cloud.bigquery.jdbc.BigQueryDriver");
             try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
                 ResultSet rs = conn.createStatement().executeQuery("SELECT 1");
                 available = rs.next();
+                createFixtureTables(conn);
                 System.out.println("[SETUP] Connected to BigQuery project: " + PROJECT_ID);
             }
         } catch (Exception e) {
@@ -173,35 +174,321 @@ class BigQueryOperatorsIT {
         try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
             conn.createStatement().execute("DROP TABLE IF EXISTS " + SINK_TABLE);
             conn.createStatement().execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
+            conn.createStatement().execute("DROP TABLE IF EXISTS " + TABLE);
         } catch (Exception e) {
-            System.err.println("[CLEANUP] failed to drop " + SINK_TABLE + ": " + e.getMessage());
+            System.err.println("[CLEANUP] failed: " + e.getMessage());
         }
     }
 
-    private Configuration createBigQueryConfig() {
-        Configuration config = new Configuration();
-        config.setProperty("wayang.bigquery.jdbc.url", JDBC_URL);
-        return config;
+    // Tests (one per operator)
+
+    @Test
+    @Order(1)
+    @DisplayName("BigQuery engine-only: TableSource -> TableSink")
+    void tableSource() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        BigQueryTableSource src = new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount");
+        TableSink<Record> sink = tableSink("order_id", "region", "product", "amount");
+        src.connectTo(0, sink, 0);
+
+        wayangContext().execute("BQ-TableSource", new WayangPlan(sink));
+
+        assertEquals(10, queryLong("SELECT count(*) FROM " + SINK_TABLE), "all 10 orders expected");
     }
 
-    private WayangContext createContext(Configuration config) {
+    @Test
+    @Order(2)
+    @DisplayName("BigQuery engine-only: Filter -> TableSink")
+    void filter() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        BigQueryTableSource src = new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (Record r) -> "EMEA".equals(r.getField(1)), Record.class
+                ).withSqlImplementation("region = 'EMEA'"));
+        TableSink<Record> sink = tableSink("order_id", "region", "product", "amount");
+        src.connectTo(0, filter, 0);
+        filter.connectTo(0, sink, 0);
+
+        wayangContext().execute("BQ-Filter", new WayangPlan(sink));
+
+        assertEquals(3, queryLong("SELECT count(*) FROM " + SINK_TABLE), "3 EMEA orders expected");
+        assertEquals(0, queryLong("SELECT COUNTIF(region != 'EMEA') FROM " + SINK_TABLE), "only EMEA rows");
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("BigQuery engine-only: Projection -> TableSink")
+    void projection() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        BigQueryTableSource src = new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (Record r) -> "EMEA".equals(r.getField(1)), Record.class
+                ).withSqlImplementation("region = 'EMEA'"));
+        MapOperator<Record, Record> projection = new MapOperator<>(
+                ProjectionDescriptor.createForRecords(
+                        new RecordType("order_id", "region", "product", "amount"),
+                        "region", "amount"),
+                DataSetType.createDefault(Record.class),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("region", "amount");
+        src.connectTo(0, filter, 0);
+        filter.connectTo(0, projection, 0);
+        projection.connectTo(0, sink, 0);
+
+        wayangContext().execute("BQ-Projection", new WayangPlan(sink));
+
+        assertEquals(3, queryLong("SELECT count(*) FROM " + SINK_TABLE), "3 EMEA rows expected");
+        assertEquals(2, columnCount(SINK_TABLE), "projection keeps only 2 columns");
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("BigQuery engine-only: Join -> TableSink")
+    void join() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        BigQueryTableSource orders = new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount");
+        BigQueryTableSource regions = new BigQueryTableSource(JOIN_TABLE, "region_name");
+        JoinOperator<Record, Record, Record> join = new JoinOperator<>(
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(1)), Record.class, Record.class
+                ).withSqlImplementation(TABLE, "region"),
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(0)), Record.class, Record.class
+                ).withSqlImplementation(JOIN_TABLE, "region_name"));
+        MapOperator<Tuple2<Record, Record>, Record> flatten = joinFlattenOperator();
+        TableSink<Record> sink = tableSink(JOIN_COLUMNS);
+        orders.connectTo(0, join, 0);
+        regions.connectTo(0, join, 1);
+        join.connectTo(0, flatten, 0);
+        flatten.connectTo(0, sink, 0);
+
+        wayangContext().execute("BQ-Join", new WayangPlan(sink));
+
+        assertEquals(10, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "join yields one row per order (every region exists)");
+        assertEquals(0, queryLong("SELECT COUNTIF(region != region_name) FROM " + SINK_TABLE),
+                "joined regions should match");
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("BigQuery engine-only: GlobalReduce -> TableSink")
+    void globalReduce() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        BigQueryTableSource src = new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount");
+        GlobalReduceOperator<Record> reduce = new GlobalReduceOperator<>(
+                new ReduceDescriptor<>((a, b) -> a, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("total_amount");
+        src.connectTo(0, reduce, 0);
+        reduce.connectTo(0, sink, 0);
+
+        wayangContext().execute("BQ-GlobalReduce", new WayangPlan(sink));
+
+        assertSingleDoubleResult(12752.0, "global reduce collapses to a single SUM row");
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("BigQuery engine-only: ReduceBy -> TableSink")
+    void reduceBy() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        BigQueryTableSource src = new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount");
+        ReduceByOperator<Record, Record> reduceBy = new ReduceByOperator<>(
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(1)), Record.class, Record.class
+                ).withSqlImplementation("region", "region"),
+                new ReduceDescriptor<>((a, b) -> a, Record.class)
+                        .withSqlImplementation("SUM(amount) AS total_amount"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("region", "total_amount");
+        src.connectTo(0, reduceBy, 0);
+        reduceBy.connectTo(0, sink, 0);
+
+        wayangContext().execute("BQ-ReduceBy", new WayangPlan(sink));
+
+        Map<String, Double> sums = readRegionSums();
+        assertEquals(3, sums.size(), "one row per region expected");
+        assertEquals(3830.75, sums.get("AMER"), 0.01);
+        assertEquals(2320.5, sums.get("EMEA"), 0.01);
+        assertEquals(6600.75, sums.get("APAC"), 0.01);
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("BigQuery engine-only: Sort -> TableSink")
+    void sort() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        BigQueryTableSource src = new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount");
+        SortOperator<Record, Record> sort = new SortOperator<>(
+                new TransformationDescriptor<>(
+                        (Record r) -> new Record(r.getField(3)), Record.class, Record.class
+                ).withSqlImplementation("amount", "ASC"),
+                DataSetType.createDefault(Record.class));
+        TableSink<Record> sink = tableSink("order_id", "region", "product", "amount");
+        src.connectTo(0, sort, 0);
+        sort.connectTo(0, sink, 0);
+
+        wayangContext().execute("BQ-Sort", new WayangPlan(sink));
+
+        assertEquals(10, queryLong("SELECT count(*) FROM " + SINK_TABLE), "sort preserves cardinality");
+        assertEquals(350.75, queryDouble("SELECT min(amount) FROM " + SINK_TABLE), 0.001);
+        assertEquals(3000.0, queryDouble("SELECT max(amount) FROM " + SINK_TABLE), 0.001);
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("BigQuery engine-only: TableSink (filter -> CREATE TABLE AS SELECT)")
+    void tableSink() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+        BigQueryTableSource src = new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (Record r) -> "EMEA".equals(r.getField(1)), Record.class
+                ).withSqlImplementation("region = 'EMEA'"));
+        TableSink<Record> sink = new TableSink<>(
+                new Properties(), "overwrite", SINK_TABLE,
+                "order_id", "region", "product", "amount");
+        src.connectTo(0, filter, 0);
+        filter.connectTo(0, sink, 0);
+
+        wayangContext().execute("BQ-TableSink", new WayangPlan(sink));
+
+        assertEquals(3, queryLong("SELECT count(*) FROM " + SINK_TABLE), "sink holds all 3 EMEA orders");
+        assertEquals(0, queryLong("SELECT COUNTIF(region != 'EMEA') FROM " + SINK_TABLE), "only EMEA rows");
+    }
+
+    // JavaPlanBuilder combination tests
+
+    @Test
+    @Order(9)
+    @DisplayName("BigQuery engine-only JavaPlanBuilder: readTable -> filter -> projection -> tableSink")
+    void javaPlanBuilderReadTableFilterProjection() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        new JavaPlanBuilder(wayangContext(), "BigQuery JavaPlanBuilder filter projection test")
+                .readTable(new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount"))
+                .filter(record -> "EMEA".equals(record.getField(1)))
+                    .withSqlUdf("region = 'EMEA'")
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"order_id", "amount"}, new Properties());
+
+        assertEquals(3, queryLong("SELECT count(*) FROM " + SINK_TABLE), "3 projected EMEA orders expected");
+        assertEquals(2, columnCount(SINK_TABLE), "projection keeps only 2 columns");
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("BigQuery engine-only JavaPlanBuilder: readTable -> filter -> globalReduce -> tableSink")
+    void javaPlanBuilderReadTableFilterGlobalReduce() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        new JavaPlanBuilder(wayangContext(), "BigQuery JavaPlanBuilder global reduce test")
+                .readTable(new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount"))
+                .filter(record -> "EMEA".equals(record.getField(1)))
+                    .withSqlUdf("region = 'EMEA'")
+                .reduce((left, right) -> left)
+                    .withSqlUdf("SUM(amount) AS total_amount")
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"total_amount"}, new Properties());
+
+        assertSingleDoubleResult(2320.5, "global reduction over EMEA should return one row");
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("BigQuery engine-only JavaPlanBuilder: readTable -> reduceByKey -> sort -> tableSink")
+    void javaPlanBuilderReadTableReduceBySort() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        new JavaPlanBuilder(wayangContext(), "BigQuery JavaPlanBuilder reduce-by sort test")
+                .readTable(new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount"))
+                .reduceByKey(
+                        record -> new Record(record.getField(1)),
+                        (left, right) -> left)
+                    .withSqlUdfs("region", "SUM(amount) AS total_amount")
+                .sort(record -> new Record(record.getField(0)))
+                    .withSqlUdf("region", "ASC")
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"region", "total_amount"}, new Properties());
+
+        Map<String, Double> sums = readRegionSums();
+        assertEquals(3, sums.size(), "one row per region expected");
+        assertTrue(sums.containsKey("AMER") && sums.containsKey("APAC") && sums.containsKey("EMEA"));
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("BigQuery engine-only JavaPlanBuilder: readTable -> filter -> projection -> writeTable")
+    void javaPlanBuilderReadTableFilterProjectionTableSink() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        new JavaPlanBuilder(wayangContext(), "BigQuery JavaPlanBuilder table sink test")
+                .readTable(new BigQueryTableSource(TABLE, "order_id", "region", "product", "amount"))
+                .filter(record -> "EMEA".equals(record.getField(1)))
+                    .withSqlUdf("region = 'EMEA'")
+                .asRecords()
+                .projectRecords(new String[]{"order_id", "amount"})
+                .writeTable(SINK_TABLE, "overwrite", new String[]{"order_id", "amount"}, new Properties());
+
+        assertEquals(3, queryLong("SELECT count(*) FROM " + SINK_TABLE), "sink holds 3 projected EMEA orders");
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("BigQuery engine-only JavaPlanBuilder: readTable + readTable -> join -> tableSink")
+    void javaPlanBuilderReadTableJoin() {
+        Assumptions.assumeTrue(available, "BigQuery not available");
+
+        JavaPlanBuilder plan = new JavaPlanBuilder(wayangContext(), "BigQuery JavaPlanBuilder join test");
+        DataQuantaBuilder<?, Record> orders = plan.readTable(new BigQueryTableSource(
+                TABLE, "order_id", "region", "product", "amount"));
+        DataQuantaBuilder<?, Record> regions = plan.readTable(new BigQueryTableSource(
+                JOIN_TABLE, "region_name"));
+
+        orders
+                .join(
+                        record -> new Record(record.getField(1)),
+                        regions,
+                        record -> new Record(record.getField(0)))
+                    .withSqlUdfs(TABLE, "region", JOIN_TABLE, "region_name")
+                .map(new JoinFlattenFunction())
+                    .withName(JOIN_FLATTEN_NAME)
+                .writeTable(SINK_TABLE, "overwrite", JOIN_COLUMNS, new Properties());
+
+        assertEquals(10, queryLong("SELECT count(*) FROM " + SINK_TABLE),
+                "join yields one row per order");
+        assertEquals(0, queryLong("SELECT COUNTIF(region != region_name) FROM " + SINK_TABLE),
+                "joined regions should match");
+    }
+
+    // Helpers
+
+    private WayangContext wayangContext() {
+        Configuration config = new Configuration();
+        config.setProperty("wayang.bigquery.jdbc.url", JDBC_URL);
+        config.getMappingProvider().addAllToWhitelist(
+                Collections.singleton(new JoinFlattenMapping()));
         return new WayangContext(config)
-                .withPlugin(Java.basicPlugin())
                 .withPlugin(BigQuery.plugin());
     }
 
-    private static void createRegionJoinTable() throws Exception {
-        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
-            conn.createStatement().execute("DROP TABLE IF EXISTS " + JOIN_TABLE);
-            conn.createStatement().execute(
-                    "CREATE TABLE " + JOIN_TABLE + " AS SELECT DISTINCT region FROM " + TABLE);
-        }
+    private TableSink<Record> tableSink(String... columnNames) {
+        return new TableSink<>(new Properties(), "overwrite", SINK_TABLE, columnNames);
     }
 
-    /** Record-aware multi-field projection (the POJO descriptor throws on >1 field). */
-    private static ProjectionDescriptor<Record, Record> project(String... fields) {
-        return ProjectionDescriptor.createForRecords(
-                new RecordType("order_id", "region", "product", "amount"), fields);
+    private static MapOperator<Tuple2<Record, Record>, Record> joinFlattenOperator() {
+        MapOperator<Tuple2<Record, Record>, Record> operator = new MapOperator<>(
+                new TransformationDescriptor<>(
+                        new JoinFlattenFunction(),
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
+                        DataUnitType.createBasic(Record.class)),
+                DataSetType.createDefaultUnchecked(Tuple2.class),
+                DataSetType.createDefault(Record.class));
+        operator.setName(JOIN_FLATTEN_NAME);
+        return operator;
     }
 
     private static Record flattenJoinResult(Object joinResult) {
@@ -212,529 +499,101 @@ class BigQueryOperatorsIT {
         Record left = (Record) pair.field0;
         Record right = (Record) pair.field1;
         return new Record(
-                left.getField(0),
-                left.getField(1),
-                left.getField(2),
-                left.getField(3),
+                left.getField(0), left.getField(1), left.getField(2), left.getField(3),
                 right.getField(0));
     }
 
-    // Verification tests
-
-    /** BigQueryTableSource must be bound to BigQueryPlatform (drives wayang.bigquery.* config). */
-    @Test
-    @Order(0)
-    @DisplayName("[VERIFY] BigQueryTableSource is bound to BigQueryPlatform")
-    void testPlatformBinding() {
-        BigQueryTableSource source = new BigQueryTableSource(TABLE, "order_id");
-
-        assertSame(
-                BigQueryPlatform.getInstance(),
-                source.getPlatform(),
-                "BigQueryTableSource.getPlatform() must return the BigQueryPlatform singleton"
-        );
-        assertEquals("bigquery", source.getPlatform().getPlatformId(),
-                "Platform id drives all wayang.bigquery.* config key lookups");
-
-        System.out.println("[VERIFY] getPlatform()   = " + source.getPlatform().getClass().getSimpleName());
-        System.out.println("[VERIFY] getPlatformId() = " + source.getPlatform().getPlatformId());
+    private long queryLong(String sql) {
+        try (Connection c = DriverManager.getConnection(JDBC_URL); ResultSet rs = c.createStatement().executeQuery(sql)) {
+            rs.next();
+            return rs.getLong(1);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: " + sql, e);
+        }
     }
 
-    /** Missing JDBC config must fail loudly, not silently fall back to Java evaluation. */
-    @Test
-    @Order(1)
-    @DisplayName("[VERIFY] Execution fails when BigQuery JDBC config is missing")
-    void testFailsWithoutJdbcConfig() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        Configuration emptyConfig = new Configuration();
-        BigQueryTableSource source = new BigQueryTableSource(TABLE, "order_id", "region");
-        List<Record> results = new ArrayList<>();
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, sink, 0);
-
-        WayangContext ctx = new WayangContext(emptyConfig)
-                .withPlugin(Java.basicPlugin())
-                .withPlugin(BigQuery.plugin());
-
-        assertThrows(Exception.class,
-                () -> ctx.execute("BQ-NoConfig", new WayangPlan(sink)),
-                "Should throw when wayang.bigquery.jdbc.url is not set"
-        );
-        System.out.println("[VERIFY] Correctly threw when JDBC config was absent.");
+    private double queryDouble(String sql) {
+        try (Connection c = DriverManager.getConnection(JDBC_URL); ResultSet rs = c.createStatement().executeQuery(sql)) {
+            rs.next();
+            return rs.getDouble(1);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: " + sql, e);
+        }
     }
 
-    // Functional tests: TableSource, Filter, and Projection
-
-    /** Full table scan: SELECT * FROM `<table>` */
-    @Test
-    @Order(2)
-    @DisplayName("BigQuery: full table scan")
-    void testTableScan() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-TableScan", new WayangPlan(sink));
-
-        assertEquals(10, results.size(), "Expected 10 rows");
-        System.out.println("[PASS] TableScan: " + results.size() + " rows");
+    private int columnCount(String table) {
+        try (Connection c = DriverManager.getConnection(JDBC_URL);
+                ResultSet rs = c.createStatement().executeQuery("SELECT * FROM " + table + " LIMIT 1")) {
+            return rs.getMetaData().getColumnCount();
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: column count of " + table, e);
+        }
     }
 
-    /** String filter pushdown: WHERE region = 'APAC' */
-    @Test
-    @Order(3)
-    @DisplayName("BigQuery: filter pushdown (region = 'APAC')")
-    void testFilterString() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        FilterOperator<Record> filter = new FilterOperator<>(
-                new PredicateDescriptor<>(
-                        r -> "APAC".equals(r.getField(1)), Record.class
-                ).withSqlImplementation("region = 'APAC'"));
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, filter, 0);
-        filter.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-Filter", new WayangPlan(sink));
-
-        assertFalse(results.isEmpty());
-        results.forEach(r -> assertEquals("APAC", r.getField(1)));
-        System.out.println("[PASS] Filter(region='APAC'): " + results.size() + " rows");
+    private void assertSingleDoubleResult(double expected, String message) {
+        try (Connection c = DriverManager.getConnection(JDBC_URL);
+                ResultSet rs = c.createStatement().executeQuery("SELECT * FROM " + SINK_TABLE)) {
+            assertTrue(rs.next(), message);
+            assertEquals(expected, rs.getDouble(1), 0.01, message);
+            assertFalse(rs.next(), message);
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: SELECT * FROM " + SINK_TABLE, e);
+        }
     }
 
-    /** Numeric filter pushdown: WHERE amount > 1000 */
-    @Test
-    @Order(4)
-    @DisplayName("BigQuery: filter pushdown (amount > 1000)")
-    void testFilterNumeric() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        FilterOperator<Record> filter = new FilterOperator<>(
-                new PredicateDescriptor<>(
-                        r -> ((Number) r.getField(3)).doubleValue() > 1000.0, Record.class
-                ).withSqlImplementation("amount > 1000"));
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, filter, 0);
-        filter.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-Filter-Numeric", new WayangPlan(sink));
-
-        assertFalse(results.isEmpty());
-        results.forEach(r -> assertTrue(((Number) r.getField(3)).doubleValue() > 1000.0));
-        System.out.println("[PASS] Filter(amount>1000): " + results.size() + " rows");
-    }
-
-    /** Projection pushdown / column pruning: SELECT region, amount FROM `<table>` */
-    @Test
-    @Order(5)
-    @DisplayName("BigQuery: projection pushdown (region, amount)")
-    void testProjection() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        MapOperator<Record, Record> projection = new MapOperator<>(
-                project("region", "amount"),
-                DataSetType.createDefault(Record.class),
-                DataSetType.createDefault(Record.class));
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, projection, 0);
-        projection.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-Projection", new WayangPlan(sink));
-
-        assertEquals(10, results.size());
-        results.forEach(r -> assertEquals(2, r.size(), "Record should have 2 projected fields"));
-        System.out.println("[PASS] Projection(region, amount): " + results.size() + " rows");
-    }
-
-    /** Combined filter + projection in one SQL query: SELECT region, amount FROM `<table>` WHERE amount > 1000 */
-    @Test
-    @Order(6)
-    @DisplayName("BigQuery: filter + projection pipeline")
-    void testFilterAndProjection() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        FilterOperator<Record> filter = new FilterOperator<>(
-                new PredicateDescriptor<>(
-                        r -> ((Number) r.getField(3)).doubleValue() > 1000.0, Record.class
-                ).withSqlImplementation("amount > 1000"));
-        MapOperator<Record, Record> projection = new MapOperator<>(
-                project("region", "amount"),
-                DataSetType.createDefault(Record.class),
-                DataSetType.createDefault(Record.class));
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, filter, 0);
-        filter.connectTo(0, projection, 0);
-        projection.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-Filter-Projection", new WayangPlan(sink));
-
-        assertFalse(results.isEmpty());
-        results.forEach(r -> {
-            assertEquals(2, r.size());
-            assertTrue(((Number) r.getField(1)).doubleValue() > 1000.0);
-        });
-        System.out.println("[PASS] Filter+Projection: " + results.size() + " rows");
-    }
-
-    /** Cardinality estimation sanity check (optimizer runs SELECT count(*) before planning). */
-    @Test
-    @Order(7)
-    @DisplayName("BigQuery: cardinality estimation via COUNT(*) is accurate")
-    void testCardinalityMatches() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        FilterOperator<Record> filter = new FilterOperator<>(
-                new PredicateDescriptor<>(
-                        r -> "EMEA".equals(r.getField(1)), Record.class
-                ).withSqlImplementation("region = 'EMEA'"));
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, filter, 0);
-        filter.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-Cardinality", new WayangPlan(sink));
-
-        assertEquals(3, results.size(), "Expected 3 EMEA rows");
-        System.out.println("[PASS] Cardinality: " + results.size() + " EMEA rows (expected 3)");
-    }
-
-    // Aggregation, ordering, sink, and JavaPlanBuilder combination tests
-
-    /**
-     * GlobalReduce: SUM(amount) over the whole table collapses to a single row.
-     *
-     * <p>Note: the reduction lives only in the SQL implementation
-     * ({@code SUM(amount)}); the Java fallback would not reproduce it, so this
-     * test relies on the optimizer electing BigQuery pushdown for the reduce.
-     */
-    @Test
-    @Order(8)
-    @DisplayName("BigQuery: global reduce (SUM(amount))")
-    void testGlobalReduce() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        GlobalReduceOperator<Record> reduce = new GlobalReduceOperator<>(
-                new ReduceDescriptor<>((a, b) -> a, Record.class)
-                        .withSqlImplementation("SUM(amount)"),
-                DataSetType.createDefault(Record.class));
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, reduce, 0);
-        reduce.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-GlobalReduce", new WayangPlan(sink));
-
-        assertEquals(1, results.size(), "global reduce must collapse to a single row");
-        assertEquals(12752.0, ((Number) results.get(0).getField(0)).doubleValue(), 0.01);
-        System.out.println("[PASS] GlobalReduce SUM(amount) = " + results.get(0).getField(0));
-    }
-
-    /** ReduceBy: SUM(amount) GROUP BY region yields one row per region. */
-    @Test
-    @Order(9)
-    @DisplayName("BigQuery: reduce-by (SUM(amount) GROUP BY region)")
-    void testReduceBy() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        ReduceByOperator<Record, Record> reduceBy = new ReduceByOperator<>(
-                new TransformationDescriptor<>(
-                        (Record r) -> new Record(r.getField(1)), Record.class, Record.class
-                ).withSqlImplementation("region", "region"),
-                new ReduceDescriptor<>((a, b) -> a, Record.class)
-                        .withSqlImplementation("SUM(amount)"),
-                DataSetType.createDefault(Record.class));
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-        source.connectTo(0, reduceBy, 0);
-        reduceBy.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-ReduceBy", new WayangPlan(sink));
-
-        assertEquals(3, results.size(), "one row per region expected");
+    private Map<String, Double> readRegionSums() {
         Map<String, Double> sums = new HashMap<>();
-        for (Record r : results) {
-            sums.put((String) r.getField(0), ((Number) r.getField(1)).doubleValue());
-        }
-        assertEquals(6600.75, sums.get("APAC"), 0.01);
-        assertEquals(2320.5,  sums.get("EMEA"), 0.01);
-        assertEquals(3830.75, sums.get("AMER"), 0.01);
-        System.out.println("[PASS] ReduceBy by region: " + sums);
-    }
-
-    /**
-     * Sort: verified through the operator's SQL-clause contract executed on live
-     * BigQuery (the same approach Trino/Presto use for {@code Join}).
-     *
-     * <p>Unlike filter/projection, a sort does not reduce cardinality, so on the
-     * tiny reference table the cost optimizer keeps it in Java rather than pushing
-     * it down, and the jdbc-template sort key is a {@code Record}, which the Java
-     * sort cannot order (the Trino/Presto suites avoid this only because their
-     * 120k-row fixtures make SQL pushdown the cheaper plan). So we assert the
-     * operator's real contract: {@link BigQuerySortOperator#createSqlClause} must
-     * produce a BigQuery-valid {@code ORDER BY} that returns correctly ordered rows.
-     */
-    @Test
-    @Order(10)
-    @DisplayName("BigQuery: sort (ORDER BY amount ASC) via operator SQL-clause contract")
-    void testSort() throws Exception {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        BigQuerySortOperator sort = new BigQuerySortOperator(
-                new TransformationDescriptor<>(
-                        (Record r) -> new Record(r.getField(3)), Record.class, Record.class
-                ).withSqlImplementation("amount", "ASC"));
-        assertEquals(BigQueryPlatform.getInstance(), sort.getPlatform());
-
-        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
-            String orderBy = sort.createSqlClause(conn, new FunctionCompiler());
-            assertTrue(orderBy.contains("ORDER BY amount ASC"), "unexpected ORDER BY clause: " + orderBy);
-
-            ResultSet rs = conn.createStatement().executeQuery(
-                    "SELECT order_id, region, product, amount FROM " + TABLE + orderBy);
-            List<Double> amounts = new ArrayList<>();
-            while (rs.next()) amounts.add(rs.getDouble("amount"));
-
-            assertEquals(10, amounts.size(), "sort must not change the cardinality");
-            assertEquals(350.75, amounts.get(0), 0.001, "smallest amount first");
-            assertEquals(3000.0, amounts.get(amounts.size() - 1), 0.001, "largest amount last");
-            for (int i = 1; i < amounts.size(); i++) {
-                assertTrue(amounts.get(i - 1) <= amounts.get(i), "non-decreasing at index " + i);
+        try (Connection c = DriverManager.getConnection(JDBC_URL);
+                ResultSet rs = c.createStatement().executeQuery("SELECT * FROM " + SINK_TABLE)) {
+            while (rs.next()) {
+                sums.put(rs.getString(1), rs.getDouble(2));
             }
-            System.out.println("[PASS] Sort ORDER BY amount ASC: " + amounts.size() + " rows in order");
+            return sums;
+        } catch (Exception e) {
+            throw new RuntimeException("query failed: SELECT * FROM " + SINK_TABLE, e);
         }
     }
 
-    /**
-     * TableSink: filter + sink composed into a single {@code CREATE TABLE ... AS
-     * SELECT} that runs entirely inside BigQuery; no data leaves the warehouse.
-     */
-    @Test
-    @Order(11)
-    @DisplayName("BigQuery: table sink (CREATE TABLE AS SELECT ... WHERE region = 'EMEA')")
-    void testTableSink() throws Exception {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        BigQueryTableSource source = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        FilterOperator<Record> filter = new FilterOperator<>(
-                new PredicateDescriptor<>(
-                        r -> "EMEA".equals(r.getField(1)), Record.class
-                ).withSqlImplementation("region = 'EMEA'"));
-        TableSink<Record> sink = new TableSink<>(
-                new Properties(), "overwrite", SINK_TABLE,
-                "order_id", "region", "product", "amount");
-        source.connectTo(0, filter, 0);
-        filter.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-TableSink", new WayangPlan(sink));
-
-        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
-            ResultSet rs = conn.createStatement().executeQuery(
-                    "SELECT count(*), COUNTIF(region != 'EMEA') FROM " + SINK_TABLE);
-            rs.next();
-            assertEquals(3, rs.getLong(1), "sink table must hold all 3 EMEA orders");
-            assertEquals(0, rs.getLong(2), "sink table must hold only EMEA orders");
-        }
-        System.out.println("[PASS] TableSink wrote 3 EMEA rows into " + SINK_TABLE);
-    }
-
-    /**
-     * Join: orders with a temporary distinct-region lookup table.
-     *
-     * <p>The logical {@link JoinOperator} emits {@code Tuple2<Record,Record>},
-     * while a pushed-down JDBC join already emits a flat {@link Record}. The
-     * following map normalizes both representations before the result reaches
-     * the sink.
-     */
-    @Test
-    @Order(12)
-    @DisplayName("BigQuery: join orders with distinct regions")
-    void testJoin() throws Exception {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-        createRegionJoinTable();
-
-        List<Record> results = new ArrayList<>();
-        BigQueryTableSource orders = new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount");
-        BigQueryTableSource regions = new BigQueryTableSource(
-                JOIN_TABLE, "region");
-        JoinOperator<Record, Record, Record> join = new JoinOperator<>(
-                new TransformationDescriptor<>(
-                        record -> new Record(record.getField(1)), Record.class, Record.class
-                ).withSqlImplementation(TABLE, "region"),
-                new TransformationDescriptor<>(
-                        record -> new Record(record.getField(0)), Record.class, Record.class
-                ).withSqlImplementation(JOIN_TABLE, "region"));
-        join.addTargetPlatform(BigQuery.platform());
-        MapOperator<Object, Record> flatten = new MapOperator<>(
-                BigQueryOperatorsIT::flattenJoinResult, Object.class, Record.class);
-        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(results, Record.class);
-
-        orders.connectTo(0, join, 0);
-        regions.connectTo(0, join, 1);
-        join.connectTo(0, flatten, 0);
-        flatten.connectTo(0, sink, 0);
-
-        createContext(createBigQueryConfig()).execute("BQ-Join", new WayangPlan(sink));
-
-        assertEquals(10, results.size());
-        assertTrue(results.stream().allMatch(row -> row.getField(1).equals(row.getField(4))));
-    }
-
-    /** JavaPlanBuilder API: combine a pushed-down filter and projection. */
-    @Test
-    @Order(13)
-    @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> projection")
-    void javaPlanBuilderReadTableFilterProjection() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        Collection<Record> rows = new JavaPlanBuilder(
-                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder filter projection test")
-                .readTable(new BigQueryTableSource(
-                        TABLE, "order_id", "region", "product", "amount"))
-                .filter(record -> ((Number) record.getField(3)).doubleValue() > 1000.0)
-                    .withSqlUdf("amount > 1000")
-                    .withTargetPlatform(BigQuery.platform())
-                .asRecords()
-                .projectRecords(new String[]{"region", "amount"})
-                    .withTargetPlatform(BigQuery.platform())
-                .collect();
-
-        assertEquals(5, rows.size());
-        assertTrue(rows.stream().allMatch(record ->
-                record.size() == 2 && ((Number) record.getField(1)).doubleValue() > 1000.0));
-    }
-
-    /** JavaPlanBuilder API: combine a filter with a global reduction. */
-    @Test
-    @Order(14)
-    @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> globalReduce")
-    void javaPlanBuilderReadTableFilterGlobalReduce() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        Collection<Record> rows = new JavaPlanBuilder(
-                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder global reduce test")
-                .readTable(new BigQueryTableSource(
-                        TABLE, "order_id", "region", "product", "amount"))
-                .filter(record -> "EMEA".equals(record.getField(1)))
-                    .withSqlUdf("region = 'EMEA'")
-                    .withTargetPlatform(BigQuery.platform())
-                .reduce((left, right) -> left)
-                    .withSqlUdf("SUM(amount)")
-                    .withTargetPlatform(BigQuery.platform())
-                .collect();
-
-        assertEquals(1, rows.size());
-        assertEquals(2320.5, ((Number) rows.iterator().next().getField(0)).doubleValue(), 0.01);
-    }
-
-    /** JavaPlanBuilder API: combine grouped aggregation and sorting. */
-    @Test
-    @Order(15)
-    @DisplayName("BigQuery JavaPlanBuilder: readTable -> reduceByKey -> sort")
-    void javaPlanBuilderReadTableReduceBySort() {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        List<Record> rows = new ArrayList<>(new JavaPlanBuilder(
-                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder reduce-by sort test")
-                .readTable(new BigQueryTableSource(
-                        TABLE, "order_id", "region", "product", "amount"))
-                .reduceByKey(
-                        record -> new Record(record.getField(1)),
-                        (left, right) -> left)
-                    .withSqlUdfs("region", "SUM(amount)")
-                    .withTargetPlatform(BigQuery.platform())
-                .sort(record -> new Record(record.getField(0)))
-                    .withSqlUdf("region", "ASC")
-                    .withTargetPlatform(BigQuery.platform())
-                .collect());
-
-        assertEquals(3, rows.size());
-        assertEquals("AMER", rows.get(0).getField(0));
-        assertEquals("APAC", rows.get(1).getField(0));
-        assertEquals("EMEA", rows.get(2).getField(0));
-    }
-
-    /** JavaPlanBuilder API: write a filtered projection into a BigQuery table. */
-    @Test
-    @Order(16)
-    @DisplayName("BigQuery JavaPlanBuilder: readTable -> filter -> projection -> tableSink")
-    void javaPlanBuilderReadTableFilterProjectionTableSink() throws Exception {
-        Assumptions.assumeTrue(available, "BigQuery not available");
-
-        new JavaPlanBuilder(
-                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder table sink test")
-                .readTable(new BigQueryTableSource(
-                        TABLE, "order_id", "region", "product", "amount"))
-                .filter(record -> "EMEA".equals(record.getField(1)))
-                    .withSqlUdf("region = 'EMEA'")
-                    .withTargetPlatform(BigQuery.platform())
-                .asRecords()
-                .projectRecords(new String[]{"order_id", "amount"})
-                    .withTargetPlatform(BigQuery.platform())
-                .writeTable(
-                        SINK_TABLE,
-                        "overwrite",
-                        new String[]{"order_id", "amount"},
-                        new Properties());
-
-        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
-            ResultSet rs = conn.createStatement().executeQuery("SELECT count(*) FROM " + SINK_TABLE);
-            rs.next();
-            assertEquals(3, rs.getLong(1));
+    private static final class JoinFlattenFunction implements
+            FunctionDescriptor.SerializableFunction<Tuple2<Record, Record>, Record> {
+        @Override
+        public Record apply(Tuple2<Record, Record> tuple) {
+            return flattenJoinResult(tuple);
         }
     }
 
-    /** JavaPlanBuilder API: join orders with a temporary distinct-region table. */
-    @Test
-    @Order(17)
-    @DisplayName("BigQuery JavaPlanBuilder: readTable + readTable -> join")
-    void javaPlanBuilderReadTableJoin() throws Exception {
-        Assumptions.assumeTrue(available, "BigQuery not available");
+    /** Test-only mapping for the unresolved logical join Tuple-to-Record mismatch. */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static final class JoinFlattenMapping implements Mapping {
+        @Override
+        public java.util.Collection<PlanTransformation> getTransformations() {
+            OperatorPattern<MapOperator> pattern = new OperatorPattern(
+                    "joinFlatten",
+                    new MapOperator(null, DataSetType.none(), DataSetType.createDefault(Record.class)),
+                    false)
+                    .withAdditionalTest(operator -> JOIN_FLATTEN_NAME.equals(((MapOperator) operator).getName()));
 
-        createRegionJoinTable();
+            ReplacementSubplanFactory factory = new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
+                    (matchedOperator, epoch) -> createBigQueryProjection().at(epoch));
 
-        JavaPlanBuilder plan = new JavaPlanBuilder(
-                createContext(createBigQueryConfig()), "BigQuery JavaPlanBuilder join test");
-        DataQuantaBuilder<?, Record> orders = plan.readTable(new BigQueryTableSource(
-                TABLE, "order_id", "region", "product", "amount"));
-        DataQuantaBuilder<?, Record> regions = plan.readTable(new BigQueryTableSource(
-                JOIN_TABLE, "region"));
+            return Collections.singleton(new PlanTransformation(
+                    SubplanPattern.createSingleton(pattern),
+                    factory,
+                    BigQueryPlatform.getInstance()));
+        }
 
-        Collection<Record> rows = orders
-                .join(
-                        record -> new Record(record.getField(1)),
-                        regions,
-                        record -> new Record(record.getField(0)))
-                    .withSqlUdfs(TABLE, "region", JOIN_TABLE, "region")
-                    .withTargetPlatform(BigQuery.platform())
-                .asRecords()
-                .collect();
-
-        assertEquals(10, rows.size());
-        assertTrue(rows.stream().allMatch(row -> row.getField(1).equals(row.getField(4))));
+        private static BigQueryProjectionOperator createBigQueryProjection() {
+            ProjectionDescriptor<Tuple2<Record, Record>, Record> descriptor = new ProjectionDescriptor<>(
+                    new JoinFlattenFunction(),
+                    Arrays.asList(JOIN_COLUMNS),
+                    DataUnitType.createBasicUnchecked(Tuple2.class),
+                    DataUnitType.createBasic(Record.class));
+            MapOperator<Tuple2<Record, Record>, Record> projection = new MapOperator<>(
+                    descriptor,
+                    DataSetType.createDefaultUnchecked(Tuple2.class),
+                    DataSetType.createDefault(Record.class));
+            projection.setName(JOIN_FLATTEN_NAME);
+            return new BigQueryProjectionOperator((MapOperator<Record, Record>) (MapOperator) projection);
+        }
     }
 }
