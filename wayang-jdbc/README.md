@@ -40,7 +40,7 @@ verification, and remaining work.
 * `wayang-jdbc-protocol` contains the versioned messages and length-prefixed
   JSON codec shared by the driver and server.
 
-* `wayang-jdbc-driver` implements the client-side `java.sql` interfaces and
+* `wayang-jdbc-client` implements the client-side `java.sql` interfaces and
   communicates with the server over TCP.
 
 * `wayang-jdbc-server` owns logical JDBC sessions, delegates queries to the
@@ -151,7 +151,7 @@ The external JDBC interface has two running pieces:
 
 1. Start a `WayangJdbcServer` process with a Wayang configuration that points
    to the Calcite model.
-2. Put `wayang-jdbc-driver` and its runtime dependencies on the client
+2. Put `wayang-jdbc-client` and its runtime dependencies on the client
    application's classpath, then connect with normal `java.sql` APIs.
 
 ### 1. Build the JDBC artifacts
@@ -231,8 +231,8 @@ local files, include all runtime JARs. You can copy them with:
 
 Then put these on the client classpath:
 
-* `wayang-jdbc/wayang-jdbc-driver/target/apache-wayang-jdbc-driver-1.1.2-SNAPSHOT.jar`
-* every JAR in `wayang-jdbc/wayang-jdbc-driver/target/driver-libs/`
+* `wayang-jdbc-client/target/apache-wayang-jdbc-driver-1.1.2-SNAPSHOT.jar`
+* every JAR in `wayang-jdbc-client/target/driver-libs/`
 
 The JDBC driver class is:
 

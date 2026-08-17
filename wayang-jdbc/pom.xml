@@ -38,7 +38,7 @@
 
     <modules>
         <module>wayang-jdbc-protocol</module>
-        <module>wayang-jdbc-driver</module>
+        <module>wayang-jdbc-client</module>
         <module>wayang-jdbc-server</module>
     </modules>
 

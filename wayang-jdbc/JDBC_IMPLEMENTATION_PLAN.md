@@ -60,7 +60,7 @@ Unsupported first:
 
 1. Create JDBC module structure.
    * Add `wayang-jdbc-protocol`.
-   * Add `wayang-jdbc-driver`.
+   * Add `wayang-jdbc-client`.
    * Add `wayang-jdbc-server`.
 
 2. Define shared protocol.
@@ -172,7 +172,7 @@ Unsupported first:
 
 1. Added module structure.
    * `wayang-jdbc/wayang-jdbc-protocol`
-   * `wayang-jdbc/wayang-jdbc-driver`
+   * `wayang-jdbc-client`
    * `wayang-jdbc/wayang-jdbc-server`
 
 2. Added documentation.
