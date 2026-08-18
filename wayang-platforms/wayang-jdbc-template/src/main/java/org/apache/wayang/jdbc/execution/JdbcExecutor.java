@@ -133,8 +133,9 @@ public class JdbcExecutor extends ExecutorTemplate {
             ));
         }
 
-        // A trailing semicolon is unnecessary for single-statement JDBC calls and
-        // strict SQL parsers such as Trino and BigQuery reject it.
+        // Intentionally no trailing ';'. A trailing semicolon is unnecessary for a
+        // single-statement JDBC executeQuery and is rejected by strict SQL parsers
+        // such as Trino and BigQuery. Postgres/SQLite/HSQLDB accept its absence.
         return sb;
     }
 
