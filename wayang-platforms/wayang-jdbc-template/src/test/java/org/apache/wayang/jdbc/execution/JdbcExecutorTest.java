@@ -21,6 +21,7 @@ package org.apache.wayang.jdbc.execution;
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.Job;
+import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
@@ -42,6 +43,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -83,6 +85,48 @@ class JdbcExecutorTest {
         assertEquals(
                 "SELECT * FROM customer;",
                 sqlQueryChannelInstance.getSqlQuery()
+        );
+    }
+
+    @Test
+    void testExecuteWithMultipleConsumers() throws SQLException {
+        Configuration configuration = new Configuration();
+        Job job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        when(job.getCrossPlatformExecutor())
+            .thenReturn(new CrossPlatformExecutor(job, new NoInstrumentationStrategy()));
+
+        SqlQueryChannel.Descriptor sqlChannelDescriptor =
+            HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor();
+
+        ExecutionStage sqlStage = mock(ExecutionStage.class);
+
+        JdbcTableSource tableSource = new HsqldbTableSource("customer");
+        ExecutionTask tableSourceTask = new ExecutionTask(tableSource);
+
+        SqlQueryChannel outputChannel =
+            new SqlQueryChannel(sqlChannelDescriptor, tableSource.getOutput(0));
+        tableSourceTask.setOutputChannel(0, outputChannel);
+        tableSourceTask.setStage(sqlStage);
+
+        when(sqlStage.getStartTasks()).thenReturn(Collections.singleton(tableSourceTask));
+        when(sqlStage.getTerminalTasks()).thenReturn(Collections.singleton(tableSourceTask));
+
+        ExecutionTask firstConsumer = mock(ExecutionTask.class);
+        ExecutionTask secondConsumer = mock(ExecutionTask.class);
+
+        outputChannel.getConsumers().add(firstConsumer);
+        outputChannel.getConsumers().add(secondConsumer);
+
+        JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
+
+        assertThrows(
+            WayangException.class,
+            () -> executor.execute(
+                    sqlStage,
+                    new DefaultOptimizationContext(job),
+                    job.getCrossPlatformExecutor()
+            )
         );
     }
 
