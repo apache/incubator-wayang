@@ -64,9 +64,6 @@ created:
 wayang.duckdb.parquetsource.prepare-sql = INSTALL httpfs; LOAD httpfs
 ```
 
-Private GCS buckets can use the same hook to create a DuckDB secret with HMAC
-credentials, as documented in `wayang-duckdb-defaults.properties`.
-
 ## Tests
 
 The embedded operator suite mirrors `TrinoOperatorsIT` / `PrestoOperatorsIT`,
@@ -143,6 +140,7 @@ with six repetitions, producing 312 Wayang executions:
   -Dduckdb.profile.rowCounts=10000,50000,100000,250000 \
   -Dduckdb.profile.plans=S01,S02,S03,S04,S05,S06,S07,S08,S09,S10,S11,S12,S13 \
   -Dduckdb.profile.repetitions=6 \
+  -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false \
   -Drat.skip=true -Dlicense.skip=true test
 ```
 
@@ -158,6 +156,7 @@ For a quick local smoke:
   -Dduckdb.profile.rowCounts=100,1000 \
   -Dduckdb.profile.plans=S01,S02 \
   -Dduckdb.profile.repetitions=2 \
+  -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false \
   -Drat.skip=true -Dlicense.skip=true test
 ```
 
