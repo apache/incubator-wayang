@@ -36,7 +36,9 @@ import org.apache.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.apache.wayang.core.platform.ExecutionState;
 import org.apache.wayang.core.platform.Executor;
 import org.apache.wayang.core.platform.ExecutorTemplate;
+import org.apache.wayang.core.platform.PartialExecution;
 import org.apache.wayang.core.platform.Platform;
+import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
 import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 import org.apache.wayang.jdbc.operators.JdbcExecutionOperator;
@@ -251,8 +253,8 @@ public class JdbcExecutor extends ExecutorTemplate {
     /**
      * Handles execution stages that end with a {@link JdbcTableSinkOperator}.
      */
-    private static void executeSinkStage(final ExecutionStage stage, final OptimizationContext optimizationContext,
-                                         final JdbcExecutor jdbcExecutor) {
+    private static long executeSinkStage(final ExecutionStage stage, final OptimizationContext optimizationContext,
+            final JdbcExecutor jdbcExecutor) {
         final Collection<?> startTasks = stage.getStartTasks();
         final Collection<?> termTasks = stage.getTerminalTasks();
         JdbcExecutor.prepareSourceTasks(startTasks, jdbcExecutor, optimizationContext.getConfiguration());
@@ -311,14 +313,53 @@ public class JdbcExecutor extends ExecutorTemplate {
                 stmt.execute("DROP TABLE IF EXISTS " + sinkOp.getTableName());
             }
             final String fullSql = sinkClause + " " + selectSql + sinkOp.createSqlSuffix();
+            final long startTime = System.currentTimeMillis();
             stmt.execute(fullSql);
+            final long executionDuration = System.currentTimeMillis() - startTime;
             jdbcExecutor.logger.info("Executed SQL sink: {}", fullSql);
             System.out.println("Executed sql sink: " + fullSql);
+            return executionDuration;
         } catch (final SQLException e) {
             throw new WayangException("Failed to execute SQL sink on table: " + sinkOp.getTableName(), e);
         }
     }
 
+    /**
+     * Creates lineage nodes for the JDBC operators that were executed as one SQL
+     * statement. Operators without an optimization context or load estimator are
+     * skipped, so JDBC platforms without cost specifications can still execute.
+     */
+    private Collection<ExecutionLineageNode> createExecutionLineageNodes(
+            final ExecutionStage stage,
+            final OptimizationContext optimizationContext) {
+        final Collection<ExecutionLineageNode> executionLineageNodes = new ArrayList<>();
+        for (ExecutionTask task : stage.getAllTasks()) {
+            final OptimizationContext.OperatorContext operatorContext =
+                    optimizationContext.getOperatorContext(task.getOperator());
+            if (operatorContext == null) {
+                this.logger.warn("Cannot profile {} because its optimization context is missing.", task);
+                continue;
+            }
+            if (operatorContext.getLoadProfileEstimator() == null) {
+                this.logger.warn("Cannot profile {} because its load profile estimator is missing.", task);
+                continue;
+            }
+            executionLineageNodes.add(
+                    new ExecutionLineageNode(operatorContext).addAtomicExecutionFromOperatorContext());
+        }
+        return executionLineageNodes;
+    }
+
+    /**
+     * Retrieves the follow-up {@link ExecutionTask} of the given {@code task}
+     * unless it is not comprising a {@link JdbcExecutionOperator} and/or not in the
+     * given {@link ExecutionStage}.
+     *
+     * @param task  whose follow-up {@link ExecutionTask} is requested; should have
+     *              a single follower
+     * @param stage in which the follow-up {@link ExecutionTask} should be
+     * @return the said follow-up {@link ExecutionTask} or {@code null} if none
+     */
     private static ExecutionTask findJdbcExecutionOperatorTaskInStage(final ExecutionTask task,
                                                                       final ExecutionStage stage) {
         assert task.getNumOuputChannels() == 1;
@@ -378,7 +419,16 @@ public class JdbcExecutor extends ExecutorTemplate {
         final ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
 
         if (termTask.getOperator() instanceof JdbcTableSinkOperator) {
-            JdbcExecutor.executeSinkStage(stage, optimizationContext, this);
+            final long executionDuration = JdbcExecutor.executeSinkStage(stage, optimizationContext, this);
+            if (this.isProfilingEnabled()) {
+                final PartialExecution partialExecution = this.createPartialExecution(
+                        this.createExecutionLineageNodes(stage, optimizationContext),
+                        executionDuration
+                );
+                if (partialExecution != null) {
+                    executionState.add(partialExecution);
+                }
+            }
         } else {
             final Tuple2<String, SqlQueryChannel.Instance> pair = JdbcExecutor.createSqlQuery(stage,
                     optimizationContext, this);
@@ -387,6 +437,10 @@ public class JdbcExecutor extends ExecutorTemplate {
             queryChannel.setSqlQuery(query);
             executionState.register(queryChannel);
         }
+    }
+
+    private boolean isProfilingEnabled() {
+        return this.getConfiguration().getBooleanProperty("wayang.core.log.enabled", false);
     }
 
     @Override

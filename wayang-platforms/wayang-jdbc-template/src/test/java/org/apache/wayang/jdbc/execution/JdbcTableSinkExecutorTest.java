@@ -23,7 +23,9 @@ import org.apache.wayang.core.api.Job;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
 import org.apache.wayang.core.plan.executionplan.ExecutionStage;
 import org.apache.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.wayang.core.platform.AtomicExecution;
 import org.apache.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.wayang.core.platform.PartialExecution;
 import org.apache.wayang.core.profiling.NoInstrumentationStrategy;
 import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.operators.JdbcTableSinkOperator;
@@ -37,7 +39,11 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -51,6 +57,17 @@ class JdbcTableSinkExecutorTest {
     @Test
     void testOverwriteModeCreatesNewTable() throws SQLException {
         Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.core.log.enabled", "true");
+        configuration.setProperty("wayang.hsqldb.cpu.mhz", "2700");
+        configuration.setProperty("wayang.hsqldb.cores", "1");
+        configuration.setProperty(
+                "wayang.hsqldb.tablesource.load",
+                "{\"in\":0,\"out\":1,\"cpu\":\"${1}\",\"ram\":\"0\",\"p\":1.0}"
+        );
+        configuration.setProperty(
+                "wayang.hsqldb.tablesink.load",
+                "{\"in\":1,\"out\":0,\"cpu\":\"${1}\",\"ram\":\"0\",\"p\":1.0}"
+        );
         HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
 
         // Create source table with data
@@ -89,10 +106,30 @@ class JdbcTableSinkExecutorTest {
 
         when(sqlStage.getStartTasks()).thenReturn(Collections.singleton(tableSourceTask));
         when(sqlStage.getTerminalTasks()).thenReturn(Collections.singleton(sinkTask));
+        when(sqlStage.getAllTasks()).thenReturn(new HashSet<>(Arrays.asList(tableSourceTask, sinkTask)));
 
         // Execute
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
-        executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
+        DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
+        optimizationContext.addOneTimeOperator(tableSource);
+        optimizationContext.addOneTimeOperator(sinkOp);
+        executor.execute(sqlStage, optimizationContext, job.getCrossPlatformExecutor());
+
+        assertEquals(1, job.getCrossPlatformExecutor().getPartialExecutions().size());
+        PartialExecution partialExecution =
+                job.getCrossPlatformExecutor().getPartialExecutions().iterator().next();
+        Set<String> estimatorKeys = partialExecution.getAtomicExecutionGroups().stream()
+                .flatMap(group -> group.getAtomicExecutions().stream())
+                .map(AtomicExecution::getLoadProfileEstimator)
+                .map(estimator -> estimator.getConfigurationKey())
+                .collect(Collectors.toSet());
+        assertEquals(
+                new HashSet<>(Arrays.asList(
+                        "wayang.hsqldb.tablesource.load",
+                        "wayang.hsqldb.tablesink.load"
+                )),
+                estimatorKeys
+        );
 
         // Verify table was created and contains all 3 rows
         try (Connection conn = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
@@ -158,6 +195,7 @@ class JdbcTableSinkExecutorTest {
 
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
         executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
+        assertEquals(0, job.getCrossPlatformExecutor().getPartialExecutions().size());
 
         // Verify target was replaced. Old data should be gone, new schema and data present
         try (Connection conn = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
@@ -176,6 +214,7 @@ class JdbcTableSinkExecutorTest {
     @Test
     void testAppendModeInsertsIntoExistingTable() throws SQLException {
         Configuration configuration = new Configuration();
+        configuration.setProperty("wayang.core.log.enabled", "false");
         HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
 
         //Create source and target table. Target has existing data.
@@ -217,6 +256,7 @@ class JdbcTableSinkExecutorTest {
 
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
         executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
+        assertEquals(0, job.getCrossPlatformExecutor().getPartialExecutions().size());
 
         // Verify existing data remains and new data is appended
         try (Connection conn = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
