@@ -359,8 +359,8 @@ public class JdbcExecutor extends ExecutorTemplate {
 
     /**
      * Creates lineage nodes for the JDBC operators that were executed as one SQL
-     * statement. Operators without load estimators are skipped so JDBC platforms
-     * without cost specifications can still execute normally.
+     * statement. Operators without an optimization context or load estimator are
+     * skipped, so JDBC platforms without cost specifications can still execute.
      */
     private Collection<ExecutionLineageNode> createExecutionLineageNodes(
             final ExecutionStage stage,
