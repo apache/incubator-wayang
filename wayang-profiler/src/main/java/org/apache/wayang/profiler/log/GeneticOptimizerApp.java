@@ -110,6 +110,7 @@ public class GeneticOptimizerApp {
         Sqlite3.platform();
         Postgres.platform();
         initializeOptionalPlatform("org.apache.wayang.presto.Presto");
+        initializeOptionalPlatform("org.apache.wayang.trino.Trino");
 
         // Load the ExecutionLog.
         double samplingFactor = this.configuration.getDoubleProperty("wayang.profiler.ga.sampling", 1d);
