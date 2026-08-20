@@ -84,16 +84,22 @@ wayang.trino.tablesource.load = {
 This can be read as:
 
 ```text
-CPU load = alpha * number_of_rows + beta
+CPU load = 10 * number_of_rows + 800000
 ```
 
 where:
 
 - `out0` is the output cardinality.
-- `alpha` is the per-row cost.
-- `beta` is the fixed overhead, such as query planning, scheduling, and remote
+- `10` is the per-row cost.
+- `800000` is the fixed overhead, such as query planning, scheduling, and remote
   execution startup.
 - `p` is the confidence of the estimate.
+
+In template form, these constants are the unknown parameters:
+
+```text
+CPU load = alpha * number_of_rows + beta
+```
 
 The profiling goal is to learn reasonable values for `alpha` and `beta` from
 real execution records.

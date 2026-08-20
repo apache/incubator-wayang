@@ -315,7 +315,7 @@ class FlinkIntegrationIT {
         final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
         // Instantiate Wayang and activate the Java/Flink backends.
-        WayangContext wayangContext = makeContext(FLINK);
+        WayangContext wayangContext = makeContext(BOTH);
 
         // Have Wayang execute the plan.
         final Job job = wayangContext.createJob(null, wayangPlan);
