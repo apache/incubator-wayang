@@ -106,7 +106,7 @@ $ java -Dwayang.configuration=url://to/my/wayang.properties ...
 
 Essential configuration settings:
 * General settings
-    * `wayang.core.log.enabled (= true)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
+    * `wayang.core.log.enabled (= false)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
     * `wayang.core.log.executions (= ~/.wayang/executions.json)` where to log execution times of operator groups
     * `wayang.core.log.cardinalities (= ~/.wayang/cardinalities.json)` where to log cardinality measurements
     * `wayang.core.optimizer.instrumentation (= org.apache.wayang.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Wayang plans; other options are `org.apache.wayang.core.profiling.NoInstrumentationStrategy` and `org.apache.wayang.core.profiling.FullInstrumentationStrategy`
