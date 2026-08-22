@@ -11,12 +11,6 @@ The current validation has two parts:
 Run the commands below from the repository root. Java 17 and Docker with Docker
 Compose are required; Maven is provided by the repository wrapper.
 
-The Presto cost-profiling branch is named `feature/presto-cost-profiling`:
-
-```bash
-git checkout feature/presto-cost-profiling
-```
-
 ## Command Conventions
 
 Use the `bash` blocks on macOS/Linux terminals. Use the `powershell` blocks on
@@ -44,7 +38,8 @@ presto-setup/
         `-- memory.properties
 
 wayang-platforms/wayang-presto/src/test/java/.../
-`-- PrestoOperatorsIT.java
+|-- PrestoOperatorsIT.java
+`-- PrestoCostPilotIT.java
 ```
 
 ## 1. Test the Wayang Presto Platform
@@ -169,7 +164,7 @@ docker compose -f presto-setup/docker-compose.yml down
 | `tableSource` | Full table scan through `PrestoTableSource` |
 | `filter` | Wayang `FilterOperator` and SQL `WHERE` pushdown |
 | `projection` | Column projection pushed into the Presto query |
-| `join` | Full Wayang join plan with normalization before the collecting sink |
+| `join` | Full Wayang join plan with normalization before the sink table |
 | `globalReduce` | Global aggregation such as `SUM` |
 | `reduceBy` | Grouped aggregation and SQL `GROUP BY` |
 | `sort` | Wayang sort and SQL `ORDER BY` |
@@ -222,8 +217,12 @@ Presto-specific profiling values:
 | Maven module | `wayang-platforms/wayang-presto` |
 | Profiling test | `PrestoCostPilotIT` |
 | Property prefix | `presto.profile.*` |
+| Profiling schema | `memory.wayang_profile` |
 | Default output directory | `target/cost-profiling/presto` |
 | Learned parameters file | `wayang-platforms/wayang-presto/src/main/resources/wayang-presto-defaults.properties` |
+
+`PrestoCostPilotIT` uses the same `PRESTO_HOST`, `PRESTO_PORT`, and
+`PRESTO_USER` endpoint variables as `PrestoOperatorsIT`.
 
 ## Troubleshooting
 
@@ -232,7 +231,7 @@ Presto-specific profiling values:
 Check that `presto-setup/etc/catalog/memory.properties` is a regular file
 before starting the container. If Docker first created the container while the
 source file was absent, it may have mounted a directory at the catalog path.
-Recreate the container after checking out the branch:
+Recreate the container after confirming the catalog file is present:
 
 ```bash
 docker compose -f presto-setup/docker-compose.yml down
