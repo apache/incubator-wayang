@@ -3,20 +3,19 @@
 Local BigQuery emulator and validation instructions for the Wayang BigQuery
 platform.
 
-The current validation has three parts:
+The local validation path has two parts and does not require a GCP account:
 
 1. Build the Wayang BigQuery platform and run the shared JDBC SQL-generation tests.
 2. Run BigQuery-compatible SQL tests against the local emulator.
+
+There is also an optional real-BigQuery validation path:
+
 3. Run the Wayang BigQuery operator tests through JDBC against real BigQuery.
 
 Run the commands below from the repository root. Java 17 and Docker with Docker
 Compose are required for the emulator tests. A GCP project and service-account
-key, plus the `gcloud` SDK, are required only for the real BigQuery operator
-tests. Maven is provided by the repository wrapper.
-
-```bash
-git checkout wayang-bigquery
-```
+key, plus the `gcloud` SDK, are required only for the optional real-BigQuery
+operator tests. Maven is provided by the repository wrapper.
 
 ## Command Conventions
 
@@ -130,15 +129,15 @@ curl -s -X POST \
 docker compose -f bigquery-setup/docker-compose.yml down
 ```
 
-## 3. Test the Wayang Operators Against Real BigQuery
+## 3. Optional: Test the Wayang Operators Against Real BigQuery
 
 `BigQueryOperatorsIT` uses the BigQuery JDBC driver and cannot run against the
-local emulator. It requires a real GCP project, a service-account JSON key, and
-a reference table containing the same 10 rows as `bigquery-setup/data.yaml`.
+local emulator. It requires a real GCP project and a service-account JSON key.
 
-The tests issue `SELECT`, `CREATE TABLE AS`, and `DROP` statements. The
-`TableSink` test creates and then drops `sales.wayang_emea_orders`; the
-reference `sales.orders` table remains in place.
+The test setup creates its own fixture tables in a configurable dataset
+(`wayang_it` by default): `orders`, `regions`, and `operator_result`. The tests
+issue `SELECT`, `CREATE TABLE AS`, and `DROP` statements, then remove those
+tables during cleanup.
 
 ### 1. Enable BigQuery and create a service account
 
@@ -176,42 +175,14 @@ gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:
 gcloud iam service-accounts keys create "$HOME\wayang-bq-key.json" --iam-account="wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com"
 ```
 
-The service account needs `jobUser` to run queries and `dataEditor` to read the
-reference table and create/drop the sink table.
+The service account needs `jobUser` to run queries and `dataEditor` to create,
+read, and drop the test dataset tables.
 
-### 2. Load the reference table
+### 2. Choose the test dataset
 
-Create a US dataset, then load the exact rows from `data.yaml` with a load job:
-
-```bash
-bq --location=US mk --dataset YOUR_PROJECT_ID:sales
-
-cat > /tmp/orders.csv <<'CSV'
-1,APAC,Widget A,1500.0
-2,EMEA,Widget B,800.5
-3,AMER,Widget A,2200.0
-4,APAC,Widget C,350.75
-5,EMEA,Widget A,1100.0
-6,AMER,Widget B,950.25
-7,APAC,Widget B,1750.0
-8,EMEA,Widget C,420.0
-9,AMER,Widget C,680.5
-10,APAC,Widget A,3000.0
-CSV
-
-bq --project_id=YOUR_PROJECT_ID --location=US load --replace \
-  --source_format=CSV sales.orders /tmp/orders.csv \
-  order_id:INTEGER,region:STRING,product:STRING,amount:FLOAT
-```
-
-Confirm that the table matches the assertions:
-
-```bash
-bq --project_id=YOUR_PROJECT_ID --location=US query --use_legacy_sql=false \
-  'SELECT count(*) n, round(sum(amount), 2) total FROM `YOUR_PROJECT_ID.sales.orders`'
-```
-
-Expected values are `n = 10` and `total = 12752.0`.
+The test creates the dataset if it does not exist. By default it uses
+`wayang_it`; override it with `-Dbigquery.dataset=DATASET_ID` or
+`BIGQUERY_DATASET` if the project needs a different dataset name.
 
 ### 3. Run the operator tests
 
@@ -223,13 +194,14 @@ Expected values are `n = 10` and `total = 12752.0`.
   -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com \
   -Dbigquery.keyPath="$HOME/wayang-bq-key.json" \
   -Dbigquery.location=US \
+  -Dbigquery.dataset=wayang_it \
   -Drat.skip=true -Dlicense.skip=true test
 ```
 
 On PowerShell:
 
 ```powershell
-.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-bigquery -am -Dtest=BigQueryOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Dbigquery.project=YOUR_PROJECT_ID -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com -Dbigquery.keyPath=C:\path\to\wayang-bq-key.json -Dbigquery.location=US -Drat.skip=true -Dlicense.skip=true test
+.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-bigquery -am -Dtest=BigQueryOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Dbigquery.project=YOUR_PROJECT_ID -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com -Dbigquery.keyPath=C:\path\to\wayang-bq-key.json -Dbigquery.location=US -Dbigquery.dataset=wayang_it -Drat.skip=true -Dlicense.skip=true test
 ```
 
 System properties take precedence over the equivalent environment variables:
@@ -239,49 +211,14 @@ System properties take precedence over the equivalent environment variables:
 | `bigquery.project` | `BIGQUERY_PROJECT` | `your-project` |
 | `bigquery.saEmail` | `BIGQUERY_SA_EMAIL` | `wayang-bq@<project>.iam.gserviceaccount.com` |
 | `bigquery.keyPath` | `BIGQUERY_KEY_PATH` | `$HOME/wayang-bq-key.json` |
-| `bigquery.table` | `BIGQUERY_TABLE` | `` `<project>.sales.orders` `` |
 | `bigquery.location` | `BIGQUERY_LOCATION` | `US` |
+| `bigquery.dataset` | `BIGQUERY_DATASET` | `wayang_it` |
 
 Successful real-BigQuery validation must show:
 
 ```text
-Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
 ```
-
-### Previously verified result
-
-On June 11, 2026, the original 12-test real-BigQuery suite was run successfully
-against a non-billing GCP project using the service-account flow documented
-above:
-
-```text
-[SETUP] Connected to BigQuery project
-[PASS] TableScan: 10 rows
-[PASS] Filter(region='APAC'): 4 rows
-[PASS] GlobalReduce SUM(amount) = 12752.0
-[PASS] TableSink wrote 3 EMEA rows
-Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
-BUILD SUCCESS
-```
-
-This verified the complete `Wayang -> BigQuery JDBC -> service-account OAuth ->
-real BigQuery` path, including reads, SQL pushdown, aggregation, sorting, and
-`CREATE TABLE AS SELECT`. The sink table was removed automatically after the
-test, while the reference `sales.orders` table was retained for reruns. No
-service-account key or credential file is stored in this repository.
-
-On June 18, 2026, the expanded 18-test suite was also verified successfully
-against real BigQuery, using `Location=US` and the local proxy settings when
-needed:
-
-```text
-Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
-BUILD SUCCESS
-```
-
-This includes the full Wayang join plan with join-result normalization and all
-five `JavaPlanBuilder` combination tests. On the same date, the local BigQuery
-emulator suite was re-run with Docker and passed 7/7 with zero skipped tests.
 
 If the browser uses a local proxy, pass the same proxy to both CLI tools and
 the Maven test JVM. For example, with a proxy at `127.0.0.1:7890`, set
@@ -295,13 +232,32 @@ On PowerShell:
 $env:HTTP_PROXY="http://127.0.0.1:7890"
 $env:HTTPS_PROXY="http://127.0.0.1:7890"
 $env:JAVA_TOOL_OPTIONS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7890"
-.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-bigquery -am -Dtest=BigQueryOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Dbigquery.project=YOUR_PROJECT_ID -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com -Dbigquery.keyPath=C:\path\to\wayang-bq-key.json -Dbigquery.location=US -Drat.skip=true -Dlicense.skip=true test
+.\mvnw.cmd --% -Pskip-prerequisite-check -pl wayang-platforms/wayang-bigquery -am -Dtest=BigQueryOperatorsIT -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false -Dbigquery.project=YOUR_PROJECT_ID -Dbigquery.saEmail=wayang-bq@YOUR_PROJECT_ID.iam.gserviceaccount.com -Dbigquery.keyPath=C:\path\to\wayang-bq-key.json -Dbigquery.location=US -Dbigquery.dataset=wayang_it -Drat.skip=true -Dlicense.skip=true test
 Remove-Item Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:JAVA_TOOL_OPTIONS
 ```
 
 If credentials or the project configuration are missing, Maven can still print
-`BUILD SUCCESS` with `Skipped: 17`. Only the platform-binding test ran in that
-case, so the BigQuery operators were not validated.
+`BUILD SUCCESS` with `Skipped: 13`. That does not count as successful
+real-BigQuery validation.
+
+## 4. Optional: Re-run Cost Profiling
+
+Follow the shared cost-profiling guide in
+[`guides/cost-profiling.md`](../guides/cost-profiling.md). This setup guide
+only covers the BigQuery emulator and real BigQuery validation setup. BigQuery
+cost profiling uses `BigQueryCostPilotIT`, so it needs the same real-BigQuery
+credentials as the optional operator tests above.
+
+BigQuery-specific profiling values:
+
+| Item | Value |
+|------|-------|
+| Maven module | `wayang-platforms/wayang-bigquery` |
+| Profiling test | `BigQueryCostPilotIT` |
+| Property prefix | `bigquery.profile.*` |
+| Profiling dataset property | `bigquery.profile.dataset` |
+| Default output directory | `target/cost-profiling/bigquery` |
+| Learned parameters file | `wayang-platforms/wayang-bigquery/src/main/resources/wayang-bigquery-defaults.properties` |
 
 ## Test Coverage
 
@@ -321,24 +277,19 @@ case, so the BigQuery operators were not validated.
 
 | Test | What it checks |
 |------|----------------|
-| `testPlatformBinding` | `BigQueryTableSource` is bound to `BigQueryPlatform` |
-| `testFailsWithoutJdbcConfig` | Execution fails clearly without the JDBC URL |
-| `testTableScan` | Full table scan through Wayang |
-| `testFilterString` | String filter pushdown |
-| `testFilterNumeric` | Numeric filter pushdown |
-| `testProjection` | Multi-column projection pushdown |
-| `testFilterAndProjection` | Combined filter and projection pipeline |
-| `testCardinalityMatches` | BigQuery `COUNT(*)` cardinality estimate |
-| `testGlobalReduce` | Global `SUM(amount)` |
-| `testReduceBy` | `SUM(amount) GROUP BY region` |
-| `testSort` | BigQuery sort operator SQL-clause contract |
-| `testTableSink` | `CREATE TABLE AS SELECT` and cleanup |
-| `testJoin` | Full Wayang join plan with normalization before the collecting sink |
-| `javaPlanBuilderReadTableFilterProjection` | `readTable -> filter -> projection -> collect` |
-| `javaPlanBuilderReadTableFilterGlobalReduce` | `readTable -> filter -> globalReduce -> collect` |
-| `javaPlanBuilderReadTableReduceBySort` | `readTable -> reduceByKey -> sort -> collect` |
+| `tableSource` | Full table scan through Wayang into a BigQuery sink table |
+| `filter` | String filter pushdown |
+| `projection` | Multi-column projection pushdown |
+| `join` | Full Wayang join plan with normalization before the sink table |
+| `globalReduce` | Global `SUM(amount)` |
+| `reduceBy` | `SUM(amount) GROUP BY region` |
+| `sort` | BigQuery sort operator SQL-clause contract |
+| `tableSink` | `CREATE TABLE AS SELECT` and cleanup |
+| `javaPlanBuilderReadTableFilterProjection` | `readTable -> filter -> projection -> writeTable` |
+| `javaPlanBuilderReadTableFilterGlobalReduce` | `readTable -> filter -> globalReduce -> writeTable` |
+| `javaPlanBuilderReadTableReduceBySort` | `readTable -> reduceByKey -> sort -> writeTable` |
 | `javaPlanBuilderReadTableFilterProjectionTableSink` | `readTable -> filter -> projection -> writeTable` |
-| `javaPlanBuilderReadTableJoin` | `readTable + readTable -> join -> collect` |
+| `javaPlanBuilderReadTableJoin` | `readTable + readTable -> join -> writeTable` |
 
 The combination tests use `.withTargetPlatform(BigQuery.platform())` so the
 small 10-row fixture still exercises BigQuery SQL pushdown. The join test creates
@@ -360,8 +311,9 @@ Remove-Item Env:BIGQUERY_HOST
 
 ## Notes
 
-- Tests use `google-cloud-bigquery` client library (REST-based, no JDBC).
-- The client connects with `NoCredentials`; no GCP account is needed.
+- Emulator tests use the `google-cloud-bigquery` client library (REST-based, no
+  JDBC).
+- The emulator client connects with `NoCredentials`; no GCP account is needed.
 - The BigQuery JDBC driver (`google-cloud-bigquery-jdbc`) requires OAuth even
   against the emulator, so `BigQueryOperatorsIT` runs only against real
   BigQuery.
