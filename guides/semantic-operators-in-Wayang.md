@@ -6,7 +6,7 @@ The example uses a semantic filter that classifies movie reviews as positive or 
 
 ## 1. Semantic operators
 
-A semantic operator an operator much like any Wayang operator, however, it takes a prompt as input,
+A semantic operator is an operator much like any Wayang operator, however, it takes a prompt as input,
 that describes how it should act.
 
 For example:
@@ -21,12 +21,12 @@ For example:
 
 The prompt describes the task. A `SemanticAlgorithm` provides one concrete implementation of that task.
 A `SemanticAlgorithm` could theoretically be any UDF you desire, there are no strict requirements on its implementation. 
-The implementation just requires the UDF is described as something that takes an input `Record` and a `prompt` and outputs
+The implementation only that the requires the UDF is implemented as something that takes an input `Record` and a `prompt` and outputs
 whatever datatype is required by the operator.
 
-The ollama local open source model is used as an example for this guide, but may also be useful for quick development.
+The Ollama local open-source model is used as an example for this guide, but may also be useful for quick development.
 
-We setup our local model hosting locallly using Docker:
+We set up our local model hosting locally using Docker:
 
 ```yaml
 ollama:
@@ -69,15 +69,14 @@ private static String callOllama(final String prompt) throws IOException, Interr
         throw new IOException("Ollama API error: " + response.body());
     }
 
-    // Parse JSON response to extract the "response" field
     return parseOllamaResponse(response.body());
 }
 ```
 
-and the semantic UDF: 
+and the semantic UDF:
 
 ```java
-public static boolean isPositiveSentiment3(final Review review, final String prompt)
+public static boolean isPositiveSentiment(final Review review, final String prompt)
         throws IOException, InterruptedException {
     final String response = callOllama(prompt + " | " + review.getReviewText());
     return response.contains("POSITIVE");
@@ -107,9 +106,9 @@ ollamaFilter.loadProfileEstimator =
     );
 ```
 
-Note that you should provide multiple configurations if you have more semantic operators.
-Now we register these UDFs to the `SemanticPlugin` this will automatically construct a new operator
-per UDF, please note this may have implications for optimization time depending on your setup.
+Note that you should provide a separate configuration for each semantic operator.
+Now we register these UDFs with the `SemanticPlugin` this automatically constructs a new operator
+per UDF. Please note this may have implications for optimization time depending on your setup.
 
 ```java
 final SemanticPlugin plugin = Semantic.plugin()
@@ -122,7 +121,7 @@ final WayangContext wayangContext = new WayangContext()
         .withPlugin(plugin);
 ```
 
-Currently we only have mappings for semantic operators in Java, so you also need the `Java.basicPlugin()`.
+Currently, we only have mappings for semantic operators in Java, so you also need the `Java.basicPlugin()`.
 Finally, you can construct your Wayang plan:
 
 ```java
