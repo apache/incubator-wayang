@@ -165,4 +165,25 @@ class SqlToRddOperatorTest extends OperatorTestBase {
         assertTrue(output.isEmpty());
     }
 
+    @Test
+    void testRowToRecord() {
+        org.apache.spark.sql.Row row = org.apache.spark.sql.RowFactory.create(1, "test", 42.0);
+        Record record = SqlToRddOperator.rowToRecord(row);
+        assertEquals(3, record.size());
+        assertEquals(1, record.getField(0));
+        assertEquals("test", record.getField(1));
+        assertEquals(42.0, record.getField(2));
+    }
+
+    @Test
+    void testJsonSerialization() {
+        SqlToRddOperator operator = new SqlToRddOperator(HsqldbPlatform.getInstance());
+        org.apache.wayang.core.util.json.WayangJsonObj json = operator.toJson();
+        assertEquals(HsqldbPlatform.class.getCanonicalName(), json.getString("platform"));
+
+        SqlToRddOperator deserialized = SqlToRddOperator.fromJson(json);
+        assertEquals(operator.getInputType(), deserialized.getInputType());
+        assertEquals(operator.getOutputType(), deserialized.getOutputType());
+    }
+
 }

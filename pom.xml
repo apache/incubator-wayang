@@ -95,7 +95,9 @@
 
         <scala.version>2.12.17</scala.version>
         <scala.mayor.version>2.12</scala.mayor.version>
-        <spark.version>3.4.4</spark.version>
+        <spark.version>3.5.7</spark.version>
+        <antlr.version>4.9.3</antlr.version>
+        <parquet.version>1.13.1</parquet.version>
         <sedona.version>1.6.1</sedona.version>
         <flink.version>1.20.0</flink.version>
         <calcite.version>1.39.0</calcite.version>
@@ -392,7 +394,7 @@
             <properties>
                 <scala.version>2.12.17</scala.version>
                 <scala.mayor.version>2.12</scala.mayor.version>
-                <spark.version>3.4.4</spark.version>
+                <spark.version>3.5.7</spark.version>
             </properties>
             <build>
                 <plugins>
@@ -498,7 +500,7 @@
                 </file>
             </activation>
             <properties>
-                <antlr.version>4.13.1</antlr.version>
+                <antlr.version>4.9.3</antlr.version>
             </properties>
             <build>
                 <pluginManagement>
@@ -732,6 +734,56 @@
                 <groupId>commons-cli</groupId>
                 <artifactId>commons-cli</artifactId>
                 <version>1.3.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${antlr.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-core_${scala.mayor.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-graphx_${scala.mayor.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql_${scala.mayor.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-mllib_${scala.mayor.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.parquet</groupId>
+                <artifactId>parquet-hadoop</artifactId>
+                <version>${parquet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.parquet</groupId>
+                <artifactId>parquet-column</artifactId>
+                <version>${parquet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.parquet</groupId>
+                <artifactId>parquet-avro</artifactId>
+                <version>${parquet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.parquet</groupId>
+                <artifactId>parquet-common</artifactId>
+                <version>${parquet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.parquet</groupId>
+                <artifactId>parquet-encoding</artifactId>
+                <version>${parquet.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

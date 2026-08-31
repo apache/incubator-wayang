@@ -87,7 +87,7 @@
         <dependency>
             <groupId>org.apache.parquet</groupId>
             <artifactId>parquet-hadoop</artifactId>
-            <version>1.12.3</version>
+            <version>${parquet.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
