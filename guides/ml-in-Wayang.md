@@ -16,7 +16,7 @@
   limitations under the License.
 
 -->
-# Using Machine-Learning for query optimization in Apache Wayang 
+# Using Machine Learning for Query Optimization in Apache Wayang 
 Apache Wayang can be customized with concrete
 implementations of the `EstimatableCost` interface in order to optimize
 for a desired metric.  The implementation can be enabled by providing it
