@@ -83,7 +83,7 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
-            <version>4.13.1</version>
+            <version>${antlr.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
