@@ -109,6 +109,8 @@ public class GeneticOptimizerApp {
         Spark.platform();
         Sqlite3.platform();
         Postgres.platform();
+        initializeOptionalPlatform("org.apache.wayang.bigquery.BigQuery");
+        initializeOptionalPlatform("org.apache.wayang.presto.Presto");
         initializeOptionalPlatform("org.apache.wayang.trino.Trino");
 
         // Load the ExecutionLog.

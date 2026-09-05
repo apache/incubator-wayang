@@ -18,6 +18,14 @@
 
 package org.apache.wayang.jdbc.execution;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.wayang.basic.data.Tuple2;
@@ -39,6 +47,7 @@ import org.apache.wayang.core.platform.ExecutorTemplate;
 import org.apache.wayang.core.platform.PartialExecution;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 import org.apache.wayang.jdbc.operators.JdbcExecutionOperator;
@@ -52,18 +61,9 @@ import org.apache.wayang.jdbc.operators.JdbcSourceOperator;
 import org.apache.wayang.jdbc.operators.JdbcTableSinkOperator;
 import org.apache.wayang.jdbc.platform.JdbcPlatformTemplate;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
  * {@link Executor} implementation for the {@link JdbcPlatformTemplate}.
  */
-
 public class JdbcExecutor extends ExecutorTemplate {
     public static StringBuilder createSqlString(final JdbcExecutor jdbcExecutor, final JdbcSourceOperator sourceOp,
             final Collection<JdbcExecutionOperator> filterTasks, final JdbcProjectionOperator projectionTask, final JdbcGlobalReduceOperator globalReduceTask, final JdbcReduceByOperator reduceByTask, final JdbcSortOperator sortTask, 
@@ -177,16 +177,13 @@ public class JdbcExecutor extends ExecutorTemplate {
             } else if (operator instanceof JdbcProjectionOperator) {
                 assert projectionTask == null; // Allow one projection operator per stage for now.
                 projectionTask = (JdbcProjectionOperator) operator;
-            } else if (operator instanceof JdbcGlobalReduceOperator) {
-                final JdbcGlobalReduceOperator globalReduce = (JdbcGlobalReduceOperator) operator;
+            } else if (operator instanceof final JdbcGlobalReduceOperator globalReduce) {
                 assert globalReduceTask == null; // Allow one projection operator per stage for now.
                 globalReduceTask = globalReduce;
-            } else if (operator instanceof JdbcReduceByOperator) {
-                final JdbcReduceByOperator reduceBy = (JdbcReduceByOperator) operator;
+            } else if (operator instanceof final JdbcReduceByOperator reduceBy) {
                 assert reduceByTask == null; // Allow one projection operator per stage for now.
                 reduceByTask = reduceBy;
-            } else if (operator instanceof JdbcSortOperator) {
-                final JdbcSortOperator sort = (JdbcSortOperator) operator;
+            } else if (operator instanceof final JdbcSortOperator sort) {
                 assert sortTask == null; // Allow one projection operator per stage for now.
                 sortTask = sort;
             } else if (operator instanceof JoinOperator || (operator instanceof SpatialJoinOperator)) {
@@ -301,27 +298,21 @@ public class JdbcExecutor extends ExecutorTemplate {
         // Walk through intermediate operators, stopping at the sink
         ExecutionTask nextTask = JdbcExecutor.findJdbcExecutionOperatorTaskInStage(startTask, stage);
         while (nextTask != null && !(nextTask.getOperator() instanceof JdbcTableSinkOperator)) {
-            if (nextTask.getOperator() instanceof JdbcFilterOperator) {
-                final JdbcFilterOperator filterOperator = (JdbcFilterOperator) nextTask.getOperator();
+            if (nextTask.getOperator() instanceof final JdbcFilterOperator filterOperator) {
                 filterTasks.add(filterOperator);
-            } else if (nextTask.getOperator() instanceof JdbcProjectionOperator) {
-                final JdbcProjectionOperator projectionOperator = (JdbcProjectionOperator) nextTask.getOperator();
+            } else if (nextTask.getOperator() instanceof final JdbcProjectionOperator projectionOperator) {
                 assert projectionTask == null;
                 projectionTask = projectionOperator;
-            } else if (nextTask.getOperator() instanceof JdbcGlobalReduceOperator) {
-                final JdbcGlobalReduceOperator globalReduceOperator = (JdbcGlobalReduceOperator) nextTask.getOperator();
+            } else if (nextTask.getOperator() instanceof final JdbcGlobalReduceOperator globalReduceOperator) {
                 assert globalReduceTask == null;
                 globalReduceTask = globalReduceOperator;
-            } else if (nextTask.getOperator() instanceof JdbcReduceByOperator) {
-                final JdbcReduceByOperator reduceByOperator = (JdbcReduceByOperator) nextTask.getOperator();
+            } else if (nextTask.getOperator() instanceof final JdbcReduceByOperator reduceByOperator) {
                 assert reduceByTask == null;
                 reduceByTask = reduceByOperator;
-            } else if (nextTask.getOperator() instanceof JdbcSortOperator) {
-                final JdbcSortOperator sortOperator = (JdbcSortOperator) nextTask.getOperator();
+            } else if (nextTask.getOperator() instanceof final JdbcSortOperator sortOperator) {
                 assert sortTask == null;
                 sortTask = sortOperator;
-            } else if (nextTask.getOperator() instanceof JdbcJoinOperator) {
-                final JdbcJoinOperator joinOperator = (JdbcJoinOperator) nextTask.getOperator();
+            } else if (nextTask.getOperator() instanceof final JdbcJoinOperator joinOperator) {
                 joinTasks.add(joinOperator);
             } else {
                 throw new WayangException(String.format("Unsupported JDBC execution task %s", nextTask.toString()));
@@ -354,7 +345,6 @@ public class JdbcExecutor extends ExecutorTemplate {
         } catch (final SQLException e) {
             throw new WayangException("Failed to execute SQL sink on table: " + sinkOp.getTableName(), e);
         }
-
     }
 
     /**
@@ -396,40 +386,52 @@ public class JdbcExecutor extends ExecutorTemplate {
     private static ExecutionTask findJdbcExecutionOperatorTaskInStage(final ExecutionTask task,
             final ExecutionStage stage) {
         assert task.getNumOuputChannels() == 1;
-
         final Channel outputChannel = task.getOutputChannel(0);
-
-        if (outputChannel.getConsumers().size() != 1) {
-            return null;
-        }
-
-        final ExecutionTask consumer = outputChannel.getConsumers().iterator().next();
-
-        return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator ? consumer
-                        : null;
+        final ExecutionTask consumer = WayangCollections.getSingle(outputChannel.getConsumers());
+        return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator
+                ? consumer
+                : null;
     }
 
+    /**
+     * Instantiates the outbound {@link SqlQueryChannel} of an
+     * {@link ExecutionTask}.
+     *
+     * @param task                whose outbound {@link SqlQueryChannel} should be
+     *                            instantiated
+     * @param optimizationContext provides information about the
+     *                            {@link ExecutionTask}
+     * @return the {@link SqlQueryChannel.Instance}
+     */
     private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
             final OptimizationContext optimizationContext, final JdbcExecutor jdbcExecutor) {
-        assert task.getNumOuputChannels() == 1;
-        assert task.getOutputChannel(0) instanceof SqlQueryChannel;
+        assert task.getNumOuputChannels() == 1 : String.format("Illegal task: %s.", task);
+        assert task.getOutputChannel(0) instanceof SqlQueryChannel : String.format("Illegal task: %s.", task);
 
         final SqlQueryChannel outputChannel = (SqlQueryChannel) task.getOutputChannel(0);
-
         final OptimizationContext.OperatorContext operatorContext = optimizationContext
                 .getOperatorContext(task.getOperator());
-
         return outputChannel.createInstance(jdbcExecutor, operatorContext, 0);
     }
 
+    /**
+     * Instantiates the outbound {@link SqlQueryChannel} of an
+     * {@link ExecutionTask}.
+     *
+     * @param task                       whose outbound {@link SqlQueryChannel}
+     *                                   should be instantiated
+     * @param optimizationContext        provides information about the
+     *                                   {@link ExecutionTask}
+     * @param predecessorChannelInstance preceeding {@link SqlQueryChannel.Instance}
+     *                                   to keep track of lineage
+     * @return the {@link SqlQueryChannel.Instance}
+     */
     private static SqlQueryChannel.Instance instantiateOutboundChannel(final ExecutionTask task,
             final OptimizationContext optimizationContext, final SqlQueryChannel.Instance predecessorChannelInstance,
             final JdbcExecutor jdbcExecutor) {
         final SqlQueryChannel.Instance newInstance = JdbcExecutor.instantiateOutboundChannel(task, optimizationContext,
                 jdbcExecutor);
-
         newInstance.getLineage().addPredecessor(predecessorChannelInstance.getLineage());
-
         return newInstance;
     }
 
@@ -487,7 +489,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         try {
             this.connection.close();
         } catch (final SQLException e) {
-            this.logger.error("Could not close JDBC connection correctly.", e);
+            this.logger.error("Could not close JDBC connection to PostgreSQL correctly.", e);
         }
     }
 
