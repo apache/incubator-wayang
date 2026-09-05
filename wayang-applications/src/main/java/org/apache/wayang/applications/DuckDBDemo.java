@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.duckdb;
+package org.apache.wayang.applications;
 
 import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.basic.function.ProjectionDescriptor;
@@ -29,6 +29,7 @@ import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.core.function.PredicateDescriptor;
 import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.types.DataSetType;
+import org.apache.wayang.duckdb.DuckDB;
 import org.apache.wayang.duckdb.operators.DuckDBTableSource;
 
 import java.sql.Connection;
@@ -38,58 +39,77 @@ import java.sql.Statement;
 import java.util.Properties;
 
 /**
- * Standalone demo for the Wayang DuckDB platform.
- *
- * <p>Run from the repository root with:
- * <pre>
- *   ./mvnw -Pskip-prerequisite-check -pl wayang-platforms/wayang-duckdb \
- *     -DskipTests -Drat.skip=true -Dlicense.skip=true exec:java \
- *     -Dexec.mainClass=org.apache.wayang.duckdb.DuckDBDemo
- * </pre>
+ * Configurable DuckDB filter and projection example.
+ * See {@code wayang-applications/duckdb.md} for usage and fixture initialization.
  */
 public class DuckDBDemo {
 
-    private static final String JDBC_URL = System.getProperty("duckdb.url", "jdbc:duckdb:target/duckdb-demo.duckdb");
-    private static final String SCHEMA = "wayang_demo";
-    private static final String ORDERS = SCHEMA + ".orders";
-    private static final String FILTER_RESULT = SCHEMA + ".filter_result";
-    private static final String PROJECTION_RESULT = SCHEMA + ".projection_result";
+    private final Configuration configuration;
+    private final String jdbcUrl;
+    private final String orders;
+    private final String filterResult;
+    private final String projectionResult;
 
-    public static void main(String[] args) throws Exception {
-        createFixture();
-        runFilterPushdown();
-        runProjectionPushdown();
+    private DuckDBDemo(Configuration configuration) {
+        this.configuration = configuration;
+        this.jdbcUrl = configuration.getStringProperty("wayang.duckdb.jdbc.url");
+        if ("jdbc:duckdb:".equals(jdbcUrl)) {
+            throw new IllegalArgumentException("This example requires a database file shared by its JDBC connections.");
+        }
+        this.orders = configuration.getStringProperty("wayang.duckdb.demo.orders", "wayang_demo.orders");
+        this.filterResult = configuration.getStringProperty(
+                "wayang.duckdb.demo.filter-result", "wayang_demo.filter_result"
+        );
+        this.projectionResult = configuration.getStringProperty(
+                "wayang.duckdb.demo.projection-result", "wayang_demo.projection_result"
+        );
+        if (orders.equalsIgnoreCase(filterResult) || orders.equalsIgnoreCase(projectionResult)
+                || filterResult.equalsIgnoreCase(projectionResult)) {
+            throw new IllegalArgumentException("Input and output tables must have distinct names.");
+        }
     }
 
-    private static void runFilterPushdown() throws Exception {
+    public static void main(String[] args) throws Exception {
+        if (args.length < 1 || args.length > 2 || (args.length == 2 && !"--init".equals(args[1]))) {
+            throw new IllegalArgumentException("Usage: DuckDBDemo <configuration URL> [--init]");
+        }
+        DuckDBDemo demo = new DuckDBDemo(new Configuration(args[0]));
+        if (args.length == 2) {
+            demo.createFixture();
+        }
+        demo.runFilterPushdown();
+        demo.runProjectionPushdown();
+    }
+
+    private void runFilterPushdown() throws Exception {
         System.out.println();
         System.out.println("DuckDB demo: Filter pushdown");
-        System.out.println("SQL shape: SELECT * FROM " + ORDERS + " WHERE region = 'AMER'");
+        System.out.println("SQL shape: SELECT * FROM " + orders + " WHERE region = 'AMER'");
 
         DuckDBTableSource source = new DuckDBTableSource(
-                ORDERS, "order_id", "customer_id", "region", "amount");
+                orders, "order_id", "customer_id", "region", "amount");
         FilterOperator<Record> filter = new FilterOperator<>(
                 new PredicateDescriptor<>(
                         (Record record) -> "AMER".equals(record.getField(2)), Record.class)
                         .withSqlImplementation("region = 'AMER'"));
         TableSink<Record> sink = new TableSink<>(
-                new Properties(), "overwrite", FILTER_RESULT,
+                new Properties(), "overwrite", filterResult,
                 "order_id", "customer_id", "region", "amount");
 
         source.connectTo(0, filter, 0);
         filter.connectTo(0, sink, 0);
         wayangContext().execute("DuckDB filter demo", new WayangPlan(sink));
 
-        printQuery("SELECT order_id, region, amount FROM " + FILTER_RESULT + " ORDER BY order_id");
+        printQuery("SELECT order_id, region, amount FROM " + filterResult + " ORDER BY order_id");
     }
 
-    private static void runProjectionPushdown() throws Exception {
+    private void runProjectionPushdown() throws Exception {
         System.out.println();
         System.out.println("DuckDB demo: Projection + filter pushdown");
-        System.out.println("SQL shape: SELECT region, amount FROM " + ORDERS + " WHERE region = 'AMER'");
+        System.out.println("SQL shape: SELECT region, amount FROM " + orders + " WHERE region = 'AMER'");
 
         DuckDBTableSource source = new DuckDBTableSource(
-                ORDERS, "order_id", "customer_id", "region", "amount");
+                orders, "order_id", "customer_id", "region", "amount");
         FilterOperator<Record> filter = new FilterOperator<>(
                 new PredicateDescriptor<>(
                         (Record record) -> "AMER".equals(record.getField(2)), Record.class)
@@ -101,7 +121,7 @@ public class DuckDBDemo {
                 DataSetType.createDefault(Record.class),
                 DataSetType.createDefault(Record.class));
         TableSink<Record> sink = new TableSink<>(
-                new Properties(), "overwrite", PROJECTION_RESULT,
+                new Properties(), "overwrite", projectionResult,
                 "region", "amount");
 
         source.connectTo(0, filter, 0);
@@ -109,28 +129,21 @@ public class DuckDBDemo {
         projection.connectTo(0, sink, 0);
         wayangContext().execute("DuckDB projection demo", new WayangPlan(sink));
 
-        printQuery("SELECT region, amount FROM " + PROJECTION_RESULT + " ORDER BY amount DESC");
+        printQuery("SELECT region, amount FROM " + projectionResult + " ORDER BY amount DESC");
     }
 
-    private static WayangContext wayangContext() {
-        Configuration configuration = new Configuration();
-        configuration.setProperty("wayang.duckdb.jdbc.url", JDBC_URL);
-        configuration.setProperty("wayang.duckdb.jdbc.user", "");
-        configuration.setProperty("wayang.duckdb.jdbc.password", "");
+    private WayangContext wayangContext() {
         return new WayangContext(configuration)
                 .withPlugin(DuckDB.plugin());
     }
 
-    private static void createFixture() throws Exception {
-        try (Connection connection = DriverManager.getConnection(JDBC_URL);
+    private void createFixture() throws Exception {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
              Statement statement = connection.createStatement()) {
-            statement.execute("CREATE SCHEMA IF NOT EXISTS " + SCHEMA);
-            statement.execute("DROP TABLE IF EXISTS " + FILTER_RESULT);
-            statement.execute("DROP TABLE IF EXISTS " + PROJECTION_RESULT);
-            statement.execute("DROP TABLE IF EXISTS " + ORDERS);
-            statement.execute("CREATE TABLE " + ORDERS + " ("
+            statement.execute("CREATE SCHEMA IF NOT EXISTS wayang_demo");
+            statement.execute("CREATE TABLE " + orders + " ("
                     + "order_id BIGINT, customer_id BIGINT, region VARCHAR, amount DOUBLE)");
-            statement.execute("INSERT INTO " + ORDERS + " VALUES "
+            statement.execute("INSERT INTO " + orders + " VALUES "
                     + "(1, 100, 'AMER', 2200.0),"
                     + "(2, 101, 'EMEA',  800.5),"
                     + "(3, 100, 'AMER',  680.5),"
@@ -140,8 +153,8 @@ public class DuckDBDemo {
         }
     }
 
-    private static void printQuery(String sql) throws Exception {
-        try (Connection connection = DriverManager.getConnection(JDBC_URL);
+    private void printQuery(String sql) throws Exception {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(sql)) {
             int columns = resultSet.getMetaData().getColumnCount();

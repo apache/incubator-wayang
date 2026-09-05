@@ -160,39 +160,12 @@ For a quick local smoke:
   -Drat.skip=true -Dlicense.skip=true test
 ```
 
-Then run the GA profiler outside Surefire, as in the Trino profiling branch.
-This avoids Maven/Surefire dependency-ordering conflicts around Jackson and
-ANTLR. On PowerShell:
+The GA configuration is maintained in
+[`wayang-profiler`](../../wayang-profiler/duckdb.md), which documents how to run
+calibration with the generated execution log on Linux, macOS, and Windows.
 
-```powershell
-.\platforms-setup-guides\duckdb-setup\scripts\run-duckdb-ga.ps1
-```
+## Example
 
-The GA settings live in
-`platforms-setup-guides/duckdb-setup/profiling/ga-relaxed.properties`. The
-learned output is written to
-`wayang-platforms/wayang-duckdb/target/cost-profiling/duckdb/learned-duckdb-relaxed.properties`.
-The GA optimizer is stochastic; repeated runs over the same execution log can
-produce slightly different coefficients.
-
-## Demo
-
-`DuckDBDemo` creates a small local fixture and runs two Wayang plans that end in
-DuckDB table sinks:
-
-| Segment | Pushdown shape |
-|---------|----------------|
-| Filter | `SELECT * FROM wayang_demo.orders WHERE region = 'AMER'` |
-| Projection + filter | `SELECT region, amount FROM wayang_demo.orders WHERE region = 'AMER'` |
-
-Run from the repository root:
-
-```bash
-./mvnw -Pskip-prerequisite-check -pl wayang-platforms/wayang-duckdb -am \
-  -DskipTests -Drat.skip=true -Dlicense.skip=true compile
-
-./mvnw -Pskip-prerequisite-check -pl wayang-platforms/wayang-duckdb \
-  -DskipTests -Drat.skip=true -Dlicense.skip=true exec:java \
-  -Dexec.mainClass=org.apache.wayang.duckdb.DuckDBDemo \
-  -Dduckdb.url=jdbc:duckdb:target/duckdb-demo.duckdb
-```
+The configurable filter and projection example lives in
+[`wayang-applications`](../../wayang-applications/duckdb.md).
+It connects directly through JDBC; no Docker setup is required.
