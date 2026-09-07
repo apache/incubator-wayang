@@ -17,14 +17,14 @@ specific language governing permissions and limitations
 under the License.
 --->
 
-# Apache Wayang (incubating) Benchmarks <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang logo">
+# Apache Wayang Benchmarks <img align="right" width="128px" src="https://wayang.apache.org/img/wayang.png" alt="Wayang logo">
 
 This repository provides example applications and further benchmarking tools to evaluate and get started with [Apache Wayang (incubating)](https://wayang.apache.org).
 
 Below we provide detailed information on our various benchmark components, including running instructions. For the configuration of Apache Wayang (incubating) itself, please consult the [Apache Wayang (incubating) repository](https://github.com/apache/incubator-wayang) or feel free to reach out on [dev@wayang.apache.org](mailto:dev@wayang.apache.org).
 
 
-## Apache Wayang (incubating) Example Applications
+## Apache Wayang Example Applications
 
 ### Launching the main class
 
