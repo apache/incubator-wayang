@@ -16,8 +16,7 @@ that's just how long compiling Wayang and its dependency tree (including
 Spark) genuinely takes the first time. That is NOT what hackathon
 participants are expected to do. Instead, a multi-architecture image
 supporting both linux/amd64 and linux/arm64 is built and pushed to
-GitHub Container Registry ahead of the event (see
-`.github/workflows/hackathon-image.yml`), with its Maven cache
+GitHub Container Registry ahead of the event, with its Maven cache
 already warmed at build time. Participants just pull the image:
 
 ```bash
@@ -167,10 +166,10 @@ psql -h postgres -U wayang -d wayang_hackathon -c "select * from word_counts_see
   confirm `/tmp/wayang-classpath.txt` from `verify.sh` actually contains
   `spark-sql` and `spark-sql-api` jars; if not, re-run the `dependency:
   build-classpath` step and check for Maven resolution errors above it.
-- **`no matching manifest for linux/arm64/v8`** — the published image does
-  not contain an ARM64 variant. Re-publish the image using the
-  multi-architecture workflow above and pull it again with
-  `docker compose pull`.
+- **`no matching manifest for linux/arm64/v8`** — the published image may
+  not include an ARM64 variant. Ensure the image supports both
+  `linux/amd64` and `linux/arm64` platforms, then run
+  `docker compose pull` again.
 - **`tar: ... Function not implemented` on Apple Silicon** — this can occur
   when an AMD64-only image is forced to run on an ARM64 host through
   emulation. Do not force `linux/amd64`; use the multi-architecture image
@@ -188,20 +187,14 @@ fresh.
 
 ## For maintainers: publishing the image
 
-`.github/workflows/hackathon-image.yml` builds `hackathon-CoC2026/Dockerfile`
-natively for both `linux/amd64` and `linux/arm64`, publishes the
-architecture-specific images, and then creates a single multi-architecture
-manifest at `ghcr.io/apache/wayang-hackathon:latest`.
+The hackathon image is published to GitHub Container Registry (GHCR).
+To publish an updated image, build and push images for both `linux/amd64`
+and `linux/arm64`, then create a multi-architecture manifest for the shared
+tag. Ensure the published package is public so participants can pull it
+without authenticating.
 
-The workflow is manual (`workflow_dispatch`), not automatic on every push —
-trigger it from the Actions tab whenever the environment needs to pick up
-new commits, and definitely once shortly before the event so the pushed
-image reflects the current environment.
-
-This needs GHCR (GitHub Container Registry) enabled for this repository
-under the ASF GitHub org. If the workflow's push step fails with a
-permissions error, that's an ASF INFRA setting to request, not a bug in the
-workflow.
+After publishing an update, verify that both architectures are present and
+that the image passes the end-to-end smoke test.
 
 ## Later platforms
 
