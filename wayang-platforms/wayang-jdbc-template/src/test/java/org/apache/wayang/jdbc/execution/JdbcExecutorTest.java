@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -243,5 +244,63 @@ class JdbcExecutorTest {
                 "SELECT name, age FROM customer WHERE age >= 18 AND name IS NOT NULL",
                 sqlQueryChannelInstance.getSqlQuery()
         );
+    }
+
+    @Test
+    void testExecuteWithNoTerminalConsumers() {
+        assertQueryWithTerminalConsumers(0);
+    }
+
+    @Test
+    void testExecuteWithMultipleTerminalConsumers() {
+        assertQueryWithTerminalConsumers(2);
+    }
+
+    private void assertQueryWithTerminalConsumers(int consumerCount) {
+        Configuration configuration = new Configuration();
+        Job job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        CrossPlatformExecutor executionState = new CrossPlatformExecutor(job, new NoInstrumentationStrategy());
+        when(job.getCrossPlatformExecutor()).thenReturn(executionState);
+        SqlQueryChannel.Descriptor descriptor = HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor();
+        ExecutionStage stage = mock(ExecutionStage.class);
+
+        JdbcTableSource source = new HsqldbTableSource("customer");
+        ExecutionTask sourceTask = new ExecutionTask(source);
+        sourceTask.setStage(stage);
+        sourceTask.setOutputChannel(0, new SqlQueryChannel(descriptor, source.getOutput(0)));
+
+        JdbcFilterOperator filter = new HsqldbFilterOperator(new PredicateDescriptor<Record>(
+                record -> true, Record.class).withSqlImplementation("age >= 18"));
+        ExecutionTask filterTask = new ExecutionTask(filter);
+        filterTask.setStage(stage);
+        sourceTask.getOutputChannel(0).addConsumer(filterTask, 0);
+        // A reusable channel lets the stage boundary have multiple downstream consumers.
+        SqlQueryChannel output = new SqlQueryChannel(descriptor, filter.getOutput(0)) {
+            @Override
+            public boolean isReusable() {
+                return true;
+            }
+        };
+        filterTask.setOutputChannel(0, output);
+        when(stage.getStartTasks()).thenReturn(Collections.singleton(sourceTask));
+        when(stage.getTerminalTasks()).thenReturn(Collections.singleton(filterTask));
+        when(stage.getAllTasks()).thenReturn(Set.of(sourceTask, filterTask));
+
+        ExecutionStage nextStage = mock(ExecutionStage.class);
+        for (int i = 0; i < consumerCount; i++) {
+            ExecutionTask consumer = new ExecutionTask(new SqlToStreamOperator(HsqldbPlatform.getInstance()));
+            consumer.setStage(nextStage);
+            output.addConsumer(consumer, 0);
+        }
+
+        JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
+        try {
+            executor.execute(stage, new DefaultOptimizationContext(job), executionState);
+            SqlQueryChannel.Instance result = (SqlQueryChannel.Instance) executionState.getChannelInstance(output);
+            assertEquals("SELECT * FROM customer WHERE age >= 18", result.getSqlQuery());
+        } finally {
+            executor.dispose();
+        }
     }
 }

@@ -47,7 +47,6 @@ import org.apache.wayang.core.platform.ExecutorTemplate;
 import org.apache.wayang.core.platform.PartialExecution;
 import org.apache.wayang.core.platform.Platform;
 import org.apache.wayang.core.platform.lineage.ExecutionLineageNode;
-import org.apache.wayang.core.util.WayangCollections;
 import org.apache.wayang.jdbc.channels.SqlQueryChannel;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 import org.apache.wayang.jdbc.operators.JdbcExecutionOperator;
@@ -338,16 +337,20 @@ public class JdbcExecutor extends ExecutorTemplate {
      * unless it is not comprising a {@link JdbcExecutionOperator} and/or not in the
      * given {@link ExecutionStage}.
      *
-     * @param task  whose follow-up {@link ExecutionTask} is requested; should have
-     *              a single follower
+     * @param task  whose follow-up {@link ExecutionTask} is requested
      * @param stage in which the follow-up {@link ExecutionTask} should be
      * @return the said follow-up {@link ExecutionTask} or {@code null} if none
      */
     private static ExecutionTask findJdbcExecutionOperatorTaskInStage(final ExecutionTask task,
             final ExecutionStage stage) {
-        assert task.getNumOuputChannels() == 1;
+        if (task.getNumOuputChannels() != 1) {
+            return null;
+        }
         final Channel outputChannel = task.getOutputChannel(0);
-        final ExecutionTask consumer = WayangCollections.getSingle(outputChannel.getConsumers());
+        if (outputChannel == null || outputChannel.getConsumers().size() != 1) {
+            return null;
+        }
+        final ExecutionTask consumer = outputChannel.getConsumers().iterator().next();
         return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator 
                 ? consumer
                 : null;
