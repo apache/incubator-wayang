@@ -15,11 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.wayang.api.sql.sources.fs;
+package org.apache.wayang.java.operators;
 
 import au.com.bytecode.opencsv.CSVParser;
-import org.apache.calcite.avatica.util.DateTimeUtils;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.commons.lang3.time.FastDateFormat;
 
 import java.io.IOException;
@@ -57,11 +55,11 @@ public class CsvRowConverter {
 
 
 
-    public static Object convert(RelDataType fieldType, String string) {
+    public static Object convert(CsvType fieldType, String string) {
         if (fieldType == null || string == null) {
             return string;
         }
-        switch (fieldType.getSqlTypeName()) {
+        switch (fieldType.getKind()) {
             case BOOLEAN:
                 if (string.length() == 0) {
                     return null;
@@ -101,14 +99,15 @@ public class CsvRowConverter {
                 if (string.length() == 0) {
                     return null;
                 }
-                return parseDecimal(fieldType.getPrecision(), fieldType.getScale(), string);
+                return fieldType.getPrecision() < 0 ? new BigDecimal(string)
+                        : parseDecimal(fieldType.getPrecision(), fieldType.getScale(), string);
             case DATE:
                 if (string.length() == 0) {
                     return null;
                 }
                 try {
                     Date date = TIME_FORMAT_DATE.parse(string);
-                    return (int) (date.getTime() / DateTimeUtils.MILLIS_PER_DAY);
+                    return (int) (date.getTime() / 86_400_000L);
                 } catch (ParseException e) {
                     return null;
                 }
@@ -132,8 +131,7 @@ public class CsvRowConverter {
                 } catch (ParseException e) {
                     return null;
                 }
-            case GEOMETRY:
-            case VARCHAR:
+            case STRING:
             default:
                 return string;
         }

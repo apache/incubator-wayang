@@ -18,12 +18,12 @@
 
 package org.apache.wayang.api.sql.calcite.converter;
 
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
 import org.apache.wayang.api.sql.calcite.utils.ModelParser;
-import org.apache.wayang.api.sql.sources.fs.JavaCSVTableSource;
+import org.apache.wayang.java.operators.JavaCSVFileSource;
+import org.apache.wayang.java.operators.CsvType;
 import org.apache.wayang.core.plan.wayangplan.Operator;
 import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.jdbc.operators.JdbcTableSource;
@@ -64,15 +64,31 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
                         "Could not initialize calcite model parser from current Wayang configuration");
             }
 
-            final List<RelDataType> fieldTypes = wayangRelNode.getRowType().getFieldList().stream()
+            final List<CsvType> fieldTypes = wayangRelNode.getRowType().getFieldList().stream()
                     .map(RelDataTypeField::getType)
+                    .map(type -> {
+                        switch (type.getSqlTypeName()) {
+                            case BOOLEAN: return CsvType.BOOLEAN;
+                            case TINYINT: return CsvType.TINYINT;
+                            case SMALLINT: return CsvType.SMALLINT;
+                            case INTEGER: return CsvType.INTEGER;
+                            case BIGINT: return CsvType.BIGINT;
+                            case FLOAT: return CsvType.FLOAT;
+                            case DOUBLE: return CsvType.DOUBLE;
+                            case DECIMAL: return CsvType.decimal(type.getPrecision(), type.getScale());
+                            case DATE: return CsvType.DATE;
+                            case TIME: return CsvType.TIME;
+                            case TIMESTAMP: return CsvType.TIMESTAMP;
+                            default: return CsvType.STRING;
+                        }
+                    })
                     .collect(Collectors.toList());
 
             final String url = String.format("file:/%s/%s.csv", modelParser.getFsPath(), wayangRelNode.getTableName());
 
             final char separator = modelParser.getSchemaDelimiter(tableSource);
 
-            return new JavaCSVTableSource<>(url, DataSetType.createDefault(Record.class), fieldTypes, separator);
+            return new JavaCSVFileSource<>(url, DataSetType.createDefault(Record.class), fieldTypes, separator);
         } else if (wayangRelNode.getTable().getQualifiedName().size() == 1) {
             // we assume that it is coming from a test environement or in memory db.
 
