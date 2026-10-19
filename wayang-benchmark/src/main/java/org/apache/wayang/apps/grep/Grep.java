@@ -98,11 +98,19 @@ public class Grep implements Serializable {
   }
 
   public static void main(String... args) throws Exception {
+    if (args.length < 3) {
+      System.err.println("Usage: <size> <platform> <input-file> [output-file]");
+      System.err.println("  size: dataset size indicator");
+      System.err.println("  platform: so|pure-java|pure-spark|pure-flink|wayang-java|wayang-spark|wayang-flink");
+      System.err.println("  input-file: full path to input file");
+      System.err.println("  output-file: full path to output file (optional, defaults to <input-file>.out)");
+      System.exit(1);
+    }
+
     int size = Integer.parseInt(args[0]);
     String platform = args[1];
-
-    String input = args[2]+"/python/src/pywy/tests/resources/10e"+size+"MB.input";
-    String output = args[2]+"/lala.out";
+    String input = args[2];
+    String output = args.length > 3 ? args[3] : args[2] + ".out";
 
     String[] command = {"rm", "-r", output};
     Process process = Runtime.getRuntime().exec(command);

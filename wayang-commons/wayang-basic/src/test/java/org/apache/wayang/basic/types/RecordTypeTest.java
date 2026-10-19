@@ -22,6 +22,7 @@ import org.apache.wayang.basic.data.Record;
 import org.apache.wayang.core.types.DataSetType;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,5 +45,14 @@ class RecordTypeTest {
         assertFalse(t2.isSupertypeOf(t3));
         assertTrue(t3.isSupertypeOf(t3));
         assertFalse(t3.isSupertypeOf(t2));
+    }
+
+    @Test
+    void testEqualInstancesHaveSameHashCode() {
+        RecordType rt1 = new RecordType("x", "y", "z");
+        RecordType rt2 = new RecordType("x", "y", "z");
+
+        assertEquals(rt1, rt2);
+        assertEquals(rt1.hashCode(), rt2.hashCode());
     }
 }

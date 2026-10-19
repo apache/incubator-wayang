@@ -61,7 +61,8 @@ public class Mappings {
             new ZipWithIdMapping(),
             new KafkaTopicSinkMapping(),
             new KafkaTopicSourceMapping(),
-            new ParquetSinkMapping()
+            new ParquetSinkMapping(),
+            new TableSinkMapping()
 
     );
 

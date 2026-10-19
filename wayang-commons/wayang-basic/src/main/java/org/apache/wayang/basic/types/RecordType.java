@@ -65,7 +65,7 @@ public class RecordType extends BasicDataUnitType<Record> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), fieldNames);
+        return Objects.hash(super.hashCode(), Arrays.hashCode(fieldNames));
     }
 
     @Override

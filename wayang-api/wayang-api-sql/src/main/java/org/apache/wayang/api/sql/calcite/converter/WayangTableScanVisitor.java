@@ -18,7 +18,6 @@
 
 package org.apache.wayang.api.sql.calcite.converter;
 
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 import org.apache.wayang.api.sql.calcite.rel.WayangTableScan;
@@ -76,7 +75,7 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
                             case BIGINT: return CsvType.BIGINT;
                             case FLOAT: return CsvType.FLOAT;
                             case DOUBLE: return CsvType.DOUBLE;
-                            case DECIMAL: return CsvType.DECIMAL;
+                            case DECIMAL: return CsvType.decimal(type.getPrecision(), type.getScale());
                             case DATE: return CsvType.DATE;
                             case TIME: return CsvType.TIME;
                             case TIMESTAMP: return CsvType.TIMESTAMP;
@@ -84,13 +83,8 @@ public class WayangTableScanVisitor extends WayangRelNodeVisitor<WayangTableScan
                         }
                     })
                     .collect(Collectors.toList());
-            
 
-            final String url = String.format(
-                "file:/%s/%s.csv", 
-                modelParser.getFsPath(), 
-                wayangRelNode.getTableName()
-            );
+            final String url = String.format("file:/%s/%s.csv", modelParser.getFsPath(), wayangRelNode.getTableName());
 
             final char separator = modelParser.getSchemaDelimiter(tableSource);
 

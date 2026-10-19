@@ -69,13 +69,37 @@ public abstract class JdbcJoinOperator<KeyType>
         final Tuple<String, String> left = this.keyDescriptor0.getSqlImplementation();
         final Tuple<String, String> right = this.keyDescriptor1.getSqlImplementation();
         final String leftTableName = left.field0;
-        final String leftKey = left.field1;
+        final String leftKeys = left.field1;
         final String rightTableName = right.field0;
-        final String rightKey = right.field1;
+        final String rightKeys = right.field1;
 
-        return "JOIN " + rightTableName + " ON " +
-            rightTableName + "." + rightKey
-            + "=" + leftTableName + "." + leftKey;
+        if (leftKeys.contains(",") && rightKeys.contains(",")) {
+            final String[] leftColumns = leftKeys.split(",");
+            final String[] rightColumns = rightKeys.split(",");
+            
+            if (leftColumns.length != rightColumns.length) {
+                throw new IllegalStateException(
+                    "Mismatch in join key counts: left has " + leftColumns.length + 
+                    " keys, right has " + rightColumns.length + " keys");
+            }
+            
+            final StringBuilder joinCondition = new StringBuilder();
+            for (int i = 0; i < leftColumns.length; i++) {
+                if (i > 0) {
+                    joinCondition.append(" AND ");
+                }
+                joinCondition.append(leftTableName).append(".").append(leftColumns[i].trim())
+                    .append("=")
+                    .append(rightTableName).append(".").append(rightColumns[i].trim());
+            }
+            
+            return "JOIN " + rightTableName + " ON " + joinCondition.toString();
+        } else {
+            // Backward compatibility
+            return "JOIN " + rightTableName + " ON " +
+                rightTableName + "." + rightKeys
+                + "=" + leftTableName + "." + leftKeys;
+        }
     }
 
     @Override

@@ -160,8 +160,13 @@ public class TensorflowIrisScalaLikeApiIT {
         DataQuantaBuilder<?, String> textFileSource = plan.readTextFile(uri.toString());
 
         if (random) {
+            // Assign random keys for shuffling, then sort by those keys
+            // This avoids comparator contract violations from r.nextInt()
             Random r = new Random();
-            textFileSource = textFileSource.sort(e -> r.nextInt());
+            textFileSource = textFileSource
+                    .map(line -> new Tuple<>(r.nextDouble(), line))
+                    .sort(tuple -> tuple.field0)
+                    .map(tuple -> tuple.field1);
         }
 
         MapDataQuantaBuilder<String, Tuple<float[], Integer>> mapXY = textFileSource.map(line -> {

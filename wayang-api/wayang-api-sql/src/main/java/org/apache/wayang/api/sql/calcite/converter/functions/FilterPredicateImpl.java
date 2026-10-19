@@ -102,7 +102,8 @@ public class FilterPredicateImpl implements FunctionDescriptor.SerializablePredi
          * @return true if {@code s1} like {@code s2}
          */
         private static boolean like(final String s1, final String s2) {
-            return new SqlFunctions.LikeFunction().like(s1, s2);
+            return s1 == null || s2 == null ? false : new SqlFunctions.LikeFunction().like(s1, s2);
+
         }
 
         /**

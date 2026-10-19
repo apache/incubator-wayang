@@ -34,15 +34,17 @@ import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator
 import org.apache.wayang.core.plan.wayangplan._
+import org.apache.wayang.core.api.spatial.{SpatialGeometry, SpatialPredicate}
 import org.apache.wayang.core.platform.Platform
 import org.apache.wayang.core.util.{Tuple => WayangTuple}
 import org.apache.wayang.basic.data.{Record, Tuple2 => WayangTuple2}
-import org.apache.wayang.basic.model.{DLModel, LogisticRegressionModel,DecisionTreeRegressionModel};
+import org.apache.wayang.basic.model.{DLModel, LogisticRegressionModel,DecisionTreeRegressionModel}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
-import com.google.protobuf.ByteString;
+import com.google.protobuf.ByteString
 import org.apache.wayang.api.python.function._
 import org.tensorflow.ndarray.NdArray
 
+import scala.collection.JavaConverters._
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
 import scala.reflect._
@@ -632,6 +634,113 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     joinOperator
   }
 
+  def semanticFilterPrompt(prompt: String): DataQuanta[Out] = {
+    val dataSetType = org.apache.wayang.core.types.DataSetType.createDefault(
+      this.output.getType.getDataUnitType.toBasicDataUnitType
+    )
+
+    val filterOperator = new SemanticFilterOperator[Out](
+      dataSetType,
+      prompt
+    )
+
+    this.connectTo(filterOperator, 0)
+    wrap[Out](filterOperator)
+  }
+
+  def semanticFilterPrompt(prompt: String, targetModels: AnyRef * ): DataQuanta[Out] = {
+      val dataSetType = org.apache.wayang.core.types.DataSetType.createDefault(
+        this.output.getType.getDataUnitType.toBasicDataUnitType
+      )
+
+      val targetModelsSet: java.util.Set[Object] = targetModels.toSet.asJava.asInstanceOf[java.util.Set[Object]]
+      
+      val filterOperator = new SemanticFilterOperator[Out](
+        dataSetType,
+        prompt,
+        targetModelsSet
+      )
+
+      this.connectTo(filterOperator, 0)
+      wrap[Out](filterOperator)
+  }
+
+
+  /**
+    * Applies a spatial filter to this instance.
+    *
+    * @param keySelector    UDF to extract spatial geometry from data quanta
+    * @param predicateType  the spatial predicate type
+    * @param filterGeometry the geometry to filter against
+    * @param columnName     optional SQL column name for database pushdown
+    * @return a new instance representing the filtered output
+    */
+  def spatialFilter(keySelector: Out => SpatialGeometry,
+                    predicateType: SpatialPredicate,
+                    filterGeometry: SpatialGeometry,
+                    columnName: String = null): DataQuanta[Out] =
+    spatialFilterJava(toSerializableFunction(keySelector), predicateType, filterGeometry, columnName)
+
+  /**
+    * Applies a spatial filter to this instance.
+    *
+    * @param keySelector    UDF to extract spatial geometry from data quanta
+    * @param predicateType  the spatial predicate type
+    * @param filterGeometry the geometry to filter against
+    * @param columnName     optional SQL column name for database pushdown
+    * @return a new instance representing the filtered output
+    */
+  def spatialFilterJava(keySelector: SerializableFunction[Out, _ <: SpatialGeometry],
+                        predicateType: SpatialPredicate,
+                        filterGeometry: SpatialGeometry,
+                        columnName: String = null): DataQuanta[Out] = {
+    val op = new SpatialFilterOperator(predicateType, keySelector, dataSetType[Out], filterGeometry)
+    if (columnName != null) op.getKeyDescriptor.withSqlImplementation(null, columnName)
+    this.connectTo(op, 0)
+    wrap[Out](op)
+  }
+
+  /**
+    * Feeds this and a further instance into a [[SpatialJoinOperator]].
+    *
+    * @param thisKeyUdf    UDF to extract spatial geometry from this instance's elements
+    * @param that          the other instance
+    * @param thatKeyUdf    UDF to extract spatial geometry from `that` instance's elements
+    * @param predicateType the spatial predicate type for the join
+    * @return a new instance representing the SpatialJoinOperator's output
+    */
+  def spatialJoin[ThatOut: ClassTag](
+      thisKeyUdf: Out => SpatialGeometry,
+      that: DataQuanta[ThatOut],
+      thatKeyUdf: ThatOut => SpatialGeometry,
+      predicateType: SpatialPredicate): DataQuanta[WayangTuple2[Out, ThatOut]] =
+    spatialJoinJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf), predicateType)
+
+  /**
+    * Feeds this and a further instance into a [[SpatialJoinOperator]].
+    *
+    * @param thisKeyUdf    UDF to extract spatial geometry from this instance's elements
+    * @param that          the other instance
+    * @param thatKeyUdf    UDF to extract spatial geometry from `that` instance's elements
+    * @param predicateType the spatial predicate type for the join
+    * @return a new instance representing the SpatialJoinOperator's output
+    */
+  def spatialJoinJava[ThatOut: ClassTag](
+      thisKeyUdf: SerializableFunction[Out, _ <: SpatialGeometry],
+      that: DataQuanta[ThatOut],
+      thatKeyUdf: SerializableFunction[ThatOut, _ <: SpatialGeometry],
+      predicateType: SpatialPredicate): DataQuanta[WayangTuple2[Out, ThatOut]] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
+    val op = new SpatialJoinOperator(
+      new TransformationDescriptor(thisKeyUdf.asInstanceOf[SerializableFunction[Out, SpatialGeometry]], basicDataUnitType[Out], basicDataUnitType[SpatialGeometry]),
+      new TransformationDescriptor(thatKeyUdf.asInstanceOf[SerializableFunction[ThatOut, SpatialGeometry]], basicDataUnitType[ThatOut], basicDataUnitType[SpatialGeometry]),
+      predicateType
+    )
+    this.connectTo(op, 0)
+    that.connectTo(op, 1)
+    wrap[WayangTuple2[Out, ThatOut]](op)
+  }
+
   def predict[ThatOut: ClassTag](
     that: DataQuanta[ThatOut],
     inputType: Class[_ <: Any],
@@ -1112,7 +1221,26 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
       this.planBuilder.sinks.clear()
     }
 
-
+    /**
+    * Write the data quanta in this instance to a database table. Triggers execution.
+    *
+    * @param tableName   name of the target table
+    * @param mode        write mode (e.g., "overwrite" or "append")
+    * @param columnNames names of the columns in the target table
+    * @param props       database connection properties
+    */
+  def writeTable(tableName: String,
+                 mode: String,
+                 columnNames: Array[String],
+                 props: java.util.Properties): Unit = {
+    val sink = new TableSink[Out](props, mode, tableName, columnNames: _*)
+    sink.setName(s"Write to table $tableName")
+    this.connectTo(sink, 0)
+    this.planBuilder.sinks += sink
+    this.planBuilder.buildAndExecute()
+    this.planBuilder.sinks.clear()
+  }
+  
   /**
     * Write the data quanta in this instance to a text file. Triggers execution.
     *
@@ -1307,8 +1435,10 @@ class JoinedDataQuanta[Out0: ClassTag, Out1: ClassTag]
 }
 
 /**
- * TODO: add the documentation to the object org.apache.wayang.api.DataQuanta
- * labels: documentation,todo
+ * Companion object for [[DataQuanta]].
+ *
+ * Provides factory methods to create [[DataQuanta]] instances directly
+ * from [[OutputSlot]]s.
  */
 object DataQuanta {
 

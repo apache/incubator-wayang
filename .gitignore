@@ -34,3 +34,4 @@ pom.xml.*
 
 # Scala Plugin for VSCode
 .metals
+.bloop/

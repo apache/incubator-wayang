@@ -33,12 +33,15 @@ import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.jdbc.execution.JdbcExecutor;
 import org.apache.wayang.core.profiling.NoInstrumentationStrategy;
 import org.apache.wayang.core.optimizer.DefaultOptimizationContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -48,6 +51,21 @@ import static org.mockito.Mockito.when;
  * Test suite for {@link SqlToStreamOperator}.
  */
 class JdbcJoinOperatorTest extends OperatorTestBase {
+    @BeforeEach
+    void initDB() throws SQLException {
+        HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
+        try (
+            Connection jdbcConnection = hsqldbPlatform
+                .createDatabaseDescriptor(configuration)
+                .createJdbcConnection()
+        ) {
+            final Statement statement = jdbcConnection.createStatement();
+            statement.execute("DROP TABLE IF EXISTS testA");
+            statement.execute("DROP TABLE IF EXISTS testB");
+            statement.execute("DROP TABLE IF EXISTS orders");
+            statement.execute("DROP TABLE IF EXISTS shipments");
+        }
+    }
     @Test
     void testWithHsqldb() throws SQLException {
         Configuration configuration = new Configuration();
@@ -100,7 +118,12 @@ class JdbcJoinOperatorTest extends OperatorTestBase {
         joinTask.setOutputChannel(0, new SqlQueryChannel(sqlChannelDescriptor, joinOperator.getOutput(0)));
         joinTask.setStage(sqlStage);
 
-        when(sqlStage.getStartTasks()).thenReturn(Collections.singleton(tableSourceATask));
+        // Deliberately list the right source first: JdbcExecutor must still choose
+        // the join's left source for the FROM clause.
+        when(sqlStage.getStartTasks()).thenReturn(new LinkedHashSet<>(Arrays.asList(
+                tableSourceBTask, tableSourceATask)));
+        when(sqlStage.getAllTasks()).thenReturn(new LinkedHashSet<>(Arrays.asList(
+                tableSourceBTask, tableSourceATask, joinTask)));
         when(sqlStage.getTerminalTasks()).thenReturn(Collections.singleton(joinTask));
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
@@ -119,8 +142,121 @@ class JdbcJoinOperatorTest extends OperatorTestBase {
         System.out.println();
 
         assertEquals(
-            "SELECT * FROM testA JOIN testB ON testB.a=testA.a;",
+            "SELECT * FROM testA JOIN testB ON testB.a=testA.a",
             sqlQueryChannelInstance.getSqlQuery()
         );
     }
+
+    @Test
+    void testMultiConditionJoinWithHsqldb() throws SQLException {
+        Configuration configuration = new Configuration();
+
+        Job job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new NoInstrumentationStrategy()));
+        SqlQueryChannel.Descriptor sqlChannelDescriptor = HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor();
+
+        HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
+
+        ExecutionStage sqlStage = mock(ExecutionStage.class);
+
+        Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection();
+        try {
+            final Statement statement = jdbcConnection.createStatement();
+            statement.execute("CREATE TABLE orders (order_id INT, customer_id INT, product_id INT, quantity INT);");
+            statement.execute("INSERT INTO orders VALUES (1, 100, 1001, 5);");
+            statement.execute("INSERT INTO orders VALUES (2, 101, 1002, 3);");
+            statement.execute("INSERT INTO orders VALUES (3, 100, 1003, 2);");
+            statement.execute("CREATE TABLE shipments (order_id INT, customer_id INT, ship_date VARCHAR(10));");
+            statement.execute("INSERT INTO shipments VALUES (1, 100, '2024-01-15');");
+            statement.execute("INSERT INTO shipments VALUES (2, 101, '2024-01-16');");
+            statement.execute("INSERT INTO shipments VALUES (3, 999, '2024-01-17');");
+
+            JdbcTableSource tableSourceOrders = new HsqldbTableSource("orders");
+            JdbcTableSource tableSourceShipments = new HsqldbTableSource("shipments");
+
+            ExecutionTask tableSourceOrdersTask = new ExecutionTask(tableSourceOrders);
+            tableSourceOrdersTask.setOutputChannel(0, new SqlQueryChannel(sqlChannelDescriptor, tableSourceOrders.getOutput(0)));
+            tableSourceOrdersTask.setStage(sqlStage);
+
+            ExecutionTask tableSourceShipmentsTask = new ExecutionTask(tableSourceShipments);
+            tableSourceShipmentsTask.setOutputChannel(0, new SqlQueryChannel(sqlChannelDescriptor, tableSourceShipments.getOutput(0)));
+            tableSourceShipmentsTask.setStage(sqlStage);
+
+            final ExecutionOperator joinOperator = new HsqldbJoinOperator<Record>(
+                new TransformationDescriptor<Record, Record>(
+                    (record) -> new Record(record.getField(0), record.getField(1)),
+                    Record.class,
+                    Record.class
+                ).withSqlImplementation("orders", "order_id,customer_id"),
+                new TransformationDescriptor<Record, Record>(
+                    (record) -> new Record(record.getField(0), record.getField(1)),
+                    Record.class,
+                    Record.class
+                ).withSqlImplementation("shipments", "order_id,customer_id")
+            );
+
+            ExecutionTask joinTask = new ExecutionTask(joinOperator);
+            tableSourceOrdersTask.getOutputChannel(0).addConsumer(joinTask, 0);
+            tableSourceShipmentsTask.getOutputChannel(0).addConsumer(joinTask, 1);
+            joinTask.setOutputChannel(0, new SqlQueryChannel(sqlChannelDescriptor, joinOperator.getOutput(0)));
+            joinTask.setStage(sqlStage);
+
+            when(sqlStage.getStartTasks()).thenReturn(Collections.singleton(tableSourceOrdersTask));
+            when(sqlStage.getTerminalTasks()).thenReturn(Collections.singleton(joinTask));
+
+            ExecutionStage nextStage = mock(ExecutionStage.class);
+
+            SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
+            ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
+            joinTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
+            sqlToStreamTask.setStage(nextStage);
+
+            JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
+            executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
+
+            SqlQueryChannel.Instance sqlQueryChannelInstance =
+                    (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
+
+            String generatedSql = sqlQueryChannelInstance.getSqlQuery();
+            assertEquals(
+                "SELECT * FROM orders JOIN shipments ON orders.order_id=shipments.order_id AND orders.customer_id=shipments.customer_id",
+                generatedSql
+            );
+
+            java.sql.ResultSet resultSet = statement.executeQuery(generatedSql);
+            
+            int rowCount = 0;
+            boolean foundOrder1 = false;
+            boolean foundOrder2 = false;
+            
+            while (resultSet.next()) {
+                rowCount++;
+                int orderId = resultSet.getInt("order_id");
+                int customerId = resultSet.getInt("customer_id");
+                String shipDate = resultSet.getString("ship_date");
+                
+                if (orderId == 1 && customerId == 100) {
+                    foundOrder1 = true;
+                    assertEquals("2024-01-15", shipDate);
+                    assertEquals(1001, resultSet.getInt("product_id"));
+                    assertEquals(5, resultSet.getInt("quantity"));
+                } else if (orderId == 2 && customerId == 101) {
+                    foundOrder2 = true;
+                    assertEquals("2024-01-16", shipDate);
+                    assertEquals(1002, resultSet.getInt("product_id"));
+                    assertEquals(3, resultSet.getInt("quantity"));
+                }
+            }
+            
+            assertEquals(2, rowCount, "Should return exactly 2 rows (order_id=3 with customer_id=100 should not match shipment with customer_id=999)");
+            assertEquals(true, foundOrder1, "Should find order 1 with customer 100");
+            assertEquals(true, foundOrder2, "Should find order 2 with customer 101");
+            
+            resultSet.close();
+        } finally {
+            jdbcConnection.close();
+        }
+    }
+
 }

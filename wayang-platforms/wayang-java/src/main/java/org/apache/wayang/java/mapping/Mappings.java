@@ -64,7 +64,9 @@ public class Mappings {
             new GoogleCloudStorageSourceMapping(),
             new AzureBlobStorageSourceMapping(),
             new ApacheIcebergSourceMapping(),
-            new ApacheIcebergSinkMapping()
+            new ApacheIcebergSinkMapping(),
+            new ParquetSinkMapping(),
+            new TableSinkMapping()
     );
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(

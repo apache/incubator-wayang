@@ -28,8 +28,9 @@ import org.apache.wayang.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaB
 import org.apache.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.apache.wayang.basic.data.{Record, Tuple2 => RT2}
 import org.apache.wayang.basic.model.{DLModel, Model, LogisticRegressionModel,DecisionTreeRegressionModel}
-import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator, LinearSVCOperator}
+import org.apache.wayang.basic.operators.{DLTrainingOperator, GlobalReduceOperator, JoinOperator, LocalCallbackSink, MapOperator, ReduceByOperator, SampleOperator, SortOperator, LogisticRegressionOperator,DecisionTreeRegressionOperator, LinearSVCOperator}
 import org.apache.wayang.commons.util.profiledb.model.Experiment
+import org.apache.wayang.core.api.spatial.{SpatialGeometry, SpatialPredicate}
 import org.apache.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializableIntUnaryOperator, SerializablePredicate}
 import org.apache.wayang.core.optimizer.ProbabilisticDoubleInterval
 import org.apache.wayang.core.optimizer.cardinality.CardinalityEstimator
@@ -44,10 +45,9 @@ import org.apache.iceberg.Schema
 import org.apache.iceberg.FileFormat
 import org.apache.iceberg.catalog.{Catalog, TableIdentifier}
 
-
-
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
+import scala.annotation.varargs
 
 /**
   * Trait/interface for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
@@ -281,6 +281,60 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
                          thatKeyUdf: SerializableFunction[ThatOut, Key]) =
     new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
 
+  def semanticFilter(prompt: String) = 
+    new SemanticFilterDataQuantaBuilder[Out](this, prompt)
+
+  /**
+    * Feed the built [[DataQuanta]] into a spatial filter operator.
+    * Requires the wayang-spatial plugin to be loaded.
+    *
+    * @param keyUdf          function to extract geometry from elements
+    * @param predicate       the spatial predicate type
+    * @param filterGeometry  the geometry to filter against
+    * @return a [[DataQuantaBuilder]] representing the filtered output
+    */
+  def spatialFilter(
+      keyUdf: SerializableFunction[Out, _ <: SpatialGeometry],
+      predicate: SpatialPredicate,
+      filterGeometry: SpatialGeometry
+  ): SpatialFilterDataQuantaBuilder[Out] =
+    new SpatialFilterDataQuantaBuilder(this, keyUdf, predicate, filterGeometry)
+
+  /**
+    * Feed the built [[DataQuanta]] into a spatial filter operator with SQL pushdown support.
+    *
+    * @param keyUdf              function to extract geometry from elements
+    * @param predicate           the spatial predicate type
+    * @param filterGeometry      the geometry to filter against
+    * @param sqlGeometryColumn   the name of the geometry column in the database for SQL pushdown
+    * @return a [[SpatialFilterDataQuantaBuilder]] representing the filtered output
+    */
+  def spatialFilter(
+      keyUdf: SerializableFunction[Out, _ <: SpatialGeometry],
+      predicate: SpatialPredicate,
+      filterGeometry: SpatialGeometry,
+      sqlGeometryColumn: String
+  ): SpatialFilterDataQuantaBuilder[Out] =
+    new SpatialFilterDataQuantaBuilder(this, keyUdf, predicate, filterGeometry)
+      .withSqlGeometryColumnName(sqlGeometryColumn)
+
+  /**
+    * Feed the built [[DataQuanta]] of this and the given instance into a spatial join operator.
+    *
+    * @param thisKeyUdf  function to extract geometry from this instance's elements
+    * @param that        the other [[DataQuantaBuilder]] to join with
+    * @param thatKeyUdf  function to extract geometry from `that` instance's elements
+    * @param predicate   the spatial predicate type
+    * @return a [[SpatialJoinDataQuantaBuilder]] representing the joined output as Tuple2
+    */
+  def spatialJoin[ThatOut](
+      thisKeyUdf: SerializableFunction[Out, _ <: SpatialGeometry],
+      that: DataQuantaBuilder[_, ThatOut],
+      thatKeyUdf: SerializableFunction[ThatOut, _ <: SpatialGeometry],
+      predicate: SpatialPredicate
+  ): SpatialJoinDataQuantaBuilder[Out, ThatOut] =
+    new SpatialJoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf, predicate)
+
   /**
    * Feed the built [[DataQuanta]] of this and the given instance into a
    * [[org.apache.wayang.basic.operators.DLTrainingOperator]].
@@ -510,12 +564,12 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @param catalog          Iceberg Catalog
     * @param schema           Iceberg Schema of the table to create
     * @param tableIdentifier  Iceberg Table Identifier of the table to create
-    * @param outputFileFormat File format of the output data files    
+    * @param outputFileFormat File format of the output data files
     * @return the collected data quanta
     */
 
-  def writeIcebergTable(catalog: Catalog, 
-                      schema: Schema, 
+  def writeIcebergTable(catalog: Catalog,
+                      schema: Schema,
                       tableIdentifier: TableIdentifier,
                       outputFileFormat: FileFormat,
                       jobName: String): Unit = {
@@ -537,6 +591,70 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
                     udfLoadProfileEstimator: LoadProfileEstimator): Unit = {
     this.javaPlanBuilder.withJobName(jobName)
     this.dataQuanta().writeKafkaTopic(topicName, formatterUdf, udfLoadProfileEstimator)
+  }
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.apache.wayang.basic.operators.ParquetSink]]. This triggers
+    * execution of the constructed [[WayangPlan]].
+    *
+    * @param url            URL of the Parquet file to be written
+    * @param overwrite      whether to overwrite existing files
+    * @param preferDataset  whether to prefer Spark Dataset over RDD
+    */
+  def writeParquet(url: String,
+                   overwrite: Boolean,
+                   preferDataset: Boolean): Unit =
+    this.writeParquet(url, overwrite, preferDataset, null)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.apache.wayang.basic.operators.ParquetSink]]. This triggers
+    * execution of the constructed [[WayangPlan]].
+    *
+    * @param url            URL of the Parquet file to be written
+    * @param overwrite      whether to overwrite existing files
+    * @param preferDataset  whether to prefer Spark Dataset over RDD
+    * @param jobName        optional name for the [[WayangPlan]]
+    */
+  def writeParquet(url: String,
+                   overwrite: Boolean,
+                   preferDataset: Boolean,
+                   jobName: String): Unit = {
+    if (jobName != null) this.javaPlanBuilder.withJobName(jobName)
+    this.dataQuanta().asInstanceOf[DataQuanta[Record]].writeParquet(url, overwrite, preferDataset)
+  }
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.apache.wayang.basic.operators.TableSink]]. This triggers
+    * execution of the constructed [[WayangPlan]].
+    *
+    * @param tableName   name of the target table
+    * @param mode        write mode (e.g., "overwrite" or "append")
+    * @param columnNames names of the columns in the target table
+    * @param props       database connection properties
+    */
+  def writeTable(tableName: String,
+                 mode: String,
+                 columnNames: Array[String],
+                 props: java.util.Properties): Unit =
+    this.writeTable(tableName, mode, columnNames, props, null)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.apache.wayang.basic.operators.TableSink]]. This triggers
+    * execution of the constructed [[WayangPlan]].
+    *
+    * @param tableName   name of the target table
+    * @param mode        write mode (e.g., "overwrite" or "append")
+    * @param columnNames names of the columns in the target table
+    * @param props       database connection properties
+    * @param jobName     optional name for the [[WayangPlan]]
+    */
+  def writeTable(tableName: String,
+                 mode: String,
+                 columnNames: Array[String],
+                 props: java.util.Properties,
+                 jobName: String): Unit = {
+    if (jobName != null) this.javaPlanBuilder.withJobName(jobName)
+    this.dataQuanta().writeTable(tableName, mode, columnNames, props)
   }
 
   /**
@@ -904,6 +1022,10 @@ class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
   /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf]]. */
   private var keyUdfRamEstimator: LoadEstimator = _
 
+  /** SQL column and direction implementing the sort key. */
+  private var sqlColumnName: String = _
+  private var sqlDirection: String = _
+
 
   // Try to infer the type classes from the UDFs.
   locally {
@@ -944,8 +1066,27 @@ class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
     this
   }
 
-  override protected def build =
-    applyTargetPlatforms(inputDataQuanta.dataQuanta().sortJava(keyUdf)(this.keyTag), this.getTargetPlatforms())
+  /**
+    * Add a SQL implementation of the sort key.
+    *
+    * @param columnName SQL column to sort by
+    * @param direction SQL sort direction, e.g. `ASC` or `DESC`
+    * @return this instance
+    */
+  def withSqlUdf(columnName: String, direction: String) = {
+    this.sqlColumnName = columnName
+    this.sqlDirection = direction
+    this
+  }
+
+  override protected def build = {
+    val result = inputDataQuanta.dataQuanta().sortJava(keyUdf)(this.keyTag)
+    if (this.sqlColumnName != null) {
+      result.operator.asInstanceOf[SortOperator[T, Key]]
+        .getKeyDescriptor.withSqlImplementation(this.sqlColumnName, this.sqlDirection)
+    }
+    applyTargetPlatforms(result, this.getTargetPlatforms())
+  }
 
 }
 
@@ -1167,6 +1308,10 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
   /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
   private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
+  /** SQL implementations of the grouping key and reduction. */
+  private var keySqlUdf: String = _
+  private var reduceSqlUdf: String = _
+
   // TODO: Add these estimators.
   //  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf]]. */
   //  private var keyUdfCpuEstimator: LoadEstimator = _
@@ -1206,7 +1351,29 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
     this
   }
 
-  override protected def build = applyTargetPlatforms(inputDataQuanta.dataQuanta().reduceByKeyJava(keyUdf, udf, this.udfLoadProfileEstimator), this.getTargetPlatforms())
+  /**
+    * Add SQL implementations of the grouping key and reduction.
+    *
+    * @param keySqlUdf SQL grouping column
+    * @param reduceSqlUdf SQL aggregate expression
+    * @return this instance
+    */
+  def withSqlUdfs(keySqlUdf: String, reduceSqlUdf: String) = {
+    this.keySqlUdf = keySqlUdf
+    this.reduceSqlUdf = reduceSqlUdf
+    this
+  }
+
+  override protected def build = {
+    val result = inputDataQuanta.dataQuanta()
+      .reduceByKeyJava(keyUdf, udf, this.udfLoadProfileEstimator)
+    if (this.keySqlUdf != null) {
+      val operator = result.operator.asInstanceOf[ReduceByOperator[T, Key]]
+      operator.getKeyDescriptor.withSqlImplementation(this.keySqlUdf, this.keySqlUdf)
+      operator.getReduceDescriptor.withSqlImplementation(this.reduceSqlUdf)
+    }
+    applyTargetPlatforms(result, this.getTargetPlatforms())
+  }
 }
 
 /**
@@ -1286,6 +1453,9 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
   /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
   private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
+  /** SQL implementation of the reduction. */
+  private var sqlUdf: String = _
+
   // Try to infer the type classes from the udf.
   locally {
     val parameters = ReflectionUtils.getTypeParameters(udf.getClass, classOf[SerializableBinaryOperator[_]])
@@ -1306,7 +1476,25 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
     this
   }
 
-  override protected def build = applyTargetPlatforms(inputDataQuanta.dataQuanta().reduceJava(udf, this.udfLoadProfileEstimator), this.getTargetPlatforms())
+  /**
+    * Add a SQL implementation of the reduction.
+    *
+    * @param sqlUdf SQL aggregate expression
+    * @return this instance
+    */
+  def withSqlUdf(sqlUdf: String) = {
+    this.sqlUdf = sqlUdf
+    this
+  }
+
+  override protected def build = {
+    val result = inputDataQuanta.dataQuanta().reduceJava(udf, this.udfLoadProfileEstimator)
+    if (this.sqlUdf != null) {
+      result.operator.asInstanceOf[GlobalReduceOperator[T]]
+        .getReduceDescriptor.withSqlImplementation(this.sqlUdf)
+    }
+    applyTargetPlatforms(result, this.getTargetPlatforms())
+  }
 
 }
 
@@ -1373,6 +1561,12 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
 
   /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf1]]. */
   private var keyUdf1RamEstimator: LoadEstimator = _
+
+  /** SQL implementations of both join keys. */
+  private var keyUdf0TableName: String = _
+  private var keyUdf0SqlUdf: String = _
+  private var keyUdf1TableName: String = _
+  private var keyUdf1SqlUdf: String = _
 
   // Try to infer the type classes from the UDFs.
   locally {
@@ -1453,6 +1647,22 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
   }
 
   /**
+    * Add SQL implementations of both join keys.
+    *
+    * @return this instance
+    */
+  def withSqlUdfs(thisTableName: String,
+                  thisKeySqlUdf: String,
+                  thatTableName: String,
+                  thatKeySqlUdf: String) = {
+    this.keyUdf0TableName = thisTableName
+    this.keyUdf0SqlUdf = thisKeySqlUdf
+    this.keyUdf1TableName = thatTableName
+    this.keyUdf1SqlUdf = thatKeySqlUdf
+    this
+  }
+
+  /**
     * Assemble the joined elements to new elements.
     *
     * @param udf produces a joined element from two joinable elements
@@ -1463,8 +1673,16 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
       override def apply(joinTuple: RT2[In0, In1]): NewOut = udf.apply(joinTuple.field0, joinTuple.field1)
     })
 
-  override protected def build =
-    applyTargetPlatforms(inputDataQuanta0.dataQuanta().joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag), this.getTargetPlatforms())
+  override protected def build = {
+    val result = inputDataQuanta0.dataQuanta()
+      .joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag)
+    if (this.keyUdf0SqlUdf != null) {
+      val operator = result.operator.asInstanceOf[JoinOperator[In0, In1, Key]]
+      operator.getKeyDescriptor0.withSqlImplementation(this.keyUdf0TableName, this.keyUdf0SqlUdf)
+      operator.getKeyDescriptor1.withSqlImplementation(this.keyUdf1TableName, this.keyUdf1SqlUdf)
+    }
+    applyTargetPlatforms(result, this.getTargetPlatforms())
+  }
 
 }
 
@@ -1928,4 +2146,78 @@ class KeyedDataQuantaBuilder[Out, Key](private val dataQuantaBuilder: DataQuanta
   def coGroup[ThatOut](that: KeyedDataQuantaBuilder[ThatOut, Key]) =
     dataQuantaBuilder.coGroup(this.keyExtractor, that.dataQuantaBuilder, that.keyExtractor)
 
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.apache.wayang.basic.operators.SemanticFilterOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param udf             UDF for the [[SemanticFilterOperator]]
+  */
+class SemanticFilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], prompt: String)
+                                (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[SemanticFilterDataQuantaBuilder[T], T] {
+
+    // Reuse the input TypeTrap to enforce type equality between input and output.
+    override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
+
+    /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
+    private var udfLoadProfileEstimator: LoadProfileEstimator = _
+
+    /** Selectivity of the filter predicate. */
+    private var selectivity: ProbabilisticDoubleInterval = _
+
+    /*
+
+    */
+    private val targetModels: ListBuffer[AnyRef] = ListBuffer()
+
+    @varargs def withTargetModels(models: AnyRef *): SemanticFilterDataQuantaBuilder[T] = {
+        models.foreach(targetModels.+=_)
+        this
+      }
+
+    override protected def build = applyTargetPlatforms(
+      inputDataQuanta.dataQuanta()
+          .semanticFilterPrompt(prompt, targetModels: _ *), 
+      this.getTargetPlatforms()
+    )
+  }
+
+class SpatialFilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
+                                        keySelector: SerializableFunction[T, _ <: SpatialGeometry],
+                                        predicateType: SpatialPredicate,
+                                        filterGeometry: SpatialGeometry)
+                                       (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[SpatialFilterDataQuantaBuilder[T], T] {
+
+  private var columnName: String = _
+
+  def withSqlGeometryColumnName(columnName: String): SpatialFilterDataQuantaBuilder[T] = {
+    this.columnName = columnName
+    this
+  }
+
+  override protected def build: DataQuanta[T] = {
+    val dq = inputDataQuanta.dataQuanta()
+    dq.spatialFilterJava(keySelector, predicateType, filterGeometry, this.columnName)
+  }
+}
+
+class SpatialJoinDataQuantaBuilder[In0, In1](inputDataQuanta0: DataQuantaBuilder[_, In0],
+                                             inputDataQuanta1: DataQuantaBuilder[_, In1],
+                                             keyUdf0: SerializableFunction[In0, _ <: SpatialGeometry],
+                                             keyUdf1: SerializableFunction[In1, _ <: SpatialGeometry],
+                                             predicateType: SpatialPredicate)
+                                            (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[SpatialJoinDataQuantaBuilder[In0, In1], RT2[In0, In1]] {
+
+  override protected def build: DataQuanta[RT2[In0, In1]] = {
+    val dq0 = inputDataQuanta0.dataQuanta()
+    val dq1 = inputDataQuanta1.dataQuanta()
+    applyTargetPlatforms(
+      dq0.spatialJoinJava(keyUdf0, dq1, keyUdf1, predicateType)(inputDataQuanta1.classTag),
+      this.getTargetPlatforms()
+    )
+  }
 }

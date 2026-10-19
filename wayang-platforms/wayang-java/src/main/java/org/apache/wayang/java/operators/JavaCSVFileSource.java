@@ -35,8 +35,6 @@ import org.apache.wayang.core.util.fs.FileSystems;
 import org.apache.wayang.core.util.fs.FileUtils;
 import org.apache.wayang.java.channels.StreamChannel;
 import org.apache.wayang.java.execution.JavaExecutor;
-import org.apache.wayang.java.operators.JavaExecutionOperator;
-import org.apache.wayang.java.operators.CsvRowConverter;
 
 import java.io.BufferedReader;
 import java.io.IOException;

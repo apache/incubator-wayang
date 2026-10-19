@@ -42,7 +42,6 @@
          WayangContext wayangContext = new WayangContext(new Configuration())
                  .withPlugin(Java.basicPlugin())
                  .withPlugin(Spark.basicPlugin());
- //                .withPlugin(Flink.basicPlugin());
  
          JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext)
                  .withJobName("WordCount")
@@ -55,7 +54,6 @@
  
                  /* Split each line by non-word characters */
                  .flatMap(line -> Arrays.asList(line.split("\\W+")))
- //                .withSelectivity(1, 100, 0.9)
                  .withName("Split words")
  
                  /* Filter empty tokens */

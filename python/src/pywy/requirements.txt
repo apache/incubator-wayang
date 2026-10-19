@@ -18,5 +18,5 @@
 # we support python 3.11
 numpy==1.24.0
 cloudpickle==3.1.2
-pytest==8.3.5
-requests==2.32.4
+pytest==9.0.3
+requests==2.33.0
