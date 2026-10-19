@@ -73,12 +73,12 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>3.9.1</version>
+            <version>3.9.2</version>
         </dependency>
         <dependency>
           <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_2.12</artifactId>
-          <version>3.4.4</version>
+          <artifactId>spark-core_${scala.mayor.version}</artifactId>
+          <version>${spark.version}</version>
           <exclusions>
             <exclusion>
               <groupId>org.xerial.snappy</groupId>
@@ -88,18 +88,18 @@
         </dependency>
         <dependency>
           <groupId>org.apache.spark</groupId>
-          <artifactId>spark-graphx_2.12</artifactId>
-          <version>3.4.4</version>
+          <artifactId>spark-graphx_${scala.mayor.version}</artifactId>
+          <version>${spark.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.12</artifactId>
-            <version>3.4.4</version>
+            <artifactId>spark-sql_${scala.mayor.version}</artifactId>
+            <version>${spark.version}</version>
         </dependency>
         <dependency>
           <groupId>org.apache.spark</groupId>
-          <artifactId>spark-mllib_2.12</artifactId>
-          <version>3.4.4</version>
+          <artifactId>spark-mllib_${scala.mayor.version}</artifactId>
+          <version>${spark.version}</version>
         </dependency>
         <!--Error of ArrayIndexOutOfBoundsException-->
         <dependency>
@@ -117,8 +117,14 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
-            <version>4.8</version>
+            <version>${antlr.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

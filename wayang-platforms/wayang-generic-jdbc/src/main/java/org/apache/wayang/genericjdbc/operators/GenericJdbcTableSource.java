@@ -33,28 +33,29 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-
 public class GenericJdbcTableSource extends JdbcTableSource implements GenericJdbcExecutionOperator {
+
+    /**
+     * Name of the JDBC configuration to use.
+     */
+    public String jdbcName;
 
     /**
      * Creates a new instance.
      *
-     * @see TableSource#TableSource(String, String...)
-     * @param jdbcName on which table resides
-     *
-     *
+     * @param tableName   the table to read from
+     * @param jdbcName    the JDBC configuration name
+     * @param columnNames the columns to read
      */
-
-    public String jdbcName;
-    public GenericJdbcTableSource(String jdbcName, String tableName, String... columnNames) {
+    public GenericJdbcTableSource(String tableName, String... columnNames) {
         super(tableName, columnNames);
-        this.jdbcName = jdbcName;
+        this.jdbcName = "genericjdbc";
     }
 
     /**
      * Copies an instance (exclusive of broadcasts).
      *
-     * @param that that should be copied
+     * @param that the instance that should be copied
      */
     public GenericJdbcTableSource(GenericJdbcTableSource that) {
         super(that);
@@ -66,24 +67,27 @@ public class GenericJdbcTableSource extends JdbcTableSource implements GenericJd
         throw new UnsupportedOperationException("This operator has no input channels.");
     }
 
+    @Override
     public CardinalityEstimator getCardinalityEstimator(int outputIndex) {
         assert outputIndex == 0;
         return new CardinalityEstimator() {
             @Override
             public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
-                // see Job for StopWatch measurements
+
                 final TimeMeasurement timeMeasurement = optimizationContext.getJob().getStopWatch().start(
                         "Optimization", "Cardinality&Load Estimation", "Push Estimation", "Estimate source cardinalities"
                 );
 
-                // Establish a DB connection.
                 try (Connection connection = GenericJdbcPlatform.getInstance()
-                        .createDatabaseDescriptor(optimizationContext.getConfiguration(),jdbcName)
+                        .createDatabaseDescriptor(optimizationContext.getConfiguration(), jdbcName)
                         .createJdbcConnection()) {
 
-                    // Query the table cardinality.
-                    final String sql = String.format("SELECT count(*) FROM %s;", GenericJdbcTableSource.this.getTableName());
+                    final String sql = String.format(
+                            "SELECT count(*) FROM %s;", GenericJdbcTableSource.this.getTableName()
+                    );
+
                     final ResultSet resultSet = connection.createStatement().executeQuery(sql);
+
                     if (!resultSet.next()) {
                         throw new SQLException("No query result for \"" + sql + "\".");
                     }
@@ -91,12 +95,13 @@ public class GenericJdbcTableSource extends JdbcTableSource implements GenericJd
                     return new CardinalityEstimate(cardinality, cardinality, 1d);
 
                 } catch (Exception e) {
+
                     LogManager.getLogger(this.getClass()).error(
                             "Could not estimate cardinality for {}.", GenericJdbcTableSource.this, e
                     );
 
-                    // If we could not load the cardinality, let's use a very conservative estimate.
                     return new CardinalityEstimate(10, 10000000, 0.9);
+
                 } finally {
                     timeMeasurement.stop();
                 }
@@ -104,4 +109,3 @@ public class GenericJdbcTableSource extends JdbcTableSource implements GenericJd
         };
     }
 }
-

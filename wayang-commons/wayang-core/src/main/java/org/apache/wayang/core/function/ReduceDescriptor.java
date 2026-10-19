@@ -18,6 +18,8 @@
 
 package org.apache.wayang.core.function;
 
+import java.util.function.BinaryOperator;
+
 import org.apache.wayang.core.optimizer.costs.LoadEstimator;
 import org.apache.wayang.core.optimizer.costs.LoadProfileEstimator;
 import org.apache.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
@@ -25,11 +27,10 @@ import org.apache.wayang.core.types.BasicDataUnitType;
 import org.apache.wayang.core.types.DataUnitGroupType;
 import org.apache.wayang.core.types.DataUnitType;
 
-import java.util.function.BinaryOperator;
-
 /**
- * This descriptor pertains to functions that take multiple data units and aggregate them into a single data unit
- * by means of a tree-like fold, i.e., using a commutative, associative function..
+ * This descriptor pertains to functions that take multiple data units and
+ * aggregate them into a single data unit by means of a tree-like fold, i.e.,
+ * using a commutative, associative function..
  */
 public class ReduceDescriptor<Type> extends FunctionDescriptor {
 
@@ -39,34 +40,57 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
 
     private final SerializableBinaryOperator<Type> javaImplementation;
 
-    public ReduceDescriptor(SerializableBinaryOperator<Type> javaImplementation,
-                            DataUnitGroupType<Type> inputType,
-                            BasicDataUnitType<Type> outputType) {
+    /**
+     * sql implementation of the reduce operator
+     */
+    private String sqlImplementation;
+
+    public ReduceDescriptor(final SerializableBinaryOperator<Type> javaImplementation, final DataUnitGroupType<Type> inputType,
+            final BasicDataUnitType<Type> outputType) {
         this(javaImplementation, inputType, outputType, new NestableLoadProfileEstimator(
-                LoadEstimator.createFallback(1, 1),
-                LoadEstimator.createFallback(1, 1)
-        ));
+                LoadEstimator.createFallback(1, 1), LoadEstimator.createFallback(1, 1)));
     }
 
-    public ReduceDescriptor(SerializableBinaryOperator<Type> javaImplementation,
-                            DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
-                            LoadProfileEstimator loadProfileEstimator) {
+    public ReduceDescriptor(final SerializableBinaryOperator<Type> javaImplementation, final DataUnitGroupType<Type> inputType,
+            final BasicDataUnitType<Type> outputType, final LoadProfileEstimator loadProfileEstimator) {
         super(loadProfileEstimator);
         this.inputType = inputType;
         this.outputType = outputType;
         this.javaImplementation = javaImplementation;
     }
 
-    public ReduceDescriptor(SerializableBinaryOperator<Type> javaImplementation, Class<Type> inputType) {
+    public ReduceDescriptor(final SerializableBinaryOperator<Type> javaImplementation, final Class<Type> inputType) {
         this(javaImplementation, DataUnitType.createGroupedUnchecked(inputType),
-                DataUnitType.createBasicUnchecked(inputType)
-        );
+                DataUnitType.createBasicUnchecked(inputType));
     }
 
+    /**
+     * This is function is not built to last. It is thought to help out devising
+     * programs while we are still figuring
+     * out how to express functions in a platform-independent way.
+     *
+     * @return a function that can perform the reduce
+     */
+    public String getSqlImplementation() {
+        return this.sqlImplementation;
+    }
 
     /**
-     * This is function is not built to last. It is thought to help out devising programs while we are still figuring
+     * This is function is not built to last. It is thought to help out devising
+     * programs while we are still figuring
      * out how to express functions in a platform-independent way.
+     *
+     * @return a function that can perform the reduce
+     */
+    public ReduceDescriptor<Type> withSqlImplementation(final String sqlImplementation) {
+        this.sqlImplementation = sqlImplementation;
+        return this;
+    }
+
+    /**
+     * This is function is not built to last. It is thought to help out devising
+     * programs while we are still figuring out how to express functions in a
+     * platform-independent way.
      *
      * @return a function that can perform the reduce
      */
@@ -75,7 +99,8 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
     }
 
     /**
-     * In generic code, we do not have the type parameter values of operators, functions etc. This method avoids casting issues.
+     * In generic code, we do not have the type parameter values of operators,
+     * functions etc. This method avoids casting issues.
      *
      * @return this instance with type parameters set to {@link Object}
      */

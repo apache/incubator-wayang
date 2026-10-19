@@ -18,11 +18,8 @@
 
 package org.apache.wayang.jdbc.test;
 
-import org.apache.wayang.core.platform.ChannelDescriptor;
 import org.apache.wayang.basic.data.Record;
-import org.apache.wayang.jdbc.test.HsqldbPlatform;
 import org.apache.wayang.jdbc.operators.JdbcJoinOperator;
-import org.apache.wayang.core.types.DataSetType;
 import org.apache.wayang.core.function.TransformationDescriptor;
 
 /**

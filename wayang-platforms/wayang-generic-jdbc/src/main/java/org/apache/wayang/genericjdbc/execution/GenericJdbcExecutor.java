@@ -43,7 +43,6 @@ import org.apache.wayang.genericjdbc.operators.GenericJdbcTableSource;
 import org.apache.wayang.genericjdbc.platform.GenericJdbcPlatform;
 import org.apache.wayang.jdbc.compiler.FunctionCompiler;
 
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
@@ -63,7 +62,7 @@ public class GenericJdbcExecutor extends ExecutorTemplate {
 
     private final GenericJdbcPlatform platform;
 
-    private final Connection connection = null;
+    private final Connection connection;
 
     private final Logger logger = LogManager.getLogger(this.getClass());
 
@@ -72,7 +71,8 @@ public class GenericJdbcExecutor extends ExecutorTemplate {
     public GenericJdbcExecutor(GenericJdbcPlatform platform, Job job) {
         super(job.getCrossPlatformExecutor());
         this.platform = platform;
-//        this.connection = this.platform.createDatabaseDescriptor(job.getConfiguration()).createJdbcConnection();
+        this.connection = this.platform.createDatabaseDescriptor(job.getConfiguration(), "genericjdbc")
+                .createJdbcConnection();
     }
 
     @Override
@@ -142,8 +142,14 @@ public class GenericJdbcExecutor extends ExecutorTemplate {
     private ExecutionTask findGenericJdbcExecutionOperatorTaskInStage(ExecutionTask task, ExecutionStage stage) {
         assert task.getNumOuputChannels() == 1;
         final Channel outputChannel = task.getOutputChannel(0);
+
+        if (outputChannel.getConsumers().isEmpty()) {
+            return null;
+        }
+
         final ExecutionTask consumer = WayangCollections.getSingle(outputChannel.getConsumers());
-        return consumer.getStage() == stage && consumer.getOperator() instanceof GenericJdbcExecutionOperator ?
+
+        return consumer.getStage() == stage && consumer.getOperator() instanceof GenericJdbcExecutionOperator ?   
                 consumer :
                 null;
     }
@@ -216,12 +222,11 @@ public class GenericJdbcExecutor extends ExecutorTemplate {
 
     @Override
     public void dispose() {
-//        try {
-//            this.connection.close();
-//        } catch (SQLException e) {
-//            this.logger.error("Could not close JDBC connection to PostgreSQL correctly.", e);
-//        }
-        return;
+        try {
+            this.connection.close();
+        } catch (SQLException e) {
+            this.logger.error("Could not close JDBC connection to PostgreSQL correctly.", e);
+        }
     }
 
     @Override

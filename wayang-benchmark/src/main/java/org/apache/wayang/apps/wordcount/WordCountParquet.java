@@ -20,7 +20,7 @@ package org.apache.wayang.apps.wordcount;
 
 import org.apache.wayang.api.JavaPlanBuilder;
 import org.apache.wayang.basic.data.Tuple2;
-import org.apache.wayang.basic.operators.ParquetSource;
+import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.WayangContext;
 import org.apache.wayang.java.Java;
 import org.apache.wayang.spark.Spark;
@@ -90,4 +90,3 @@ public class WordCountParquet {
         wordcounts.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
     }
 }
-

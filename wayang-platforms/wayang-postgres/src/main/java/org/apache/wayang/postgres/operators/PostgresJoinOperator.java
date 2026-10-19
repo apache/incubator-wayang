@@ -19,7 +19,6 @@
 package org.apache.wayang.postgres.operators;
 
 import org.apache.wayang.basic.data.Record;
-import org.apache.wayang.basic.operators.FilterOperator;
 import org.apache.wayang.basic.operators.JoinOperator;
 import org.apache.wayang.core.function.TransformationDescriptor;
 import org.apache.wayang.jdbc.operators.JdbcJoinOperator;

@@ -55,4 +55,5 @@ jobs:
           key: ${{ runner.os }}-maven
       - name: Generate the documentation
         run: |
-          ./mvnw clean gem:exec@bundle-install gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site -pl wayang-docs -Pweb-documentation          
+          ./mvnw clean install -DskipTests
+          ./mvnw gem:exec@bundle-install gem:exec@generate-documentation gem:exec@generate-documentation-as-latest site -pl wayang-docs -Pweb-documentation          

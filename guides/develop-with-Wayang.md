@@ -124,3 +124,18 @@ A sample Java class file can be found [here](WordCount.java).
 
 # More Wayang jobs
 For more examples of Wayang jobs see [here](github.com/zkaoudi/wayang-examples).
+### Running a Simple Program
+
+After setting up Wayang, you can execute a simple program as follows:
+
+```java
+WayangContext context = new WayangContext(configuration);
+
+JavaPlanBuilder planBuilder = new JavaPlanBuilder(context);
+
+planBuilder
+    .readTextFile("input.txt")
+    .map(line -> line.toUpperCase())
+    .writeTextFile("output.txt");
+
+context.execute();

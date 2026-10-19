@@ -31,17 +31,13 @@ class PythonApiTests {
     @Test
     void processCallerSocketTest() {
         try {
-        final Configuration configuration = new Configuration();
-        final String path = Paths.get("python/worker.py").toString();
-        
-        configuration.setProperty("wayang.api.python.worker", path);
+            final Configuration configuration = new Configuration();
+            final PythonProcessCaller processCaller = new PythonProcessCaller();
 
-        final PythonProcessCaller processCaller = new PythonProcessCaller();
+            assertTrue(processCaller.getSocket().isConnected());
+            assertTrue(processCaller.isReady());
 
-        assertTrue(processCaller.getSocket().isConnected());
-        assertTrue(processCaller.isReady());
-
-        processCaller.close();
+            processCaller.close();
         } catch (Exception e) {
             assumeTrue(false, "Skipping test due to setup error: " + e.getMessage());
         }

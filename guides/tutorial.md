@@ -20,23 +20,23 @@ This tutorial will show users how to run the WordCount example locally with Waya
 
 # Clone repository
 ```shell
-git clone https://github.com/apache/incubator-wayang.git 
+git clone https://github.com/apache/wayang.git
 ```
 
 # Create binaries
 Running following commands to build Wayang and generate the tar.gz  
 ```shell
-cd incubator-wayang
+cd wayang
 ./mvnw clean package -pl :wayang-assembly -Pdistribution 
 ```
-Then you can find the `wayang-assembly-1.1.1-SNAPSHOT-dist.tar.gz` under `wayang-assembly/target` directory.
+Then you can find the `wayang-assembly-1.1.2-SNAPSHOT-dist.tar.gz` under `wayang-assembly/target` directory.
 
 
 # Prepare the environment
 ## Wayang
 ```shell
-tar -xvf wayang-assembly-1.1.1-SNAPSHOT-dist.tar.gz
-cd wayang-1.1.1-SNAPSHOT
+tar -xvf wayang-assembly-1.1.2-SNAPSHOT-dist.tar.gz
+cd wayang-1.1.2-SNAPSHOT
 ```
 
 In linux
@@ -60,11 +60,11 @@ source ~/.zshrc
 To execute the WordCount example with Apache Wayang, you need to execute your program with the 'wayang-submit' command:
 
 ```shell
-cd wayang-1.1.1-SNAPSHOT
+cd wayang-1.1.2-SNAPSHOT
 ./bin/wayang-submit org.apache.wayang.apps.wordcount.Main java file://$(pwd)/README.md
 ```
-##  If you're using Java 17, add the following JVM flags:
-Update your `wayang-submit` (wayang-assembly/target/wayang-1.0.1-SNAPSHOT/bin/wayang-submit) script (or command) with:
+## If you're using Java 17, add the following JVM flags:
+Update your `wayang-submit` (`wayang-assembly/target/wayang-1.1.2-SNAPSHOT/bin/wayang-submit`) script (or command) with:
 
 ```shell 
 eval "$RUNNER \
@@ -83,3 +83,66 @@ eval "$RUNNER \
 Then you should be able to see outputs like this:
 
 ![img.png](../images/wordcount_result.png)
+
+## Running SQL Queries in Wayang
+
+Wayang provides support for executing SQL queries using its SQL API.
+
+### Steps to execute SQL queries
+
+1. Configure the Wayang Calcite model using the property `wayang.calcite.model`:
+
+```java
+Configuration configuration = new Configuration();
+configuration.setProperty(
+    "wayang.calcite.model",
+    "{ \"version\": \"1.0\", \"defaultSchema\": \"MY_SCHEMA\", \"schemas\": [] }"
+);
+```
+
+2. Create a `SqlContext` instance:
+
+```java
+SqlContext context = new SqlContext(configuration);
+```
+
+3. Execute your SQL query:
+
+```java
+Collection<Record> result = context.executeSql("SELECT * FROM my_table");
+
+for (Record record : result) {
+    System.out.println(record);
+}
+```
+
+### Example: Running a SQL Query
+
+Wayang allows executing SQL queries using the `SqlContext` API.
+
+```java
+import org.apache.wayang.api.sql.context.SqlContext;
+import org.apache.wayang.core.api.Configuration;
+import org.apache.wayang.basic.data.Record;
+
+import java.util.Collection;
+
+public class Example {
+    public static void main(String[] args) throws Exception {
+        Configuration configuration = new Configuration();
+
+        configuration.setProperty(
+            "wayang.calcite.model",
+            "{ \"version\": \"1.0\", \"defaultSchema\": \"MY_SCHEMA\", \"schemas\": [] }"
+        );
+
+        SqlContext context = new SqlContext(configuration);
+
+        Collection<Record> result = context.executeSql("SELECT * FROM my_table");
+
+        for (Record record : result) {
+            System.out.println(record);
+        }
+    }
+}
+```

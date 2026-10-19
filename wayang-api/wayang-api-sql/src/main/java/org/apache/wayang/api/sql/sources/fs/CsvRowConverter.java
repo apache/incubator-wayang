@@ -132,6 +132,7 @@ public class CsvRowConverter {
                 } catch (ParseException e) {
                     return null;
                 }
+            case GEOMETRY:
             case VARCHAR:
             default:
                 return string;

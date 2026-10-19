@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import java.net.URL;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -71,7 +72,7 @@ class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
         evaluate(source, inputs, outputs);
 
         // Verify the outcome.
-        final List<String> result = outputs[0].<String>provideStream().toList();
+        final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
         assertEquals(63, result.size());
     }
 
@@ -100,7 +101,7 @@ class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
             evaluate(source, inputs, outputs);
 
             // Verify the outcome.
-            final List<String> result = outputs[0].<String>provideStream().toList();
+            final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
             assertEquals(225, result.size());
         } finally {
             if (javaExecutor != null)
@@ -123,7 +124,7 @@ class JavaTextFileSourceTest extends JavaExecutionOperatorTestBase {
             evaluate(source, inputs, outputs);
 
             // Verify the outcome.
-            final List<String> result = outputs[0].<String>provideStream().toList();
+            final List<String> result = outputs[0].<String>provideStream().collect(Collectors.toList());
             assertEquals(64, result.size());
         } catch (final Exception e) {
             Assumptions.assumeTrue(false, "Skipping test due to possible network error: " + e.getMessage());

@@ -15,6 +15,7 @@
 #  limitations under the License.
 #
 
+import collections
 import re
 
 from inspect import signature
@@ -175,7 +176,7 @@ def get_type_flatmap_function(call: FlatmapFunction) -> (type, type):
             )
         )
 
-    if type(sig.return_annotation) != type(Iterable):
+    if get_origin(sig.return_annotation) is not collections.abc.Iterable:
         raise PywyException(
             "the return for the FlatmapFunction is not Iterable, {}".format(
                 str(sig.return_annotation)
@@ -196,11 +197,15 @@ def typecheck(input_type: Type[ConstrainedOperatorType]):
 
     if isinstance(input_type, List) and args:
         typecheck(args[0])
-    elif isinstance(input_type, Tuple):
+    elif get_origin(input_type) is tuple:
         if all(arg in allowed_types for arg in args):
             return
         else:
             raise TypeError(f"Unsupported Operator type: {input_type}")
+    elif isinstance(input_type,tuple):
+        for arg in input_type:
+            typecheck(arg)
+        return
     else:
         raise TypeError(f"Unsupported Operator type: {input_type}, {origin}, {args}")
 

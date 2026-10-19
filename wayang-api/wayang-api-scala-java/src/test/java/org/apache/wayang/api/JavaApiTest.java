@@ -114,6 +114,22 @@ class JavaApiTest {
     }
 
     @Test
+    void testFilter() {
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
+
+        final List<Integer> inputValues = Arrays.asList(1, 2, 3, 4, 5, 6);
+
+        final Collection<Integer> outputValues = builder
+                .loadCollection(inputValues).withName("Load input values")
+                .filter(i -> (i & 1) == 0).withName("Filter even numbers")
+                .collect();
+
+        Set<Integer> expectedValues = WayangCollections.asSet(2, 4, 6);
+        assertEquals(expectedValues, WayangCollections.asSet(outputValues));
+    }
+
+    @Test
     void testBroadcast2() {
         WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
         JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext);

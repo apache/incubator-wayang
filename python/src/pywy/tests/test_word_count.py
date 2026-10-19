@@ -55,7 +55,7 @@ def config(pytestconfig):
 
 
 # TODO: implement tuple types support
-@pytest.mark.skip(reason="missing implementation for tuple types in operators")
+# @pytest.mark.skip(reason="missing implementation for tuple types in operators")
 def test_wordcount(config):
     with resources.path(resources_folder, "sample_data.md") as resource_path, \
          resources.path(resources_folder, "wordcount_out_python.txt") as output_path, \

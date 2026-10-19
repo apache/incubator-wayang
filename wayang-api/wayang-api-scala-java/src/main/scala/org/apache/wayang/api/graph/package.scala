@@ -21,14 +21,17 @@ package org.apache.wayang.api
 import org.apache.wayang.basic.data.{Tuple2 => T2}
 
 /**
-  * Provides implicits for Wayang's graph API.
-  */
+ * Provides implicit conversions and type aliases for Apache Wayang's graph API.
+ *
+ * This package object defines core type aliases used in graph processing pipelines:
+ * - Vertex: represents a graph node as a Long identifier
+ * - Edge: represents a directed connection between two vertices
+ * - PageRank: represents a vertex with its computed PageRank score
+ *
+ * These types support graph analytics operations within Wayang's
+ * cross-platform execution model.
+ */
 package object graph {
-
-  /**
-   * TODO: add the description for the implicitis in org.apache.wayang.api.graph
-   * labels: documentation,todo
-   */
 
   type Vertex = java.lang.Long
 

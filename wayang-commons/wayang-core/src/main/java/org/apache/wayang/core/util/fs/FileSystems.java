@@ -24,7 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.FileNotFoundException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -38,20 +38,38 @@ public class FileSystems {
 
     private static final Logger LOGGER = LogManager.getLogger(FileSystems.class);
 
+    private static final String HADOOP_FILE_SYSTEM_CLASS = "org.apache.hadoop.fs.FileSystem";
+
     /**
      * We need file sizes several times during the optimization process, so we cache them.
      */
     private static final LruCache<String, Long> fileSizeCache = new LruCache<>(20);
 
-    private static Collection<FileSystem> registeredFileSystems = Arrays.asList(
-            new LocalFileSystem(),
-            new HadoopFileSystem(),
-            new S3FileSystem()
-    );
+    private static Collection<FileSystem> registeredFileSystems = createRegisteredFileSystems();
 
     private FileSystems() {
     }
 
+    private static Collection<FileSystem> createRegisteredFileSystems() {
+        Collection<FileSystem> fileSystems = new ArrayList<>();
+        fileSystems.add(new LocalFileSystem());
+
+        if (isClassAvailable(HADOOP_FILE_SYSTEM_CLASS)) {
+            fileSystems.add(new HadoopFileSystem());
+        }
+
+        fileSystems.add(new S3FileSystem());
+        return Collections.unmodifiableCollection(fileSystems);
+    }
+
+    private static boolean isClassAvailable(String className) {
+        try {
+            Class.forName(className, false, FileSystems.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
 
     public static Optional<FileSystem> getFileSystem(String fileUrl) {
         return registeredFileSystems.stream()
