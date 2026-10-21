@@ -58,6 +58,18 @@ jobs:
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven
+      - name: Validate documentation POM
+        run: |
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+
+          ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
+          root_version = ET.parse('pom.xml').findtext('m:version', namespaces=ns)
+          docs_parent = ET.parse('wayang-docs/pom.xml').findtext('m:parent/m:version', namespaces=ns)
+          if docs_parent != root_version:
+              raise SystemExit(f'Documentation parent {docs_parent} does not match root {root_version}')
+          PY
+          ./mvnw validate -B -Pweb-documentation -pl wayang-docs
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
