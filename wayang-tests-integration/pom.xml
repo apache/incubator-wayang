@@ -219,7 +219,6 @@
         <plugins>
            <plugin>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>3.0.2</version>
             <executions>
                 <execution>
                     <id>process-resources</id>
@@ -244,7 +243,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
                 <configuration>
                     <argLine>
                         --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
@@ -276,7 +274,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
                 <configuration>
                     <argLine>
                         --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
