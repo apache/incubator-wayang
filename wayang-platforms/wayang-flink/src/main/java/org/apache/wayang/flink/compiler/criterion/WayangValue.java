@@ -26,10 +26,9 @@ import org.apache.flink.types.Value;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import org.apache.wayang.basic.operators.ObjectFileSerialization;
 /**
  * Implementation of {@link Value} of flink for use in Wayang
  */
@@ -42,12 +41,36 @@ public class WayangValue<T> implements Value {
 
     private T data;
 
+    private Class<T> type;
+
     public WayangValue(){
         this.data = null;
+        this.type = null;
+    }
+
+    public WayangValue(Class<T> type){
+        this.data = null;
+        this.type = type;
     }
 
     public WayangValue(T element){
         this.data = element;
+        if (element != null) {
+            this.type = (Class<T>) element.getClass();
+        }
+    }
+
+    public WayangValue(T element, Class<T> type){
+        this.data = element;
+        this.type = type;
+    }
+
+    public Class<T> getType() {
+        return this.type;
+    }
+
+    public void setType(Class<T> type) {
+        this.type = type;
     }
 
     @Override
@@ -85,51 +108,43 @@ public class WayangValue<T> implements Value {
 
         dataInputView.read(array);
 
-        this.data = convertToObject(array);
+        try {
+            this.data = convertToObject(array);
+        } catch (org.apache.wayang.core.api.exception.WayangException e) {
+            if (e.getCause() instanceof IOException) {
+                throw (IOException) e.getCause();
+            }
+            throw new IOException("Failed to deserialize WayangValue payload", e);
+        }
     }
 
-    public byte[] convertToByte(){
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutput out = null;
-        byte[] result = null;
-        try {
-            out = new ObjectOutputStream(bos);
+    public byte[] convertToByte() {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(bos)) {
             out.writeObject(this.data);
             out.flush();
-            result = bos.toByteArray();
+            return bos.toByteArray();
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                bos.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+            throw new org.apache.wayang.core.api.exception.WayangException("Failed to serialize WayangValue payload", e);
         }
-        return result;
     }
 
-    public T convertToObject(byte[] array){
-        ByteArrayInputStream bis = new ByteArrayInputStream(array);
-        ObjectInput in = null;
-        T object = null;
-        try {
-            in = new ObjectInputStream(bis);
-            object = (T) in.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+    public T convertToObject(byte[] array) {
+        return convertToObject(array, this.type != null ? this.type : (this.data != null ? this.data.getClass() : null));
+    }
+
+    public T convertToObject(byte[] array, Class<?> expectedType) {
+        if (array == null || array.length == 0) {
+            return null;
         }
-        return object;
+        Class<?> targetType = expectedType != null ? expectedType : (this.type != null ? this.type : (this.data != null ? this.data.getClass() : null));
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(array);
+             ObjectInputStream in = new ObjectInputStream(bis)) {
+            in.setObjectInputFilter(ObjectFileSerialization.createObjectInputFilter(targetType));
+            return (T) in.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            throw new org.apache.wayang.core.api.exception.WayangException("Failed to deserialize WayangValue payload", e);
+        }
     }
 
     public String toString(){
