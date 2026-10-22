@@ -36,11 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class FlinkJoinOperatorTest extends FlinkOperatorTestBase {
 
-    //TODO: Validate FlinkJoinOperator implementation
-    // it is required to validate the implementation of FlinkJoinOperator
-    // because trigger an exception in the test and looks like is a problem in the
-    // implementation of the implementation in the operator
-    // labels:flink,bug
+
     @Test
     void testExecution() throws Exception {
         // Prepare test data.
