@@ -87,7 +87,7 @@
         <dependency>
             <groupId>org.locationtech.jts</groupId>
             <artifactId>jts-core</artifactId>
-            <version>1.19.0</version>
+            <version>1.20.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -136,7 +136,7 @@
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>2.7.1</version>
+            <version>2.7.4</version>
             <scope>test</scope>
         </dependency>
 
