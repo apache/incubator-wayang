@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import org.apache.wayang.core.api.Configuration;
 import org.apache.wayang.core.api.exception.WayangException;
 import org.apache.wayang.core.optimizer.OptimizationContext;
 import org.apache.wayang.core.optimizer.enumeration.PlanImplementation;
@@ -40,26 +41,99 @@ import org.apache.wayang.core.plan.wayangplan.WayangPlan;
 import org.apache.wayang.core.platform.Junction;
 
 public class TreeEncoder {
+
+    public static final String ENCODE_IDS_PROPERTY = "wayang.ml.encoding.encode-ids";
+
+    public static final String ENCODE_IDS_SHORTHAND_PROPERTY = "wayang.ml.encode-ids";
+
     private final OneHotMappings mappings;
 
+    private Configuration configuration;
+
     public TreeEncoder(final OneHotMappings mappings) {
+        this(mappings, null);
+    }
+
+    public TreeEncoder(final OneHotMappings mappings, final Configuration configuration) {
         this.mappings = mappings;
+        this.configuration = configuration;
     }
 
     public OneHotMappings getMappings() {
         return this.mappings;
     }
 
+    public Configuration getConfiguration() {
+        return this.configuration;
+    }
+
+    public void setConfiguration(final Configuration configuration) {
+        this.configuration = configuration;
+    }
+
+    /**
+     * Resolves whether operator IDs should be encoded. The configuration hierarchy is walked from the given
+     * (most specific, e.g. job-level) configuration up to its ancestors; the closest level that sets either
+     * {@link #ENCODE_IDS_PROPERTY} or {@link #ENCODE_IDS_SHORTHAND_PROPERTY} wins, so a child can override an
+     * inherited value even if it uses the other spelling. If both are set on the very same level, a spelling
+     * that merely mirrors the inherited value (e.g., cached by an earlier read through the child) loses
+     * against the other one; otherwise the canonical property takes precedence. Defaults to {@code false}.
+     */
+    public static boolean resolveEncodeIds(final Configuration config) {
+        for (Configuration level = config; level != null; level = level.getParent()) {
+            final String canonical = level.getProperties().provideLocally(ENCODE_IDS_PROPERTY);
+            final String shorthand = level.getProperties().provideLocally(ENCODE_IDS_SHORTHAND_PROPERTY);
+            if (canonical == null && shorthand == null) {
+                continue;
+            }
+            if (canonical == null) {
+                return Boolean.parseBoolean(shorthand);
+            }
+            if (shorthand == null) {
+                return Boolean.parseBoolean(canonical);
+            }
+            final Configuration parent = level.getParent();
+            final boolean canonicalMirrorsParent = canonical.equals(inheritedValue(parent, ENCODE_IDS_PROPERTY));
+            final boolean shorthandMirrorsParent = shorthand.equals(inheritedValue(parent, ENCODE_IDS_SHORTHAND_PROPERTY));
+            return canonicalMirrorsParent && !shorthandMirrorsParent
+                    ? Boolean.parseBoolean(shorthand)
+                    : Boolean.parseBoolean(canonical);
+        }
+        return false;
+    }
+
+    /**
+     * Looks up the value that {@code level} or its closest ancestor defines for {@code key} without touching
+     * any property caches.
+     */
+    private static String inheritedValue(final Configuration level, final String key) {
+        for (Configuration current = level; current != null; current = current.getParent()) {
+            final String value = current.getProperties().provideLocally(key);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private boolean resolveEncodeIds(final OptimizationContext optimizationContext) {
+        final Configuration config = this.configuration != null
+                ? this.configuration
+                : (optimizationContext != null ? optimizationContext.getConfiguration() : null);
+        return resolveEncodeIds(config);
+    }
+
     public TreeNode encode(final PlanImplementation plan) {
+        return this.encode(plan, this.resolveEncodeIds(plan.getOptimizationContext()));
+    }
+
+    public TreeNode encode(final PlanImplementation plan, final boolean encodeIds) {
         final List<TreeNode> result = new ArrayList<TreeNode>();
 
         final HashMap<Operator, Collection<Operator>> tree = new HashMap<>();
         final List<ExecutionOperator> sinks = plan.getOperators().stream().filter(Operator::isSink).toList();
 
         final Map<OutputSlot<?>, Junction> junctions = plan.getJunctions();
-
-        // TODO: convert to config
-        final boolean encodeIds = false;
 
         for (final Operator sink : sinks) {
             final TreeNode sinkNode = traversePIOperator(sink, plan.getOptimizationContext(), encodeIds, junctions,
@@ -75,6 +149,10 @@ public class TreeEncoder {
         resultNode.rebalance();
 
         return resultNode;
+    }
+
+    public TreeNode encode(final WayangPlan plan, final OptimizationContext optimizationContext) {
+        return this.encode(plan, optimizationContext, this.resolveEncodeIds(optimizationContext));
     }
 
     public TreeNode encode(final WayangPlan plan, final OptimizationContext optimizationContext,
